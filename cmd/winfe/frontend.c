@@ -15,6 +15,7 @@
 #include "merrors.h"
 #include "downloads.h"
 #include "history.h"
+#include "bookmarks.h"
 #include "np.h"
 #include <nspr/prglobal.h>
 #include <stdio.h>
@@ -137,12 +138,14 @@ int WFE_Init(void)
     NPL_Init();
     WFE_DownloadInit();
     NET_RegisterContentTypeConverter(UNKNOWN_CONTENT_TYPE, FO_PRESENT, NULL, fe_MakeSaveAsStream);
+    if (!WFE_BookmarksInit()) { WFE_Shutdown(); return 0; }
     return 1;
 }
 
 void WFE_Shutdown(void)
 {
     unsigned int index;
+    WFE_BookmarksShutdown();
     WFE_DownloadShutdown();
     IL_Shutdown();
     NET_ShutdownNetLib();

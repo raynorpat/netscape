@@ -17,8 +17,9 @@ Native frame contexts now support nested cells, named and special targets,
 child forms/images, independent scrolling, cache/history-based resize and cleanup.
 Native saving/downloads now use independent transfer windows and checked binary
 streams. Native history traversal and its dialog now use SHIST, including frame history,
-forms/scroll state and persisted visited-page dates. The next priority is the
-bookmark manager, followed by remaining browser UI and optional engines. Optional engines remain separate porting tasks.
+forms/scroll state and persisted visited-page dates. A native bookmark manager
+uses the original tree and HTML persistence. Remaining browser UI and optional
+engines are separate porting tasks.
 
 ## Native frontend work
 
@@ -29,10 +30,10 @@ bookmark manager, followed by remaining browser UI and optional engines. Optiona
 | Implemented | Frames | Native child contexts use the original grid/history engine. Fixtures cover nested views, named/parent/top targets, streamed server-directed target changes, child forms/images, resize and cleanup. Draggable divider UI and broader interrupted-load cases need further coverage. |
 | Implemented | Saving/downloads | Save Page and link/image context actions use native pickers and independent progress/cancel windows. Fixtures cover exact bytes, final-response headers, truncation, cancellation, concurrent transfers, browser closure and filesystem failures. Known renderable attachment enforcement, transformed/chunked responses and large-file limits need further work. |
 | Implemented | History | Back/Forward and Reload use SHIST; a native history list and visited-pages view expose the core data. Fixtures cover form/scroll restoration, frame traversal, forward truncation, POST cancellation, persisted dates and malformed/expired records. |
-| 3 | Bookmarks | Clipboard transfers exist; the manager and editing/persistence UI remain the next integration item. Use the original bookmark tree and writer. |
+| Implemented | Bookmarks | Add page and a native tree manager support folders, editing, opening and deletion through the original BM APIs. Fixtures check escaped and long names/URLs, ordering, cross-process persistence and failed-save retry. Import/export, search, drag/drop and richer organization remain future work. |
 | 3 | Charset/text | The frontend defaults to Latin-1 and draws/measures through ANSI GDI. A subset of single-byte conversion tables uses Windows code pages; this does not establish correct multilingual rendering. Verify document charset changes, MIME headers, fonts, conversion failure, selection, and copy. |
 | 4 | Plugins | The plugin archive and `NPL_Init` are present, but discovery registers no descriptors, loading returns NULL, and embed streaming fails. Native module loading, NPAPI callbacks, embedded-window lifetime, and a controlled test plugin are separate work. |
-| 4 | Other browser UI | Add selection/copy, find, printing, preferences, cache controls, navigation command state, and link context actions. Printing/translation archives being linked does not supply native print UI. Disk cache is explicitly disabled at initialization. |
+| 4 | Other browser UI | Add selection/copy, find, printing, preferences, cache controls and remaining navigation/link context actions. Printing/translation archives being linked does not supply native print UI. Disk cache is explicitly disabled at initialization. |
 
 The direct evidence is in [frontend callbacks](../cmd/winfe/frontend.c),
 [services](../cmd/winfe/services.c), [window/navigation code](../cmd/winfe/main.cpp),
@@ -65,6 +66,6 @@ sets `NO_SSL`, uses static native-thread NSPR and ANSI/IPv4 interfaces, and
 rejects x64. Keep x64 as a separate port with pointer/ABI tests.
 
 Use independent configure/build probes for each newly enabled archive, followed
-by runtime tests for its actual behavior. The checked-in Windows CTest setup
-covers core, socket, local frontend, HTTP frontend, and mail/news fixtures. No optional engine, plugin, frame, or download runtime result is established
-by this audit. Native image/form checks are now part of the frontend suite.
+by runtime tests for its actual behavior. The checked-in Windows CTest setup covers core, socket, local/HTTP frontend,
+mail/news, images, forms, frames, downloads, history and bookmarks. These fixtures
+do not establish optional engine or plugin runtime support.

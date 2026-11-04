@@ -45,9 +45,9 @@ Files: focused `cmd/winfe/downloads.cpp`/`.h`, native menu/callback glue, indepe
 
 ## 4. Bookmark manager
 
-- [ ] Integrate the original bookmark tree with native add/folder/edit/open/delete controls.
-- [ ] Verify safe backend lifetime, persistence and special-character round trips.
-- [ ] Review, run regressions and commit independently.
+- [x] Integrate the original bookmark tree with native add/folder/edit/open/delete controls.
+- [x] Verify safe backend lifetime, persistence and special-character round trips.
+- [x] Review, run regressions and commit independently.
 
 ## Execution record
 
@@ -58,3 +58,11 @@ Frame contexts: complete. Nine CTests passed in both Win32 Release and Debug, in
 Saving/downloads: complete. Ten CTests passed in Release and Debug; Linux rebuilt after current-response header metadata and identity encoding handling. Actual identity truncation and redirect failures were reproduced before fixes. Destination creation/final rename errors, cancellation, browser closure and exact output bytes passed independent fixture checks. Mid-write disk exhaustion remains an inspected limit.
 
 History: complete. Eleven CTests passed in Release and Debug; focused browser checks passed after the final position-saving changes. The Linux browser rebuilt with fixed-width global-history dates and the expired-POST guard. Independent review found no remaining P1/P2 findings.
+
+Bookmarks: complete. Twelve CTests passed in Release and Debug; Linux rebuilt.
+Actual raw HTML title loss and fixed-line long-URL loss were reproduced before
+fixes. Fixtures check Add Page, native edit/delete/open/manager reopen, quoted
+and literal-entity text, long escaped URLs, failed rename preservation/retry,
+legacy wrapped titles and boundary descriptions. Core review findings on buffer
+lifetime, append slack and failed-read guards were addressed; allocation failure
+and import recovery were inspected rather than fault-injected.

@@ -3,7 +3,7 @@
 This port builds the native Win32 core libraries and an optional MFC browser
 frontend adapted to the 3.02 backend interfaces. The initial frontend supports
 HTML layout, GIF/JPEG/XBM images, native HTML forms, local files, HTTP navigation,
-scrolling and links, plus native mail/news folder lists, message lists, a reader, and composer windows. Remaining
+frames, history, bookmarks, saving/downloads, scrolling and links, plus native mail/news folder lists, message lists, a reader, and composer windows. Remaining
 browser features are tracked in [windows-roadmap.md](windows-roadmap.md).
 
 ## Windows browser frontend
@@ -67,7 +67,7 @@ GET, POST and image click coordinates against captured loopback requests.
 File upload/multipart behavior, progressive/animated image timing, and full
 keyboard traversal through offscreen controls remain unverified.
 
-Plugins, bookmark dialogs, printing, Java, Mocha and SSL/security integration
+Plugins, printing, Java, Mocha and SSL/security integration
 remain incomplete. Text and password prompts use native dialogs.
 
 Framesets use native child document windows with independent contexts, scrolling,
@@ -110,6 +110,25 @@ history across process restart. Stored dates retain the original four-byte disk
 format and are explicitly converted to native time values. Expired and malformed
 records and the rendered date view are checked.
 
+Bookmarks > Add page (Ctrl+D) adds the current page to the original bookmark
+tree. Manage bookmarks opens a native tree with Open, Add Page, New Folder,
+Edit and Delete controls. Names and URLs are saved to the profile's
+`bookmark.htm` in Netscape HTML format. The backend outlives manager windows,
+so closing and reopening the manager preserves its tree. Browser visits update
+the original bookmark metadata.
+
+Bookmark fixtures check native manager actions, edited addresses, folder/order
+preservation and names/URLs with quotes, ampersands, angle brackets and literal
+entity text across separate processes. Long escaped URLs and legacy wrapped titles
+exercise buffer growth; failed destination replacement preserves the old file and
+can be retried without another edit. Import/export UI, search and drag/drop
+are not yet implemented.
+
+The complete twelve-test suite passed in Win32 Release and Debug on 2026-11-04,
+including existing mail/news delivery fixtures. The Linux browser rebuilt and
+reported 3.02 after the shared history, HTTP and bookmark changes. Bookmark
+read-error/import guards were reviewed; allocation failure was not fault-injected.
+
 To install or package the Release build:
 
 ```powershell
@@ -120,9 +139,9 @@ cpack --config out/windows-frontend/CPackConfig.cmake -G ZIP -C Release -B out/p
 The Windows archive is named `netscape-legacy-3.02-Windows-x86.zip` and contains
 `bin/netscape.exe` and the documentation/licenses. It still requires the matching
 shared Visual C++ and MFC runtime. Installation and ZIP generation were verified;
-the installed executable passed the image/form fixtures. The eleven-test native suite includes frame, download and history fixtures; verification is recorded
-with the existing browser/mail checks. The shared layout/XBM fixes also passed a Linux
-browser rebuild.
+the installed executable passed the image/form fixtures. The native suite includes frame, download, history and bookmark fixtures alongside
+the existing browser/mail checks. Configuration-specific verification is recorded
+below as each roadmap item is completed.
 
 ## Mail and news
 
@@ -272,7 +291,7 @@ Windows frontend**. Concrete differences already found:
 
 The native frontend above provides the first MFC application shell, text
 rendering, event dispatch, asynchronous sockets/DNS, file services and resource
-targets. Frames, richer preferences and optional engines remain integration work. The recovered source remains the implementation guide
+targets. Richer preferences and optional engines remain integration work. The recovered source remains the implementation guide
 while the 3.02 backend interfaces stay authoritative.
 
 Because usable Windows frontend source was recovered, binary reconstruction is

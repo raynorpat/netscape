@@ -12,6 +12,7 @@ add_executable(netscape-win32 WIN32
  "${PROJECT_SOURCE_DIR}/cmd/winfe/forms.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/downloads.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/history.cpp"
+ "${PROJECT_SOURCE_DIR}/cmd/winfe/bookmarks.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/netscape.rc"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/cmdparse.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/genedit.cpp")
@@ -68,4 +69,8 @@ if(BUILD_TESTING)
   "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_history.py"
   --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/history-test")
  set_tests_properties(windows_browser_history PROPERTIES TIMEOUT 60)
+ add_test(NAME windows_bookmarks COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_bookmarks.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/bookmarks-test")
+ set_tests_properties(windows_bookmarks PROPERTIES TIMEOUT 80)
 endif()

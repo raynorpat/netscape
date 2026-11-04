@@ -38,6 +38,7 @@ static void invalid_parameter(const wchar_t *expression, const wchar_t *function
 #include "shist.h"
 #include "downloads.h"
 #include "history.h"
+#include "bookmarks.h"
 #include "glhist.h"
 #include "merrors.h"
 extern "C" {
@@ -113,6 +114,9 @@ protected:
     afx_msg void OnOpen();
     afx_msg void OnSavePage();
     afx_msg void OnHistory();
+    afx_msg void OnBookmarks();
+    afx_msg void OnAddBookmark();
+    afx_msg void OnUpdateAddBookmark(CCmdUI *command);
     afx_msg void OnUpdateBack(CCmdUI *command);
     afx_msg void OnUpdateForward(CCmdUI *command);
     afx_msg void OnGo();
@@ -154,6 +158,9 @@ BEGIN_MESSAGE_MAP(BrowserFrame, CFrameWnd)
  ON_COMMAND(ID_BROWSER_OPEN, OnOpen)
  ON_COMMAND(ID_BROWSER_SAVE, OnSavePage)
  ON_COMMAND(ID_BROWSER_HISTORY, OnHistory)
+ ON_COMMAND(ID_BOOKMARKS_SHOW, OnBookmarks)
+ ON_COMMAND(ID_BOOKMARKS_ADD, OnAddBookmark)
+ ON_UPDATE_COMMAND_UI(ID_BOOKMARKS_ADD, OnUpdateAddBookmark)
  ON_UPDATE_COMMAND_UI(ID_NAV_BACK, OnUpdateBack)
  ON_UPDATE_COMMAND_UI(ID_NAV_FORWARD, OnUpdateForward)
  ON_COMMAND(ID_NAV_GO, OnGo)
@@ -330,6 +337,12 @@ void BrowserFrame::OnGo() { CString text; address.GetWindowText(text); if (mode 
 void BrowserFrame::OnOpen() { CFileDialog dialog(TRUE, "html", nullptr, OFN_FILEMUSTEXIST, "Documents|*.html;*.htm;*.txt|All files|*.*||", this); if (dialog.DoModal() == IDOK) Navigate(dialog.GetPathName()); }
 void BrowserFrame::OnSavePage() { WFE_SavePage(&context, nullptr); }
 void BrowserFrame::OnHistory() { WFE_HistoryShow(&context); }
+void BrowserFrame::OnBookmarks() { WFE_BookmarksShow(&context); }
+void BrowserFrame::OnAddBookmark() { WFE_BookmarksAddPage(&context); }
+void BrowserFrame::OnUpdateAddBookmark(CCmdUI *command) {
+    History_entry *entry = SHIST_GetCurrent(&context.hist);
+    command->Enable(context.type == MWContextBrowser && entry && entry->method != URL_POST_METHOD);
+}
 void BrowserFrame::OnStop() { XP_InterruptContext(&context); }
 void BrowserFrame::OnReload() { WFE_HistoryMove(&context, 0); }
 void BrowserFrame::OnBack() { WFE_HistoryMove(&context, -1); }
@@ -1399,7 +1412,7 @@ public:
         POSITION position = arguments.GetHeadPosition();
         CString first = position ? arguments.GetNext(position) : "about:";
         smoke_mode = first == "--smoke-test" || first == "--mailnews-smoke" || first == "--composer-delivery-smoke"
-            || first == "--images-smoke" || first == "--forms-smoke" || first == "--frames-smoke" || first == "--downloads-smoke" || first == "--history-smoke" || first == "--history-reopen-smoke";
+            || first == "--images-smoke" || first == "--forms-smoke" || first == "--frames-smoke" || first == "--downloads-smoke" || first == "--history-smoke" || first == "--history-reopen-smoke" || first == "--bookmarks-smoke";
         if (smoke_mode) {
             SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
 #ifdef _DEBUG
@@ -1420,6 +1433,12 @@ public:
             else if (first == "--frames-smoke") m_nExitCode = WFE_RunFramesSmoke(report, url);
             else if (first == "--history-smoke") m_nExitCode = WFE_RunHistorySmoke(report, url);
             else if (first == "--history-reopen-smoke") m_nExitCode = WFE_RunHistoryReopenSmoke(report, url);
+            else if (first == "--bookmarks-smoke") {
+                MWContext *source = WFE_NewWindow("about:blank");
+                if (source) browser_smoke_wait(frame_for(source));
+                m_nExitCode = source ? WFE_BookmarksSmoke(source, report, url) : 2;
+                if (source) WFE_CloseWindow(source);
+            }
             else if (first == "--downloads-smoke") {
                 CString directory = position ? arguments.GetNext(position) : "";
                 MWContext *source = WFE_NewWindow(nullptr);

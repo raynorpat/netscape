@@ -3,6 +3,7 @@
 #include "downloads.h"
 #include "mailsettings.h"
 #include "bkmks.h"
+#include "bookmarks.h"
 #include "msgcom.h"
 #include "mime.h"
 #include "libi18n.h"
@@ -320,43 +321,42 @@ void *BMFE_GetClipContents(MWContext *context, int32 *length)
 void BMFE_RefreshCells(MWContext *context, int32 first, int32 last, XP_Bool now)
 {
     (void)first; (void)last; (void)now;
-    WFE_Unsupported(context, "Bookmark list window");
+    WFE_BookmarksChanged(context);
 }
 
 void BMFE_SyncDisplay(MWContext *context)
 {
-    WFE_Unsupported(context, "Bookmark list window");
+    WFE_BookmarksChanged(context);
 }
 
 void BMFE_MeasureEntry(MWContext *context, BM_Entry *entry,
                        uint32 *width, uint32 *height)
 {
     (void)context; (void)entry;
-    /* BM_WidestEntry is unused: there is no bookmark list widget. */
+    /* The native tree sizes its own text; BM_WidestEntry is unused. */
     if (width) *width = 0;
     if (height) *height = 0;
 }
 
 void BMFE_OpenBookmarksWindow(MWContext *context)
 {
-    WFE_Unsupported(context, "Bookmark properties window");
+    WFE_BookmarksShow(context);
 }
 
 void BMFE_EditItem(MWContext *context, BM_Entry *entry)
 {
-    (void)entry;
-    WFE_Unsupported(context, "Bookmark properties window");
+    WFE_BookmarksEdit(context, entry);
 }
 
 void BMFE_EntryGoingAway(MWContext *context, BM_Entry *entry)
 {
-    /* This frontend retains no BM_Entry pointers. */
-    (void)context; (void)entry;
+    (void)entry;
+    WFE_BookmarksChanged(context);
 }
 
 void BMFE_GotoBookmark(MWContext *context, const char *url)
 {
-    if (url && *url) WFE_Load(context, url);
+    WFE_BookmarkNavigate(context, url);
 }
 
 void *BMFE_OpenFindWindow(MWContext *context, BM_FindInfo *info)
@@ -369,13 +369,12 @@ void *BMFE_OpenFindWindow(MWContext *context, BM_FindInfo *info)
 void BMFE_ScrollIntoView(MWContext *context, BM_Entry *entry)
 {
     (void)entry;
-    WFE_Unsupported(context, "Bookmark list window");
+    WFE_BookmarksChanged(context);
 }
 
 void BMFE_BookmarkMenuInvalid(MWContext *context)
 {
-    /* There is no dynamically populated bookmarks menu to invalidate. */
-    (void)context;
+    WFE_BookmarksChanged(context);
 }
 
 void BMFE_UpdateWhatsChanged(MWContext *context, const char *url,

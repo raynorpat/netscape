@@ -7,6 +7,7 @@
 #include "undo.h"
 #include "xp_hash.h"
 #include "xpgetstr.h"
+#include <errno.h>
 
 #undef MIN
 #define MIN(a,b)((a)<(b)?(a):(b))
@@ -191,6 +192,7 @@ typedef struct BM_Frame {
 	XP_HashTable nicknameTable;
     int aliasID;
 	XP_Bool errorSavingBookmarks;
+	XP_Bool readFailed; /* Never overwrite a file after an incomplete load. */
 
   int32 batch_depth;
   int32 first_update_line;
@@ -736,7 +738,7 @@ BM_PrettyLastVisitedDate(BM_Entry* entry)
 	  sprintf(buffer, XP_GetString(XP_BKMKS_HOURS_AGO), hours);
 	} else if (elapsed < (SECONDS_PER_DAY * 31)) {
 	  sprintf(buffer, XP_GetString(XP_BKMKS_DAYS_AGO),
-			  (elapsed + (SECONDS_PER_DAY / 2)) / SECONDS_PER_DAY);
+			  (long) ((elapsed + (SECONDS_PER_DAY / 2)) / SECONDS_PER_DAY));
 	} else {
 	  struct tm* tmp;
 	  tmp = localtime(&lastVisited);
@@ -2087,6 +2089,31 @@ bm_check_read_alias(MWContext* context, BM_Entry* new_item, char* parseString)
   return new_item;
 }
 
+/* Decode the entities emitted by bm_write_html once, after finding delimiters.
+ * In particular, a literal "&lt;" saved as "&amp;lt;" must remain literal. */
+static void
+bm_decode_html(char* text)
+{
+  char* from = text;
+  char* to = text;
+  if (!text) return;
+  while (*from) {
+    if (!XP_STRNCMP(from, "&amp;", 5)) {
+      *to++ = '&'; from += 5;
+    } else if (!XP_STRNCMP(from, "&lt;", 4)) {
+      *to++ = '<'; from += 4;
+    } else if (!XP_STRNCMP(from, "&gt;", 4)) {
+      *to++ = '>'; from += 4;
+    } else if (!XP_STRNCMP(from, "&quot;", 6)) {
+      *to++ = '"'; from += 6;
+    } else {
+      *to++ = *from++;
+    }
+  }
+  *to = '\0';
+}
+
+
 static void
 bm_check_nickname(MWContext* context, BM_Entry* entry, char* str)
 {
@@ -2097,6 +2124,7 @@ bm_check_nickname(MWContext* context, BM_Entry* entry, char* str)
 	end = XP_STRCHR(ptr, '"');
 	if (end) {
 	  *end = '\0';
+	  bm_decode_html(ptr);
 	  BM_SetNickName(context, entry, ptr);
 	  *end = '"';
 	}
@@ -2105,77 +2133,91 @@ bm_check_nickname(MWContext* context, BM_Entry* entry, char* str)
 
 
 
-static BM_Entry*
-bm_read_url(MWContext* context, XP_File fp, char* buffer, char* ptr,
-			const char* relative_url)
+/* Read a complete physical line. Escaping a valid short URL may expand it
+ * beyond READ_BUFFER_SIZE. Keep the original allocation on realloc failure. */
+static int
+bm_read_line(XP_File fp, char** buffer, int32* capacity)
 {
-  char* endQuote;
-  char* gtr_than;
-  char* parseString;
-  char* end;
-  char* url;
-  BM_Entry* new_item = NULL;
-
-  /* find next quote */
-  parseString = ptr + 6;
-
-  endQuote = XP_STRCHR(parseString, '"');
-  if (endQuote) {
-	/* temporarily terminate */
-	*endQuote = '\0';
-
-	url = NET_MakeAbsoluteURL((char* /*FUCK*/)relative_url, parseString);
-	if (url) {
-	  new_item = BM_NewUrl(NULL, url, NULL, 0);
-	  XP_FREE(url);
-	}
-	if (!new_item) return NULL;
-
-	/* find '>' and the name will be right after it */
-	gtr_than = XP_STRCHR(endQuote + 1, '>');
-	if (gtr_than) {
-	  /* find the end of the name */
-	  end = strcasestr(gtr_than, "</A>");
-	  if (end) {
-		*end = '\0';
-		StrAllocCopy(new_item->name, XP_StripLine(gtr_than + 1));
-		/* terminate at beginning of name since there
-		   is nothing interesting after that */
-		*gtr_than = '\0';
-	  } else {
-		StrAllocCopy(new_item->name,
-					 XP_StripLine(gtr_than + 1));
-
-		/* what happens if this breaks??  this is bogus stuff I don't
-		   know what to do with */
-		XP_FileReadLine(buffer, READ_BUFFER_SIZE, fp);
-		end = strcasestr(buffer, "</A>");
-
-		if (end) *end = '\0';
-
-		StrAllocCat(new_item->name, XP_StripLine(buffer));
-	  }
-	}
-
-	parseString = endQuote + 1;
-
-	new_item->addition_date = bm_addition_date(parseString);
-
-	new_item->d.url.last_visit = bm_last_date(parseString, FALSE);
-	new_item->d.url.last_modified = bm_last_date(parseString, TRUE);
-	if (new_item->d.url.last_modified == 0) {
-	  new_item->d.url.last_modified = new_item->d.url.last_visit;
-	}
-
-	new_item = bm_check_read_alias(context, new_item, parseString);
-
-	/* replace the quotes */
-	*endQuote = '"';
+  int32 used = 0;
+  for (;;) {
+    int32 count;
+    /* bm_read_description may append LINEBREAK after stripping the line. */
+    if (!XP_FileReadLine(*buffer + used, *capacity - used - LINEBREAK_LEN, fp)) {
+      if (ferror(fp)) return -1;
+      return used ? 1 : 0;
+    }
+    count = XP_STRLEN(*buffer + used);
+    used += count;
+    if (used && (*buffer)[used - 1] == '\n') return 1;
+    if (used < *capacity - LINEBREAK_LEN - 1) return 1; /* Last line without a newline. */
+    if (*capacity > 0x3fffffffL) return -1;
+    {
+      int32 grown = *capacity * 2;
+      char* replacement = (char*) XP_REALLOC(*buffer, grown);
+      if (!replacement) return -1;
+      *buffer = replacement;
+      *capacity = grown;
+    }
   }
-
-  return new_item;
 }
 
+
+static BM_Entry*
+bm_read_url(MWContext* context, XP_File fp, char** buffer, int32* capacity,
+            char* ptr, const char* relative_url, int* read_status)
+{
+  char* parseString = ptr + 6;
+  char* endQuote = XP_STRCHR(parseString, '"');
+  char* attributes;
+  char* gtr_than;
+  char* end;
+  char* url;
+  BM_Entry* new_item;
+
+  if (!endQuote) return NULL;
+  /* Continuation reads can replace/reallocate buffer. Retain attributes before
+   * reading any more lines, and do not touch endQuote afterwards. */
+  attributes = XP_STRDUP(endQuote + 1);
+  if (!attributes) { *read_status = -1; return NULL; }
+  end = XP_STRCHR(attributes, '>');
+  if (end) *end = '\0';
+  gtr_than = XP_STRCHR(endQuote + 1, '>');
+  *endQuote = '\0';
+  bm_decode_html(parseString);
+  url = NET_MakeAbsoluteURL((char*)relative_url, parseString);
+  new_item = url ? BM_NewUrl(NULL, url, NULL, 0) : NULL;
+  FREEIF(url);
+  if (!new_item) {
+    XP_FREE(attributes); *read_status = -1; return NULL;
+  }
+
+  if (gtr_than) {
+    char* name = gtr_than + 1;
+    for (;;) {
+      end = strcasestr(name, "</A>");
+      if (end) *end = '\0';
+      StrAllocCat(new_item->name, XP_StripLine(name));
+      if (end) break;
+      *read_status = bm_read_line(fp, buffer, capacity);
+      if (*read_status <= 0) break;
+      name = *buffer;
+    }
+  }
+  if (*read_status < 0) {
+    BM_FreeEntry(context, new_item);
+    XP_FREE(attributes);
+    return NULL;
+  }
+  bm_decode_html(new_item->name);
+  new_item->addition_date = bm_addition_date(attributes);
+  new_item->d.url.last_visit = bm_last_date(attributes, FALSE);
+  new_item->d.url.last_modified = bm_last_date(attributes, TRUE);
+  if (new_item->d.url.last_modified == 0)
+    new_item->d.url.last_modified = new_item->d.url.last_visit;
+  new_item = bm_check_read_alias(context, new_item, attributes);
+  XP_FREE(attributes);
+  return new_item;
+}
 
 static BM_Entry*
 bm_read_address(MWContext* context, XP_File fp, char* buffer, char* ptr)
@@ -2196,6 +2238,7 @@ bm_read_address(MWContext* context, XP_File fp, char* buffer, char* ptr)
   if (endQuote) {
 	*endQuote = '\0';
 
+	bm_decode_html(parseString);
 	url = parseString;
 
 	if (strncasecomp(url, "mailto:", 7) == 0) {
@@ -2217,6 +2260,7 @@ bm_read_address(MWContext* context, XP_File fp, char* buffer, char* ptr)
 	  }
 	}
 
+	bm_decode_html(new_item->name);
 	parseString = endQuote + 1;
 
 	new_item = bm_check_read_alias(context, new_item, parseString);
@@ -2253,6 +2297,7 @@ bm_read_header(MWContext* context, char* buffer, char* ptr)
 	*end = '\0';
 
 	new_item = BM_NewHeader(gtr_than + 1);
+	if (new_item) bm_decode_html(new_item->name);
 
 	if (!new_item)
 	  return NULL;
@@ -2287,7 +2332,6 @@ bm_read_header(MWContext* context, char* buffer, char* ptr)
 static void
 bm_read_description(BM_Entry* new_item, char* buffer )
 {
-  char* ptr;
   char* end;
   int length;
 
@@ -2326,16 +2370,7 @@ bm_read_description(BM_Entry* new_item, char* buffer )
 	  *end = '\0';
 	}
 
-	/* go through and turn &lt; into '<' */
-	for (ptr = buffer, end = buffer; *end != '\0'; end++) {
-	  if (!strncasecomp(end, "&lt;", 4)) {
-		end += 3;
-		*ptr++ = '<';
-	  } else {
-		*ptr++ = *end;
-	  }
-	}
-	*ptr = '\0'; /* terminate */
+	bm_decode_html(buffer);
 	StrAllocCat(new_item->description, buffer);
   }
 }
@@ -2415,11 +2450,11 @@ bm_DoFindBookmark_1(MWContext* context, BM_Entry* at, BM_FindInfo* findInfo) {
 }
 
 /* reads an item from fp using the specified buffer and relative_url */
-static void
+static int
 bm_ReadFromHTML(MWContext* context,
 				XP_File fp,
 				BM_Entry* item,
-				char* buffer,
+				char** buffer, int32* capacity,
 				const char* relative_url)
 {
   BM_Frame* f = GETFRAME(context);
@@ -2427,16 +2462,18 @@ bm_ReadFromHTML(MWContext* context,
   char* buffer_ptr;
   char* ptr;
   uint16 type;
+  int read_status;
 
-  /* read loop */
-  while (XP_FileReadLine(buffer, READ_BUFFER_SIZE, fp)) {
-	buffer_ptr = XP_StripLine(buffer);
+  /* read loop; recursion shares ownership of the growable line buffer. */
+  while ((read_status = bm_read_line(fp, buffer, capacity)) > 0) {
+	buffer_ptr = XP_StripLine(*buffer);
 
 	type = bm_tokenize_line(context, buffer_ptr, &ptr);
 
 	switch (type) {
 	case BM_TYPE_URL:
-	  new_item = bm_read_url(context, fp, buffer_ptr, ptr, relative_url);
+	  new_item = bm_read_url(context, fp, buffer, capacity, ptr, relative_url, &read_status);
+	  if (read_status < 0) return -1;
 	  break;
 
 	case BM_TYPE_ADDRESS:
@@ -2454,7 +2491,7 @@ bm_ReadFromHTML(MWContext* context,
 	  break;
 
 	case BM_HEADER_END:
-	  if (item != f->gBookmarks) return;
+	  if (item != f->gBookmarks) return 0;
 	  break;
 
 	case BM_UNKNOWN:
@@ -2482,7 +2519,7 @@ bm_ReadFromHTML(MWContext* context,
 		  } else {
 			(void) BM_GetRoot(context);	/* Has side effect of creating
 										   root header. */
-			if (!f->gBookmarks) return;
+			if (!f->gBookmarks) return -1;
 		  }
 		}
 		item = f->gBookmarks;
@@ -2497,10 +2534,11 @@ bm_ReadFromHTML(MWContext* context,
 SKIP:
 	  /* if it's a header, recurse */
 	  if (new_item->type == BM_TYPE_HEADER) {
-		bm_ReadFromHTML(context, fp, new_item, buffer, relative_url);
+		if (bm_ReadFromHTML(context, fp, new_item, buffer, capacity, relative_url) < 0) return -1;
 	  }
 	}
   }
+  return read_status < 0 ? -1 : 0;
 }
 
 static int
@@ -2519,6 +2557,31 @@ bm_write_ok(const char* str, int length, XP_File fp)
 
 #define WRITE(str, length, fp) \
 if (bm_write_ok((str), (length), (fp)) < 0) return -1
+
+/* Escape both element text and quoted attribute values, without allocation. */
+static int
+bm_write_html(const char* text, XP_File fp)
+{
+  const char* start = text;
+  if (!text) return 0;
+  for (; *text; text++) {
+    const char* escaped = NULL;
+    switch (*text) {
+    case '&': escaped = "&amp;"; break;
+    case '<': escaped = "&lt;"; break;
+    case '>': escaped = "&gt;"; break;
+    case '"': escaped = "&quot;"; break;
+    }
+    if (escaped) {
+      WRITE(start, text - start, fp);
+      WRITE(escaped, -1, fp);
+      start = text + 1;
+    }
+  }
+  WRITE(start, text - start, fp);
+  return 0;
+}
+
 
 static int
 bm_write_alias_info(MWContext* context, XP_File fp, BM_Entry* entry,
@@ -2548,7 +2611,7 @@ bm_write_nickname(MWContext* context, XP_File fp, BM_Entry* entry,
   if (context->type == MWContextAddressBook && !isalias &&
 	  entry->nickname && *entry->nickname) {
 	WRITE(" NICKNAME=\"", -1, fp);
-	WRITE(entry->nickname, -1, fp);
+	if (bm_write_html(entry->nickname, fp) < 0) return -1;
 	WRITE("\"", -1, fp);
   }
   return 0;		/* XXX This was left out. Is is 0 right? */
@@ -2592,13 +2655,13 @@ bm_write_html_header(MWContext* context, XP_File fp, BM_Entry* item,
 	  if (context->type == MWContextBookmarks) {
 		/* write addition date */
 		WRITE(" ADD_DATE=\"", -1, fp);
-		XP_SPRINTF(buffer, "%ld\"", item->addition_date);
+		XP_SPRINTF(buffer, "%ld\"", (long) item->addition_date);
 		WRITE(buffer, XP_STRLEN(buffer), fp);
 	  }
 	  WRITE(">", -1, fp);
 
 	  /* write name */
-	  WRITE(item->name, XP_STRLEN(item->name), fp);
+	  if (bm_write_html(item->name, fp) < 0) return -1;
 	  WRITE("</H3>", -1, fp);
 	  WRITE(LINEBREAK, LINEBREAK_LEN, fp);
 	}
@@ -2611,13 +2674,13 @@ bm_write_html_header(MWContext* context, XP_File fp, BM_Entry* item,
 	WRITE("<DD>", -1, fp);
 
 	for (; *ptr != '\0'; ptr++) {
-	  if (*ptr == '<') {
-		WRITE("&lt;", -1, fp);
-	  } else if (*ptr == '\n') {
+	  if (*ptr == '\n') {
 		WRITE("<BR>", -1, fp);
 		WRITE(LINEBREAK, LINEBREAK_LEN, fp);
 	  } else {
-		WRITE(ptr, 1, fp);
+		char letter[2];
+		letter[0] = *ptr; letter[1] = 0;
+		if (bm_write_html(letter, fp) < 0) return -1;
 	  }
 	}
 	WRITE(LINEBREAK, LINEBREAK_LEN, fp);
@@ -2631,7 +2694,8 @@ bm_write_html_header(MWContext* context, XP_File fp, BM_Entry* item,
 	WRITE("<DL><p>" LINEBREAK, -1, fp);
 	
 	for (child = item->d.header.children; child ; child = child->next) {
-	  bm_WriteAsHTML(context, fp, child, level + 1, FALSE);
+	  status = bm_WriteAsHTML(context, fp, child, level + 1, FALSE);
+	  if (status < 0) return status;
 	}
 	
 	for (i = 0; i < level; i++) {
@@ -2675,7 +2739,7 @@ bm_write_url_or_address(MWContext* context, XP_File fp, BM_Entry* item,
 	if (context->type == MWContextAddressBook) {
 	  WRITE("mailto:", -1, fp);
 	}
-	WRITE(address, -1, fp);
+	if (bm_write_html(address, fp) < 0) return -1;
 	WRITE("\"", -1, fp);
 
 	status = bm_write_alias_info(context, fp, item, isalias);
@@ -2687,18 +2751,18 @@ bm_write_url_or_address(MWContext* context, XP_File fp, BM_Entry* item,
 	if (BM_ISURL(item)) {
 	  /* write the addition date  */
 	  WRITE(" ADD_DATE=\"", -1, fp);
-	  XP_SPRINTF(buffer, "%ld", item->addition_date);
+	  XP_SPRINTF(buffer, "%ld", (long) item->addition_date);
 	  WRITE(buffer, -1, fp);
 	  WRITE("\"", -1, fp);
 
 	  /* write the last visited date */
 	  WRITE(" LAST_VISIT=\"", -1, fp);
-	  XP_SPRINTF(buffer, "%ld\"", item->d.url.last_visit);
+	  XP_SPRINTF(buffer, "%ld\"", (long) item->d.url.last_visit);
 	  WRITE(buffer, -1, fp);
 
 	  /* write the last modified date */
 	  WRITE(" LAST_MODIFIED=\"", -1, fp);
-	  XP_SPRINTF(buffer, "%ld\"", item->d.url.last_modified);
+	  XP_SPRINTF(buffer, "%ld\"", (long) item->d.url.last_modified);
 	  WRITE(buffer, -1, fp);
 	}
 	WRITE(">", -1, fp);
@@ -2706,13 +2770,13 @@ bm_write_url_or_address(MWContext* context, XP_File fp, BM_Entry* item,
 	/* write the name */
 
 	if (item->name) {
-	  WRITE(item->name, -1, fp);
+	  if (bm_write_html(item->name, fp) < 0) return -1;
 	} else {
 	  if (BM_ISURL(item)) {
-		WRITE(item->d.url.address, -1, fp);
+		if (bm_write_html(item->d.url.address, fp) < 0) return -1;
 	  } else {
 		XP_ASSERT(BM_ISADDRESS(item));
-		WRITE(item->d.address.address, -1, fp);
+		if (bm_write_html(item->d.address.address, fp) < 0) return -1;
 	  }
 	}
 
@@ -2726,13 +2790,13 @@ bm_write_url_or_address(MWContext* context, XP_File fp, BM_Entry* item,
 	  WRITE("<DD>", -1, fp);
 
 	  for (; *ptr != '\0'; ptr++) {
-		if (*ptr == '<') {
-		  WRITE("&lt;", -1, fp);
-		} else if (*ptr == '\n') {
+		if (*ptr == '\n') {
 		  WRITE("<BR>", -1, fp);
 		  WRITE(LINEBREAK, LINEBREAK_LEN, fp);
 		} else {
-		  WRITE(ptr, 1, fp);
+		  char letter[2];
+		  letter[0] = *ptr; letter[1] = 0;
+		  if (bm_write_html(letter, fp) < 0) return -1;
 		}
 	  }
 	  WRITE(LINEBREAK, LINEBREAK_LEN, fp);
@@ -4018,40 +4082,63 @@ BM_ReadBookmarksFromDisk(MWContext* context, const char* filename,
   XP_File fp;
   char* buffer;
   UndoState* undo;
+  int32 capacity = READ_BUFFER_SIZE;
+  int read_status;
+  char* readname;
 
   CHKCONTEXTVOID(context);
+  if (!filename) return;
 
   undo = f->undo;
-  if (BM_Modified(context)) {
+  if (BM_Modified(context) && !f->readFailed) {
 	if (!bm_ConfirmSave(context)) return;
 	if (BM_SaveBookmarks(context, f->gFile) < 0) return;
   }
+  /* Prepare the input before replacing a complete tree or its undo records. */
+  readname = XP_STRDUP(filename);
+  buffer = (char*) XP_ALLOC(READ_BUFFER_SIZE);
+  if (!readname || !buffer) {
+    FREEIF(readname);
+    FREEIF(buffer);
+    f->readFailed = TRUE;
+    FE_Alert(context, "Unable to read the complete bookmarks file. Reload it before saving.");
+    return;
+  }
+  fp = XP_FileOpen(readname, xpBookmarks, XP_FILE_READ);
+  if (!fp) {
+    if (errno == ENOENT && !f->gFile) {
+      /* A new profile has no file yet; retain its empty root for first save. */
+      f->gFile = readname;
+      readname = NULL;
+      XP_MEMSET(&f->laststat, 0, sizeof(f->laststat));
+      f->readFailed = FALSE;
+      bm_SetModified(context, FALSE);
+    } else {
+      f->readFailed = TRUE;
+      FE_Alert(context, "Unable to read the complete bookmarks file. Reload it before saving.");
+    }
+    FREEIF(readname);
+    XP_FREE(buffer);
+    return;
+  }
+  /* The first line is the fixed-format cookie. Detect read errors before
+   * discarding the former tree; an empty file is a valid empty list. */
+  XP_FileReadLine(buffer, READ_BUFFER_SIZE, fp);
+  if (ferror(fp)) {
+    XP_FileClose(fp);
+    XP_FREE(readname);
+    XP_FREE(buffer);
+    f->readFailed = TRUE;
+    FE_Alert(context, "Unable to read the complete bookmarks file. Reload it before saving.");
+    return;
+  }
+  f->readFailed = TRUE;
   if (f->gBookmarks) BM_FreeEntry(context, f->gBookmarks);
   f->gBookmarks = NULL;
-
-  buffer = (char*) XP_ALLOC(READ_BUFFER_SIZE);
-  if (!buffer) return;
-
-  /* don't kill ourselves */
-  if (f->gFile != filename)
-  	StrAllocCopy(f->gFile, filename);
-  
-  XP_ASSERT(f->gFile != NULL);
-  
-
-  if (XP_Stat(filename, &(f->laststat), xpBookmarks) != 0) {
-	XP_MEMSET(&(f->laststat), 0, sizeof(f->laststat));
-  }
-
-  fp = XP_FileOpen(filename, xpBookmarks, XP_FILE_READ);
-
-  if (!fp) {
-	XP_FREE(buffer);
-	return;
-  }
-
-  /* read in the first line */
-  XP_FileReadLine(buffer, READ_BUFFER_SIZE, fp);
+  if (f->gFile == filename) XP_FREE(readname);
+  else { FREEIF(f->gFile); f->gFile = readname; }
+  if (XP_Stat(f->gFile, &(f->laststat), xpBookmarks) != 0)
+    XP_MEMSET(&(f->laststat), 0, sizeof(f->laststat));
 
   /* DONT REQUIRE THE COOKIE FOR NOW
    *
@@ -4071,7 +4158,7 @@ BM_ReadBookmarksFromDisk(MWContext* context, const char* filename,
   bm_clear_alias_info(context);
 
   /* gBookmarks shouldn't exist yet! */
-  bm_ReadFromHTML(context, fp, NULL, buffer, relative_url);
+  read_status = bm_ReadFromHTML(context, fp, NULL, &buffer, &capacity, relative_url);
   bm_SyncCount(context);
 
   XP_FileClose(fp);
@@ -4082,12 +4169,20 @@ BM_ReadBookmarksFromDisk(MWContext* context, const char* filename,
 	bm_resort_headers(context, BM_GetRoot(context));
   }
 
-  bm_SetModified(context, FALSE);
+  f->readFailed = read_status < 0;
+  if (!f->readFailed) bm_SetModified(context, FALSE);
+  else {
+    /* The former tree has already been replaced. Disable default-file saves
+     * until a successful reload, so later edits cannot write a partial load. */
+    f->gBookmarksModified = TRUE;
+    FE_Alert(context, "Unable to read the complete bookmarks file. Reload it before saving.");
+  }
 
   XP_FREE(buffer);
 
   bm_end_batch(context);
   f->undo = undo;
+  /* Undo records refer to the former tree, including on a failed load. */
   UNDO_DiscardAll(undo);
 }
 
@@ -4106,6 +4201,7 @@ BM_SaveBookmarks(MWContext* context, const char* filename)
   defaultFile = (filename == NULL || (f->gFile && XP_STRCMP(filename, f->gFile) == 0));
 
   CHKCONTEXT(context);
+  if (f->readFailed && defaultFile) goto FAIL;
 
   if (filename == NULL) {
 	filename = f->gFile;
@@ -4223,7 +4319,7 @@ BM_SaveBookmarks(MWContext* context, const char* filename)
 	goto FAIL;
   }
   fp = NULL;
-  XP_FileRename(tmpname, tmptype, filename, xpBookmarks);
+  if (XP_FileRename(tmpname, tmptype, filename, xpBookmarks) != 0) goto FAIL;
   XP_FREE(tmpname);
   tmpname = NULL;
 
@@ -5788,9 +5884,16 @@ static void
 bm_import_file(MWContext* context, char* newFile, void* closure)
 {
   BM_Frame* f = GETFRAME(context);
+  if (f->readFailed) {
+    FREEIF(newFile);
+    FE_Alert(context, "Reload the complete bookmarks file before importing.");
+    return;
+  }
   bm_start_batch(context);
   UNDO_DiscardAll(f->undo);
   if (newFile) {
+	XP_Bool oldReadFailed = f->readFailed;
+	XP_Bool oldModified = f->gBookmarksModified;
 	BM_Entry* oldroot = f->gBookmarks;
 	BM_Entry* oldmenuheader = f->menuheader;
 	BM_Entry* oldaddheader = f->addheader;
@@ -5802,7 +5905,7 @@ bm_import_file(MWContext* context, char* newFile, void* closure)
 	
 	if (f->gFile) {
 	  oldfile = XP_STRDUP(f->gFile);
-	  if (!oldfile) return; /* Out of memory... */
+	  if (!oldfile) { XP_FREE(newFile); bm_end_batch(context); return; }
 	}
 	f->gBookmarks = NULL;
 	f->gBookmarksModified = FALSE; /* Don't save now. */
@@ -5816,6 +5919,25 @@ bm_import_file(MWContext* context, char* newFile, void* closure)
 	XP_MEMCPY(&(f->laststat), &savedStat,  sizeof(savedStat));
 		
 	newroot = f->gBookmarks;
+	if (f->readFailed) {
+      UndoState* undo = f->undo;
+      f->undo = NULL;
+      if (newroot) BM_FreeEntry(context, newroot);
+      f->undo = undo;
+      f->gBookmarks = oldroot;
+      f->menuheader = oldmenuheader;
+      f->addheader = oldaddheader;
+      FREEIF(f->gFile);
+      f->gFile = oldfile;
+      f->readFailed = oldReadFailed;
+      bm_SetModified(context, oldModified);
+      bm_SyncCount(context);
+      bm_refresh(context, 1, BM_LAST_CELL);
+      XP_FREE(newFile);
+      bm_end_batch(context);
+      return;
+    }
+    f->readFailed = oldReadFailed;
 	if (newroot && oldroot) {
 	  /* Make the new stuff be the first folder of the old stuff. */
 	  f->gBookmarks = oldroot;

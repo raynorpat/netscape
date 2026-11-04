@@ -204,14 +204,32 @@ Use Messages > Open Mail / Open News, or launch `netscape.exe --mail`, `--news`,
 or `--compose`. Account settings configure name, email address, organization,
 SMTP, POP and NNTP hosts. Settings are stored in the profile's `mailnews.ini`,
 under `[MailNews]`, with keys `name`, `email`, `organization`, `smtp`, `pop`, and
-`news`. NNTP and SMTP accept `host:port`. The News location field can switch
-hosts with Connect. Empty server settings leave the service unconfigured.
+`news`. NNTP and SMTP accept `host:port`. Change the News host through
+Options > Mail and News Preferences. Empty server settings leave the service
+unconfigured.
 
 The folder and message controls call the original MSG backend; the reader uses
 its MIME conversion, HTML layout and native GDI text drawing. Local mail uses
 mbox files in the profile's `Mail` directory. Inbox, Drafts, Sent, Outbox and
 Trash are created only when missing. Message commands include reply, reply all,
 forward, mark read, delete mail, fetch mail/more news, and send queued messages.
+
+Mail and news now follow the supplied classic Mail reference: their own menus,
+a compact ten-button toolbar and logo, folder/message lists across a short
+upper band, and a full-width reader below. Browser Location and directory bars
+are hidden. Raised dividers resize the folder column and reader height; list
+columns resize with the window. Original folder/envelope/flag artwork, Sender,
+status, Subject and Date columns, sorting, Previous/Next, normal/all headers,
+selected-message titles and mailbox counts use the original backend state.
+Plain text messages use Courier New, and borderless MIME header tables retain
+their intended appearance. Print stays disabled.
+
+`windows_mail_layout` seeds two real MIME messages in an isolated profile and
+checks native selection, decoded reader text, Previous/Next, reader scrolling,
+divider dragging/clamps, narrow geometry, menus and toolbar states. It also
+checks actual captured GDI pixels for folder artwork and borderless headers.
+The new layout fixture and existing mail/news delivery tests passed in Win32
+Release and Debug on 2026-11-04.
 
 The composer supports recipient headers, newsgroups, subject, plain text body,
 attachments, Send, Send Later, Save Draft and cancellation. Drafts and queued

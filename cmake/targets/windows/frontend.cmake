@@ -10,6 +10,7 @@ add_executable(netscape-win32 WIN32
  "${PROJECT_SOURCE_DIR}/cmd/winfe/main.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/classic.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/chrome.cpp"
+ "${PROJECT_SOURCE_DIR}/cmd/winfe/mailui.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/find.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/frontend.c"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/platform.c"
@@ -85,4 +86,11 @@ if(BUILD_TESTING)
   "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_chrome.py"
   --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/chrome-test")
  set_tests_properties(windows_classic_chrome PROPERTIES TIMEOUT 60)
+endif()
+
+if(BUILD_TESTING)
+ add_test(NAME windows_mail_layout COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_mail_ui.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/mail-layout-test" --mode mail)
+ set_tests_properties(windows_mail_layout PROPERTIES TIMEOUT 60)
 endif()

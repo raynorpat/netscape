@@ -219,3 +219,15 @@ END
 IDR_CLASSIC_ABOUT RCDATA "res/about.html"
 IDR_CLASSIC_ABOUT_LOGO RCDATA "../../lib/xp/biglogo.gif"
 IDR_CLASSIC_LICENSE RCDATA "../../l10n/us/xp/LICENSE-export"
+
+535 BITMAP "res/classic/quote.bmp"
+635 BITMAP "res/classic/quote-disabled.bmp"
+536 BITMAP "res/classic/address.bmp"
+636 BITMAP "res/classic/address-disabled.bmp"
+540 BITMAP "res/classic/folder.bmp"
+541 BITMAP "res/classic/folder-open.bmp"
+542 BITMAP "res/classic/message-read.bmp"
+543 BITMAP "res/classic/message-unread.bmp"
+544 BITMAP "res/classic/message-flag.bmp"
+
+#include "res/mail.rc"

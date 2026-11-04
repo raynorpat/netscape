@@ -17,12 +17,14 @@ static const ChromeCommand browser_tools[] = {
 };
 static const ChromeCommand mail_tools[] = {
     {ID_MESSAGE_GET,"Get Mail",IDB_CLASSIC_GETMAIL,"Get new mail / news"},
-    {ID_CLIENT_COMPOSE,"New Msg",IDB_CLASSIC_COMPOSE,"Compose a message"},
-    {ID_MESSAGE_REPLY,"Reply",IDB_CLASSIC_REPLY,"Reply to sender"},
-    {ID_MESSAGE_REPLY_ALL,"Reply All",IDB_CLASSIC_REPLYALL,"Reply to all recipients"},
-    {ID_MESSAGE_FORWARD,"Forward",IDB_CLASSIC_FORWARDMSG,"Forward this message"},
-    {ID_MESSAGE_READ,"Read",IDB_CLASSIC_NEXT,"Mark the message read"},
     {ID_MESSAGE_DELETE,"Delete",IDB_CLASSIC_DELETE,"Delete this message"},
+    {ID_CLIENT_COMPOSE,"To:Mail",IDB_CLASSIC_COMPOSE,"Compose a message"},
+    {ID_MESSAGE_REPLY,"Re:Mail",IDB_CLASSIC_REPLY,"Reply to sender"},
+    {ID_MESSAGE_REPLY_ALL,"Re:All",IDB_CLASSIC_REPLYALL,"Reply to all recipients"},
+    {ID_MESSAGE_FORWARD,"Forward",IDB_CLASSIC_FORWARDMSG,"Forward this message"},
+    {ID_MESSAGE_PREVIOUS,"Previous",IDB_CLASSIC_PREVIOUS,"Previous message"},
+    {ID_MESSAGE_NEXT,"Next",IDB_CLASSIC_NEXT,"Next message"},
+    {ID_BROWSER_PRINT,"Print",IDB_CLASSIC_PRINT,"Native printing is not yet available"},
     {ID_NAV_STOP,"Stop",IDB_CLASSIC_STOP,"Stop loading"}
 };
 static const char *directory_labels[] = {"What's New?","What's Cool?","Destinations","Net Search","People","Software"};
@@ -35,6 +37,7 @@ END_MESSAGE_MAP()
 bool ClassicChrome::Create(CWnd *owner, CGenericEdit *address, ClassicButton *go_button, int window_mode)
 {
     mode = window_mode; edit = address; go = go_button;
+    if(mode) { location_visible=false;directory_visible=false; }
     if (!CreateEx(0, AfxRegisterWndClass(0,LoadCursor(nullptr,IDC_ARROW),nullptr), "Navigation toolbar",
                    WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, CRect(0,0,1,1),owner,ID_CLASSIC_CHROME)) return false;
     tips.Create(this, TTS_ALWAYSTIP); tips.Activate(TRUE);
@@ -43,7 +46,7 @@ bool ClassicChrome::Create(CWnd *owner, CGenericEdit *address, ClassicButton *go
     for (size_t i=0; i<count; ++i) {
         std::unique_ptr<ClassicButton> button(new ClassicButton);
         UINT id = mode == 2 && commands[i].id == ID_CLIENT_COMPOSE ? ID_CLIENT_POST : commands[i].id;
-        const char *caption=mode==2 && commands[i].id==ID_CLIENT_COMPOSE ? "New Post" : mode==2 && commands[i].id==ID_MESSAGE_GET ? "Get More" : commands[i].label;
+        const char *caption=mode==2 && commands[i].id==ID_CLIENT_COMPOSE ? "To:News" : mode==2 && commands[i].id==ID_MESSAGE_GET ? "Get More" : commands[i].label;
         if (!button->Create(caption,WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_OWNERDRAW,CRect(0,0,1,1),this,id)) return false;
         button->SetBitmapResource(commands[i].bitmap);
         tips.AddTool(button.get(),commands[i].tip);
@@ -77,14 +80,14 @@ bool ClassicChrome::Create(CWnd *owner, CGenericEdit *address, ClassicButton *go
 int ClassicChrome::Arrange(int width)
 {
     auto s = [this](int n){ return ClassicUI::Scale(this,n); };
-    int y=s(3), button_width=s(mode ? 54 : 44), button_height=s(38);
-    int columns=(std::max)(1,(width-s(8))/button_width);
+    int y=s(3), button_width=s(44), button_height=s(mode ? 42 : 38);
+    int columns=(std::max)(1,(width-s(mode ? 48 : 8))/button_width);
     for (size_t i=0;i<buttons.size();++i) {
         buttons[i]->ShowWindow(toolbar_visible ? SW_SHOW : SW_HIDE);
         buttons[i]->MoveWindow(s(4)+(int(i)%columns)*button_width,y+(int(i)/columns)*button_height,button_width-s(2),button_height-s(2));
     }
     if (toolbar_visible) y += ((int(buttons.size())+columns-1)/columns)*button_height+s(3);
-    int logo_top=y, logo_size=s(44), right=(std::max)(s(100),width-logo_size-s(5));
+    int logo_top=mode ? s(3) : y, logo_size=s(mode ? 32 : 44), right=(std::max)(s(100),width-logo_size-s(5));
     label.ShowWindow(location_visible ? SW_SHOW : SW_HIDE);
     location.ShowWindow(location_visible ? SW_SHOW : SW_HIDE);
     go->ShowWindow(location_visible && mode ? SW_SHOW : SW_HIDE);
@@ -101,7 +104,7 @@ int ClassicChrome::Arrange(int width)
         shortcuts[i]->MoveWindow(s(5)+(int(i)%short_columns)*s(76),y+(int(i)/short_columns)*s(20),s(75),s(19));
     }
     if (directory_visible) y += ((int(shortcuts.size())+short_columns-1)/short_columns)*s(20);
-    bool show_logo=location_visible || directory_visible;
+    bool show_logo=mode ? toolbar_visible : location_visible || directory_visible;
     logo.ShowWindow(show_logo ? SW_SHOW : SW_HIDE);
     if(show_logo) {
         logo.MoveWindow(width-logo_size-s(4),logo_top,logo_size,logo_size);

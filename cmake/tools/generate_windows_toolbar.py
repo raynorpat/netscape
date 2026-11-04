@@ -9,6 +9,9 @@ ROOT = Path(__file__).resolve().parents[2]
 ICONS = ROOT / "cmd/xfe/icons"
 OUTPUT = ROOT / "cmd/winfe/res/classic"
 SOURCES = {
+    "quote": "CQuote", "address": "CAddress",
+    "folder": "GFolder", "folder-open": "GFolder",
+    "message-read": "HMsg", "message-unread": "HMsg", "message-flag": "HMarked",
     "back": "TBack", "forward": "TNext", "home": "THome", "edit": "ed_edit",
     "reload": "TReload", "images": "TLoadImages", "open": "TOpenUrl",
     "print": "TPrint", "find": "TFind", "stop": "TStop",
@@ -31,6 +34,12 @@ def main():
     OUTPUT.mkdir(exist_ok=True)
     for name, source in SOURCES.items():
         image = load(ICONS / (source + ".gif"))
+        if name == "message-unread":
+            # Original green unread marker over the original envelope artwork.
+            marker = Image.open(ICONS / "HURead.gif").convert("RGBA")
+            overlay = image.convert("RGBA")
+            overlay.alpha_composite(marker, (max(0, image.width-marker.width), max(0, image.height-marker.height)))
+            image = overlay.convert("RGB")
         image.save(OUTPUT / (name + ".bmp"))
         inactive = ICONS / (source + ".i.gif")
         if inactive.exists():

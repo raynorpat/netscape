@@ -31,6 +31,7 @@ engines are separate porting tasks.
 | Implemented | Saving/downloads | Save Page and link/image context actions use native pickers and independent progress/cancel windows. Fixtures cover exact bytes, final-response headers, truncation, cancellation, concurrent transfers, browser closure and filesystem failures. Known renderable attachment enforcement, transformed/chunked responses and large-file limits need further work. |
 | Implemented | History | Back/Forward and Reload use SHIST; a native history list and visited-pages view expose the core data. Fixtures cover form/scroll restoration, frame traversal, forward truncation, POST cancellation, persisted dates and malformed/expired records. |
 | Implemented | Bookmarks | Add page and a native tree manager support folders, editing, opening and deletion through the original BM APIs. Fixtures check escaped and long names/URLs, ordering, cross-process persistence and failed-save retry. Import/export, search, drag/drop and richer organization remain future work. |
+| Implemented | Classic mail/news UI | Own menus and ten-button toolbar, folder/message lists above a full-width reader, draggable dividers, original icons, sorting, Previous/Next, header modes, selected-message caption and mailbox status. Populated MIME captures, scrolling and narrow layouts are covered. Print remains disabled. |
 | 3 | Charset/text | The frontend defaults to Latin-1 and draws/measures through ANSI GDI. A subset of single-byte conversion tables uses Windows code pages; this does not establish correct multilingual rendering. Verify document charset changes, MIME headers, fonts, conversion failure, selection, and copy. |
 | 4 | Plugins | The plugin archive and `NPL_Init` are present, but discovery registers no descriptors, loading returns NULL, and embed streaming fails. Native module loading, NPAPI callbacks, embedded-window lifetime, and a controlled test plugin are separate work. |
 | Implemented | Classic chrome | Browser toolbar, location dropdown, shortcuts/logo, traditional menus and segmented status use original artwork and classic fonts/edges. Mail/news toolbars and composer/utility windows share the styling. Native Find supports selection, case/direction/wrap and focused frames. View toggles and keyboard location entry are covered. |
@@ -68,5 +69,6 @@ rejects x64. Keep x64 as a separate port with pointer/ABI tests.
 
 Use independent configure/build probes for each newly enabled archive, followed
 by runtime tests for its actual behavior. The checked-in Windows CTest setup covers core, socket, local/HTTP frontend,
-mail/news, images, forms, frames, downloads, history, bookmarks and classic chrome. These fixtures
+mail/news, images, forms, frames, downloads, history, bookmarks, classic chrome and
+mail pane layout. These fixtures
 do not establish optional engine or plugin runtime support.

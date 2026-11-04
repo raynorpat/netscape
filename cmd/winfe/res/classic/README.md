@@ -9,3 +9,7 @@ Original source-tree notices apply. No screenshot pixels were used as artwork.
 
 Disabled variants use the original `.i.gif` where present, otherwise a gray
 silhouette. The native toolbar scales the source artwork to its display size.
+
+Mail list folders use `GFolder.gif`; message envelopes use `HMsg.gif` with the
+original `HURead.gif` unread marker. Composition adds `CQuote.gif` and
+`CAddress.gif`. These are original 3.02 source assets.

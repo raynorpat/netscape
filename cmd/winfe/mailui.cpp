@@ -1,0 +1,231 @@
+#include "mailui.h"
+#include "classic.h"
+#include "frontend.h"
+#include "msgcom.h"
+
+static int mail_clamp(int value, int low, int high)
+{
+    return value < low ? low : value > high ? high : value;
+}
+
+static bool mail_image(CImageList &images, CWnd *owner, UINT resource)
+{
+    CBitmap source, scaled;
+    if (!source.LoadBitmap(resource)) return false;
+    BITMAP bitmap; source.GetBitmap(&bitmap);
+    int size = ClassicUI::Scale(owner, 16);
+    CClientDC screen(owner);
+    CDC input, output;
+    input.CreateCompatibleDC(&screen); output.CreateCompatibleDC(&screen);
+    if (!scaled.CreateCompatibleBitmap(&screen, size, size)) return false;
+    CBitmap *old_input = input.SelectObject(&source);
+    CBitmap *old_output = output.SelectObject(&scaled);
+    output.SetStretchBltMode(COLORONCOLOR);
+    output.StretchBlt(0, 0, size, size, &input, 0, 0,
+                      bitmap.bmWidth, bitmap.bmHeight, SRCCOPY);
+    input.SelectObject(old_input); output.SelectObject(old_output);
+    return images.Add(&scaled, ClassicUI::Face) >= 0;
+}
+
+BEGIN_MESSAGE_MAP(MailPaneDivider, CWnd)
+ ON_WM_PAINT()
+ ON_WM_ERASEBKGND()
+ ON_WM_SETCURSOR()
+ ON_WM_LBUTTONDOWN()
+ ON_WM_LBUTTONUP()
+ ON_WM_MOUSEMOVE()
+ ON_WM_CAPTURECHANGED()
+ ON_WM_CANCELMODE()
+END_MESSAGE_MAP()
+
+bool MailPaneDivider::Create(MailPaneUI *ui, CWnd *owner, bool direction, UINT id)
+{
+    panes = ui; vertical = direction;
+    return CWnd::CreateEx(0, AfxRegisterWndClass(0), "",
+        WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS, CRect(0,0,0,0), owner, id) != FALSE;
+}
+
+void MailPaneDivider::OnPaint()
+{
+    CPaintDC dc(this); CRect area; GetClientRect(area);
+    dc.FillSolidRect(area, ClassicUI::Face);
+    dc.Draw3dRect(area, RGB(255,255,255), RGB(128,128,128));
+}
+
+BOOL MailPaneDivider::OnEraseBkgnd(CDC *) { return TRUE; }
+
+BOOL MailPaneDivider::OnSetCursor(CWnd *, UINT, UINT)
+{
+    ::SetCursor(::LoadCursor(nullptr, vertical ? IDC_SIZEWE : IDC_SIZENS));
+    return TRUE;
+}
+
+void MailPaneDivider::OnLButtonDown(UINT, CPoint point)
+{
+    grab_offset = vertical ? point.x : point.y;
+    SetCapture(); dragging = GetCapture() == this;
+}
+
+void MailPaneDivider::OnMouseMove(UINT, CPoint point)
+{
+    if (dragging && GetCapture() == this) {
+        ClientToScreen(&point);
+        panes->DragDivider(vertical, point, grab_offset);
+    } else dragging = false;
+}
+
+void MailPaneDivider::OnLButtonUp(UINT flags, CPoint point)
+{
+    OnMouseMove(flags, point);
+    OnCancelMode();
+}
+
+void MailPaneDivider::OnCaptureChanged(CWnd *window)
+{
+    dragging = false;
+    CWnd::OnCaptureChanged(window);
+}
+
+void MailPaneDivider::OnCancelMode()
+{
+    dragging = false;
+    if (GetCapture() == this) ::ReleaseCapture();
+    CWnd::OnCancelMode();
+}
+
+MailPaneUI::~MailPaneUI()
+{
+    if (folder_divider.GetSafeHwnd()) folder_divider.DestroyWindow();
+    if (reader_divider.GetSafeHwnd()) reader_divider.DestroyWindow();
+    if (folders && folders->GetSafeHwnd()) folders->SetImageList(nullptr, LVSIL_SMALL);
+    if (messages && messages->GetSafeHwnd()) messages->SetImageList(nullptr, LVSIL_SMALL);
+}
+
+bool MailPaneUI::Attach(CWnd *frame, CListCtrl *folder_list, CListCtrl *message_list,
+                        CWnd *view, bool news)
+{
+    if (owner || !frame || !frame->GetSafeHwnd() || !folder_list
+        || !folder_list->GetSafeHwnd() || !message_list || !message_list->GetSafeHwnd()
+        || !view || !view->GetSafeHwnd()) return false;
+    owner = frame; folders = folder_list; messages = message_list; reader = view;
+    folder_width = ClassicUI::Scale(owner, 170);
+    int size = ClassicUI::Scale(owner, 16);
+    if (!folder_images.Create(size, size, ILC_COLOR24 | ILC_MASK, 2, 1)
+        || !message_images.Create(size, size, ILC_COLOR24 | ILC_MASK, 3, 1)
+        || !mail_image(folder_images, owner, 540)
+        || !mail_image(folder_images, owner, 541)
+        || !mail_image(message_images, owner, 542)
+        || !mail_image(message_images, owner, 543)
+        || !mail_image(message_images, owner, 544)
+        || !folder_divider.Create(this, owner, true, FolderDividerID)
+        || !reader_divider.Create(this, owner, false, ReaderDividerID)) return false;
+    folders->SetImageList(&folder_images, LVSIL_SMALL);
+    messages->SetImageList(&message_images, LVSIL_SMALL);
+    folders->SetExtendedStyle(folders->GetExtendedStyle() | LVS_EX_FULLROWSELECT);
+    messages->SetExtendedStyle(messages->GetExtendedStyle()
+                              | LVS_EX_FULLROWSELECT | LVS_EX_SUBITEMIMAGES);
+    folders->SetBkColor(RGB(255,255,255)); folders->SetTextBkColor(RGB(255,255,255));
+    messages->SetBkColor(RGB(255,255,255)); messages->SetTextBkColor(RGB(255,255,255));
+    while (folders->DeleteColumn(0)) {}
+    while (messages->DeleteColumn(0)) {}
+    folders->InsertColumn(0, news ? "Newsgroup" : "Mail Folder");
+    folders->InsertColumn(1, "Unread", LVCFMT_RIGHT);
+    folders->InsertColumn(2, "Total", LVCFMT_RIGHT);
+    messages->InsertColumn(0, "Sender");
+    messages->InsertColumn(1, "", LVCFMT_CENTER);
+    messages->InsertColumn(2, "Subject");
+    messages->InsertColumn(3, "Date");
+    ClassicUI::Apply(folders); ClassicUI::Apply(messages);
+    return true;
+}
+
+void MailPaneUI::Arrange(int toolbar_bottom, int status_height)
+{
+    if (!owner || !owner->GetSafeHwnd() || !folders->GetSafeHwnd()
+        || !messages->GetSafeHwnd() || !reader->GetSafeHwnd()) return;
+    CRect area; owner->GetClientRect(area);
+    top = mail_clamp(toolbar_bottom, 0, area.bottom);
+    footer = mail_clamp(status_height, 0, area.bottom - top);
+    int width = area.Width(), height = area.bottom - footer - top;
+    int divider = ClassicUI::Scale(owner, 5);
+    int vertical_size = mail_clamp(divider, 0, width);
+    int horizontal_size = mail_clamp(divider, 0, height);
+    int list_space = width - vertical_size, body_space = height - horizontal_size;
+    int folder_min = ClassicUI::Scale(owner, 110), message_min = ClassicUI::Scale(owner, 160);
+    if (list_space < folder_min + message_min) {
+        folder_min = MulDiv(list_space, 110, 270);
+        message_min = list_space - folder_min;
+    }
+    int pane_min = ClassicUI::Scale(owner, 70);
+    if (body_space < pane_min * 2) pane_min = body_space / 2;
+    if (top_height == -1 && height > 0)
+        top_height = mail_clamp(MulDiv(height, 22, 100),
+                               ClassicUI::Scale(owner, 70), ClassicUI::Scale(owner, 140));
+    int folder_size = mail_clamp(folder_width, folder_min, list_space - message_min);
+    int list_height = mail_clamp(top_height, pane_min, body_space - pane_min);
+    folder_bounds.SetRect(0, top, folder_size, top + list_height);
+    message_bounds.SetRect(folder_size + vertical_size, top, width, top + list_height);
+    reader_bounds.SetRect(0, top + list_height + horizontal_size, width, area.bottom - footer);
+    folders->MoveWindow(folder_bounds); messages->MoveWindow(message_bounds);
+    reader->MoveWindow(reader_bounds);
+    folder_divider.MoveWindow(folder_size, top, vertical_size, list_height);
+    reader_divider.MoveWindow(0, top + list_height, width, horizontal_size);
+    arranged = true;
+    FitColumns();
+}
+
+void MailPaneUI::FitColumns()
+{
+    if (!folders || !folders->GetSafeHwnd() || !messages || !messages->GetSafeHwnd()) return;
+    CRect area; folders->GetClientRect(area);
+    int width = area.Width();
+    int unread = ClassicUI::Scale(owner, 46), total = ClassicUI::Scale(owner, 38);
+    int label_min = ClassicUI::Scale(owner, 60);
+    if (width < label_min + unread + total) {
+        int numeric = width > label_min ? width - label_min : 0;
+        unread = MulDiv(numeric, 46, 84); total = numeric - unread;
+    }
+    folders->SetColumnWidth(0, width - unread - total);
+    folders->SetColumnWidth(1, unread); folders->SetColumnWidth(2, total);
+    messages->GetClientRect(area); width = area.Width();
+    int sender = ClassicUI::Scale(owner, 100), status = ClassicUI::Scale(owner, 20);
+    int date = ClassicUI::Scale(owner, 70), subject_min = ClassicUI::Scale(owner, 70);
+    int nominal = sender + status + date + subject_min;
+    if (width < nominal) {
+        sender = MulDiv(width, 100, 260); status = MulDiv(width, 20, 260);
+        date = MulDiv(width, 70, 260);
+    }
+    messages->SetColumnWidth(0, sender); messages->SetColumnWidth(1, status);
+    messages->SetColumnWidth(2, width - sender - status - date);
+    messages->SetColumnWidth(3, date);
+}
+
+int MailPaneUI::FolderImage(unsigned long flags) const
+{
+    return (flags & MSG_FOLDER_FLAG_SELECTED)
+        || ((flags & MSG_FOLDER_FLAG_DIRECTORY) && !(flags & MSG_FOLDER_FLAG_ELIDED)) ? 1 : 0;
+}
+
+int MailPaneUI::MessageImage(unsigned long flags) const
+{
+    return flags & MSG_FLAG_READ ? 0 : 1;
+}
+
+void MailPaneUI::SetDividers(int width, int height)
+{
+    /* Only an explicit -1 restore requests the initial list height. */
+    folder_width = width; top_height = height == -1 ? -1 : height < 0 ? 0 : height;
+    if (arranged) Arrange(top, footer);
+}
+
+void MailPaneUI::DragDivider(bool vertical, CPoint point, int offset)
+{
+    if (!owner || !owner->GetSafeHwnd()) return;
+    owner->ScreenToClient(&point);
+    if (vertical) folder_width = point.x - offset;
+    else {
+        int height = point.y - offset - top;
+        top_height = height < 0 ? 0 : height;
+    }
+    Arrange(top, footer);
+}

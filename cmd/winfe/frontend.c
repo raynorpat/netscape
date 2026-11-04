@@ -133,6 +133,7 @@ int WFE_Init(void)
     NET_RegisterContentTypeConverter(TEXT_PLAIN, FO_PRESENT, NULL, NET_PlainTextConverter);
     NET_RegisterContentTypeConverter(UNKNOWN_CONTENT_TYPE, FO_PRESENT, NULL, NET_PlainTextConverter);
     MSG_RegisterConverters();
+    MSG_SetPlaintextFont(NULL, TRUE);
     NET_RegisterContentTypeConverter(TEXT_HTML, FO_QUOTE_MESSAGE, NULL, INTL_ConvCharCode);
     NET_RegisterContentTypeConverter(INTERNAL_PARSER, FO_QUOTE_MESSAGE, &parser_data, PA_BeginParseMDL);
     NET_RegisterContentTypeConverter(TEXT_PLAIN, FO_QUOTE_MESSAGE, NULL, NET_PlainTextConverter);
@@ -279,7 +280,7 @@ void FE_FreeEdgeElement(MWContext *context, LO_EdgeStruct *edge) { }
 void FE_DisplayEmbed(MWContext *context, int location, LO_EmbedStruct *embed) { WFE_Rect(context, embed->x, embed->y, embed->width, embed->height, RGB(128,128,128), 0); }
 void FE_DisplayJavaApp(MWContext *context, int location, LO_JavaAppStruct *applet) { }
 void FE_DisplayEdge(MWContext *context, int location, LO_EdgeStruct *edge) { }
-void FE_DisplayTable(MWContext *context, int location, LO_TableStruct *table) { WFE_Rect(context, table->x, table->y, table->width, table->height, RGB(128,128,128), 0); }
+void FE_DisplayTable(MWContext *context, int location, LO_TableStruct *table) { if (table->border_width > 0) WFE_Rect(context, table->x, table->y, table->width, table->height, RGB(128,128,128), 0); }
 void FE_DisplayCell(MWContext *context, int location, LO_CellStruct *cell) { }
 void FE_DisplaySubDoc(MWContext *context, int location, LO_SubDocStruct *doc) { }
 void FE_DisplayLineFeed(MWContext *context, int location, LO_LinefeedStruct *line, XP_Bool background) { }

@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include "downloads.h"
+#include "classic.h"
 extern "C" {
 #include "shist.h"
 #include "merrors.h"
@@ -75,12 +76,16 @@ public:
     uint32 id;
     CStatic address, filename, status;
     CProgressCtrl progress;
-    CButton cancel;
+    ClassicButton cancel;
     explicit DownloadFrame(uint32 value) : id(value) { }
     void Update();
+    void Arrange();
     void PostNcDestroy() override { delete this; }
 protected:
     afx_msg int OnCreate(LPCREATESTRUCT);
+    afx_msg void OnSize(UINT type, int width, int height);
+    afx_msg BOOL OnEraseBkgnd(CDC *dc);
+    afx_msg HBRUSH OnCtlColor(CDC *dc, CWnd *window, UINT type);
     afx_msg void OnTimer(UINT_PTR);
     afx_msg void OnClose();
     afx_msg void OnDestroy();
@@ -90,6 +95,9 @@ protected:
 
 BEGIN_MESSAGE_MAP(DownloadFrame, CFrameWnd)
  ON_WM_CREATE()
+ ON_WM_SIZE()
+ ON_WM_ERASEBKGND()
+ ON_WM_CTLCOLOR()
  ON_WM_TIMER()
  ON_WM_CLOSE()
  ON_WM_DESTROY()
@@ -104,13 +112,51 @@ int DownloadFrame::OnCreate(LPCREATESTRUCT create)
         !filename.Create("Choosing destination...", WS_CHILD | WS_VISIBLE | SS_PATHELLIPSIS, CRect(12,40,550,62), this) ||
         !progress.Create(WS_CHILD | WS_VISIBLE, CRect(12,72,550,96), this, 5100) ||
         !status.Create("Waiting for response...", WS_CHILD | WS_VISIBLE, CRect(12,106,440,130), this) ||
-        !cancel.Create("Cancel", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
+        !cancel.Create("Cancel", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW,
                         CRect(458,104,550,132), this, IDCANCEL)) return -1;
-    CFont *font = CFont::FromHandle((HFONT)GetStockObject(DEFAULT_GUI_FONT));
+    CFont *font = ClassicUI::Font(this);
     address.SetFont(font); filename.SetFont(font); status.SetFont(font); cancel.SetFont(font);
+    ClassicUI::Apply(this);
+    progress.SetBarColor(RGB(0,0,128));
+    progress.SetBkColor(RGB(192,192,192));
     progress.SetRange32(0, 1000);
+    CRect area(0, 0, ClassicUI::Scale(this, 550), ClassicUI::Scale(this, 126));
+    AdjustWindowRectEx(&area, GetStyle(), FALSE, GetExStyle());
+    SetWindowPos(nullptr, 0, 0, area.Width(), area.Height(), SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+    Arrange();
     SetTimer(1, 20, nullptr);
     return 0;
+}
+
+void DownloadFrame::Arrange()
+{
+    if (!cancel.GetSafeHwnd()) return;
+    CRect area; GetClientRect(&area);
+    auto s = [this](int value) { return ClassicUI::Scale(this, value); };
+    int width = (std::max)(area.Width() - s(16), s(20));
+    address.MoveWindow(s(8), s(8), width, s(18));
+    filename.MoveWindow(s(8), s(31), width, s(18));
+    progress.MoveWindow(s(8), s(56), width, s(20));
+    status.MoveWindow(s(8), s(90), (std::max)(width - s(98), s(20)), s(24));
+    cancel.MoveWindow((std::max)(area.Width() - s(90), s(8)), s(88), s(82), s(23));
+}
+
+void DownloadFrame::OnSize(UINT type, int width, int height)
+{
+    CFrameWnd::OnSize(type, width, height);
+    Arrange();
+}
+
+BOOL DownloadFrame::OnEraseBkgnd(CDC *dc)
+{
+    CRect area; GetClientRect(&area);
+    dc->FillSolidRect(area, RGB(192,192,192));
+    return TRUE;
+}
+
+HBRUSH DownloadFrame::OnCtlColor(CDC *dc, CWnd *window, UINT type)
+{
+    return ClassicUI::ControlColor(dc, window, type);
 }
 
 void DownloadFrame::Update()

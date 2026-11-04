@@ -32,9 +32,9 @@ mechanically converted to compiled resource bitmaps with provenance.
 
 ## 2. Companion windows
 
-- [ ] Apply shared classic treatment to composer and utility windows.
-- [ ] Verify existing mail/news/composer/bookmark/history/download fixtures.
-- [ ] Review and commit independently; refresh install and ZIP.
+- [x] Apply shared classic treatment to composer and utility windows.
+- [x] Verify existing mail/news/composer/bookmark/history/download fixtures.
+- [x] Review and commit independently; refresh install and ZIP.
 
 ## Execution notes
 
@@ -58,3 +58,7 @@ capture. High-DPI/multi-monitor behavior remains unverified beyond scaled metric
 Integrated verification: all thirteen CTests passed in Release and Debug. The
 Linux browser rebuilt and reported version 3.02 with source-scoped Windows
 about-buffer ownership. Fresh review found no remaining P1/P2 findings.
+
+Install and ZIP refreshed. The installed executable passed the classic-chrome
+fixture; the ZIP contains the identical tested Win32 binary. Companion-window
+styles are committed independently from shared browser/messaging chrome.

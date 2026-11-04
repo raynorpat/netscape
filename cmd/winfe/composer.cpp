@@ -6,6 +6,8 @@
 #include <vector>
 #include <shlwapi.h>
 #include "composer.h"
+#include "classic.h"
+#include "resource.h"
 #include "mailsettings.h"
 #include "legacy/genedit.h"
 extern "C" {
@@ -62,7 +64,7 @@ public:
     MWContext context = {};
     CStatic labels[header_count], attachment_label, attachment_text, status;
     CGenericEdit fields[header_count], body;
-    CButton send, later, draft, attach, cancel, headers, remove;
+    ClassicButton send, later, draft, attach, cancel, headers, remove;
     MSG_HEADER_SET visible = 0x3ff;
     bool initialized = false, changing = false, dirty = false;
     bool destroying = false, backend_closed = false, delivery = false;
@@ -83,6 +85,8 @@ public:
 protected:
     afx_msg int OnCreate(LPCREATESTRUCT create);
     afx_msg void OnSize(UINT type, int width, int height);
+    afx_msg BOOL OnEraseBkgnd(CDC *dc);
+    afx_msg HBRUSH OnCtlColor(CDC *dc, CWnd *window, UINT type);
     afx_msg void OnTimer(UINT_PTR timer);
     afx_msg void OnClose();
     afx_msg void OnDestroy();
@@ -100,6 +104,8 @@ protected:
 BEGIN_MESSAGE_MAP(ComposerFrame, CFrameWnd)
  ON_WM_CREATE()
  ON_WM_SIZE()
+ ON_WM_ERASEBKGND()
+ ON_WM_CTLCOLOR()
  ON_WM_TIMER()
  ON_WM_CLOSE()
  ON_WM_DESTROY()
@@ -117,14 +123,17 @@ END_MESSAGE_MAP()
 int ComposerFrame::OnCreate(LPCREATESTRUCT create)
 {
     if (CFrameWnd::OnCreate(create) == -1) return -1;
-    CFont *font = CFont::FromHandle((HFONT)GetStockObject(DEFAULT_GUI_FONT));
+    CFont *font = ClassicUI::Font(this);
     CButton *buttons[] = {&send, &later, &draft, &attach, &cancel, &headers};
     const char *names[] = {"Send", "Send Later", "Save Draft", "Attach...", "Cancel", "All Headers"};
     for (int i = 0; i < 6; ++i) {
-        if (!buttons[i]->Create(names[i], WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
+        if (!buttons[i]->Create(names[i], WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW,
                                 CRect(0,0,0,0), this, IDC_COMPOSE_SEND + i)) return -1;
         buttons[i]->SetFont(font);
     }
+    send.SetBitmapResource(IDB_CLASSIC_SEND);  /* Original message toolbar artwork. */
+    attach.SetBitmapResource(IDB_CLASSIC_ATTACH);
+    draft.SetBitmapResource(IDB_CLASSIC_COMPOSE);
     for (int i = 0; i < header_count; ++i) {
         if (!labels[i].Create(header_names[i], WS_CHILD | WS_VISIBLE,
                                CRect(0,0,0,0), this)) return -1;
@@ -138,7 +147,7 @@ int ComposerFrame::OnCreate(LPCREATESTRUCT create)
                                   CRect(0,0,0,0), this) ||
         !attachment_text.Create("None", WS_CHILD | WS_VISIBLE | SS_PATHELLIPSIS,
                                  CRect(0,0,0,0), this, IDC_COMPOSE_ATTACHMENT) ||
-        !remove.Create("Remove All", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
+        !remove.Create("Remove All", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW,
                          CRect(0,0,0,0), this, IDC_COMPOSE_REMOVE) ||
         !body.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | WS_VSCROLL |
                      ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN,
@@ -148,9 +157,10 @@ int ComposerFrame::OnCreate(LPCREATESTRUCT create)
     attachment_label.SetFont(font);
     attachment_text.SetFont(font);
     remove.SetFont(font);
-    body.SetFont(CFont::FromHandle((HFONT)GetStockObject(ANSI_FIXED_FONT)));
     body.LimitText(0x7ffffffe);
     status.SetFont(font);
+    ClassicUI::Apply(this);
+    body.SetFont(CFont::FromHandle((HFONT)GetStockObject(ANSI_FIXED_FONT)));
     WFE_InitContext(&context, this);
     context.type = MWContextMessageComposition;
     initialized = true;
@@ -164,25 +174,45 @@ void ComposerFrame::Arrange()
 {
     if (!body.GetSafeHwnd()) return;
     CRect area; GetClientRect(&area);
+    auto s = [this](int value) { return ClassicUI::Scale(this, value); };
     CButton *buttons[] = {&send, &later, &draft, &attach, &cancel, &headers};
-    for (int i = 0; i < 6; ++i) buttons[i]->MoveWindow(8 + 100*i, 8, 94, 26);
-    int y = 44;
+    int x = s(4), y = s(4);
+    for (int i = 0; i < 6; ++i) {
+        if (i && x + s(88) > area.Width() - s(4)) { x = s(4); y += s(48); }
+        buttons[i]->MoveWindow(x, y, s(88), s(46));
+        x += s(90);
+    }
+    y += s(52);
     for (int i = 0; i < header_count; ++i) {
         bool show = (visible & header_masks[i]) != 0;
         labels[i].ShowWindow(show ? SW_SHOW : SW_HIDE);
         fields[i].ShowWindow(show ? SW_SHOW : SW_HIDE);
         if (show) {
-            labels[i].MoveWindow(8, y + 4, 88, 22);
-            fields[i].MoveWindow(98, y, (std::max)(area.Width() - 108, 80), 24);
-            y += 28;
+            labels[i].MoveWindow(s(6), y + s(3), s(76), s(18));
+            fields[i].MoveWindow(s(84), y, (std::max)(area.Width() - s(90), s(20)), s(21));
+            y += s(24);
         }
     }
-    attachment_label.MoveWindow(8, y + 4, 88, 22);
-    attachment_text.MoveWindow(98, y + 4, (std::max)(area.Width() - 216, 20), 22);
-    remove.MoveWindow((std::max)(area.Width() - 108, 120), y, 98, 24);
-    y += 32;
-    body.MoveWindow(8, y, (std::max)(area.Width() - 16, 20), (std::max)(area.Height() - y - 30, 20));
-    status.MoveWindow(8, (std::max)(area.Height() - 24, y + 24), (std::max)(area.Width() - 16, 20), 20);
+    attachment_label.MoveWindow(s(6), y + s(3), s(76), s(18));
+    attachment_text.MoveWindow(s(84), y + s(3), (std::max)(area.Width() - s(186), s(20)), s(18));
+    remove.MoveWindow((std::max)(area.Width() - s(96), s(106)), y, s(90), s(22));
+    y += s(27);
+    body.MoveWindow(s(6), y, (std::max)(area.Width() - s(12), s(20)),
+                    (std::max)(area.Height() - y - s(26), s(20)));
+    status.MoveWindow(s(6), (std::max)(area.Height() - s(21), y + s(24)),
+                      (std::max)(area.Width() - s(12), s(20)), s(18));
+}
+
+BOOL ComposerFrame::OnEraseBkgnd(CDC *dc)
+{
+    CRect area; GetClientRect(&area);
+    dc->FillSolidRect(area, RGB(192,192,192));
+    return TRUE;
+}
+
+HBRUSH ComposerFrame::OnCtlColor(CDC *dc, CWnd *window, UINT type)
+{
+    return ClassicUI::ControlColor(dc, window, type);
 }
 
 void ComposerFrame::OnSize(UINT type, int width, int height)

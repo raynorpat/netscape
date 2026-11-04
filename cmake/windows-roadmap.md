@@ -33,7 +33,8 @@ engines are separate porting tasks.
 | Implemented | Bookmarks | Add page and a native tree manager support folders, editing, opening and deletion through the original BM APIs. Fixtures check escaped and long names/URLs, ordering, cross-process persistence and failed-save retry. Import/export, search, drag/drop and richer organization remain future work. |
 | 3 | Charset/text | The frontend defaults to Latin-1 and draws/measures through ANSI GDI. A subset of single-byte conversion tables uses Windows code pages; this does not establish correct multilingual rendering. Verify document charset changes, MIME headers, fonts, conversion failure, selection, and copy. |
 | 4 | Plugins | The plugin archive and `NPL_Init` are present, but discovery registers no descriptors, loading returns NULL, and embed streaming fails. Native module loading, NPAPI callbacks, embedded-window lifetime, and a controlled test plugin are separate work. |
-| 4 | Other browser UI | Add selection/copy, find, printing, preferences, cache controls and remaining navigation/link context actions. Printing/translation archives being linked does not supply native print UI. Disk cache is explicitly disabled at initialization. |
+| Implemented | Classic chrome | Browser toolbar, location dropdown, shortcuts/logo, traditional menus and segmented status use original artwork and classic fonts/edges. Mail/news toolbars and composer/utility windows share the styling. Native Find supports selection, case/direction/wrap and focused frames. View toggles and keyboard location entry are covered. |
+| 4 | Other browser UI | Finish mouse selection, printing, richer preferences, cache controls and remaining navigation/link actions. Copy/Select All and native Find exist; Gold editing and Print remain disabled. Printing/translation archives being linked does not supply native print UI. Disk cache is explicitly disabled at initialization. |
 
 The direct evidence is in [frontend callbacks](../cmd/winfe/frontend.c),
 [services](../cmd/winfe/services.c), [window/navigation code](../cmd/winfe/main.cpp),
@@ -67,5 +68,5 @@ rejects x64. Keep x64 as a separate port with pointer/ABI tests.
 
 Use independent configure/build probes for each newly enabled archive, followed
 by runtime tests for its actual behavior. The checked-in Windows CTest setup covers core, socket, local/HTTP frontend,
-mail/news, images, forms, frames, downloads, history and bookmarks. These fixtures
+mail/news, images, forms, frames, downloads, history, bookmarks and classic chrome. These fixtures
 do not establish optional engine or plugin runtime support.

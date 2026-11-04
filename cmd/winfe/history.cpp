@@ -1,6 +1,7 @@
 #include <afxwin.h>
 #include <afxcmn.h>
 #include "history.h"
+#include "classic.h"
 extern "C" {
 #include "shist.h"
 }
@@ -54,26 +55,32 @@ public:
     int32 selected = 0, automatic;
     bool global = false;
     CListCtrl entries;
-    CButton open, close, visited;
+    ClassicButton open, close, visited;
     explicit HistoryDialog(MWContext *source, int32 test_id = 0) : context(source), automatic(test_id) { }
 protected:
     BOOL OnInitDialog() override {
         CDialog::OnInitDialog();
         SetWindowText("History");
         CRect area; GetClientRect(area);
+        auto s = [this](int value) { return ClassicUI::Scale(this, value); };
         entries.Create(WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
-                       CRect(10,10,area.Width()-10,area.Height()-48), this, 1001);
+                       CRect(s(6),s(6),area.Width()-s(6),area.Height()-s(35)), this, 1001);
         entries.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
-        entries.InsertColumn(0, "Title", LVCFMT_LEFT, 220);
-        entries.InsertColumn(1, "Address", LVCFMT_LEFT, 500);
-        open.Create("Open", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON,
-                    CRect(area.Width()-190,area.Height()-36,area.Width()-105,area.Height()-10), this, IDOK);
-        close.Create("Close", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
-                     CRect(area.Width()-95,area.Height()-36,area.Width()-10,area.Height()-10), this, IDCANCEL);
-        visited.Create("Visited pages", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
-                       CRect(10,area.Height()-36,150,area.Height()-10), this, 1002);
-        CFont *font = CFont::FromHandle((HFONT)GetStockObject(DEFAULT_GUI_FONT));
+        entries.InsertColumn(0, "Title", LVCFMT_LEFT, s(190));
+        entries.InsertColumn(1, "Address", LVCFMT_LEFT, s(440));
+        open.Create("Open", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW,
+                    CRect(area.Width()-s(170),area.Height()-s(29),area.Width()-s(90),area.Height()-s(6)), this, IDOK);
+        close.Create("Close", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW,
+                     CRect(area.Width()-s(86),area.Height()-s(29),area.Width()-s(6),area.Height()-s(6)), this, IDCANCEL);
+        visited.Create("Visited pages", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW,
+                       CRect(s(6),area.Height()-s(29),s(118),area.Height()-s(6)), this, 1002);
+        CFont *font = ClassicUI::Font(this);
         entries.SetFont(font); open.SetFont(font); close.SetFont(font); visited.SetFont(font);
+        ClassicUI::Apply(this);
+        entries.SetBkColor(RGB(255,255,255));
+        entries.SetTextBkColor(RGB(255,255,255));
+        entries.SetTextColor(RGB(0,0,0));
+        SetDefID(IDOK);
         if (XP_IsContextInList(context)) {
             XP_List *list = SHIST_GetList(context);
             History_entry *current = SHIST_GetCurrent(&context->hist);
@@ -107,7 +114,21 @@ protected:
         if (control == 1001 && event && event->code == NM_DBLCLK) { OnOK(); *result = 0; return TRUE; }
         return CDialog::OnNotify(control, notification, result);
     }
+    afx_msg BOOL OnEraseBkgnd(CDC *dc) {
+        CRect area; GetClientRect(&area);
+        dc->FillSolidRect(area, RGB(192,192,192));
+        return TRUE;
+    }
+    afx_msg HBRUSH OnCtlColor(CDC *dc, CWnd *window, UINT type) {
+        return ClassicUI::ControlColor(dc, window, type);
+    }
+    DECLARE_MESSAGE_MAP()
 };
+
+BEGIN_MESSAGE_MAP(HistoryDialog, CDialog)
+ ON_WM_ERASEBKGND()
+ ON_WM_CTLCOLOR()
+END_MESSAGE_MAP()
 
 static int show_history(MWContext *context, int32 automatic)
 {

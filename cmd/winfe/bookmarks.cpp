@@ -4,6 +4,7 @@
 #include <string>
 #include <shlwapi.h>
 #include "bookmarks.h"
+#include "classic.h"
 extern "C" {
 #include "bkmks.h"
 #include "shist.h"
@@ -51,7 +52,7 @@ static bool save_bookmarks(bool alert)
 class BookmarksFrame : public CFrameWnd {
 public:
     CTreeCtrl tree;
-    CButton open, add, folder, edit, remove, close;
+    ClassicButton open, add, folder, edit, remove, close;
     bool dirty = true, rebuilding = false;
     void Arrange();
     void Refresh();
@@ -66,6 +67,8 @@ public:
 protected:
     afx_msg int OnCreate(LPCREATESTRUCT create);
     afx_msg void OnSize(UINT type, int width, int height);
+    afx_msg BOOL OnEraseBkgnd(CDC *dc);
+    afx_msg HBRUSH OnCtlColor(CDC *dc, CWnd *window, UINT type);
     afx_msg void OnDestroy();
     afx_msg void OnClose();
     afx_msg LRESULT OnRefresh(WPARAM, LPARAM);
@@ -82,6 +85,8 @@ protected:
 BEGIN_MESSAGE_MAP(BookmarksFrame, CFrameWnd)
  ON_WM_CREATE()
  ON_WM_SIZE()
+ ON_WM_ERASEBKGND()
+ ON_WM_CTLCOLOR()
  ON_WM_DESTROY()
  ON_WM_CLOSE()
  ON_MESSAGE(WM_BOOKMARK_REFRESH, OnRefresh)
@@ -101,15 +106,18 @@ int BookmarksFrame::OnCreate(LPCREATESTRUCT create)
     if (!tree.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP |
                      TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_SHOWSELALWAYS,
                      CRect(0,0,0,0), this, IDC_BOOKMARK_TREE)) return -1;
-    CFont *font = CFont::FromHandle((HFONT)GetStockObject(DEFAULT_GUI_FONT));
+    CFont *font = ClassicUI::Font(this);
     tree.SetFont(font);
     CButton *buttons[] = {&open, &add, &folder, &edit, &remove, &close};
     const char *names[] = {"Open", "Add Page", "New Folder...", "Edit...", "Delete", "Close"};
     for (int i = 0; i < 6; ++i) {
-        if (!buttons[i]->Create(names[i], WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
+        if (!buttons[i]->Create(names[i], WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW,
                                 CRect(0,0,0,0), this, IDC_BOOKMARK_OPEN + i)) return -1;
         buttons[i]->SetFont(font);
     }
+    ClassicUI::Apply(this);
+    tree.SetBkColor(RGB(255,255,255));
+    tree.SetTextColor(RGB(0,0,0));
     WFE_RegisterNativeWindow(&bookmarks_context, GetSafeHwnd());
     BM_SetFEData(&bookmarks_context, this);
     Refresh();
@@ -121,10 +129,23 @@ void BookmarksFrame::Arrange()
 {
     if (!tree.GetSafeHwnd() || !close.GetSafeHwnd()) return;
     CRect area; GetClientRect(&area);
-    int right = (std::max)(area.Width() - 112, 8);
-    tree.MoveWindow(8, 8, (std::max)(right - 16, 20), (std::max)(area.Height() - 16, 20));
+    auto s = [this](int value) { return ClassicUI::Scale(this, value); };
+    int right = (std::max)(area.Width() - s(102), s(6));
+    tree.MoveWindow(s(6), s(6), (std::max)(right - s(12), s(20)), (std::max)(area.Height() - s(12), s(20)));
     CButton *buttons[] = {&open, &add, &folder, &edit, &remove, &close};
-    for (int i = 0; i < 6; ++i) buttons[i]->MoveWindow(right, 8 + i * 34, 104, 28);
+    for (int i = 0; i < 6; ++i) buttons[i]->MoveWindow(right, s(6 + i * 27), s(96), s(23));
+}
+
+BOOL BookmarksFrame::OnEraseBkgnd(CDC *dc)
+{
+    CRect area; GetClientRect(&area);
+    dc->FillSolidRect(area, RGB(192,192,192));
+    return TRUE;
+}
+
+HBRUSH BookmarksFrame::OnCtlColor(CDC *dc, CWnd *window, UINT type)
+{
+    return ClassicUI::ControlColor(dc, window, type);
 }
 
 void BookmarksFrame::OnSize(UINT type, int width, int height)

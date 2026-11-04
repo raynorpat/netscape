@@ -143,6 +143,61 @@ the installed executable passed the image/form fixtures. The native suite includ
 the existing browser/mail checks. Configuration-specific verification is recorded
 below as each roadmap item is completed.
 
+## Classic Windows interface
+
+The browser now follows the supplied Navigator reference: raised icon/text
+buttons, Location dropdown, directory shortcuts, right-hand Netscape logo,
+traditional File/Edit/View/Go/Bookmarks/Options/Directory/Window/Help menus,
+and a segmented status bar. Original 3.02 artwork is compiled into the binary.
+The about page uses the original wordmark and gray table layout, retaining
+version 3.02. Java/security/editor credits are not shown as enabled features.
+
+View toggles control the toolbar, Location, directory buttons and status bar.
+Ctrl+L/Alt+D selects Location; Enter navigates; the dropdown holds recent
+addresses. Toolbar controls support Tab/Shift+Tab and keyboard activation.
+Home defaults to the built-in about page; Options can save the current page as
+Home in the profile's `browser.ini`. Directory shortcuts retain historical
+Netscape destinations; current availability of those sites is not established.
+
+Find (Ctrl+F) uses the original layout search and selection APIs, with case,
+direction and wrap options. It retains the focused document when a toolbar
+button takes focus, including nested frames. Copy and Select All use native
+edit controls or layout selections as appropriate. Full mouse text-selection
+work remains separate. Print and the unavailable Gold page editor are visibly
+disabled; Images is disabled because images already load automatically.
+
+Mail/news use command-specific classic toolbars and backend command states.
+Composer, bookmarks, history, downloads, account settings and prompts share
+compact classic fonts, gray surfaces and raised buttons. The composer body
+retains its fixed-width editing font; document colors are not overridden.
+Metrics scale from window DPI; visual captures were checked at 96 DPI, with
+multi-monitor/high-DPI runtime checks still pending. Title bars, system menus
+and system file pickers remain managed by Windows.
+
+All thirteen native CTests passed in Release and Debug after this UI pass.
+The Linux browser rebuilt with the Windows-specific about-buffer cleanup
+guarded separately. Actual captures were checked for the browser, mail,
+composer, bookmarks, account settings and native prompts.
+
+`windows_classic_chrome` verifies real navigation, toolbar states, menus, Find,
+bar toggles, narrow-window geometry, actual captured pixels (including disabled
+artwork), and the embedded about-page image. The frame fixture additionally
+checks focused-child Find. About resource buffers are writable for the legacy
+parser and explicitly released; the fixture checks zero outstanding buffers.
+
+For repeatable offline window captures, use an isolated profile:
+
+```powershell
+$env:NETSCAPE_PROFILE_DIR = "$PWD/out/ui-preview-profile"
+.\out\windows-frontend\Release\netscape.exe --ui-gallery "$PWD/out/ui-preview"
+```
+
+This diagnostic command requires the profile override and sets a test mail
+identity in that profile. It never sends mail. Toolbar bitmap regeneration is
+an optional development step using Python/Pillow:
+`python cmake/tools/generate_windows_toolbar.py`; normal builds use checked-in
+bitmaps. Source provenance is in `cmd/winfe/res/classic/README.md`.
+
 ## Mail and news
 
 Use Messages > Open Mail / Open News, or launch `netscape.exe --mail`, `--news`,

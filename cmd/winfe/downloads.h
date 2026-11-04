@@ -21,6 +21,7 @@ void WFE_DownloadShutdown(void);
    an existing directory uses the sanitized server-suggested basename. */
 uint32 WFE_SavePage(MWContext *source, const char *destination);
 uint32 WFE_SaveLink(MWContext *source, const char *address, const char *destination);
+uint32 WFE_SaveSourceForApplication(MWContext *,const char *,const char *);
 int WFE_DownloadCancel(uint32 id);
 int WFE_GetDownloadSnapshot(uint32 id, WFE_DownloadSnapshot *snapshot);
 void WFE_DownloadProgress(MWContext *, URL_Struct *, int32 received, int32 length);

@@ -8,6 +8,7 @@
 #include <memory>
 #include "classic.h"
 #include "preferences.h"
+#include "applications.h"
 #include "preferences_resource.h"
 
 extern "C" void GH_ClearGlobalHistory(void);
@@ -150,7 +151,9 @@ protected:
             "Language entries are sent in the order shown in the Accept List.\n"
             "Background image files supply the default, unless a document supplies its own background.\n"
             "Always Use My Colors also overrides document backgrounds.\n"
-            "Disabled application and helper-editing controls are not available in this version.\n\n"
+            "Apps accepts executable paths without command templates. Terminal applications receive host and port,\n"
+            "with -l username when supplied. Blank View Source uses Netscape. Temporary Directory must be writable.\n"
+            "Helper association editing is not available in this version.\n\n"
             "OK saves all pages. Cancel discards changes. Expire Now takes effect when you choose OK.",
             "Preferences Help",MB_OK|MB_ICONINFORMATION);
     }
@@ -283,12 +286,14 @@ BOOL GeneralPreferencesDialog::OnInitDialog()
 
     Group(4,"Supporting Applications",10,16,449,190);
     const char *app_labels[]={"Telnet Application:","TN3270 Application:","View Source:","Temporary Directory:"};
-    char temp[MAX_PATH]={}; GetTempPathA(MAX_PATH,temp);
+    const char *app_values[]={values.telnet_application.c_str(),values.tn3270_application.c_str(),values.source_application.c_str(),
+        values.temporary_directory.empty()?WFE_DefaultTemporaryDirectory():values.temporary_directory.c_str()};
     for(int i=0;i<4;i++) {
         int y=37+i*34; Label(4,app_labels[i],21,y+3,104);
-        Edit(4,i==3?temp:"",124,y,256,7500+i,false);
-        if(i<3) Button(4,"Browse...",388,y,59,23,7510+i,false);
+        Edit(4,app_values[i],124,y,256,7500+i);
+        if(i<3) Button(4,"Browse...",388,y,59,23,7510+i);
     }
+    Label(4,"Leave View Source blank to use Netscape's source viewer.",21,179,420);
 
     Label(5,"File type",10,14,190); Label(5,"Action",216,14,115); Label(5,"Extensions",350,14,100);
     Add(5,WC_LISTVIEWA,"",LVS_REPORT|LVS_SINGLESEL|LVS_SHOWSELALWAYS|LVS_NOCOLUMNHEADER|WS_TABSTOP|WS_BORDER,10,32,442,140,IDC_PREF_HELPERS,WS_EX_CLIENTEDGE);
@@ -347,6 +352,12 @@ bool GeneralPreferencesDialog::PageCommand(int page,WPARAM w,LPARAM)
         if(id==IDC_PREF_EXPIRE_NOW) { expire_now=true; Control(0,id)->EnableWindow(FALSE); }
     }
     if(page==1 && notification==BN_CLICKED && (id==IDC_PREF_PROP_FONT || id==IDC_PREF_FIXED_FONT)) { ChooseFont(id==IDC_PREF_FIXED_FONT); return true; }
+    if(page==4 && notification==BN_CLICKED && id>=7510 && id<=7512) {
+        int field=7500+id-7510;
+        CFileDialog picker(TRUE,"exe",Text(4,field),OFN_FILEMUSTEXIST|OFN_HIDEREADONLY|OFN_NOCHANGEDIR,
+            "Windows applications|*.exe|All files|*.*||",this);
+        if(picker.DoModal()==IDOK) SetText(4,field,picker.GetPathName());return true;
+    }
     if(page==2 && notification==BN_CLICKED) {
         if(id==IDC_PREF_BG_IMAGE || id==IDC_PREF_BG_DEFAULT || id==IDC_PREF_BG_CUSTOM) UpdateBackground();
         if(id==IDC_PREF_BG_BROWSE) {
@@ -428,6 +439,9 @@ bool GeneralPreferencesDialog::ReadControls()
     values.background_image=Checked(2,IDC_PREF_BG_IMAGE);values.background_file=(const char *)Text(2,IDC_PREF_BG_FILE);
     values.dither=Checked(3,IDC_PREF_AUTOMATIC)?0:Checked(3,IDC_PREF_DITHER)?1:2;
     values.incremental=Checked(3,IDC_PREF_WHILE_LOADING);
+    values.telnet_application=(const char *)Text(4,7500);values.tn3270_application=(const char *)Text(4,7501);
+    values.source_application=(const char *)Text(4,7502);values.temporary_directory=(const char *)Text(4,7503);
+    if(!_stricmp(values.temporary_directory.c_str(),WFE_DefaultTemporaryDirectory())) values.temporary_directory.clear();
     CString pending=Text(6,IDC_PREF_LANG_CUSTOM);pending.TrimLeft();pending.TrimRight();
     if(!pending.IsEmpty()) {
         SelectPage(6);ShowError("Add the language to the Accept List or clear User define before choosing OK.");Control(6,IDC_PREF_LANG_CUSTOM)->SetFocus();return false;
@@ -476,6 +490,8 @@ static bool same_preferences(const GeneralPreferences &a,const GeneralPreference
         a.text_custom==b.text_custom && a.link_custom==b.link_custom && a.visited_custom==b.visited_custom &&
         a.background_custom==b.background_custom && a.override_colors==b.override_colors &&
         a.background_image==b.background_image && a.background_file==b.background_file &&
+        a.telnet_application==b.telnet_application && a.tn3270_application==b.tn3270_application &&
+        a.source_application==b.source_application && a.temporary_directory==b.temporary_directory &&
         !memcmp(a.colors,b.colors,sizeof(a.colors)) && a.dither==b.dither && a.incremental==b.incremental && a.languages==b.languages;
 }
 
@@ -578,3 +594,5 @@ int WFE_PreferencesUISmoke(CWnd *parent,const char *report,const char *snapshot)
 }
 
 #include "preferences-background-smoke.inc"
+
+#include "preferences-apps-smoke.inc"

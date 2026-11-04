@@ -2,6 +2,7 @@
  * fail explicitly; browser rendering, navigation and event dispatch are real. */
 #include "frontend.h"
 #include "preferences.h"
+#include "applications.h"
 #ifdef EDITOR
 #include "editor.h"
 #include "edt.h"
@@ -121,6 +122,7 @@ static void url_complete(URL_Struct *url, int status, MWContext *context)
 }
 void WFE_ViewSource(MWContext *context,const char *address)
 {
+    if(WFE_ExternalSource(context,address)) return;
     URL_Struct *url=NET_CreateURLStruct(address,NET_DONT_RELOAD);
     if(url) NET_GetURL(url,FO_VIEW_SOURCE,context,url_complete);
 }

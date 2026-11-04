@@ -9,6 +9,7 @@
 #include <vector>
 #include "downloads.h"
 #include "classic.h"
+#include "applications.h"
 extern "C" {
 #include "shist.h"
 #include "merrors.h"
@@ -30,6 +31,8 @@ struct DownloadJob {
     HANDLE file = INVALID_HANDLE_VALUE;
     DownloadFrame *frame = nullptr;
     std::string address, requested, destination, temporary, error;
+    std::string application;
+    bool owns_destination=false;
 };
 static std::map<uint32, std::shared_ptr<DownloadJob>> download_jobs;
 static uint32 next_download = 1;
@@ -304,10 +307,12 @@ static bool prepare_file(const std::shared_ptr<DownloadJob> &job, URL_Struct *ur
     if (!length || length >= sizeof(absolute)) { job->error = "Invalid download destination."; return false; }
     job->destination = absolute;
     std::string directory = job->destination.substr(0, job->destination.find_last_of("\\/"));
+    DWORD identity=GetTickCount()^GetCurrentProcessId()^(DWORD)job->id;
     for (unsigned attempt = 0; attempt < 32; ++attempt) {
         char suffix[100];
-        sprintf(suffix, "\\.netscape-download-%lu-%lu-%u.part", (unsigned long)GetCurrentProcessId(),
-                (unsigned long)job->id, attempt);
+        /* Keep the reserved sibling inside MAX_PATH even for a temporary
+         * directory accepted by GetTempFileName. CREATE_NEW owns collisions. */
+        sprintf(suffix, "\\~%08lx%02x",(unsigned long)identity,attempt);
         job->temporary = directory + suffix;
         job->file = CreateFileA(job->temporary.c_str(), GENERIC_WRITE, 0, nullptr,
                                 CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
@@ -376,6 +381,11 @@ static void download_exit(URL_Struct *url, int status, MWContext *context)
         if (good) job->temporary.clear();
         else job->error = "Could not replace the download destination.";
     } else good = false;
+    if(good && !job->application.empty()) {
+        good=WFE_LaunchApplication(job->application,{job->destination},&job->error);
+        if(good) job->owns_destination=false; /* A viewer may hand off to another process. */
+    }
+    if(!good && job->owns_destination) {DeleteFileA(job->destination.empty()?job->requested.c_str():job->destination.c_str());job->owns_destination=false;}
     if (job->cancel) job->state = WFE_DOWNLOAD_CANCELLED;
     else if (good) job->state = WFE_DOWNLOAD_COMPLETE;
     else {
@@ -449,13 +459,14 @@ extern "C" NET_StreamClass *fe_MakeSaveAsStream(FO_Present_Types, void *, URL_St
     return stream;
 }
 
-static uint32 start_download(URL_Struct *url, const char *destination, FO_Present_Types format = FO_SAVE_AS)
+static uint32 start_download(URL_Struct *url, const char *destination, FO_Present_Types format = FO_SAVE_AS,const char *application=nullptr)
 {
     if (!url) return 0;
     auto job = new_job();
     if (!job) { NET_FreeURLStruct(url); return 0; }
     job->address = url->address ? url->address : "";
     job->requested = destination ? destination : "";
+    if(application) {job->application=application;job->owns_destination=true;}
     job->url = url;
     url->load_background = TRUE;
     if (job->frame) job->frame->Update();
@@ -490,6 +501,17 @@ extern "C" uint32 WFE_SaveLink(MWContext *, const char *address, const char *des
 {
     if (!address || !*address) return 0;
     return start_download(NET_CreateURLStruct(address, NET_DONT_RELOAD), destination);
+}
+extern "C" uint32 WFE_SaveSourceForApplication(MWContext *source,const char *address,const char *program)
+{
+    if(!source || !address || !*address || !program || !*program) return 0;
+    History_entry *entry=SHIST_GetCurrent(&source->hist);
+    if(entry && entry->method==URL_POST_METHOD && entry->address && !strcmp(entry->address,address)) return 0;
+    char *path=WH_TempName(xpTemporary,"src");if(!path) return 0;
+    /* The colored-source converter rewrites cached presentation metadata.
+     * External viewers need a fresh raw GET, rather than that presentation. */
+    uint32 id=start_download(NET_CreateURLStruct(address,NET_SUPER_RELOAD),path,FO_SAVE_AS,program);
+    if(!id) DeleteFileA(path);free(path);return id;
 }
 
 extern "C" int WFE_DownloadCancel(uint32 id)

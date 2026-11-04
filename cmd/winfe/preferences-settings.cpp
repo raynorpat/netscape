@@ -2,6 +2,7 @@
 #include "frontend.h"
 #include "preferences.h"
 #include "glhist.h"
+#include "applications.h"
 #include <shlwapi.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -94,6 +95,8 @@ bool WFE_ValidateGeneralPreferences(const GeneralPreferences &p, std::string *er
     }
     if (!wfe_valid_languages(p.languages))
         return wfe_preference_error(error, "Use unique language tags with letters, digits and single hyphens.");
+    if(!WFE_ValidateApplication(p.telnet_application,error) || !WFE_ValidateApplication(p.tn3270_application,error) ||
+        !WFE_ValidateApplication(p.source_application,error) || !WFE_ValidateTemporaryDirectory(p.temporary_directory,error)) return false;
     return true;
 }
 
@@ -121,6 +124,7 @@ static void wfe_apply_general(void)
     if(wfe_general.background_image && SUCCEEDED(UrlCreateFromPathA(wfe_general.background_file.c_str(),background_url,&url_size,0)))
         LO_SetDefaultBackdrop(background_url);
     else LO_SetDefaultBackdrop(NULL);
+    WFE_ApplyTemporaryDirectory(wfe_general.temporary_directory.c_str());
     GH_SetGlobalHistoryTimeout(wfe_general.expire ? (int32)wfe_general.days * 86400 : -1);
     wfe_languages = wfe_join_languages(wfe_general.languages);
 }
@@ -189,6 +193,10 @@ extern "C" int WFE_PreferencesInit(void)
     p.dither = wfe_read_int("Dither", p.dither, 0, 2);
     p.incremental = wfe_read_int("Incremental", p.incremental, 0, 1) != 0;
     std::string value;
+    if(wfe_read_string("General","TelnetApplication",value) && WFE_ValidateApplication(value,NULL)) p.telnet_application=value;
+    if(wfe_read_string("General","TN3270Application",value) && WFE_ValidateApplication(value,NULL)) p.tn3270_application=value;
+    if(wfe_read_string("General","SourceApplication",value) && WFE_ValidateApplication(value,NULL)) p.source_application=value;
+    if(wfe_read_string("General","TemporaryDirectory",value) && WFE_ValidateTemporaryDirectory(value,NULL)) p.temporary_directory=value;
     if(wfe_read_string("General","BackgroundFile",value) && wfe_safe_string(value,MAX_PATH,true)) p.background_file=value;
     if(p.background_image) {
         std::string problem;
@@ -295,7 +303,11 @@ bool WFE_SaveGeneralPreferences(const GeneralPreferences &p, std::string *error)
             wfe_write_string(temporary, "General", "Proportional", p.proportional) &&
             wfe_write_string(temporary, "General", "Fixed", p.fixed) &&
             wfe_write_string(temporary, "General", "Languages", wfe_join_languages(p.languages)) &&
-            wfe_write_string(temporary, "General", "BackgroundFile", p.background_file);
+            wfe_write_string(temporary, "General", "BackgroundFile", p.background_file) &&
+            wfe_write_string(temporary, "General", "TelnetApplication", p.telnet_application) &&
+            wfe_write_string(temporary, "General", "TN3270Application", p.tn3270_application) &&
+            wfe_write_string(temporary, "General", "SourceApplication", p.source_application) &&
+            wfe_write_string(temporary, "General", "TemporaryDirectory", p.temporary_directory);
         /* The cache-flush form can return zero even after a successful write.
          * Check the actual file flush below before replacing the destination. */
         if (ok) WritePrivateProfileStringA(NULL, NULL, NULL, temporary);

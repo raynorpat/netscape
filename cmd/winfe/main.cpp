@@ -3100,6 +3100,8 @@ static int WFE_RunWorkflowSmoke(const char *report,const char *url,const char *d
 
 #include "background-smoke.inc"
 
+#include "applications-smoke.inc"
+
 class NetscapeApplication : public CWinApp {
 public:
     BOOL ProcessMessageFilter(int code,LPMSG message) override {
@@ -3121,7 +3123,7 @@ public:
         POSITION position = arguments.GetHeadPosition();
         bool explicit_command=position!=nullptr;
         CString first = position ? arguments.GetNext(position) : "about:";
-        smoke_mode = first == "--background-smoke" || first == "--background-reopen-smoke" || first == "--dividers-smoke" || first == "--links-smoke" || first == "--interaction-smoke" || first == "--printing-smoke" || first == "--smoke-test" || first == "--mailnews-smoke" || first == "--composer-delivery-smoke"
+        smoke_mode = first == "--applications-smoke" || first == "--applications-reopen-smoke" || first == "--background-smoke" || first == "--background-reopen-smoke" || first == "--dividers-smoke" || first == "--links-smoke" || first == "--interaction-smoke" || first == "--printing-smoke" || first == "--smoke-test" || first == "--mailnews-smoke" || first == "--composer-delivery-smoke"
             || first == "--images-smoke" || first == "--forms-smoke" || first == "--frames-smoke" || first == "--downloads-smoke" || first == "--history-smoke" || first == "--history-reopen-smoke" || first == "--bookmarks-smoke" || first == "--chrome-smoke" || first == "--ui-gallery" || first == "--preferences-ui-smoke" || first == "--preferences-reopen-smoke" || first == "--news-ui-smoke" || first == "--mail-ui-smoke" || first == "--compose-ui-smoke"
 #ifdef EDITOR
             || first == "--editor-smoke"
@@ -3151,7 +3153,8 @@ public:
             }
             else
 #endif
-            if(first=="--background-smoke" || first=="--background-reopen-smoke") {CString image=position?arguments.GetNext(position):"";m_nExitCode=WFE_RunBackgroundSmoke(report,url,image,first=="--background-reopen-smoke");}
+            if(first=="--applications-smoke" || first=="--applications-reopen-smoke") {CString program=position?arguments.GetNext(position):"",temporary=position?arguments.GetNext(position):"";m_nExitCode=WFE_RunApplicationsSmoke(report,url,program,temporary,first=="--applications-reopen-smoke");}
+            else if(first=="--background-smoke" || first=="--background-reopen-smoke") {CString image=position?arguments.GetNext(position):"";m_nExitCode=WFE_RunBackgroundSmoke(report,url,image,first=="--background-reopen-smoke");}
             else if(first=="--dividers-smoke") m_nExitCode=WFE_RunDividerSmoke(report,url);
             else if(first=="--links-smoke") m_nExitCode=WFE_RunLinkSmoke(report,url);
             else if(first=="--interaction-smoke") m_nExitCode=WFE_RunInteractionSmoke(report,url);

@@ -13,6 +13,7 @@
 
 static char wfe_profile[MAX_PATH];
 static char wfe_cache[MAX_PATH];
+static char wfe_selected_temp[MAX_PATH];
 static char wfe_temp[MAX_PATH];
 static char wfe_history[MAX_PATH];
 static int wfe_initialized;
@@ -116,6 +117,21 @@ int WFE_PlatformInit(void)
 }
 
 const char *WFE_ProfileDirectory(void) { return wfe_profile; }
+const char *WFE_DefaultTemporaryDirectory(void) { return wfe_temp; }
+int WFE_TestTemporaryDirectory(const char *directory)
+{
+    char probe[MAX_PATH];DWORD attributes=directory?GetFileAttributesA(directory):INVALID_FILE_ATTRIBUTES;
+    if(attributes==INVALID_FILE_ATTRIBUTES || !(attributes&FILE_ATTRIBUTE_DIRECTORY) || strlen(directory)+14>=MAX_PATH) return 0;
+    if(!GetTempFileNameA(directory,"chk",0,probe)) return 0;
+    return DeleteFileA(probe)!=FALSE;
+}
+void WFE_ApplyTemporaryDirectory(const char *directory)
+{
+    DWORD attributes=directory&&*directory?GetFileAttributesA(directory):INVALID_FILE_ATTRIBUTES;
+    if(attributes!=INVALID_FILE_ATTRIBUTES && (attributes&FILE_ATTRIBUTE_DIRECTORY) && strlen(directory)+14<MAX_PATH) {
+        strcpy(wfe_selected_temp,directory);FE_TempDir=wfe_selected_temp;
+    } else FE_TempDir=wfe_temp;
+}
 
 static char *wfe_full_path(const char *name)
 {

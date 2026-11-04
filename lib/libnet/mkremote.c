@@ -11,6 +11,9 @@
 #include "glhist.h"
 #include "mkgeturl.h"   /* for URL types */
 #include "merrors.h"
+#ifdef XP_WIN
+extern int MK_MALFORMED_URL_ERROR;
+#endif
 
 /*
  * begin a session with a remote host.
@@ -74,11 +77,23 @@ NET_RemoteHostLoad (ActiveEntry  * cur_entry)
              * only allow alphanums
              */
             for(cp=username; *cp != '\0'; cp++)
+#ifdef XP_WIN
+                /* Native Windows launchers pass separate argv and support
+                 * ordinary dotted/dashed logins. Reject invalid input rather
+                 * than silently launching a different, truncated username. */
+                if(!isalnum((unsigned char)*cp) && *cp!='.' && *cp!='_' && *cp!='-')
+                  {
+                    cur_entry->status=MK_MALFORMED_URL_ERROR;
+                    XP_FREE(host_string);
+                    return -1;
+                  }
+#else
                 if(!isalnum(*cp))
                   {
                     *cp = '\0';
                     break;
                   }
+#endif
 		  }
 
 		/* now sanity check the hostname part

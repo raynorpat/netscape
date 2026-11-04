@@ -57,3 +57,21 @@ Task 1 verification: standard Debug 22/22 (97.26s), Gold Debug background,
 preferences and editor 3/3 (19.86s). Actual background pixels, restart/fallback,
 Colors capture and saved Gold HTML were inspected. Final Release verification
 follows Task 2.
+
+Task 2 verification before the shared gray fix: standard Debug 23/23 passed
+(113.11s). Review found long staging paths and truncated terminal usernames;
+new native regressions reproduced both. Short atomic staging names and the
+Windows username parser fix pass the Apps/download fixtures (15.43s), followed
+by the maximal-directory and encoded-invalid-login cases. External source uses
+a fresh raw GET after a colored internal source view; a cached presentation
+can otherwise stall the legacy source-copy stream. Final full configurations
+will run after the requested shared gray-color item.
+
+## Task 3: Consistent classic gray (user follow-up)
+
+- [ ] Add native pixel assertions for tab panels, dialog margins and standard
+  button faces; preserve white edit/list surfaces and custom color swatches.
+- [ ] Make shared classic styling render native UI face colors as #C0C0C0
+  locally, including print/capture paths, without changing desktop system colors.
+- [ ] Check keyboard/mouse behavior and native captures, run complete standard
+  and Gold Debug/Release suites, refresh packages and commit separately.

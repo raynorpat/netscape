@@ -1,6 +1,7 @@
 /* Optional user-interface services for the 3.02 browser frontend. */
 #include "frontend.h"
 #include "preferences.h"
+#include "applications.h"
 #include "downloads.h"
 #include "mailsettings.h"
 #include "bkmks.h"
@@ -179,8 +180,7 @@ char *FE_LockTable(char **handle)
 void FE_ConnectToRemoteHost(MWContext *context, int type, char *host,
                           char *port, char *user)
 {
-    (void)type; (void)host; (void)port; (void)user;
-    WFE_Unsupported(context, "Telnet, TN3270 and rlogin sessions");
+    if(!WFE_TerminalApplication(context,type,host,port,user)) WFE_Unsupported(context, "rlogin sessions");
 }
 
 Bool FE_SecurityDialog(MWContext *context, int message)

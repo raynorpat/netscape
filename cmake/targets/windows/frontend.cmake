@@ -13,6 +13,7 @@ add_executable(netscape-win32 WIN32
  "${PROJECT_SOURCE_DIR}/cmd/winfe/mailui.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/find.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/browser-links.cpp"
+ "${PROJECT_SOURCE_DIR}/cmd/winfe/applications.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/frame-divider.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/printing.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/frontend.c"
@@ -174,4 +175,14 @@ if(BUILD_TESTING)
   "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_background.py"
   --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/background-test")
  set_tests_properties(windows_background_preferences PROPERTIES TIMEOUT 170)
+endif()
+
+if(BUILD_TESTING)
+ add_executable(netscape_windows_application_probe WIN32 "${PROJECT_SOURCE_DIR}/cmake/tests/windows_application_probe.c")
+ set_property(TARGET netscape_windows_application_probe PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+ add_test(NAME windows_supporting_applications COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_applications.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --probe "$<TARGET_FILE:netscape_windows_application_probe>"
+  --output "${PROJECT_BINARY_DIR}/applications-test")
+ set_tests_properties(windows_supporting_applications PROPERTIES TIMEOUT 230)
 endif()

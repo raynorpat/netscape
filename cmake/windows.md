@@ -709,3 +709,31 @@ without rewriting the saved preferences. GIF/JPEG/XBM decoding uses the original
 image engine. The background fixture checks actual tiled GDI pixels, persistence
 across processes, failed saves, invalid files and removal; Gold additionally
 checks that a user backdrop is absent from the editor's document properties.
+
+## Supporting applications
+
+The classic Apps page now saves Telnet, TN3270 and View Source executable paths
+and an existing writable temporary directory. Browse selects a Windows .exe;
+fields accept executable paths without shell command templates. Terminal clients
+receive `[-l username] host [port]` as distinct arguments and must support that
+convention. Dotted, dashed and underscored logins are preserved on Windows;
+invalid login characters are rejected instead of silently truncating the name.
+Rlogin remains unavailable.
+
+A configured source viewer receives a temporary file only after a fresh raw GET
+finishes and the checked download stream validates its result. POST responses
+are not resubmitted. Blank View Source retains the original engine's separate
+named colored-source window. External source retrieval inherits the download
+engine's content/transfer-encoding limits. Successful source copies remain in
+the selected temporary directory so applications that hand off to another
+process can still read them; failed/canceled copies are removed. Browser closure
+and later directory changes do not invalidate an active source job.
+
+Cancel and failed preference writes retain active settings. Missing configured
+applications fall back to unconfigured/internal behavior at startup. A missing
+temporary directory falls back to the profile-local temp folder without changing
+the saved INI. Native fixtures launch a controlled child executable and check
+actual arguments, source bytes, encoded-invalid logins, 245-character directory
+paths, truncation/cancellation, failed launch, POST protection, browser closure,
+temp-directory switching and restart persistence/fallback. Third-party terminal
+and source-viewer applications have not been exercised.

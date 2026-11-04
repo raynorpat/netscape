@@ -16,6 +16,7 @@ struct GeneralPreferences {
     bool background_custom = false, override_colors = false;
     bool background_image = false;
     std::string background_file;
+    std::string telnet_application,tn3270_application,source_application,temporary_directory;
     unsigned long colors[4] = {0xffffff, 0x000000, 0xff0000, 0x800080}; /* COLORREF: background,text,link,visited */
     int dither = 0; /* automatic, dither, closest */
     bool incremental = true;

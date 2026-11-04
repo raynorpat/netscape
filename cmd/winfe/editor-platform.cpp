@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include "editor.h"
+#include "editor-preferences.h"
 #include "preferences.h"
 #include "images.h"
 extern "C" {
@@ -302,7 +303,7 @@ extern "C" void FE_GetDocAndWindowPosition(MWContext *context, int32 *x, int32 *
 extern "C" MWContext *FE_CreateNewEditWindow(MWContext *, URL_Struct *url)
 { return WFE_NewEditorWindow(url ? url->address : nullptr); }
 extern "C" void FE_EditFormattingUpdate(MWContext *context) { WFE_EditorFormattingChanged(context); }
-extern "C" void FE_EditorDocumentLoaded(MWContext *context) { WFE_EditorDocumentLoaded(context); }
+extern "C" void FE_EditorDocumentLoaded(MWContext *context) { WFE_EditorCopyLoaded(context); WFE_EditorApplyPreferences(context,context->is_new_document!=FALSE); WFE_EditorDocumentLoaded(context); }
 
 extern "C" void FE_SetNewDocumentProperties(MWContext *context)
 {
@@ -390,7 +391,9 @@ extern "C" int WFE_EditorSave(MWContext *context, const char *path, int save_as)
     EditorPlatform &data = editors[context];
     std::string destination = path ? path : "";
     if (!path && !save_as && !context->is_new_document) {
-        destination = data.saved.empty() ? local_path(WFE_CurrentDocumentURL(context)) : data.saved;
+        /* Navigation can reuse this context; its last successful save may
+         * belong to a different document. The current URL is authoritative. */
+        destination = local_path(WFE_CurrentDocumentURL(context));
     }
     if (destination.empty()) {
         CFileDialog dialog(FALSE, "html", "Untitled.html", OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY | OFN_NOCHANGEDIR,
@@ -407,11 +410,10 @@ extern "C" int WFE_EditorSave(MWContext *context, const char *path, int save_as)
     data.completed = 0; data.dirty = EDT_DirtyFlag(context) != FALSE; data.saving = true;
     FE_SaveDialogCreate(context, 1, FALSE);
     FE_SaveDialogSetFilename(context, const_cast<char *>(destination.c_str()));
-    EDT_PageData *page = EDT_GetPageData(context);
-    XP_Bool images = page ? page->bKeepImagesWithDoc : TRUE;
-    if (page) EDT_FreePageData(page);
+    EditorPreferences preferences=WFE_EditorPreferencesRead();
+    XP_Bool images=preferences.keep_images;
     ED_FileError result = EDT_SaveFile(context, const_cast<char *>(source.c_str()), const_cast<char *>(url.c_str()),
-                                     save_as || context->is_new_document, images, TRUE);
+                                     save_as || context->is_new_document, images, preferences.maintain_links);
     if (result != ED_ERROR_NONE) data.status = result;
     finish_save(context);
     return data.saving || data.status == ED_ERROR_NONE ? 1 : data.status == ED_ERROR_CANCEL ? 0 : -1;

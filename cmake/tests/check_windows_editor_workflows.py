@@ -26,7 +26,7 @@ def main():
     values = dict(line.split('=', 1) for line in report.read_text().splitlines() if '=' in line) if report.exists() else {}
     required = ['workflow_browser', 'workflow_preferences', 'workflow_cancel', 'workflow_validation',
                 'workflow_autosave', 'workflow_autosave_write', 'workflow_template', 'workflow_template_unchanged',
-                'workflow_wizard', 'workflow_quote', 'workflow_restore', 'workflow_original_distinct']
+                'workflow_wizard', 'workflow_quote', 'workflow_restore', 'workflow_original_distinct', 'workflow_save_identity']
     assert result.returncode == 0, (result.returncode, values, result.stderr)
     assert all(values.get(key) == '1' for key in required), values
     assert values.get('editor_workflows') == 'pass', values

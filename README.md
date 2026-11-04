@@ -34,7 +34,10 @@ Native Win32 core libraries, NSPR and MFC browser/mail/news windows are availabl
 including image rendering, HTML forms, message reading and composition. The
 optional `NETSCAPE_BUILD_WINDOWS_EDITOR=ON` configuration adds the original Gold
 HTML editing engine and a native editor opened with `--edit [path]`; use a
-separate `out/windows-gold` build directory. Gold runtime verification is pending.
+separate `out/windows-gold` build directory. Native print/preview, Editor
+Preferences, independent templates, an offline wizard and HTTP/FTP publishing
+are available. Debug/Release regression and installed-workflow checks are
+recorded in the Windows guide.
 See [cmake/windows.md](cmake/windows.md) for MSVC build commands, runtime tests,
 the recovered 1998 Windows frontend source, and remaining integration work.
 

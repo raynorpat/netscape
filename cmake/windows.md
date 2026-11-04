@@ -168,7 +168,7 @@ and a Windows caret. `editor-ui.cpp` supplies native commands and property
 dialogs; `editor-platform.cpp` supplies the original editor frontend callbacks,
 local file saving and cancellable progress. Save calls `EDT_SaveFile`, including
 its image/link handling and backup transaction; failed or cancelled saves retain
-unsaved changes in the editor. Publishing is disabled.
+unsaved changes in the editor. Publishing uses the native workflow described below.
 
 The interface transcribes Gold RT_MENU 101 for the editor and RT_MENU 2 for its
 browser. It has three icon-only bars, paragraph and size selectors, a 104px
@@ -183,8 +183,8 @@ The native command surface includes text entry and selection, clipboard editing,
 undo/redo, basic character and paragraph formatting, lists/alignment, local
 Save/Save As and browser preview. Insert/property dialogs expose links, images,
 targets, HTML tags, horizontal rules, tables and document/text properties.
-Printing, publishing, templates, the page wizard, advanced editor preferences
-and external source editing remain visibly disabled.
+Printing, publishing, templates, an offline page wizard, Editor Preferences and
+external HTML source editing are now connected to native Windows workflows.
 
 The Gold-specific `windows_gold_editor` fixture is registered when testing and
 the editor option are enabled. On 2026-11-04, all eighteen Gold CTests passed in
@@ -207,6 +207,70 @@ Advanced property-dialog equivalence, asynchronous image-save cancellation,
 high-DPI behavior and non-Latin-1 editing remain unverified. The limited original Gold observations are recorded in
 [windows-reference.md](windows-reference.md).
 
+## Gold completion workflows
+
+File > Page Setup, Print and Print Preview use the current LO document and GDI
+drawing commands. Preview records vector EMF pages, with Next/Previous and zoom;
+the same pages feed the Windows printer dialog and spooler. Paper, orientation
+and margins persist atomically in `printing.ini`. The current document width is
+fitted to paper; ordinary lines/images move to the next page rather than being
+cut, while objects taller than a page can span pages. The live editor's selection,
+scroll and dirty state are preserved. Browser, focused frame and Mail/News reader
+views share printing; message-composition printing remains separate work.
+Preview works without an installed printer. Physical printer-driver output has
+not been exercised by these tests.
+
+Options > Editor Preferences uses the original Gold General/Publish dialog
+templates. Author, local template, external application paths, autosave interval,
+link/image save policy, publishing/browse locations and username persist in
+`gold-editor.ini`. Cancel retains the previous values. Save failures leave
+settings unchanged. Passwords are not written to preferences. The original EDT
+autosave callback saves an existing local document; unsaved documents retain the
+engine's filename/save prompt behavior.
+
+File > New Document > From Template opens an independent unsaved editor copy.
+Its source URL remains the base for relative assets; ordinary Save asks for a new
+filename. Opening the original separately does not activate or overwrite that
+copy. From Wizard provides a labeled native offline builder for title, text,
+layout and background color; it retains a button for the historical hosted
+wizard. Web Page Starter supplies an offline guide. These replace unavailable
+hosted content and are not copies of the original online services.
+
+Edit HTML Source saves with EDT, launches the configured executable with the
+filename passed as data, and offers to import the edited temporary copy into a
+new unsaved editor. The current document is retained. Declining import retains
+the temporary file and reports its location. External editor configuration takes
+an executable path, not shell commands or argument templates; Windows argument
+quoting is covered. External image-editor launching and every third-party editor
+interaction remain outside runtime coverage.
+
+Publish first saves the current EDT HTML locally, then offers its associated
+sibling assets, optional other files from the same directory, destination,
+credentials and progress/cancel controls. The original HTTP PUT/FTP backends
+upload assets before the referring HTML. Only HTTP and FTP publishing are
+enabled; HTTPS requires the separate security port. Failed/cancelled uploads
+retain local work and allow retry. Remote uploads are not atomic: earlier files
+may already exist on the server when a later transfer fails or is cancelled.
+Passwords are cleared from the dialog, never persisted to settings, and cached
+HTTP credentials are wiped at network shutdown.
+
+The new fixtures inspect actual vector text and printed form values/password
+masking, preview controls, owner-close cancellation, preferences controls and
+persistence, template independence, wizard output and actual EDT autosave.
+Loopback HTTP/FTP fixtures verify exact HTML/assets/empty files, native Publish
+controls, final server rejection, cancel/retry and reserved-character HTTP
+credentials. Native General/Publish/Preview/Publish Document captures were
+inspected at 96 DPI. All twenty-one Gold tests and eighteen standard-edition tests
+passed in Win32 Debug and Release with MSVC 19.51. After the final Save-path
+correction, the affected editor/workflow/publishing tests passed again in both
+configurations. The regression verifies that navigating an editor and saving
+does not overwrite its previously saved document. The earlier
+eighteen/seventeen-test results above describe the initial editor milestone.
+
+The installed Release executable passed printing, authoring-workflow,
+publishing and original-editor fixtures from a path containing spaces. The
+updated Gold ZIP contains that verified executable and the resource provenance.
+
 ## Classic Windows interface
 
 The browser now follows the supplied Navigator reference: raised icon/text
@@ -227,7 +291,7 @@ Find (Ctrl+F) uses the original layout search and selection APIs, with case,
 direction and wrap options. It retains the focused document when a toolbar
 button takes focus, including nested frames. Copy and Select All use native
 edit controls or layout selections as appropriate. Full mouse text-selection
-work remains separate. Print is visibly disabled. Gold page editing is available
+work remains separate. Native document printing is available. Gold page editing is available
 in the optional editor configuration above; it remains disabled in the standard
 build. Images is disabled because images already load automatically.
 
@@ -374,7 +438,7 @@ columns resize with the window. Original folder/envelope/flag artwork, Sender,
 status, Subject and Date columns, sorting, Previous/Next, normal/all headers,
 selected-message titles and mailbox counts use the original backend state.
 Plain text messages use Courier New, and borderless MIME header tables retain
-their intended appearance. Print stays disabled.
+their intended appearance. Reader printing uses the shared native vector workflow.
 
 `windows_mail_layout` seeds two real MIME messages in an isolated profile and
 checks native selection, decoded reader text, Previous/Next, reader scrolling,

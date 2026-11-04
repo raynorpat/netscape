@@ -18,48 +18,54 @@ plaintext settings. Parent owns shared integration, GUI tests and commits.
 
 ## Item 1: Printing, Page Setup and Preview
 
-- [ ] Add a failing native smoke for multipage vector output and invalid margins.
-- [ ] Implement `printing.cpp/.h`: native printer/page setup dialogs, paginated
+- [x] Add a failing native smoke for multipage vector output and invalid margins.
+- [x] Implement `printing.cpp/.h`: native printer/page setup dialogs, paginated
   EMF preview, checked print/cancel paths and profile persistence.
-- [ ] Add `WFE_PrintDocumentSize` and `WFE_PrintDocumentPage` adapters in main.cpp
+- [x] Add `WFE_PrintDocumentSize` and `WFE_PrintDocumentPage` adapters in main.cpp
   that paint the original LO document without mutating selection, scroll or dirty
   state. Wire browser/Mail/News/Gold commands and available-state updates.
-- [ ] Verify vector records, page ordering/ranges, preview, setup cancellation,
+- [x] Verify vector records, page ordering/ranges, preview, setup cancellation,
   actual document content and state retention; run affected suites and commit.
 
 ## Item 2: Preferences, Templates and Page Wizard
 
-- [ ] Add failing workflow tests for preference persistence/cancel and independent
+- [x] Add failing workflow tests for preference persistence/cancel and independent
   template documents. Use literal fixture HTML as the input and inspect EDT output.
-- [ ] Implement `editor-preferences.cpp/.h` and `editor-create.cpp/.h`: classic
+- [x] Implement `editor-preferences.cpp/.h` and `editor-create.cpp/.h`: classic
   preferences, author/autosave/save policy, template and publishing locations,
   native template/page creation and safe external source editing.
-- [ ] Apply preferences at document load/new document and save; open copies as
+- [x] Apply preferences at document load/new document and save; open copies as
   new documents so saving cannot overwrite the original template.
-- [ ] Exercise native controls, validation/cancel, cross-process persistence,
+- [x] Exercise native controls, validation/cancel, cross-process persistence,
   template independence, wizard HTML and autosave; enable menu items and commit.
 
 ## Item 3: Publishing
 
-- [ ] Add a loopback fixture that fails while Publish is unavailable, then
+- [x] Add a loopback fixture that fails while Publish is unavailable, then
   captures original netlib HTTP/FTP uploads and actual EDT HTML/assets.
-- [ ] Implement `editor-publish.cpp/.h`: destination/file selection, progress,
+- [x] Implement `editor-publish.cpp/.h`: destination/file selection, progress,
   cancellation, checked completion, retry and safe context teardown.
-- [ ] Preserve local editor address and unsaved content through failed/cancelled
+- [x] Preserve local editor address and unsaved content through failed/cancelled
   uploads. Persist nonsecret destinations only; use native credential prompts.
-- [ ] Verify exact bytes, failures, cancellation/retry and editor closure; wire
+- [x] Verify exact bytes, failures, cancellation/retry and editor closure; wire
   Publish/browse-location commands and commit.
 
 ## Final verification
 
-- [ ] Compare enabled compiled menus with original resource inventories; retain
+- [x] Compare enabled compiled menus with original resource inventories; retain
   disabled states only for facilities still unavailable in this build.
-- [ ] Run Win32 standard and Gold Debug/Release regression suites, review native
+- [x] Run Win32 standard and Gold Debug/Release regression suites, review native
   captures, verify installed executable and refresh the Gold ZIP.
-- [ ] Update the Windows roadmap/reference/build guide with actual coverage and
+- [x] Update the Windows roadmap/reference/build guide with actual coverage and
   remaining limits, and verify the worktree is clean after item commits.
 
 Review focus: printing must retain editor state; print ranges must not duplicate
 pages; failed preference writes must not apply settings; templates must never
 be overwritten by ordinary Save; cancellation/closure during network callbacks
 must not dereference a destroyed editor or report a partial upload as success.
+
+Verification: Gold 21/21 and standard 18/18 in both Debug and Release. Final
+Save-path regressions passed again in both configurations; installed printing,
+preferences/templates/wizard, publishing and EDT fixtures passed. Native dialog
+captures and independent code review completed. Physical printer output and
+third-party editor applications were not exercised.

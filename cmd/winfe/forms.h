@@ -12,6 +12,7 @@ void WFE_FormSetToggle(MWContext *, LO_FormElementStruct *, XP_Bool);
 void WFE_FormFree(MWContext *, LO_FormElementData *);
 void WFE_FormTextIsSubmit(MWContext *, LO_FormElementStruct *);
 void WFE_FormDisplay(MWContext *, int location, LO_FormElementStruct *);
+void WFE_FormPrint(MWContext *, LO_FormElementStruct *);
 void WFE_FormImageSubmit(MWContext *, LO_ImageStruct *, int32 x, int32 y);
 void WFE_FormPositionAll(MWContext *);
 void WFE_FormForgetContext(MWContext *);

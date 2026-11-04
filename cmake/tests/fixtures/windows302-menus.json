@@ -88,21 +88,21 @@
               "original_flags": 0,
               "original_id": 57605,
               "command": "ID_MENU_PAGE_SETUP",
-              "disabled": true
+              "disabled": false
             },
             {
               "label": "&Print...",
               "original_flags": 0,
               "original_id": 57607,
               "command": "ID_BROWSER_PRINT",
-              "disabled": true
+              "disabled": false
             },
             {
               "label": "Print Pre&view",
               "original_flags": 0,
               "original_id": 57609,
               "command": "ID_MENU_PRINT_PREVIEW",
-              "disabled": true
+              "disabled": false
             },
             {
               "label": "",
@@ -932,7 +932,7 @@
               "original_flags": 0,
               "original_id": 57605,
               "command": "ID_MENU_PAGE_SETUP",
-              "disabled": true
+              "disabled": false
             },
             {
               "label": "&Print...\tCtrl+P",
@@ -946,7 +946,7 @@
               "original_flags": 0,
               "original_id": 57609,
               "command": "ID_MENU_PRINT_PREVIEW",
-              "disabled": true
+              "disabled": false
             },
             {
               "label": "",
@@ -2032,7 +2032,7 @@
               "original_flags": 0,
               "original_id": 57605,
               "command": "ID_MENU_PAGE_SETUP",
-              "disabled": true
+              "disabled": false
             },
             {
               "label": "&Print Message(s)\tCtrl+P",
@@ -2046,7 +2046,7 @@
               "original_flags": 0,
               "original_id": 57609,
               "command": "ID_MENU_PRINT_PREVIEW",
-              "disabled": true
+              "disabled": false
             },
             {
               "label": "",

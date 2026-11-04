@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include "forms.h"
+#include "images.h"
 extern "C" {
 #include "proto.h"
 #include "shist.h"
@@ -371,6 +372,51 @@ extern "C" void WFE_FormDisplay(MWContext *context, int, LO_FormElementStruct *e
     form->element = element;
     form->displayed = true;
     position_control(form);
+}
+
+extern "C" void WFE_FormPrint(MWContext *context,LO_FormElementStruct *element)
+{
+    if(!element || !element->element_data) return;
+    int x=element->x+element->x_offset,y=element->y+element->y_offset;
+    WFE_RecordPrintSpan(context,y,element->height);
+    HDC dc=WFE_DrawingContext(context);if(!dc) return;
+    NativeForm *form=form_for(element->element_data);if(!form || !IsWindow(form->window)) return;
+    RECT area={x,y,x+form->width,y+form->height};
+    int saved=SaveDC(dc);if(!saved) return;
+    HGDIOBJ font=(HGDIOBJ)SendMessage(form->window,WM_GETFONT,0,0);if(font) SelectObject(dc,font);
+    SetTextColor(dc,RGB(0,0,0));SetBkColor(dc,RGB(255,255,255));SetBkMode(dc,TRANSPARENT);
+    int type=form->data->type;
+    char kind[32]={};GetClassNameA(form->window,kind,sizeof(kind));
+    if(!_stricmp(kind,"ListBox")) {
+        FillRect(dc,&area,(HBRUSH)GetStockObject(WHITE_BRUSH));FrameRect(dc,&area,(HBRUSH)GetStockObject(BLACK_BRUSH));
+        RECT inside=area;InflateRect(&inside,-2,-2);IntersectClipRect(dc,inside.left,inside.top,inside.right,inside.bottom);
+        int count=(int)SendMessage(form->window,LB_GETCOUNT,0,0);
+        int first=(std::max)(0,(int)SendMessage(form->window,LB_GETTOPINDEX,0,0));
+        int line=(std::max)(1,(int)SendMessage(form->window,LB_GETITEMHEIGHT,first,0));
+        bool multiple=(GetWindowLong(form->window,GWL_STYLE)&(LBS_MULTIPLESEL|LBS_EXTENDEDSEL))!=0;
+        int current=(int)SendMessage(form->window,LB_GETCURSEL,0,0);
+        for(int row=first,yrow=inside.top;row<count && yrow<inside.bottom;++row,yrow+=line) {
+            int length=(int)SendMessage(form->window,LB_GETTEXTLEN,row,0);
+            if(length<0 || length>maximum_text) continue;
+            std::vector<char> text(length+1);SendMessage(form->window,LB_GETTEXT,row,(LPARAM)text.data());
+            RECT item={inside.left,yrow,inside.right,yrow+line};
+            bool selected=multiple?SendMessage(form->window,LB_GETSEL,row,0)>0:row==current;
+            if(selected) {HBRUSH brush=CreateSolidBrush(RGB(210,210,210));FillRect(dc,&item,brush);DeleteObject(brush);}
+            item.left+=2;DrawTextA(dc,text.data(),length,&item,DT_SINGLELINE|DT_VCENTER|DT_NOPREFIX);
+        }
+    } else if(type==FORM_TYPE_CHECKBOX || type==FORM_TYPE_RADIO) {
+        UINT state=type==FORM_TYPE_RADIO?DFCS_BUTTONRADIO:DFCS_BUTTONCHECK;
+        if(SendMessage(form->window,BM_GETCHECK,0,0)==BST_CHECKED) state|=DFCS_CHECKED;
+        DrawFrameControl(dc,&area,DFC_BUTTON,state);
+    } else {
+        int length=(std::min)(GetWindowTextLengthA(form->window),maximum_text);
+        std::vector<char> text(length+1);GetWindowTextA(form->window,text.data(),(int)text.size());
+        if(type==FORM_TYPE_PASSWORD) std::fill(text.begin(),text.end()-1,'*');
+        FillRect(dc,&area,(HBRUSH)GetStockObject(WHITE_BRUSH));FrameRect(dc,&area,(HBRUSH)GetStockObject(BLACK_BRUSH));
+        InflateRect(&area,-3,-2);
+        DrawTextA(dc,text.data(),-1,&area,DT_NOPREFIX|(type==FORM_TYPE_TEXTAREA?DT_WORDBREAK:DT_SINGLELINE|DT_VCENTER));
+    }
+    RestoreDC(dc,saved);
 }
 
 extern "C" void WFE_FormPositionAll(MWContext *context)

@@ -26,6 +26,8 @@ void WFE_ConfigureChrome(MWContext *context,const Chrome *chrome);
 MWContext *WFE_NewWindow(const char *address);
 void WFE_BeginLoad(MWContext *context, const char *address);
 HWND WFE_DocumentWindow(MWContext *context);
+int WFE_IsPrinting(MWContext *context);
+void WFE_RecordPrintSpan(MWContext *context,int y,int height);
 void WFE_Pump(void);
 void WFE_Status(MWContext *context, const char *message);
 int WFE_Message(MWContext *context, const char *message, int confirm);

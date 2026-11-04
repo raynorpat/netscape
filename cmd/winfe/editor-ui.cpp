@@ -2,6 +2,9 @@
 #include "editor.h"
 #ifdef EDITOR
 #include "editor_resource.h"
+#include "printing.h"
+#include "editor-create.h"
+#include "editor-publish.h"
 #include "resource.h"
 #include "menu_resource.h"
 #include "classic.h"
@@ -437,9 +440,7 @@ bool paste_selection(MWContext *context)
 bool unavailable(UINT command)
 {
     switch(command) {
-    case ID_EDITOR_PUBLISH:case ID_EDITOR_TEMPLATE:case ID_EDITOR_WIZARD:case ID_EDITOR_PREFERENCES:
-    case ID_EDITOR_SOURCE_EDIT:case ID_EDITOR_STARTER:case ID_EDITOR_PUBLISH_LOCATION:
-    case 32810:case 57605:case 57607:case 57609:case 32884:case 32883:case 32878:case 42293:case 42294:case 32839:
+    case 32810:case 32884:case 32883:case 32878:case 42293:case 42294:case 32839:
         return true;
     }
     return (command>=33115 && command<=34377 && command!=33115 && command!=ID_EDITOR_SELECT_ALL);
@@ -461,6 +462,7 @@ extern "C" void WFE_EditorFormattingChanged(MWContext *context) {GoldChrome *ui=
 bool WFE_EditorCommand(MWContext *context,UINT command)
 {
     if(!context || !context->is_editor) return false;
+    if(WFE_PrintCommand(context,command) || WFE_EditorWorkflowCommand(context,command) || WFE_EditorPublishCommand(context,command)) return true;
     if(command==ID_WINDOW_BOOKMARKS) return WFE_WindowCommand(owner(context),command);
     if(unavailable(command)) return true;
     switch(command) {
@@ -556,6 +558,7 @@ bool WFE_EditorCommand(MWContext *context,UINT command)
 
 bool WFE_EditorUpdate(MWContext *context,CCmdUI *command)
 {
+    if(WFE_PrintUpdate(context,command) || WFE_EditorWorkflowUpdate(context,command) || WFE_EditorPublishUpdate(context,command)) return true;
     if(command->m_nID==ID_WINDOW_BOOKMARKS) return WFE_WindowUpdateCommand(owner(context),command);
     UINT id=command->m_nID;bool active=ready(context),enable=active,check=false,handled=true;
     if(unavailable(id)) enable=false;

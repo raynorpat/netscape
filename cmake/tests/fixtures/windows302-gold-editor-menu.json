@@ -42,14 +42,14 @@
                 "original_id": 34401,
                 "label": "From &Template",
                 "command": "34401",
-                "disabled": true
+                "disabled": false
               },
               {
                 "original_flags": 128,
                 "original_id": 65021,
                 "label": "From &Wizard...",
                 "command": "ID_EDITOR_WIZARD",
-                "disabled": true
+                "disabled": false
               }
             ]
           },
@@ -107,7 +107,7 @@
             "original_id": 42216,
             "label": "P&ublish...",
             "command": "42216",
-            "disabled": true
+            "disabled": false
           },
           {
             "original_flags": 0,
@@ -142,21 +142,21 @@
             "original_id": 57605,
             "label": "Pa&ge Setup...",
             "command": "57605",
-            "disabled": true
+            "disabled": false
           },
           {
             "original_flags": 0,
             "original_id": 57607,
             "label": "&Print...",
             "command": "57607",
-            "disabled": true
+            "disabled": false
           },
           {
             "original_flags": 0,
             "original_id": 57609,
             "label": "Print Pre&view",
             "command": "57609",
-            "disabled": true
+            "disabled": false
           },
           {
             "original_flags": 0,
@@ -370,7 +370,7 @@
             "original_id": 42217,
             "label": "&Edit Document Source",
             "command": "42217",
-            "disabled": true
+            "disabled": false
           },
           {
             "original_flags": 0,
@@ -874,7 +874,7 @@
             "original_id": 42040,
             "label": "&Editor Preferences...",
             "command": "42040",
-            "disabled": true
+            "disabled": false
           },
           {
             "original_flags": 0,
@@ -1172,7 +1172,7 @@
             "original_id": 65020,
             "label": "&Web Page Starter",
             "command": "65020",
-            "disabled": true
+            "disabled": false
           },
           {
             "original_flags": 0,

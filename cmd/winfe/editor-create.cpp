@@ -43,10 +43,10 @@ void pump()
 bool wait_ready(MWContext *context)
 {
     ULONGLONG deadline=GetTickCount64()+15000;
-    while(XP_IsContextInList(context) && !ready(context) && GetTickCount64()<deadline) {
+    while(XP_IsContextInList(context) && (!ready(context) || XP_IsContextBusy(context)) && GetTickCount64()<deadline) {
         pump();MsgWaitForMultipleObjects(0,nullptr,FALSE,10,QS_ALLINPUT);
     }
-    return ready(context);
+    return ready(context) && !XP_IsContextBusy(context);
 }
 bool save_wait(MWContext *context,const char *path,bool save_as)
 {
@@ -357,6 +357,20 @@ bool WFE_EditorWorkflowSmoke(MWContext *context,const char *report)
     MWContext *wizard=new_html(wizard_html("Offline wizard fixture","Wizard body fixture",RGB(230,240,255),1));
     bool wizard_ok=wizard && wizard->is_new_document && EDT_HaveEditBuffer(wizard)
         && save_wait(wizard,(base+".wizard.html").c_str(),true);
+    bool save_identity=false;
+    std::string old_saved,next_path=base+".next.html",next_html;
+    if(independent && read_file(copy_path,old_saved) && write_file(next_path,"<html><body>Second document</body></html>")) {
+        char url[32768];DWORD length=sizeof(url);
+        if(SUCCEEDED(UrlCreateFromPathA(next_path.c_str(),url,&length,0))) {
+            WFE_Load(copy,url);
+            if(wait_ready(copy)) {
+                EDT_EndOfDocument(copy,FALSE);char text[]="SecondDocumentEdit";EDT_PasteText(copy,text);
+                std::string retained;
+                save_identity=save_wait(copy,nullptr,false) && read_file(copy_path,retained) && retained==old_saved &&
+                    read_file(next_path,next_html) && next_html.find("SecondDocumentEdit")!=std::string::npos;
+            }
+        }
+    }
     std::string probe="C:\\Gold folder\\quoted\" argument\\";
     /* CommandLineToArgvW checks actual Windows command-line parsing rather than
      * reproducing the quoting implementation in the expected value. */
@@ -370,9 +384,10 @@ bool WFE_EditorWorkflowSmoke(MWContext *context,const char *report)
         quote_ok=probe==parsed.data();
     }
     if(argv) LocalFree(argv);
-    bool passed=preferences && browser_ok && independent && autosave_write && template_unchanged && wizard_ok && quote_ok;
+    bool passed=preferences && browser_ok && independent && autosave_write && template_unchanged && wizard_ok && quote_ok && save_identity;
     FILE *file=fopen(report,"ab");if(!file) return false;
     fprintf(file,"workflow_original_distinct=%d\n",original_distinct);
+    fprintf(file,"workflow_save_identity=%d\n",save_identity);
     fprintf(file,"workflow_browser=%d\nworkflow_template=%d\nworkflow_autosave_write=%d\nworkflow_template_unchanged=%d\nworkflow_wizard=%d\nworkflow_quote=%d\neditor_workflows=%s\n",
         browser_ok,independent,autosave_write,template_unchanged,wizard_ok,quote_ok,passed?"pass":"fail");fclose(file);
     return passed;

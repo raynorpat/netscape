@@ -345,7 +345,7 @@ void FE_ResetFormElement(MWContext *context, LO_FormElementStruct *element) { WF
 void FE_SetFormElementToggle(MWContext *context, LO_FormElementStruct *element, XP_Bool toggle) { WFE_FormSetToggle(context, element, toggle); }
 void FE_FreeFormElement(MWContext *context, LO_FormElementData *element) { WFE_FormFree(context, element); }
 void FE_FormTextIsSubmit(MWContext *context, LO_FormElementStruct *element) { WFE_FormTextIsSubmit(context, element); }
-void FE_DisplayFormElement(MWContext *context, int location, LO_FormElementStruct *element) { WFE_FormDisplay(context, location, element); }
+void FE_DisplayFormElement(MWContext *context, int location, LO_FormElementStruct *element) { if(WFE_IsPrinting(context)) WFE_FormPrint(context,element);else WFE_FormDisplay(context, location, element); }
 MWContext *FE_MakeGridWindow(MWContext *context, void *history, int32 x, int32 y, int32 width, int32 height, char *url, char *name, int8 scrolling, NET_ReloadMethod reload, Bool no_edge) { return WFE_NewGridWindow(context, history, x, y, width, height, url, name, scrolling, reload, no_edge); }
 void *FE_FreeGridWindow(MWContext *context, XP_Bool save) { return WFE_FreeGridWindow(context, save); }
 void FE_RestructureGridWindow(MWContext *context, int32 x, int32 y, int32 width, int32 height) { WFE_ResizeGridWindow(context, x, y, width, height); }

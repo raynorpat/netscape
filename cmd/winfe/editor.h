@@ -6,6 +6,8 @@
 extern "C" {
 #endif
 MWContext *WFE_NewEditorWindow(const char *address);
+MWContext *WFE_NewEditorDocument(const char *source);
+void WFE_EditorCopyLoaded(MWContext *context);
 const char *WFE_CurrentDocumentURL(MWContext *context);
 /* Save returns 1 when started, 0 for Cancel, -1 on failure. */
 int WFE_EditorSave(MWContext *context,const char *path,int save_as);

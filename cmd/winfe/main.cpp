@@ -46,9 +46,12 @@ static void invalid_parameter(const wchar_t *expression, const wchar_t *function
 #include "mailui.h"
 #include "find.h"
 #include "preferences.h"
+#include "printing.h"
 #ifdef EDITOR
 #include "editor.h"
 #include "editor_resource.h"
+#include "editor-create.h"
+#include "editor-publish.h"
 #include "edt.h"
 #endif
 #include "glhist.h"
@@ -88,6 +91,8 @@ public:
     std::map<std::string, CPoint> links;
     void Render(CDC &dc, int width, int height);
     bool selecting=false;
+    bool printing=false;
+    std::vector<std::pair<int,int>> *print_spans=nullptr;
 protected:
     BOOL OnCommand(WPARAM command, LPARAM control) override;
     afx_msg void OnPaint();
@@ -113,6 +118,7 @@ public:
     ClassicChrome chrome;
     ClassicStatusBar status;
     bool status_visible = true, editing = false;
+    bool new_document_copy=false;
     CListCtrl folders, messages;
     MailPaneUI mail_panes;
     MWContext context;
@@ -319,7 +325,22 @@ static BrowserFrame *frame_for(MWContext *context)
 }
 BOOL BrowserFrame::OnCmdMsg(UINT id,int code,void *extra,AFX_CMDHANDLERINFO *info)
 {
+    if(initialized && !info) {
+        UINT print_id=id==ID_BROWSER_PRINT?57607:id==ID_MENU_PAGE_SETUP?57605:id==ID_MENU_PRINT_PREVIEW?57609:id;
+        if(code==CN_COMMAND && WFE_PrintCommand(FocusedDocument(),print_id)) return TRUE;
+        if(code==CN_UPDATE_COMMAND_UI && extra) {
+            CCmdUI *ui=(CCmdUI *)extra;UINT original=ui->m_nID;ui->m_nID=print_id;
+            bool handled=WFE_PrintUpdate(FocusedDocument(),ui);ui->m_nID=original;
+            if(handled) return TRUE;
+        }
+    }
 #ifdef EDITOR
+    if(initialized && !info) {
+        if(code==CN_COMMAND && WFE_EditorWorkflowCommand(&context,id)) return TRUE;
+        if(code==CN_UPDATE_COMMAND_UI && extra && WFE_EditorWorkflowUpdate(&context,(CCmdUI *)extra)) return TRUE;
+        if(code==CN_COMMAND && WFE_EditorPublishCommand(&context,id)) return TRUE;
+        if(code==CN_UPDATE_COMMAND_UI && extra && WFE_EditorPublishUpdate(&context,(CCmdUI *)extra)) return TRUE;
+    }
     if(editing && initialized && !info) {
         if(code==CN_COMMAND && WFE_EditorCommand(&context,id)) return TRUE;
         if(code==CN_UPDATE_COMMAND_UI && extra && WFE_EditorUpdate(&context,(CCmdUI *)extra)) return TRUE;
@@ -1259,7 +1280,7 @@ void BrowserFrame::OnDestroy()
     KillTimer(1);
     KillTimer(2);
 #ifdef EDITOR
-    if(editing) {WFE_EditorDestroyUI(&context);WFE_EditorForget(&context);}
+    if(editing) {WFE_EditorPublishForget(&context);WFE_EditorDestroyUI(&context);WFE_EditorForget(&context);}
 #endif
     if (initialized) { initialized = false; WFE_DestroyContext(&context); }
     browser_contexts.erase(&context);
@@ -1544,6 +1565,11 @@ extern "C" void WFE_ClearBackdrop(MWContext *context, LO_ImageStruct *image)
 extern "C" void WFE_RecordImage(MWContext *context, LO_ImageStruct *image)
 {
     BrowserFrame *frame = frame_for(context);
+    if(frame && frame->view.print_spans && image) {
+        frame->view.print_spans->push_back({image->y+image->y_offset,image->height+2*image->border_width});
+        return;
+    }
+    if(frame && frame->view.printing) return;
     if (frame && std::find(frame->view.drawn_images.begin(), frame->view.drawn_images.end(), image) == frame->view.drawn_images.end())
         frame->view.drawn_images.push_back(image);
 }
@@ -1570,6 +1596,9 @@ extern "C" void WFE_Text(MWContext *context, LO_TextStruct *text, int32 start, i
 {
     BrowserFrame *frame = frame_for(context);
     if (!frame || !frame->view.drawing || !text->text) return;
+    if(frame->view.print_spans) {
+        frame->view.print_spans->push_back({text->y+text->y_offset,text->height});return;
+    }
     start = (std::max)(0L, start);
     end = (std::min)((long)text->text_len, end);
     if (end <= start) return;
@@ -1583,7 +1612,7 @@ extern "C" void WFE_Text(MWContext *context, LO_TextStruct *text, int32 start, i
         SetTextColor(dc, RGB(attribute->fg.red, attribute->fg.green, attribute->fg.blue));
         SetBkColor(dc, RGB(attribute->bg.red, attribute->bg.green, attribute->bg.blue));
     }
-    bool selection=(text->ele_attrmask&LO_ELE_SELECTED)!=0;
+    bool selection=!frame->view.printing && (text->ele_attrmask&LO_ELE_SELECTED)!=0;
     int first=selection?(std::max)((int)start,text->sel_start<0?0:(int)text->sel_start):(int)end;
     int last=selection?(std::min)((int)end,text->sel_end<0?(int)text->text_len:(int)text->sel_end+1):(int)end;
     auto draw=[&](int begin,int finish,bool selected) {
@@ -1598,7 +1627,7 @@ extern "C" void WFE_Text(MWContext *context, LO_TextStruct *text, int32 start, i
     else draw(start,end,false);
     SelectObject(dc, previous);
     DeleteObject(font);
-    if (smoke_mode) {
+    if (smoke_mode && !frame->view.printing) {
         frame->view.drawn_text.append((char *)text->text + start, end - start);
         frame->view.drawn_text += ' ';
         ++frame->view.drawn_runs;
@@ -1614,6 +1643,7 @@ extern "C" void WFE_Rect(MWContext *context, int32 x, int32 y, int32 width, int3
 {
     BrowserFrame *frame = frame_for(context);
     if (!frame || !frame->view.drawing) return;
+    if(frame->view.print_spans) {frame->view.print_spans->push_back({y,height});return;}
     CRect area(x,y,x+width,y+height);
     if (fill) frame->view.drawing->FillSolidRect(area, color);
     else { CBrush brush(color); frame->view.drawing->FrameRect(area, &brush); }
@@ -1698,6 +1728,61 @@ extern "C" void WFE_Background(MWContext *context, unsigned long color) { Browse
 extern "C" void WFE_Unsupported(MWContext *context, const char *feature) { std::string message = std::string(feature) + " is not available in this Windows port yet."; OutputDebugStringA(message.c_str()); WFE_Status(context, message.c_str()); }
 extern "C" int WFE_Message(MWContext *context, const char *message, int confirm) { if (smoke_mode) { smoke_error = message ? message : ""; return 0; } BrowserFrame *frame = frame_for(context); return MessageBoxA(frame ? frame->GetSafeHwnd() : nullptr, message ? message : "", "Netscape", confirm ? MB_YESNO | MB_ICONQUESTION : MB_OK | MB_ICONINFORMATION) == IDYES; }
 extern "C" void WFE_Complete(MWContext *context, int status) { BrowserFrame *frame = frame_for(context); if (frame) { frame->completed = true; frame->resizing = false; frame->load_status = status; WFE_Invalidate(context); } }
+extern "C" int WFE_IsPrinting(MWContext *context)
+{BrowserFrame *frame=frame_for(context);return frame && frame->view.printing;}
+extern "C" void WFE_RecordPrintSpan(MWContext *context,int y,int height)
+{BrowserFrame *frame=frame_for(context);if(frame && frame->view.print_spans) frame->view.print_spans->push_back({y,height});}
+bool WFE_PrintDocumentSize(MWContext *context,int *width,int *height)
+{
+    BrowserFrame *frame=frame_for(context);
+    if(!frame || !frame->initialized || !width || !height || XP_IsContextBusy(context)) return false;
+    /* Frames are printed as the focused document, not as a cropped frameset. */
+    for(auto child:browser_windows) if(child->grid_parent==context) return false;
+    CRect area;frame->view.GetClientRect(area);
+    *width=(std::max)(frame->view.document_width,area.Width());
+    *height=frame->view.document_height;
+    return *width>0 && *height>0;
+}
+bool WFE_PrintDocumentPage(MWContext *context,HDC target,int top,int width,int height)
+{
+    BrowserFrame *frame=frame_for(context);
+    if(!frame || !target || top<0 || width<=0 || height<=0 || width>1000000 || top>INT_MAX-height) return false;
+    int saved=::SaveDC(target);if(!saved) return false;
+    POINT origin={};GetWindowOrgEx(target,&origin);
+    SetWindowOrgEx(target,origin.x,origin.y+top,nullptr);
+    IntersectClipRect(target,0,top,width,top+height);
+    CDC dc;dc.Attach(target);
+    CDC *old=frame->view.drawing;bool printing=frame->view.printing;
+    frame->view.drawing=&dc;frame->view.printing=true;
+    if(!frame->view.print_spans) {
+        dc.FillSolidRect(0,top,width,height,frame->view.background);
+        if(frame->view.backdrop) WFE_DrawBackdrop(target,context,frame->view.backdrop,width,height,0,top);
+    }
+    LO_RefreshArea(context,0,top,width,height);
+    frame->view.drawing=old;frame->view.printing=printing;
+    dc.Detach();::RestoreDC(target,saved);return true;
+}
+int WFE_PrintPageHeight(MWContext *context,int top,int maximumHeight)
+{
+    BrowserFrame *frame=frame_for(context);int width=0,height=0;
+    if(maximumHeight<=0 || !WFE_PrintDocumentSize(context,&width,&height)) return 0;
+    std::vector<std::pair<int,int>> spans;
+    CClientDC screen(&frame->view);CDC measure;measure.CreateCompatibleDC(&screen);
+    auto old=frame->view.print_spans;frame->view.print_spans=&spans;
+    bool measured=WFE_PrintDocumentPage(context,measure,top,width,maximumHeight);
+    frame->view.print_spans=old;if(!measured) return 0;
+    int bottom=top+maximumHeight;
+    bool changed;
+    do {
+        changed=false;
+        for(auto span:spans) if(span.second>0 && span.second<=maximumHeight && span.first>top &&
+            span.first<bottom && (long long)span.first+span.second>bottom) {
+            bottom=span.first;changed=true;
+        }
+    } while(changed);
+    return bottom>top ? bottom-top : maximumHeight;
+}
+
 static void fit_reference_window(CWnd *window,int width,int height)
 {
     MONITORINFO monitor={};monitor.cbSize=sizeof(monitor);CRect work;
@@ -1729,19 +1814,30 @@ extern "C" const char *WFE_CurrentDocumentURL(MWContext *context)
 {
     BrowserFrame *frame=frame_for(context);return frame?frame->current_url.c_str():"";
 }
-extern "C" MWContext *WFE_NewEditorWindow(const char *address)
+static MWContext *new_editor_window(const char *address,bool copy)
 {
-    if(address && *address) {
+    if(!copy && address && *address) {
         std::string url=as_url(address);
-        for(auto existing:browser_windows) if(existing->editing && existing->current_url==url) {existing->ShowWindow(SW_SHOW);existing->SetForegroundWindow();return &existing->context;}
+        for(auto existing:browser_windows) if(existing->editing && !existing->new_document_copy && !existing->context.is_new_document && existing->current_url==url) {existing->ShowWindow(SW_SHOW);existing->SetForegroundWindow();return &existing->context;}
     }
-    BrowserFrame *frame=new BrowserFrame;frame->editing=true;
+    BrowserFrame *frame=new BrowserFrame;frame->editing=true;frame->new_document_copy=copy;
     if(!frame->Create(nullptr,"Netscape Editor - [file:///Untitled]",WS_OVERLAPPEDWINDOW,CRect(80,80,1185,845),nullptr,MAKEINTRESOURCE(IDR_EDITOR))) return nullptr;
     frame->SetIcon(AfxGetApp()->LoadIcon(IDR_EDITOR),TRUE);
     frame->SetIcon(AfxGetApp()->LoadIcon(IDR_EDITOR),FALSE);frame->LoadAccelTable(MAKEINTRESOURCE(IDR_EDITOR_ACCEL));
     fit_reference_window(frame,1105,765);browser_windows.push_back(frame);WFE_RegisterNativeWindow(&frame->context,frame->GetSafeHwnd());
     if(!smoke_mode) frame->ShowWindow(SW_SHOW);
     frame->Navigate(address&&*address?address:"about:editfilenew");return &frame->context;
+}
+extern "C" MWContext *WFE_NewEditorWindow(const char *address) {return new_editor_window(address,false);}
+extern "C" MWContext *WFE_NewEditorDocument(const char *address) {return new_editor_window(address,true);}
+extern "C" void WFE_EditorCopyLoaded(MWContext *context)
+{
+    BrowserFrame *frame=frame_for(context);
+    if(frame && frame->new_document_copy && EDT_HaveEditBuffer(context)) {
+        frame->new_document_copy=false;context->is_new_document=TRUE;
+        EDT_SetDirtyFlag(context,TRUE);
+        WFE_Status(context,"New document from template. Use Save to choose a file name.");
+    }
 }
 #endif
 extern "C" MWContext *WFE_NewMailWindow(int is_news, const char *server)
@@ -1953,7 +2049,7 @@ static int WFE_RunChromeSmoke(const char *report,const char *url,const char *sna
     edit_enabled=true;
 #endif
     bool state=!enabled(ID_NAV_BACK)&&!enabled(ID_NAV_FORWARD)&&enabled(ID_NAV_HOME)&&enabled(ID_NAV_RELOAD)&&
-        enabled(ID_BROWSER_EDIT)==edit_enabled&&enabled(ID_BROWSER_IMAGES)&&!enabled(ID_BROWSER_PRINT)&&enabled(ID_BROWSER_FIND)&&!enabled(ID_NAV_STOP);
+        enabled(ID_BROWSER_EDIT)==edit_enabled&&enabled(ID_BROWSER_IMAGES)&&enabled(ID_BROWSER_PRINT)&&enabled(ID_BROWSER_FIND)&&!enabled(ID_NAV_STOP);
     bool find=WFE_FindDialogSmoke(&frame->context,"Classic toolbar needle")!=0;
     LO_Element *first=nullptr,*last=nullptr;int32 a=0,b=0;
     LO_GetSelectionEndpoints(&frame->context,&first,&last,&a,&b);
@@ -2805,6 +2901,54 @@ static int WFE_RunPreferencesSmoke(const char *report,const char *snapshot,const
     frame->SendMessage(WM_CLOSE);return passed?0:1;
 }
 
+static int WFE_RunPrintingSmoke(const char *report,const char *url)
+{
+    BrowserFrame *frame=frame_for(WFE_NewWindow(url));if(!frame) return 2;
+    browser_smoke_wait(frame);
+    int x=frame->view.scroll_x,y=frame->view.scroll_y;
+    bool passed=WFE_PrintSmoke(&frame->context,report)!=0;
+    passed=passed && frame->view.scroll_x==x && frame->view.scroll_y==y;
+    bool editor_preserved=true;
+#ifdef EDITOR
+    BrowserFrame *editor=frame_for(WFE_NewEditorWindow(url));editor_preserved=editor!=nullptr;
+    if(editor) {
+        browser_smoke_wait(editor);MWContext *context=&editor->context;
+        editor_preserved=EDT_HaveEditBuffer(context)!=FALSE;
+        if(editor_preserved) {
+            EDT_EndOfDocument(context,FALSE);EDT_BeginOfLine(context,TRUE);EDT_SetDirtyFlag(context,TRUE);
+            LO_Element *first=nullptr,*last=nullptr,*after_first=nullptr,*after_last=nullptr;int32 a=0,b=0,after_a=0,after_b=0;
+            LO_GetSelectionEndpoints(context,&first,&last,&a,&b);
+            int sx=editor->view.scroll_x,sy=editor->view.scroll_y,width=0,height=0;
+            HDC emf=CreateEnhMetaFileA(nullptr,nullptr,nullptr,nullptr);
+            editor_preserved=emf && WFE_PrintDocumentSize(context,&width,&height) &&
+                WFE_PrintDocumentPage(context,emf,0,width,(std::min)(height,800));
+            if(emf) {HENHMETAFILE picture=CloseEnhMetaFile(emf);if(picture) DeleteEnhMetaFile(picture);else editor_preserved=false;}
+            LO_GetSelectionEndpoints(context,&after_first,&after_last,&after_a,&after_b);
+            editor_preserved=editor_preserved && EDT_DirtyFlag(context) && sx==editor->view.scroll_x && sy==editor->view.scroll_y &&
+                first==after_first && last==after_last && a==after_a && b==after_b;
+            EDT_SetDirtyFlag(context,FALSE);
+        }
+        editor->SendMessage(WM_CLOSE);
+    }
+#endif
+    FILE *file=fopen(report,"ab");
+    if(file) {fprintf(file,"view_preserved=%d\neditor_preserved=%d\n",frame->view.scroll_x==x&&frame->view.scroll_y==y,editor_preserved);fclose(file);}
+    passed=passed&&editor_preserved;
+    frame->SendMessage(WM_CLOSE);return passed?0:1;
+}
+
+#ifdef EDITOR
+static int WFE_RunWorkflowSmoke(const char *report,const char *url,const char *destination)
+{
+    BrowserFrame *frame=frame_for(WFE_NewEditorWindow(url));if(!frame) return 2;
+    browser_smoke_wait(frame);
+    int result=destination ? WFE_EditorPublishSmoke(&frame->context,report,destination) :
+        (WFE_EditorWorkflowSmoke(&frame->context,report)?0:1);
+    if(EDT_HaveEditBuffer(&frame->context)) EDT_SetDirtyFlag(&frame->context,FALSE);
+    frame->SendMessage(WM_CLOSE);return result;
+}
+#endif
+
 class NetscapeApplication : public CWinApp {
 public:
     BOOL InitInstance() override {
@@ -2819,10 +2963,11 @@ public:
         POSITION position = arguments.GetHeadPosition();
         bool explicit_command=position!=nullptr;
         CString first = position ? arguments.GetNext(position) : "about:";
-        smoke_mode = first == "--smoke-test" || first == "--mailnews-smoke" || first == "--composer-delivery-smoke"
+        smoke_mode = first == "--printing-smoke" || first == "--smoke-test" || first == "--mailnews-smoke" || first == "--composer-delivery-smoke"
             || first == "--images-smoke" || first == "--forms-smoke" || first == "--frames-smoke" || first == "--downloads-smoke" || first == "--history-smoke" || first == "--history-reopen-smoke" || first == "--bookmarks-smoke" || first == "--chrome-smoke" || first == "--ui-gallery" || first == "--preferences-ui-smoke" || first == "--preferences-reopen-smoke" || first == "--news-ui-smoke" || first == "--mail-ui-smoke" || first == "--compose-ui-smoke"
 #ifdef EDITOR
             || first == "--editor-smoke"
+            || first == "--editor-workflows-smoke" || first == "--editor-publish-smoke"
 #endif
             ;
         if (smoke_mode) {
@@ -2841,9 +2986,15 @@ public:
             CString url = position ? arguments.GetNext(position) : "";
 #ifdef EDITOR
             if(first=="--editor-smoke") m_nExitCode=WFE_RunEditorSmoke(report,url);
+            else if(first=="--editor-workflows-smoke") m_nExitCode=WFE_RunWorkflowSmoke(report,url,nullptr);
+            else if(first=="--editor-publish-smoke") {
+                CString destination=position?arguments.GetNext(position):"";
+                m_nExitCode=WFE_RunWorkflowSmoke(report,url,destination);
+            }
             else
 #endif
-            if(first=="--preferences-ui-smoke"||first=="--preferences-reopen-smoke") { CString page=position?arguments.GetNext(position):"";m_nExitCode=WFE_RunPreferencesSmoke(report,url,page,first=="--preferences-reopen-smoke"); }
+            if(first=="--printing-smoke") m_nExitCode=WFE_RunPrintingSmoke(report,url);
+            else if(first=="--preferences-ui-smoke"||first=="--preferences-reopen-smoke") { CString page=position?arguments.GetNext(position):"";m_nExitCode=WFE_RunPreferencesSmoke(report,url,page,first=="--preferences-reopen-smoke"); }
             else if(first=="--news-ui-smoke") { CString server=position?arguments.GetNext(position):"";m_nExitCode=WFE_RunNewsUISmoke(report,url,server); }
             else if(first=="--mail-ui-smoke") { m_nExitCode=WFE_RunMailUISmoke(report,url); }
             else if(first=="--compose-ui-smoke") {
@@ -2880,6 +3031,9 @@ public:
                 WFE_CloseWindow(source);
             }
             else m_nExitCode = WFE_RunSmokeTest(report, url.IsEmpty() ? nullptr : (const char *)url);
+            /* Close fixture-created editors before tearing down their engines. */
+            while(!browser_windows.empty()) browser_windows.back()->DestroyWindow();
+            WFE_ComposerCloseAll();m_pMainWnd=nullptr;
             WFE_Shutdown();
             backend_initialized = false;
             return FALSE;

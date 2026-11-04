@@ -11,8 +11,8 @@ BEGIN
   POPUP "&New Document\tCtrl+N"
   BEGIN
    MENUITEM "&Blank", 42279 // Gold 42279
-   MENUITEM "From &Template", 34401, GRAYED // Gold 34401
-   MENUITEM "From &Wizard...", ID_EDITOR_WIZARD, GRAYED // Gold 65021
+   MENUITEM "From &Template", 34401 // Gold 34401
+   MENUITEM "From &Wizard...", ID_EDITOR_WIZARD // Gold 65021
   END
   MENUITEM SEPARATOR
   MENUITEM "&Browse Document", 42021 // Gold 42021
@@ -21,14 +21,14 @@ BEGIN
   MENUITEM "Open &File...\tCtrl+O", 42151 // Gold 42151
   MENUITEM "&Save\tCtrl+S", 42001 // Gold 42001
   MENUITEM "Save &As...", 42002 // Gold 42002
-  MENUITEM "P&ublish...", 42216, GRAYED // Gold 42216
+  MENUITEM "P&ublish...", 42216 // Gold 42216
   MENUITEM SEPARATOR
   MENUITEM "New &Mail Message...\tCtrl+M", ID_CLIENT_COMPOSE // Gold 32879
   MENUITEM "Ma&il Document...", 32810, GRAYED // Gold 32810
   MENUITEM SEPARATOR
-  MENUITEM "Pa&ge Setup...", 57605, GRAYED // Gold 57605
-  MENUITEM "&Print...", 57607, GRAYED // Gold 57607
-  MENUITEM "Print Pre&view", 57609, GRAYED // Gold 57609
+  MENUITEM "Pa&ge Setup...", 57605 // Gold 57605
+  MENUITEM "&Print...", 57607 // Gold 57607
+  MENUITEM "Print Pre&view", 57609 // Gold 57609
   MENUITEM SEPARATOR
   MENUITEM "&Close\tCtrl+W", 0xE141 // Gold 57602
   MENUITEM "E&xit", ID_MENU_EXIT // Gold 57665
@@ -65,7 +65,7 @@ BEGIN
   MENUITEM "Re&fresh", 32783 // Gold 32783
   MENUITEM SEPARATOR
   MENUITEM "View Document &Source", 32789 // Gold 32789
-  MENUITEM "&Edit Document Source", 42217, GRAYED // Gold 42217
+  MENUITEM "&Edit Document Source", 42217 // Gold 42217
   MENUITEM "Document I&nfo", 32846 // Gold 32846
   MENUITEM SEPARATOR
   MENUITEM "Display &Paragraph Marks", 42291 // Gold 42291
@@ -152,7 +152,7 @@ BEGIN
  POPUP "&Options"
  BEGIN
   MENUITEM "&General Preferences...", ID_BROWSER_PREFERENCES // Gold 32791
-  MENUITEM "&Editor Preferences...", 42040, GRAYED // Gold 42040
+  MENUITEM "&Editor Preferences...", 42040 // Gold 42040
   MENUITEM "&Mail and News Preferences...", ID_EDITOR_MAIL_PREFERENCES // Gold 32882
   MENUITEM "&Network Preferences...", 32884, GRAYED // Gold 32884
   MENUITEM "&Security Preferences...", 32883, GRAYED // Gold 32883
@@ -201,7 +201,7 @@ BEGIN
   MENUITEM "About &Plug-ins", ID_MENU_HELP_PLUGINS // Gold 65018
   MENUITEM "Registration &Information", ID_MENU_HELP_REGISTRATION // Gold 65010
   MENUITEM "Sof&tware", ID_MENU_HELP_SOFTWARE // Gold 65019
-  MENUITEM "&Web Page Starter", 65020, GRAYED // Gold 65020
+  MENUITEM "&Web Page Starter", 65020 // Gold 65020
   MENUITEM SEPARATOR
   MENUITEM "&Handbook", ID_MENU_HELP_HANDBOOK // Gold 65011
   MENUITEM "&Release Notes", ID_MENU_HELP_RELEASE_NOTES // Gold 65012

@@ -43,14 +43,14 @@
                 "original_id": 34401,
                 "label": "From &Template",
                 "command": "ID_EDITOR_TEMPLATE",
-                "disabled": true
+                "disabled": false
               },
               {
                 "original_flags": 128,
                 "original_id": 65021,
                 "label": "From &Wizard...",
                 "command": "ID_EDITOR_WIZARD",
-                "disabled": true
+                "disabled": false
               }
             ]
           },
@@ -143,21 +143,21 @@
             "original_id": 57605,
             "label": "Pa&ge Setup...",
             "command": "ID_MENU_PAGE_SETUP",
-            "disabled": true
+            "disabled": false
           },
           {
             "original_flags": 0,
             "original_id": 57607,
             "label": "&Print...",
             "command": "ID_BROWSER_PRINT",
-            "disabled": true
+            "disabled": false
           },
           {
             "original_flags": 0,
             "original_id": 57609,
             "label": "Print Pre&view",
             "command": "ID_MENU_PRINT_PREVIEW",
-            "disabled": true
+            "disabled": false
           },
           {
             "original_flags": 0,
@@ -378,7 +378,7 @@
             "original_id": 34402,
             "label": "&Default Publish Location",
             "command": "ID_EDITOR_PUBLISH_LOCATION",
-            "disabled": true
+            "disabled": false
           },
           {
             "original_flags": 128,
@@ -432,7 +432,7 @@
             "original_id": 42040,
             "label": "&Editor Preferences...",
             "command": "ID_EDITOR_PREFERENCES",
-            "disabled": true
+            "disabled": false
           },
           {
             "original_flags": 0,
@@ -848,7 +848,7 @@
             "original_id": 65020,
             "label": "&Web Page Starter",
             "command": "ID_EDITOR_STARTER",
-            "disabled": true
+            "disabled": false
           },
           {
             "original_flags": 0,

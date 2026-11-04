@@ -12,6 +12,7 @@ add_executable(netscape-win32 WIN32
  "${PROJECT_SOURCE_DIR}/cmd/winfe/chrome.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/mailui.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/find.cpp"
+ "${PROJECT_SOURCE_DIR}/cmd/winfe/printing.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/frontend.c"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/platform.c"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/services.c"
@@ -30,7 +31,10 @@ add_executable(netscape-win32 WIN32
 if(NETSCAPE_BUILD_WINDOWS_EDITOR)
  target_sources(netscape-win32 PRIVATE
   "${PROJECT_SOURCE_DIR}/cmd/winfe/editor-platform.cpp"
-  "${PROJECT_SOURCE_DIR}/cmd/winfe/editor-ui.cpp")
+  "${PROJECT_SOURCE_DIR}/cmd/winfe/editor-ui.cpp"
+  "${PROJECT_SOURCE_DIR}/cmd/winfe/editor-create.cpp"
+  "${PROJECT_SOURCE_DIR}/cmd/winfe/editor-preferences.cpp"
+  "${PROJECT_SOURCE_DIR}/cmd/winfe/editor-publish.cpp")
  if(BUILD_TESTING)
   target_sources(netscape-win32 PRIVATE "${PROJECT_SOURCE_DIR}/cmd/winfe/editor-stream-smoke.cpp")
   target_compile_definitions(netscape-win32 PRIVATE WFE_EDITOR_STREAM_TEST)
@@ -43,7 +47,7 @@ set_target_properties(netscape-win32 PROPERTIES OUTPUT_NAME netscape CXX_STANDAR
 target_link_libraries(netscape-win32 PRIVATE netscape_platform
  netscape_xlate netscape_net netscape_lay netscape_i18n netscape_img netscape_jpeg
  netscape_misc netscape_parse netscape_msg netscape_mime netscape_plugin
- netscape_dbm netscape_hash netscape_xp netscape_nspr comctl32 shell32 shlwapi msimg32)
+ netscape_dbm netscape_hash netscape_xp netscape_nspr comctl32 shell32 shlwapi msimg32 comdlg32)
 install(TARGETS netscape-win32 RUNTIME DESTINATION bin COMPONENT Runtime)
 install(FILES "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/LICENSE"
  DESTINATION share/doc/netscape/licenses RENAME WinFE-NPL-1.0 COMPONENT Runtime)
@@ -105,9 +109,21 @@ if(BUILD_TESTING)
   --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/chrome-test"
   --edition "$<IF:$<BOOL:${NETSCAPE_BUILD_WINDOWS_EDITOR}>,gold,standard>")
  set_tests_properties(windows_classic_chrome PROPERTIES TIMEOUT 60)
+ add_test(NAME windows_printing COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_printing.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/printing-test")
+ set_tests_properties(windows_printing PROPERTIES TIMEOUT 80)
 endif()
 
 if(BUILD_TESTING AND NETSCAPE_BUILD_WINDOWS_EDITOR)
+ add_test(NAME windows_gold_workflows COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_editor_workflows.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/workflows-test")
+ add_test(NAME windows_gold_publishing COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_editor_publish.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/publish-test")
+ set_tests_properties(windows_gold_workflows PROPERTIES TIMEOUT 150)
+ set_tests_properties(windows_gold_publishing PROPERTIES TIMEOUT 160)
  add_test(NAME windows_gold_editor COMMAND "${Python3_EXECUTABLE}"
   "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_editor.py"
   --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/editor-test")

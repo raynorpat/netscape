@@ -12,3 +12,13 @@ Original RT_GROUP_ICON 101 SHA256: `1fdd6e659a323aa21a89db1d5fb12604361c5959949c
 
 `about.html` adapts the native frontend's shared About page to identify the Gold
 edition. It is not an extracted original HTML payload.
+
+## Editor Preferences
+
+`editor-preferences.cpp` embeds the unchanged English Gold dialog templates
+RT_DIALOG 2008 (General, 1060 bytes) and 2189 (Publish, 1578 bytes) in a native
+property sheet. The original password control is disabled and labeled
+"Not stored"; credentials are entered for publishing instead.
+
+- General template SHA256: `54d43c9afebcfcb0c25173367eaaf8772554dc6ea6a7fff459110e598b822e56`.
+- Publish template SHA256: `be415936922cdfa40053c28a6f77afa5bf2c1a99e64adba76a6f9241d9cde5e3`.

@@ -77,8 +77,8 @@ Mail/News menus route sorting, thread/flag selection, read/unread/flag changes,
 header and attachment modes, message finding, next/previous/unread/flagged
 navigation, filing and folder/news actions to MSG. Native availability/check
 states come from the backend. News host entry now uses a native prompt.
-Network/security settings, other encodings, address-book operations, upload and
-printing remain visible and disabled while their integrations are missing.
+Network/security settings, other encodings, address-book operations and general
+browser file upload remain disabled while their integrations are missing.
 Historical Help/Directory URLs are reproduced exactly; modern availability of
 those destinations is not established.
 
@@ -129,9 +129,8 @@ The native implementation uses the original 3.02 EDT document engine and LO/GDI
 rendering, with native commands for basic formatting, insertions, property
 dialogs and local saving. The three bars occupy 104px at 96 DPI. The 1105 x 765
 outer window size is a selected comparison size, constrained to the monitor work
-area, rather than an independently established original default. Print,
-Publish, templates, wizard, advanced editor preferences and external source
-editing are disabled pending their integrations.
+area, rather than an independently established original default. Remaining
+Gold workflows are documented below.
 
 Original runtime evidence currently consists of opening the blank Gold editor
 and confirming a visible `g` from a physical key event. The failed Unicode text
@@ -148,6 +147,22 @@ bars, editor icon, disabled glyphs and corrected Save As caption. These tests
 establish the port's observed behavior, not untested original-release equivalence.
 
 ## Coverage limits and next comparisons
+
+The subsequent Gold completion uses the original General/Publish Editor
+Preferences templates (resources 2008/2189), with source hashes in the artwork
+record. New native workflows provide vector print preview/page setup, local
+template copies, an explicitly labeled offline page wizard/starter, external
+HTML-source import and HTTP/FTP publishing. These do not depend on the original
+retired hosted wizard/catalog. Native captures of Preferences, Preview and
+Publish Document were inspected; original hosted-service behavior, third-party
+editor applications and physical printer output were not compared.
+
+The native fixtures inspect actual vector text, printed form values/password
+masking, owner-close cancellation, preferences Cancel/persistence and EDT
+autosave. Publishing tests use loopback servers for exact HTML/assets/empty
+files, final rejection, cancel/retry, and reserved-character HTTP Basic
+credentials. FTP directory probes are checked against a server which rejects
+file paths as directories. No public server or user account was used.
 
 Original runtime inspection covered browser chrome/About, local mail reading,
 empty News, new composition, the seven General Preferences pages and the limited

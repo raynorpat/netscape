@@ -2,6 +2,13 @@
 #include "../../lib/layout/editor.h"
 #include <io.h>
 
+bool WFE_EditorInvokeAutoSave(MWContext *context)
+{
+    CEditBuffer *buffer=LO_GetEDBuffer(context);
+    if(!buffer || buffer->IsBlocked()) return false;
+    buffer->AutoSaveCallback();return true;
+}
+
 bool WFE_EditorStreamSmoke(const char *path)
 {
     XP_File file=fopen(path,"w+b");

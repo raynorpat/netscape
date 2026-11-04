@@ -659,3 +659,14 @@ continue to use EDT selection. The `windows_browser_interaction` fixture checks
 exact selected/clipboard text, reverse drag, word/Shift selection, ordinary link
 click versus drag, capture cancellation and selection in a scrolled child frame.
 The native GDI capture shows the selected characters with system highlight colors.
+
+Browser link interactions use owned URL/target strings from a shared text/image
+hit test. Native context menus offer Back/Forward/Reload, link opening in its
+target or a new window, URL copying, image viewing/saving and selected-text
+Copy. Hover shows the resolved destination in the owning browser's status bar
+and uses hand/text cursors. Client-side and server-side image maps share their
+coordinate/target resolution with normal clicks. Mail/news reader links open a
+browser rather than replacing the message. The `windows_browser_links` fixture
+selects real popup items, checks exact clipboard URLs, separate windows and
+named child-frame targets, and closes a browser while its popup is active.
+Queued messages for destroyed windows are filtered before MFC examines them.

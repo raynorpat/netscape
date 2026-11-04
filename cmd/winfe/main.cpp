@@ -45,6 +45,7 @@ static void invalid_parameter(const wchar_t *expression, const wchar_t *function
 #include "chrome.h"
 #include "mailui.h"
 #include "find.h"
+#include "browser-links.h"
 #include "preferences.h"
 #include "printing.h"
 #ifdef EDITOR
@@ -93,6 +94,8 @@ public:
     bool selecting=false;
     bool selection_dragged=false;
     CPoint selection_origin,selection_pointer;
+    std::string hovered_link,hover_status;
+    void ClearHover();
     void CancelInput();
     bool printing=false;
     std::vector<std::pair<int,int>> *print_spans=nullptr;
@@ -112,6 +115,8 @@ protected:
     afx_msg void OnContextMenu(CWnd *window, CPoint point);
     afx_msg void OnCaptureChanged(CWnd *window);
     afx_msg void OnTimer(UINT_PTR timer);
+    afx_msg void OnMouseLeave();
+    afx_msg BOOL OnSetCursor(CWnd *window,UINT hit,UINT message);
     DECLARE_MESSAGE_MAP()
 };
 
@@ -323,6 +328,8 @@ BEGIN_MESSAGE_MAP(BrowserView, CWnd)
  ON_WM_CONTEXTMENU()
  ON_WM_CAPTURECHANGED()
  ON_WM_TIMER()
+ ON_WM_MOUSELEAVE()
+ ON_WM_SETCURSOR()
 END_MESSAGE_MAP()
 
 static BrowserFrame *frame_for(MWContext *context)
@@ -1351,6 +1358,35 @@ void BrowserView::OnMouseMove(UINT flags,CPoint point)
         return;
     }
     CWnd::OnMouseMove(flags,point);
+    if(!frame->initialized || frame->editing) return;
+    BrowserLinkHit hit=WFE_BrowserLinkAt(&frame->context,point.x+scroll_x,point.y+scroll_y);
+    if(hit.link!=hovered_link) {
+        ClearHover();
+        if(!hit.link.empty()) {
+            BrowserFrame *owner=frame;while(owner && owner->grid_parent) owner=frame_for(owner->grid_parent);
+            if(owner) hover_status=(const char *)owner->status.GetPaneText(1);
+            hovered_link=hit.link;WFE_Status(&frame->context,hovered_link.c_str());
+            TRACKMOUSEEVENT track={sizeof(track),TME_LEAVE,GetSafeHwnd(),0};TrackMouseEvent(&track);
+        }
+    }
+    ::SetCursor(::LoadCursor(nullptr,!hit.link.empty()?IDC_HAND:hit.text?IDC_IBEAM:IDC_ARROW));
+}
+void BrowserView::ClearHover()
+{
+    if(hovered_link.empty()) return;
+    BrowserFrame *owner=frame;while(owner && owner->grid_parent) owner=frame_for(owner->grid_parent);
+    if(owner && owner->status.GetSafeHwnd() && owner->status.GetPaneText(1)==hovered_link.c_str()) owner->status.SetPaneText(1,hover_status.c_str());
+    hovered_link.clear();hover_status.clear();
+}
+void BrowserView::OnMouseLeave() {ClearHover();}
+BOOL BrowserView::OnSetCursor(CWnd *window,UINT hit,UINT message)
+{
+    if(hit==HTCLIENT && frame->initialized && !frame->editing) {
+        CPoint point;GetCursorPos(&point);ScreenToClient(&point);
+        BrowserLinkHit link=WFE_BrowserLinkAt(&frame->context,point.x+scroll_x,point.y+scroll_y);
+        ::SetCursor(::LoadCursor(nullptr,!link.link.empty()?IDC_HAND:link.text?IDC_IBEAM:IDC_ARROW));return TRUE;
+    }
+    return CWnd::OnSetCursor(window,hit,message);
 }
 void BrowserView::OnLButtonDblClk(UINT flags,CPoint point)
 {
@@ -1365,6 +1401,7 @@ void BrowserView::OnLButtonDblClk(UINT flags,CPoint point)
 }
 void BrowserView::CancelInput()
 {
+    ClearHover();
     selecting=false;selection_dragged=false;KillTimer(71);
     if(::GetCapture()==GetSafeHwnd()) ReleaseCapture();
 }
@@ -1440,10 +1477,7 @@ void BrowserView::OnLButtonUp(UINT flags, CPoint point)
     if(selecting) {LO_EndSelection(&frame->context);CancelInput();Invalidate();}
     if(suppress_link) return;
     LO_Element *element = LO_XYToElement(&frame->context, point.x + scroll_x, point.y + scroll_y);
-    if (element && element->type == LO_TEXT && element->lo_text.anchor_href) {
-        char *address = (char *)element->lo_text.anchor_href->anchor;
-        if (address) WFE_NavigateTarget(&frame->context, address, (const char *)element->lo_text.anchor_href->target);
-    } else if (element && element->type == LO_IMAGE) {
+    if (element && element->type == LO_IMAGE) {
         LO_ImageStruct *image = &element->lo_image;
         int x = point.x + scroll_x - image->x - image->x_offset - image->border_width;
         int y = point.y + scroll_y - image->y - image->y_offset - image->border_width;
@@ -1451,41 +1485,36 @@ void BrowserView::OnLButtonUp(UINT flags, CPoint point)
             WFE_FormImageSubmit(&frame->context, image, x, y);
             return;
         }
-        LO_AnchorData *anchor = image->anchor_href;
-        if (image->image_attr && image->image_attr->usemap_name)
-            anchor = LO_MapXYToAreaAnchor(&frame->context, image, x, y);
-        if (anchor && anchor->anchor) {
-            std::string target((const char *)anchor->anchor);
-            if (image->image_attr && (image->image_attr->attrmask & LO_ATTR_ISMAP)) {
-                char position[48]; sprintf(position, "?%d,%d", x, y); target += position;
-            }
-            WFE_NavigateTarget(&frame->context, target.c_str(), (const char *)anchor->target);
-        }
     }
+    BrowserLinkHit hit=WFE_BrowserLinkAt(&frame->context,point.x+scroll_x,point.y+scroll_y);
+    WFE_BrowserLinkCommand(&frame->context,hit,ID_BROWSER_OPEN_LINK);
 }
 void BrowserView::OnContextMenu(CWnd *, CPoint point)
 {
 #ifdef EDITOR
     if(frame->editing) return;
 #endif
+    SetFocus();
     if (point.x == -1 && point.y == -1) { point = CPoint(8,8); ClientToScreen(&point); }
     CPoint document = point; ScreenToClient(&document);
-    LO_Element *element = LO_XYToElement(&frame->context, document.x + scroll_x, document.y + scroll_y);
-    std::string link, image;
-    if (element && element->type == LO_TEXT && element->lo_text.anchor_href && element->lo_text.anchor_href->anchor)
-        link = (const char *)element->lo_text.anchor_href->anchor;
-    else if (element && element->type == LO_IMAGE) {
-        if (element->lo_image.anchor_href && element->lo_image.anchor_href->anchor) link = (const char *)element->lo_image.anchor_href->anchor;
-        if (element->lo_image.image_url) image = (const char *)element->lo_image.image_url;
-    }
+    BrowserLinkHit hit=WFE_BrowserLinkAt(&frame->context,document.x+scroll_x,document.y+scroll_y);
     CMenu menu; menu.CreatePopupMenu();
-    menu.AppendMenu(MF_STRING, ID_BROWSER_SAVE, "Save page as...");
-    if (!link.empty()) menu.AppendMenu(MF_STRING, ID_BROWSER_SAVE_LINK, "Save link as...");
-    if (!image.empty()) menu.AppendMenu(MF_STRING, ID_BROWSER_SAVE_IMAGE, "Save image as...");
-    UINT command = menu.TrackPopupMenu(TPM_RETURNCMD | TPM_RIGHTBUTTON, point.x, point.y, this);
-    if (command == ID_BROWSER_SAVE) WFE_SavePage(&frame->context, nullptr);
-    else if (command == ID_BROWSER_SAVE_LINK) WFE_SaveLink(&frame->context, link.c_str(), nullptr);
-    else if (command == ID_BROWSER_SAVE_IMAGE) WFE_SaveLink(&frame->context, image.c_str(), nullptr);
+    menu.AppendMenu(MF_STRING|(WFE_HistoryCanMove(&frame->context,-1)?0:MF_GRAYED),ID_NAV_BACK,"&Back");
+    menu.AppendMenu(MF_STRING|(WFE_HistoryCanMove(&frame->context,1)?0:MF_GRAYED),ID_NAV_FORWARD,"&Forward");
+    menu.AppendMenu(MF_STRING,ID_NAV_RELOAD,"&Reload");menu.AppendMenu(MF_SEPARATOR);
+    WFE_BrowserLinkMenu(menu,hit);
+    menu.AppendMenu(MF_STRING, ID_BROWSER_SAVE, "Save &Page As...");
+    char *selection=(char *)LO_GetSelectionText(&frame->context);
+    menu.AppendMenu(MF_STRING|(selection&&*selection?0:MF_GRAYED),ID_EDIT_COPY,"&Copy");free(selection);
+    MWContext *context=&frame->context;HWND window=GetSafeHwnd();
+    UINT command = menu.TrackPopupMenu(TPM_RETURNCMD|TPM_RIGHTBUTTON,point.x,point.y,this);
+    /* The popup's nested loop may have closed the owning browser. */
+    BrowserFrame *owner=frame_for(context);if(!owner || !::IsWindow(window)) return;
+    if(WFE_BrowserLinkCommand(context,hit,command)) return;
+    if (command == ID_BROWSER_SAVE) WFE_SavePage(context, nullptr);
+    else if (command == ID_BROWSER_SAVE_LINK) WFE_SaveLink(context, hit.link.c_str(), nullptr);
+    else if (command == ID_BROWSER_SAVE_IMAGE) WFE_SaveLink(context, hit.image.c_str(), nullptr);
+    else if(command) owner->SendMessage(WM_COMMAND,command);
 }
 
 static HFONT text_font(LO_TextAttr *attribute,const GeneralPreferences &preferences,bool link)
@@ -3005,9 +3034,17 @@ static int WFE_RunWorkflowSmoke(const char *report,const char *url,const char *d
 #endif
 
 #include "interaction-smoke.inc"
+#include "link-smoke.inc"
 
 class NetscapeApplication : public CWinApp {
 public:
+    BOOL ProcessMessageFilter(int code,LPMSG message) override {
+        /* A native popup can retain a queued message for its just-closed
+         * owner. MFC otherwise creates a CWnd for that invalid HWND and
+         * dereferences it while finding its top-level frame. */
+        if(message && message->hwnd && !::IsWindow(message->hwnd)) return FALSE;
+        return CWinApp::ProcessMessageFilter(code,message);
+    }
     BOOL InitInstance() override {
         CWinApp::InitInstance();
         INITCOMMONCONTROLSEX controls = {sizeof(controls), ICC_TAB_CLASSES | ICC_LISTVIEW_CLASSES | ICC_PROGRESS_CLASS | ICC_TREEVIEW_CLASSES};
@@ -3020,7 +3057,7 @@ public:
         POSITION position = arguments.GetHeadPosition();
         bool explicit_command=position!=nullptr;
         CString first = position ? arguments.GetNext(position) : "about:";
-        smoke_mode = first == "--interaction-smoke" || first == "--printing-smoke" || first == "--smoke-test" || first == "--mailnews-smoke" || first == "--composer-delivery-smoke"
+        smoke_mode = first == "--links-smoke" || first == "--interaction-smoke" || first == "--printing-smoke" || first == "--smoke-test" || first == "--mailnews-smoke" || first == "--composer-delivery-smoke"
             || first == "--images-smoke" || first == "--forms-smoke" || first == "--frames-smoke" || first == "--downloads-smoke" || first == "--history-smoke" || first == "--history-reopen-smoke" || first == "--bookmarks-smoke" || first == "--chrome-smoke" || first == "--ui-gallery" || first == "--preferences-ui-smoke" || first == "--preferences-reopen-smoke" || first == "--news-ui-smoke" || first == "--mail-ui-smoke" || first == "--compose-ui-smoke"
 #ifdef EDITOR
             || first == "--editor-smoke"
@@ -3050,7 +3087,8 @@ public:
             }
             else
 #endif
-            if(first=="--interaction-smoke") m_nExitCode=WFE_RunInteractionSmoke(report,url);
+            if(first=="--links-smoke") m_nExitCode=WFE_RunLinkSmoke(report,url);
+            else if(first=="--interaction-smoke") m_nExitCode=WFE_RunInteractionSmoke(report,url);
             else if(first=="--printing-smoke") m_nExitCode=WFE_RunPrintingSmoke(report,url);
             else if(first=="--preferences-ui-smoke"||first=="--preferences-reopen-smoke") { CString page=position?arguments.GetNext(position):"";m_nExitCode=WFE_RunPreferencesSmoke(report,url,page,first=="--preferences-reopen-smoke"); }
             else if(first=="--news-ui-smoke") { CString server=position?arguments.GetNext(position):"";m_nExitCode=WFE_RunNewsUISmoke(report,url,server); }

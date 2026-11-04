@@ -1,6 +1,8 @@
 """Exercise native mouse gestures through the original LO engine, on loopback."""
 import argparse
+import base64
 import http.server
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -11,7 +13,17 @@ import threading
 class Handler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         self.server.requests.append(self.path)
-        if self.path == '/selectionframes':
+        if self.path == '/pixel.gif':
+            body = base64.b64decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7')
+        elif self.path == '/links':
+            body = (b'<html><body><p><a href="/opened?x=1&amp;y=two" target="linkTarget">Targeted text link</a></p>'
+                    b'<p><a href="/image-link"><img src="/pixel.gif" width="40" height="30"></a></p>'
+                    b'<p><img src="/pixel.gif" width="40" height="30" usemap="#map"></p>'
+                    b'<map name="map"><area shape="rect" coords="0,0,39,29" href="/mapped" target="linkTarget"></map>'
+                    b'<p><a href="/server-map"><img src="/pixel.gif" width="40" height="30" ismap></a></p></body></html>')
+        elif self.path == '/linkframes':
+            body = b'<html><frameset cols="50%,50%"><frame name="linkSource" src="/links"><frame name="linkTarget" src="/blank"></frameset></html>'
+        elif self.path == '/selectionframes':
             body = b'<html><frameset cols="50%,50%"><frame name="selectionLeft" src="/selection"><frame src="/blank"></frameset></html>'
         elif self.path == '/selection':
             body = ('<html><head><title>Browser mouse selection</title></head><body>'
@@ -22,7 +34,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         else:
             body = b'<html><body>Clicked link</body></html>'
         self.send_response(200)
-        self.send_header('Content-Type', 'text/html')
+        self.send_header('Content-Type', 'image/gif' if self.path == '/pixel.gif' else 'text/html')
         self.send_header('Content-Length', str(len(body)))
         self.end_headers()
         self.wfile.write(body)
@@ -35,6 +47,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--executable', required=True)
     parser.add_argument('--output', required=True)
+    parser.add_argument('--mode', choices=['selection', 'links'], default='selection')
     args = parser.parse_args()
     output = Path(args.output).resolve()
     output.mkdir(parents=True, exist_ok=True)
@@ -48,7 +61,7 @@ def main():
     env = os.environ.copy()
     env['NETSCAPE_PROFILE_DIR'] = str(run / 'profile')
     try:
-        result = subprocess.run([args.executable, '--interaction-smoke', str(report),
+        result = subprocess.run([args.executable, '--links-smoke' if args.mode == 'links' else '--interaction-smoke', str(report),
                                  'http://127.0.0.1:%d/' % server.server_port],
                                 env=env, capture_output=True, timeout=75)
     finally:
@@ -56,9 +69,19 @@ def main():
         server.server_close()
         thread.join(timeout=2)
     (run / 'process.txt').write_bytes(result.stdout + result.stderr)
+    (run / 'requests.json').write_text(json.dumps(server.requests, indent=2))
     values = dict(line.split('=', 1) for line in report.read_text().splitlines() if '=' in line) if report.exists() else {}
     print('Report:', report, values)
     assert result.returncode == 0, (result.returncode, values)
+    if args.mode == 'links':
+        assert all(value == '1' for value in values.values()), values
+        base = 'http://127.0.0.1:%d/' % server.server_port
+        for name, suffix in [('copylink', 'opened?x=1&y=two'), ('copyimage', 'pixel.gif'),
+                             ('copymap', 'mapped'), ('copyservermap', 'server-map?5,6')]:
+            assert Path(str(report) + '.' + name).read_text(encoding='latin1') == base + suffix, name
+        assert server.requests.count('/opened?x=1&y=two') >= 1, server.requests
+        print('Native link menus, image maps, hover and target routing verified')
+        return
     assert all(values.get(key) == '1' for key in ['passed', 'drag_link', 'capture', 'capture_cancel',
                                                 'navigation_cancel', 'autoscroll', 'capture_released',
                                                 'clicked', 'frame_selection']), values

@@ -25,11 +25,11 @@ requests, rather than accepting only success flags.
 
 ## Task 2: Link interaction
 
-- [ ] Add failing hover and context action tests, including text/image maps,
+- [x] Add failing hover and context action tests, including text/image maps,
   clipboard exact URL, focused-frame navigation and opening a separate window.
-- [ ] Share link hit resolution among click, hover and context menu; add classic
+- [x] Share link hit resolution among click, hover and context menu; add classic
   Open/Open New Window/Copy Link Location and View/Copy Image Location actions.
-- [ ] Run interaction and relevant existing tests, document and commit.
+- [x] Run interaction and relevant existing tests, document and commit.
 
 ## Task 3: Frame dividers
 
@@ -55,3 +55,9 @@ refresh is optional for this batch; report only the builds and tests executed.
 Task 1 evidence: standard Debug 19/19; Gold Debug browser gestures, classic
 chrome, forms, frames and original editor regressions passed. Native selection
 capture reviewed. Release coverage will follow after the final browser item.
+
+Task 2 evidence: standard Debug 20/20; link menus verify actual clipboard
+URLs and target windows. Closing the owner inside the native popup reproduced
+an MFC message-filter assertion; guarding invalid queued HWNDs fixes it.
+Clipboard assertions retry boundedly because Windows clipboard history briefly
+locks the clipboard after the application releases it.

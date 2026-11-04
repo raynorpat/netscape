@@ -22,7 +22,10 @@ static void interaction_record(const char *report,const char *name,const std::st
 static std::string interaction_clipboard(CWnd *window)
 {
     std::string result;
-    if(window->OpenClipboard()) {
+    /* Clipboard history can briefly acquire it after our writer closes it. */
+    bool opened=false;
+    for(int i=0;i<50 && !(opened=window->OpenClipboard()!=FALSE);++i) Sleep(10);
+    if(opened) {
         HGLOBAL data=GetClipboardData(CF_TEXT);const char *text=data?(const char *)GlobalLock(data):nullptr;
         if(text) {result=text;GlobalUnlock(data);}CloseClipboard();
     }

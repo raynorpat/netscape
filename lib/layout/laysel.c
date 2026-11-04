@@ -3765,7 +3765,9 @@ void LO_PositionCaret(MWContext *context, int32 x, int32 y)
 {
     LO_Click(context, x, y, TRUE);
 }
+#endif
 
+/* Word selection is also used by native browser document views. */
 void LO_DoubleClick(MWContext *context, int32 x, int32 y)
 {
 	int32 doc_id;
@@ -3789,8 +3791,6 @@ void LO_DoubleClick(MWContext *context, int32 x, int32 y)
     lo_ProcessDoubleClick(context, top_state, state, &result);
 }
 
-
-#endif
 
 void lo_GetHorizontalBounds(LO_Element* eptr, int32* returnBegin, int32* returnEnd)
 {

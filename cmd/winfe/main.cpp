@@ -91,6 +91,9 @@ public:
     std::map<std::string, CPoint> links;
     void Render(CDC &dc, int width, int height);
     bool selecting=false;
+    bool selection_dragged=false;
+    CPoint selection_origin,selection_pointer;
+    void CancelInput();
     bool printing=false;
     std::vector<std::pair<int,int>> *print_spans=nullptr;
 protected:
@@ -107,6 +110,8 @@ protected:
     afx_msg void OnKillFocus(CWnd *next);
     afx_msg void OnLButtonUp(UINT flags, CPoint point);
     afx_msg void OnContextMenu(CWnd *window, CPoint point);
+    afx_msg void OnCaptureChanged(CWnd *window);
+    afx_msg void OnTimer(UINT_PTR timer);
     DECLARE_MESSAGE_MAP()
 };
 
@@ -316,6 +321,8 @@ BEGIN_MESSAGE_MAP(BrowserView, CWnd)
  ON_WM_KILLFOCUS()
  ON_WM_LBUTTONUP()
  ON_WM_CONTEXTMENU()
+ ON_WM_CAPTURECHANGED()
+ ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 static BrowserFrame *frame_for(MWContext *context)
@@ -1319,22 +1326,65 @@ void BrowserView::OnLButtonDown(UINT flags,CPoint point)
         else EDT_StartSelection(&frame->context,point.x+scroll_x,point.y+scroll_y);
         return;
     }
+    if(frame->editing) return;
 #endif
-    CWnd::OnLButtonDown(flags,point);
+    if(!frame->initialized) return;
+    SetFocus();selection_origin=selection_pointer=point;
+    selection_dragged=(flags&MK_SHIFT)!=0;selecting=true;SetCapture();
+    if(flags&MK_SHIFT) LO_ExtendSelection(&frame->context,point.x+scroll_x,point.y+scroll_y);
+    else LO_StartSelection(&frame->context,point.x+scroll_x,point.y+scroll_y);
+    Invalidate();
 }
 void BrowserView::OnMouseMove(UINT flags,CPoint point)
 {
 #ifdef EDITOR
     if(frame->editing && selecting && (flags&MK_LBUTTON)) {EDT_ExtendSelection(&frame->context,point.x+scroll_x,point.y+scroll_y);return;}
 #endif
+    if(selecting && (flags&MK_LBUTTON)) {
+        selection_pointer=point;
+        if(abs(point.x-selection_origin.x)>=GetSystemMetrics(SM_CXDRAG) || abs(point.y-selection_origin.y)>=GetSystemMetrics(SM_CYDRAG)) selection_dragged=true;
+        if(selection_dragged) {
+            LO_ExtendSelection(&frame->context,point.x+scroll_x,point.y+scroll_y);Invalidate();
+            CRect area;GetClientRect(area);
+            if(!area.PtInRect(point)) SetTimer(71,60,nullptr);else KillTimer(71);
+        }
+        return;
+    }
     CWnd::OnMouseMove(flags,point);
 }
 void BrowserView::OnLButtonDblClk(UINT flags,CPoint point)
 {
 #ifdef EDITOR
     if(frame->editing && EDT_HaveEditBuffer(&frame->context)) {EDT_DoubleClick(&frame->context,point.x+scroll_x,point.y+scroll_y);return;}
+    if(frame->editing) return;
 #endif
-    CWnd::OnLButtonDblClk(flags,point);
+    if(frame->initialized) {
+        SetFocus();LO_DoubleClick(&frame->context,point.x+scroll_x,point.y+scroll_y);
+        selecting=true;selection_dragged=true;selection_pointer=point;SetCapture();Invalidate();
+    }
+}
+void BrowserView::CancelInput()
+{
+    selecting=false;selection_dragged=false;KillTimer(71);
+    if(::GetCapture()==GetSafeHwnd()) ReleaseCapture();
+}
+void BrowserView::OnCaptureChanged(CWnd *window)
+{
+    selecting=false;selection_dragged=false;KillTimer(71);
+    CWnd::OnCaptureChanged(window);
+}
+void BrowserView::OnTimer(UINT_PTR timer)
+{
+    if(timer!=71) {CWnd::OnTimer(timer);return;}
+    if(!selecting || !frame->initialized || ::GetCapture()!=GetSafeHwnd()) {CancelInput();return;}
+    CRect area;GetClientRect(area);CPoint point=selection_pointer;
+    if(point.y<0) OnVScroll(SB_LINEUP,0,nullptr);
+    else if(point.y>=area.bottom) OnVScroll(SB_LINEDOWN,0,nullptr);
+    if(point.x<0) OnHScroll(SB_LINEUP,0,nullptr);
+    else if(point.x>=area.right) OnHScroll(SB_LINEDOWN,0,nullptr);
+    point.x=(std::max)(0L,(std::min)(point.x,area.right-1));
+    point.y=(std::max)(0L,(std::min)(point.y,area.bottom-1));
+    LO_ExtendSelection(&frame->context,point.x+scroll_x,point.y+scroll_y);Invalidate();
 }
 void BrowserView::OnSetFocus(CWnd *old)
 {
@@ -1380,12 +1430,15 @@ void BrowserView::OnHScroll(UINT code, UINT position, CScrollBar *)
 #endif
 }
 BOOL BrowserView::OnMouseWheel(UINT, short delta, CPoint) { OnVScroll(delta > 0 ? SB_LINEUP : SB_LINEDOWN, 0, nullptr); return TRUE; }
-void BrowserView::OnLButtonUp(UINT, CPoint point)
+void BrowserView::OnLButtonUp(UINT flags, CPoint point)
 {
     SetFocus();
 #ifdef EDITOR
     if(frame->editing) {if(selecting) {selecting=false;ReleaseCapture();EDT_EndSelection(&frame->context,point.x+scroll_x,point.y+scroll_y);}return;}
 #endif
+    bool suppress_link=selecting && (selection_dragged || (flags&MK_SHIFT));
+    if(selecting) {LO_EndSelection(&frame->context);CancelInput();Invalidate();}
+    if(suppress_link) return;
     LO_Element *element = LO_XYToElement(&frame->context, point.x + scroll_x, point.y + scroll_y);
     if (element && element->type == LO_TEXT && element->lo_text.anchor_href) {
         char *address = (char *)element->lo_text.anchor_href->anchor;
@@ -1467,6 +1520,7 @@ extern "C" void WFE_BeginLoad(MWContext *context, const char *url)
 {
     BrowserFrame *frame = frame_for(context);
     if (!frame || !url) return;
+    frame->view.CancelInput();
     if(frame->current_url!=url) frame->force_images=false;
     frame->document_preferences=WFE_GeneralPreferences();WFE_ImageInitContext(context);
     if(frame->mode) {frame->current_url=url;return;}
@@ -1720,6 +1774,7 @@ extern "C" void WFE_DocumentAddress(MWContext *context,const char *address)
 extern "C" void WFE_DocumentDefaults(MWContext *context)
 {
     BrowserFrame *frame=frame_for(context);if(!frame) return;
+    frame->view.CancelInput();
     const GeneralPreferences &preferences=frame->document_preferences;
     COLORREF color=preferences.background_custom?preferences.colors[0]:RGB(255,255,255);
     frame->view.background=color;WFE_ImageBackground(context,GetRValue(color),GetGValue(color),GetBValue(color));
@@ -2949,6 +3004,8 @@ static int WFE_RunWorkflowSmoke(const char *report,const char *url,const char *d
 }
 #endif
 
+#include "interaction-smoke.inc"
+
 class NetscapeApplication : public CWinApp {
 public:
     BOOL InitInstance() override {
@@ -2963,7 +3020,7 @@ public:
         POSITION position = arguments.GetHeadPosition();
         bool explicit_command=position!=nullptr;
         CString first = position ? arguments.GetNext(position) : "about:";
-        smoke_mode = first == "--printing-smoke" || first == "--smoke-test" || first == "--mailnews-smoke" || first == "--composer-delivery-smoke"
+        smoke_mode = first == "--interaction-smoke" || first == "--printing-smoke" || first == "--smoke-test" || first == "--mailnews-smoke" || first == "--composer-delivery-smoke"
             || first == "--images-smoke" || first == "--forms-smoke" || first == "--frames-smoke" || first == "--downloads-smoke" || first == "--history-smoke" || first == "--history-reopen-smoke" || first == "--bookmarks-smoke" || first == "--chrome-smoke" || first == "--ui-gallery" || first == "--preferences-ui-smoke" || first == "--preferences-reopen-smoke" || first == "--news-ui-smoke" || first == "--mail-ui-smoke" || first == "--compose-ui-smoke"
 #ifdef EDITOR
             || first == "--editor-smoke"
@@ -2993,7 +3050,8 @@ public:
             }
             else
 #endif
-            if(first=="--printing-smoke") m_nExitCode=WFE_RunPrintingSmoke(report,url);
+            if(first=="--interaction-smoke") m_nExitCode=WFE_RunInteractionSmoke(report,url);
+            else if(first=="--printing-smoke") m_nExitCode=WFE_RunPrintingSmoke(report,url);
             else if(first=="--preferences-ui-smoke"||first=="--preferences-reopen-smoke") { CString page=position?arguments.GetNext(position):"";m_nExitCode=WFE_RunPreferencesSmoke(report,url,page,first=="--preferences-reopen-smoke"); }
             else if(first=="--news-ui-smoke") { CString server=position?arguments.GetNext(position):"";m_nExitCode=WFE_RunNewsUISmoke(report,url,server); }
             else if(first=="--mail-ui-smoke") { m_nExitCode=WFE_RunMailUISmoke(report,url); }

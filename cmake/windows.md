@@ -648,3 +648,14 @@ The recovered source guides implementation while the original 3.02 Windows
 release now supplies a runtime UI reference. See [windows-reference.md](windows-reference.md)
 for its provenance and the limits of the comparison. No Windows binary was
 decompiled, and complete behavior parity has not been established.
+
+## Browser mouse selection
+
+Browser and message-reader document views route mouse dragging and Shift-click
+to the original LO selection APIs. Double-click uses the original word rule,
+including trailing spaces. Captured dragging supports autoscroll, suppresses
+link activation, and stops on capture loss or a new document load. Editor views
+continue to use EDT selection. The `windows_browser_interaction` fixture checks
+exact selected/clipboard text, reverse drag, word/Shift selection, ordinary link
+click versus drag, capture cancellation and selection in a scrolled child frame.
+The native GDI capture shows the selected characters with system highlight colors.

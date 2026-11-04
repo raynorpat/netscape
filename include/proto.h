@@ -131,6 +131,7 @@ extern Bool LO_GridCanGoForward(MWContext *context);
 extern Bool LO_GridCanGoBackward(MWContext *context);
 #endif /* NEW_FRAME_HIST */
 extern Bool LO_Click( MWContext *context, int32 x, int32 y, Bool requireCaret );
+extern void LO_DoubleClick(MWContext *context, int32 x, int32 y);
 extern void LO_Hit(MWContext *context, int32 x, int32 y,
 	Bool requireCaret, LO_HitResult *result);
 extern int32 LO_TextElementWidth(MWContext *context, LO_TextStruct *text_ele, int charOffset);

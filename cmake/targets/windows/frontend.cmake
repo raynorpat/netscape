@@ -113,6 +113,10 @@ if(BUILD_TESTING)
   "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_printing.py"
   --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/printing-test")
  set_tests_properties(windows_printing PROPERTIES TIMEOUT 80)
+ add_test(NAME windows_browser_interaction COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_interaction.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/interaction-test")
+ set_tests_properties(windows_browser_interaction PROPERTIES TIMEOUT 90)
 endif()
 
 if(BUILD_TESTING AND NETSCAPE_BUILD_WINDOWS_EDITOR)

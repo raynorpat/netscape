@@ -54,4 +54,8 @@ if(BUILD_TESTING)
   "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_browser_features.py"
   --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/browser-forms-test" --mode forms)
  set_tests_properties(windows_browser_images windows_browser_forms PROPERTIES TIMEOUT 100)
+ add_test(NAME windows_browser_frames COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_frames.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/browser-frames-test")
+ set_tests_properties(windows_browser_frames PROPERTIES TIMEOUT 60)
 endif()

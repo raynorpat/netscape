@@ -13,7 +13,9 @@ shared clients, failed loads/backgrounds, local paths and HTTP. Form fixtures
 verify native reset/scrolling/cleanup, Enter, exact GET/POST values and image
 submit coordinates. See [windows.md](windows.md) for verification and limits.
 
-The next priorities are frame contexts, native saving/downloads, and completing
+Native frame contexts now support nested cells, named and special targets,
+child forms/images, independent scrolling, cache/history-based resize and cleanup.
+The next priorities are native saving/downloads and completing
 history/bookmark/navigation UI. Optional engines remain separate porting tasks.
 
 ## Native frontend work
@@ -22,7 +24,7 @@ history/bookmark/navigation UI. Optional engines remain separate porting tasks.
 | --- | --- | --- |
 | Implemented | Images | Native IL/GDI adapter decodes, paints, scales, tiles backgrounds and releases shared images. Progressive/animated timing and broader format/error cases need further coverage. |
 | Implemented | Forms | Native controls collect/reset values and submit through LO. File picker exists; multipart uploads, offscreen keyboard traversal and full history restoration need runtime coverage. |
-| 3 | Frames | `FE_MakeGridWindow` declines frames; restructuring/history callbacks are empty. Add child contexts, native view ownership, focus, target routing, sizing, navigation, and cleanup. `laygrid.c` is already in the layout archive. |
+| Implemented | Frames | Native child contexts use the original grid/history engine. Fixtures cover nested views, named/parent/top targets, streamed server-directed target changes, child forms/images, resize and cleanup. Draggable divider UI and broader interrupted-load cases need further coverage. |
 | 3 | Saving/downloads | General file selection declines the operation; progress callbacks are empty. Add native save selection, an explicit save converter/stream, cancel/error handling, binary preservation, and completion UI. A configured download directory alone is not a download implementation. |
 | 3 | Bookmarks/history | Bookmark clipboard transfers exist, while bookmark list/properties/find callbacks decline work. Browser Back/Forward uses a private URL vector and reloads URLs; SHIST contexts are initialized, and netlib owns global-history initialization/update/save calls. Integrate native UI with those backends rather than replacing their databases. |
 | 3 | Charset/text | The frontend defaults to Latin-1 and draws/measures through ANSI GDI. A subset of single-byte conversion tables uses Windows code pages; this does not establish correct multilingual rendering. Verify document charset changes, MIME headers, fonts, conversion failure, selection, and copy. |

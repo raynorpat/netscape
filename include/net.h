@@ -1593,6 +1593,8 @@ extern void NET_DelExternalURLType(char * type);
  *	to be called with a status of MK_CHANGING_CONTEXT
  */
 extern int NET_SetNewContext(URL_Struct *URL_s, MWContext * new_context, Net_GetUrlExitFunc *exit_routine);
+/* Descriptors of one active URL, for frontend context-transfer ownership. */
+extern int NET_GetURLDescriptors(URL_Struct *, NETSOCK *, NETSOCK *, Bool *, Bool *);
 
 /* returns true if the stream is safe for setting up a new
  * context and using a separate window.

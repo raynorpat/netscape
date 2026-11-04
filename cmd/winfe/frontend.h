@@ -10,8 +10,17 @@ extern "C" {
 int WFE_Init(void);
 void WFE_Shutdown(void);
 void WFE_InitContext(MWContext *context, void *window);
+void WFE_InitGridContext(MWContext *context, void *window, MWContext *parent, const char *name);
+MWContext *WFE_URLTarget(MWContext *context, URL_Struct *url);
+void WFE_TransferURL(URL_Struct *, MWContext *old_context, MWContext *new_context);
+void WFE_NavigateTarget(MWContext *context, const char *address, const char *target);
+MWContext *WFE_NewGridWindow(MWContext *, void *, int32, int32, int32, int32, char *, char *, int8, NET_ReloadMethod, Bool);
+void *WFE_FreeGridWindow(MWContext *context, XP_Bool save);
+void WFE_ResizeGridWindow(MWContext *, int32, int32, int32, int32);
+void WFE_LoadGridHistory(MWContext *, void *, NET_ReloadMethod);
 void WFE_DestroyContext(MWContext *context);
 void WFE_Load(MWContext *context, const char *address);
+MWContext *WFE_NewWindow(const char *address);
 void WFE_BeginLoad(MWContext *context, const char *address);
 HWND WFE_DocumentWindow(MWContext *context);
 void WFE_Pump(void);

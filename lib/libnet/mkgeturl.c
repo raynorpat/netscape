@@ -3096,6 +3096,27 @@ NET_InterruptSocket (NETSOCK socket)
 	LIBNET_UNLOCK_AND_RETURN(status);
 }
 
+/* Return the descriptors owned by one active request, without changing it. */
+PUBLIC int
+NET_GetURLDescriptors(URL_Struct *url, NETSOCK *socket, NETSOCK *connecting,
+                      Bool *local_file, Bool *memory_file)
+{
+    XP_List *iter;
+    ActiveEntry *entry;
+    LIBNET_LOCK();
+    iter = net_EntryList;
+    while ((entry = (ActiveEntry *)XP_ListNextObject(iter)) != NULL) {
+        if (entry->URL_s == url) {
+            if (socket) *socket = entry->socket;
+            if (connecting) *connecting = entry->con_sock;
+            if (local_file) *local_file = entry->local_file;
+            if (memory_file) *memory_file = entry->memory_file;
+            LIBNET_UNLOCK_AND_RETURN(0);
+        }
+    }
+    LIBNET_UNLOCK_AND_RETURN(-1);
+}
+
 /*
  *  NET_SetNewContext changes the context associated with a URL Struct.
  *	can also change the url exit routine, which causes the old one to be

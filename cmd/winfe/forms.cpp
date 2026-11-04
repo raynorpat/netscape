@@ -166,7 +166,7 @@ static void load_control(NativeForm *form, bool reset)
         int count = (std::min)((std::max)((int)select->option_cnt, 0), 32767);
         int selected = -1;
         for (int i = 0; i < count; ++i) {
-            if (reset || !form->restored) options[i].selected = options[i].def_selected;
+            if (reset) options[i].selected = options[i].def_selected;
             std::string text = block_text(options[i].text_value);
             SendMessageA(form->window, combo ? CB_ADDSTRING : LB_ADDSTRING, 0, (LPARAM)text.c_str());
             if (options[i].selected) {
@@ -400,6 +400,8 @@ static void submit_data(MWContext *context, LO_FormSubmitData *data)
     std::string action = block_text(data->action);
     URL_Struct *url = NET_CreateURLStruct(action.c_str(), NET_DONT_RELOAD);
     if (!url) { LO_FreeSubmitData(data); WFE_Status(context, "Could not allocate form request."); return; }
+    std::string target = block_text(data->window_target);
+    if (!target.empty()) url->window_target = XP_STRDUP(target.c_str());
     History_entry *history = SHIST_GetCurrent(&context->hist);
     if (history && history->address) url->referer = XP_STRDUP(history->address);
     int result = NET_AddLOSubmitDataToURLStruct(data, url);

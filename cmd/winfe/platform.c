@@ -595,6 +595,33 @@ void FE_ClearDNSSelect(MWContext *context, int socket)
     }
 }
 
+void WFE_TransferURL(URL_Struct *url, MWContext *old_context, MWContext *new_context)
+{
+    NETSOCK socket, connecting;
+    Bool local_file, memory_file;
+    WFE_Watch *watch;
+    WFE_DNS *job;
+    if (NET_GetURLDescriptors(url, &socket, &connecting, &local_file, &memory_file) < 0)
+        return;
+    for (watch = wfe_watches; watch; watch = watch->next) {
+        if (watch->context != old_context || (watch->flags & WFE_ALWAYS)) continue;
+        if ((socket != SOCKET_INVALID && watch->descriptor == (int)socket &&
+             !!(watch->flags & WFE_FILE) == !!local_file) ||
+            (connecting != SOCKET_INVALID && watch->descriptor == (int)connecting &&
+             (watch->flags & WFE_CONNECT)))
+            watch->context = new_context;
+    }
+    for (job = wfe_dns; job; job = job->next)
+        if (job->context == old_context &&
+            (job->socket == (int)socket || job->socket == (int)connecting))
+            job->context = new_context;
+    if (memory_file) {
+        WFE_SetCallNetlibAllTheTime(new_context);
+        if (!NET_AreThereActiveConnectionsForWindow(old_context))
+            WFE_ClearCallNetlibAllTheTime(old_context);
+    }
+}
+
 void WFE_PollNetworking(void)
 {
     WFE_Watch *watch;

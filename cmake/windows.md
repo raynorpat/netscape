@@ -67,10 +67,20 @@ GET, POST and image click coordinates against captured loopback requests.
 File upload/multipart behavior, progressive/animated image timing, and full
 keyboard traversal through offscreen controls remain unverified.
 
-Frames, plugins, bookmark and history dialogs, downloads, printing, Java, Mocha
+Plugins, bookmark and history dialogs, downloads, printing, Java, Mocha
 and SSL/security integration remain incomplete. Back/Forward currently reloads
 the URL rather than restoring a complete session-history entry. Text and
 password prompts use native dialogs.
+
+Framesets use native child document windows with independent contexts, scrolling,
+images and forms. Named links and form targets, nested frames, `_parent` and
+`_top` navigation use the original context lookup. Resize uses cached documents
+and core frame history so it preserves the currently navigated child page.
+The frame fixture also streams server-directed `Window-Target` responses while
+moving URL/socket ownership and destroying the original child. Native divider
+dragging and broader interrupted-load cases remain outside current coverage.
+All nine native CTests passed in Release and Debug after frame integration; the
+Linux browser also rebuilt with the portable descriptor-query addition.
 
 To install or package the Release build:
 
@@ -82,8 +92,8 @@ cpack --config out/windows-frontend/CPackConfig.cmake -G ZIP -C Release -B out/p
 The Windows archive is named `netscape-legacy-3.02-Windows-x86.zip` and contains
 `bin/netscape.exe` and the documentation/licenses. It still requires the matching
 shared Visual C++ and MFC runtime. Installation and ZIP generation were verified;
-the installed executable passed the image/form fixtures. All eight native CTests
-passed in both Release and Debug. The shared layout/XBM fixes also passed a Linux
+the installed executable passed the image/form fixtures. The nine-test native suite includes the frame fixture; verification is recorded
+with the existing browser/mail checks. The shared layout/XBM fixes also passed a Linux
 browser rebuild.
 
 ## Mail and news

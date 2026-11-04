@@ -35,6 +35,7 @@ static void invalid_parameter(const wchar_t *expression, const wchar_t *function
 #include "composer.h"
 #include "images.h"
 #include "forms.h"
+#include "shist.h"
 
 class BrowserFrame;
 static bool smoke_mode = false;
@@ -54,6 +55,9 @@ public:
     std::string drawn_text;
     LO_ImageStruct *backdrop = nullptr;
     std::vector<LO_ImageStruct *> drawn_images;
+    CPoint link_point;
+    std::string link_text;
+    std::map<std::string, CPoint> links;
     void Render(CDC &dc, int width, int height);
 protected:
     BOOL OnCommand(WPARAM command, LPARAM control) override;
@@ -73,6 +77,10 @@ public:
     CStatusBar status;
     CListCtrl folders, messages;
     MWContext context;
+    MWContext *grid_parent = nullptr;
+    std::string grid_name;
+    int grid_scrolling = LO_SCROLL_AUTO;
+    bool resizing = false;
     int mode = 0; /* browser, mail, news */
     bool updating_lists = false;
     bool mail_update_pending = false;
@@ -199,6 +207,17 @@ int BrowserFrame::OnCreate(LPCREATESTRUCT create)
 {
     static UINT indicators[] = {ID_SEPARATOR};
     if (CFrameWnd::OnCreate(create) == -1) return -1;
+    if (grid_parent) {
+        view.frame = this;
+        DWORD style = WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN;
+        if (grid_scrolling != LO_SCROLL_NO) style |= WS_VSCROLL | WS_HSCROLL;
+        if (!view.CreateEx(0, AfxRegisterWndClass(CS_DBLCLKS, LoadCursor(nullptr, IDC_ARROW)),
+                           "Frame document", style, CRect(0,0,1,1), this, 112)) return -1;
+        browser_contexts[&context] = this;
+        WFE_InitGridContext(&context, this, grid_parent, grid_name.c_str());
+        initialized = true;
+        return 0;
+    }
     if (!address.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
                         CRect(8,8,700,32), this, ID_ADDRESS)) return -1;
     address.SetFont(CFont::FromHandle((HFONT)GetStockObject(DEFAULT_GUI_FONT)));
@@ -235,6 +254,11 @@ void BrowserFrame::OnSize(UINT type, int width, int height)
 {
     CFrameWnd::OnSize(type, width, height);
     if (!view.GetSafeHwnd()) return;
+    if (grid_parent) {
+        view.MoveWindow(0, 0, (std::max)(width, 1), (std::max)(height, 1));
+        if (initialized) { WFE_FormPositionAll(&context); SetTimer(2, 120, nullptr); }
+        return;
+    }
     address.MoveWindow(8, 8, (std::max)(width - 84, 20), 24);
     go.MoveWindow((std::max)(width - 68, 8), 8, 60, 24);
     if (mode && folders.GetSafeHwnd()) {
@@ -245,6 +269,7 @@ void BrowserFrame::OnSize(UINT type, int width, int height)
         view.MoveWindow(left + 4, list_height + 44, (std::max)(width - left - 4, 1), (std::max)(height - list_height - 66, 1));
     } else view.MoveWindow(0, 40, width, (std::max)(height - 62, 1));
     if (initialized) WFE_FormPositionAll(&context);
+    if (initialized && mode == 0 && !current_url.empty()) SetTimer(2, 120, nullptr);
 }
 BOOL BrowserFrame::PreTranslateMessage(MSG *message)
 {
@@ -256,7 +281,7 @@ BOOL BrowserFrame::PreTranslateMessage(MSG *message)
 void BrowserFrame::Navigate(const char *input, bool remember)
 {
     current_url = as_url(input);
-    address.SetWindowText(current_url.c_str());
+    if (address.GetSafeHwnd()) address.SetWindowText(current_url.c_str());
     if (remember) {
         if (!history.empty()) history.resize(history_position + 1);
         history.push_back(current_url);
@@ -267,10 +292,25 @@ void BrowserFrame::Navigate(const char *input, bool remember)
     view.drawn_text.clear();
     WFE_Load(&context, current_url.c_str());
 }
-void BrowserFrame::OnTimer(UINT_PTR timer) { if (timer == 1) WFE_Pump(); else CFrameWnd::OnTimer(timer); }
+void BrowserFrame::OnTimer(UINT_PTR timer)
+{
+    if (timer == 1) WFE_Pump();
+    else if (timer == 2) {
+        KillTimer(2);
+        if (!initialized || current_url.empty()) return;
+        if (resizing || XP_IsContextBusy(&context)) { SetTimer(2, 120, nullptr); return; }
+        History_entry *entry = SHIST_GetCurrent(&context.hist);
+        if (!entry || entry->method != URL_GET_METHOD) return;
+        URL_Struct *url = SHIST_CreateURLStructFromHistoryEntry(&context, entry);
+        if (!url) return;
+        resizing = true; completed = false;
+        url->force_reload = NET_RESIZE_RELOAD;
+        FE_GetURL(&context, url);
+    } else CFrameWnd::OnTimer(timer);
+}
 void BrowserFrame::OnGo() { CString text; address.GetWindowText(text); if (mode == 1) { MSG_MailDirectoryChanged(&context); RefreshMailLists(); } else if (mode == 2) { if (!text.IsEmpty() && WFE_SetMailPreference("news", text)) { WFE_ApplyMailPreferences(); MSG_NewsHostChanged(&context, text); RefreshMailLists(); } } else if (!text.IsEmpty()) Navigate(text); }
 void BrowserFrame::OnOpen() { CFileDialog dialog(TRUE, "html", nullptr, OFN_FILEMUSTEXIST, "Documents|*.html;*.htm;*.txt|All files|*.*||", this); if (dialog.DoModal() == IDOK) Navigate(dialog.GetPathName()); }
-void BrowserFrame::OnStop() { NET_InterruptWindow(&context); }
+void BrowserFrame::OnStop() { XP_InterruptContext(&context); }
 void BrowserFrame::OnReload() { if (!current_url.empty()) Navigate(current_url.c_str(), false); }
 void BrowserFrame::OnBack() { if (history_position > 0) { --history_position; Navigate(history[history_position].c_str(), false); } }
 void BrowserFrame::OnForward() { if (history_position + 1 < history.size()) { ++history_position; Navigate(history[history_position].c_str(), false); } }
@@ -446,6 +486,7 @@ void BrowserFrame::OnClose()
 void BrowserFrame::OnDestroy()
 {
     KillTimer(1);
+    KillTimer(2);
     if (initialized) { initialized = false; WFE_DestroyContext(&context); }
     browser_contexts.erase(&context);
     WFE_UnregisterNativeWindow(&context);
@@ -488,10 +529,11 @@ void BrowserView::OnHScroll(UINT code, UINT position, CScrollBar *) { CRect area
 BOOL BrowserView::OnMouseWheel(UINT, short delta, CPoint) { OnVScroll(delta > 0 ? SB_LINEUP : SB_LINEDOWN, 0, nullptr); return TRUE; }
 void BrowserView::OnLButtonUp(UINT, CPoint point)
 {
+    SetFocus();
     LO_Element *element = LO_XYToElement(&frame->context, point.x + scroll_x, point.y + scroll_y);
     if (element && element->type == LO_TEXT && element->lo_text.anchor_href) {
         char *address = (char *)element->lo_text.anchor_href->anchor;
-        if (address) frame->Navigate(address);
+        if (address) WFE_NavigateTarget(&frame->context, address, (const char *)element->lo_text.anchor_href->target);
     } else if (element && element->type == LO_IMAGE) {
         LO_ImageStruct *image = &element->lo_image;
         int x = point.x + scroll_x - image->x - image->x_offset - image->border_width;
@@ -508,7 +550,7 @@ void BrowserView::OnLButtonUp(UINT, CPoint point)
             if (image->image_attr && (image->image_attr->attrmask & LO_ATTR_ISMAP)) {
                 char position[48]; sprintf(position, "?%d,%d", x, y); target += position;
             }
-            frame->Navigate(target.c_str());
+            WFE_NavigateTarget(&frame->context, target.c_str(), (const char *)anchor->target);
         }
     }
 }
@@ -533,6 +575,7 @@ extern "C" HWND WFE_DocumentWindow(MWContext *context)
 }
 extern "C" void FE_RaiseWindow(MWContext *context)
 {
+    while (context && context->grid_parent) context = context->grid_parent;
     auto found = native_windows.find(context);
     if (!smoke_mode && found != native_windows.end()) {
         ShowWindow(found->second, SW_RESTORE);
@@ -544,12 +587,79 @@ extern "C" void WFE_BeginLoad(MWContext *context, const char *url)
     BrowserFrame *frame = frame_for(context);
     if (!frame || frame->mode || !url) return;
     frame->current_url = url;
-    frame->address.SetWindowText(url);
+    if (frame->address.GetSafeHwnd()) frame->address.SetWindowText(url);
+    if (frame->resizing) return;
     if (!frame->history.empty()) frame->history.resize(frame->history_position + 1);
     frame->history.push_back(url);
     frame->history_position = frame->history.size() - 1;
     frame->completed = false;
     frame->view.drawn_runs = 0; frame->view.drawn_text.clear();
+}
+extern "C" MWContext *WFE_URLTarget(MWContext *context, URL_Struct *url)
+{
+    if (!url || !url->window_target || !*url->window_target) return context;
+    std::string name(url->window_target);
+    MWContext *target = XP_FindNamedContextInList(context, (char *)name.c_str());
+    if (!target) {
+        target = WFE_NewWindow(nullptr);
+        if (target && name[0] != '_') { free(target->name); target->name = _strdup(name.c_str()); }
+    }
+    free(url->window_target); url->window_target = _strdup("");
+    return target;
+}
+extern "C" void WFE_NavigateTarget(MWContext *context, const char *address, const char *target)
+{
+    URL_Struct *url = NET_CreateURLStruct(address, NET_DONT_RELOAD);
+    if (!url) return;
+    if (target && *target) url->window_target = _strdup(target);
+    FE_GetURL(context, url);
+}
+extern "C" MWContext *WFE_NewGridWindow(MWContext *parent, void *history,
+    int32 x, int32 y, int32 width, int32 height, char *address, char *name,
+    int8 scrolling, NET_ReloadMethod reload, Bool no_edge)
+{
+    BrowserFrame *owner = frame_for(parent);
+    if (!owner) return nullptr;
+    BrowserFrame *frame = new BrowserFrame;
+    frame->grid_parent = parent; frame->grid_name = name ? name : ""; frame->grid_scrolling = scrolling;
+    DWORD style = WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | (no_edge ? 0 : WS_BORDER);
+    if (!frame->Create(nullptr, "Netscape frame", style,
+        CRect(x,y,x+(std::max)(width,1L),y+(std::max)(height,1L)), &owner->view, nullptr)) return nullptr;
+    frame->view.MoveWindow(0, 0, (std::max)(width,1L), (std::max)(height,1L));
+    if (history) SHIST_AddDocument(&frame->context, (History_entry *)history);
+    URL_Struct *url = history ? SHIST_CreateURLStructFromHistoryEntry(&frame->context, (History_entry *)history)
+                             : NET_CreateURLStruct(address ? address : "about:blank", NET_DONT_RELOAD);
+    if (url) {
+        url->force_reload = reload;
+        memset(&url->savedData, 0, sizeof(url->savedData));
+        FE_GetURL(&frame->context, url);
+    }
+    return &frame->context;
+}
+extern "C" void *WFE_FreeGridWindow(MWContext *context, XP_Bool save)
+{
+    BrowserFrame *frame = frame_for(context);
+    if (!frame || !context->is_grid_cell) return nullptr;
+    XP_List *history = nullptr;
+    if (save) {
+        LO_DiscardDocument(context);
+        history = context->hist.list_ptr;
+        context->hist.list_ptr = nullptr;
+        context->hist.cur_doc_ptr = nullptr;
+    }
+    frame->DestroyWindow();
+    return history;
+}
+extern "C" void WFE_ResizeGridWindow(MWContext *context, int32 x, int32 y, int32 width, int32 height)
+{
+    BrowserFrame *frame = frame_for(context);
+    if (frame && context->is_grid_cell) frame->MoveWindow(x, y, (std::max)(width, 1L), (std::max)(height, 1L));
+}
+extern "C" void WFE_LoadGridHistory(MWContext *context, void *history, NET_ReloadMethod reload)
+{
+    if (!history) return;
+    URL_Struct *url = SHIST_CreateURLStructFromHistoryEntry(context, (History_entry *)history);
+    if (url) { url->force_reload = reload; FE_GetURL(context, url); }
 }
 extern "C" HDC WFE_DrawingContext(MWContext *context)
 {
@@ -617,6 +727,12 @@ extern "C" void WFE_Text(MWContext *context, LO_TextStruct *text, int32 start, i
         frame->view.drawn_text.append((char *)text->text + start, end - start);
         frame->view.drawn_text += ' ';
         ++frame->view.drawn_runs;
+        if (text->anchor_href) {
+            frame->view.link_text.assign((char *)text->text + start, end - start);
+            frame->view.link_point = CPoint(text->x + text->x_offset + offset.cx + 1,
+                                           text->y + text->y_offset + 3);
+            frame->view.links[frame->view.link_text] = frame->view.link_point;
+        }
     }
 }
 extern "C" void WFE_Rect(MWContext *context, int32 x, int32 y, int32 width, int32 height, unsigned long color, int fill)
@@ -627,17 +743,34 @@ extern "C" void WFE_Rect(MWContext *context, int32 x, int32 y, int32 width, int3
     if (fill) frame->view.drawing->FillSolidRect(area, color);
     else { CBrush brush(color); frame->view.drawing->FrameRect(area, &brush); }
 }
-extern "C" void WFE_Status(MWContext *context, const char *message) { BrowserFrame *frame = frame_for(context); if (frame && frame->status.GetSafeHwnd()) frame->status.SetPaneText(0, message ? message : ""); else WFE_ComposerStatus(context, message); }
+extern "C" void WFE_Status(MWContext *context, const char *message) { BrowserFrame *frame = frame_for(context); while (frame && frame->grid_parent) frame = frame_for(frame->grid_parent); if (frame && frame->status.GetSafeHwnd()) frame->status.SetPaneText(0, message ? message : ""); else WFE_ComposerStatus(context, message); }
 extern "C" void WFE_Title(MWContext *context, const char *title) { BrowserFrame *frame = frame_for(context); if (frame) { std::string caption = std::string(title ? title : "Untitled") + " - Netscape 3.02"; frame->SetWindowText(caption.c_str()); } }
 extern "C" void WFE_Invalidate(MWContext *context) { BrowserFrame *frame = frame_for(context); if (frame && frame->view.GetSafeHwnd()) frame->view.Invalidate(); }
 extern "C" void WFE_WindowSize(MWContext *context, int32 *width, int32 *height) { BrowserFrame *frame = frame_for(context); CRect area(0,0,800,600); if (frame) frame->view.GetClientRect(area); *width = area.Width(); *height = area.Height(); }
-extern "C" void WFE_DocumentSize(MWContext *context, int32 width, int32 height) { BrowserFrame *frame = frame_for(context); if (frame) { frame->view.document_width = width; frame->view.document_height = height; frame->view.SetScrollRange(SB_VERT, 0, height); frame->view.SetScrollRange(SB_HORZ, 0, width); } }
+extern "C" void WFE_DocumentSize(MWContext *context, int32 width, int32 height)
+{
+    BrowserFrame *frame = frame_for(context);
+    if (!frame) return;
+    BrowserView &view = frame->view;
+    view.document_width = width; view.document_height = height;
+    if (context->is_grid_cell && frame->grid_scrolling == LO_SCROLL_NO) {
+        view.ShowScrollBar(SB_BOTH, FALSE);
+        return;
+    }
+    CRect area; view.GetClientRect(area);
+    SCROLLINFO vertical = {sizeof(SCROLLINFO), SIF_RANGE | SIF_PAGE | SIF_POS, 0, (int)(std::max)(0L,height-1), (UINT)area.Height(), view.scroll_y, 0};
+    SCROLLINFO horizontal = {sizeof(SCROLLINFO), SIF_RANGE | SIF_PAGE | SIF_POS, 0, (int)(std::max)(0L,width-1), (UINT)area.Width(), view.scroll_x, 0};
+    if (context->is_grid_cell && frame->grid_scrolling == LO_SCROLL_YES) {
+        vertical.fMask |= SIF_DISABLENOSCROLL; horizontal.fMask |= SIF_DISABLENOSCROLL;
+    }
+    view.SetScrollInfo(SB_VERT, &vertical); view.SetScrollInfo(SB_HORZ, &horizontal);
+}
 extern "C" void WFE_Scroll(MWContext *context, int32 x, int32 y) { BrowserFrame *frame = frame_for(context); if (frame) { frame->view.scroll_x = x; frame->view.scroll_y = y; WFE_FormPositionAll(context); WFE_Invalidate(context); } }
 extern "C" void WFE_Position(MWContext *context, int32 *x, int32 *y) { BrowserFrame *frame = frame_for(context); *x = frame ? frame->view.scroll_x : 0; *y = frame ? frame->view.scroll_y : 0; }
 extern "C" void WFE_Background(MWContext *context, unsigned long color) { BrowserFrame *frame = frame_for(context); if (frame) frame->view.background = color; }
 extern "C" void WFE_Unsupported(MWContext *context, const char *feature) { std::string message = std::string(feature) + " is not available in this Windows port yet."; OutputDebugStringA(message.c_str()); WFE_Status(context, message.c_str()); }
 extern "C" int WFE_Message(MWContext *context, const char *message, int confirm) { if (smoke_mode) { smoke_error = message ? message : ""; return 0; } BrowserFrame *frame = frame_for(context); return MessageBoxA(frame ? frame->GetSafeHwnd() : nullptr, message ? message : "", "Netscape", confirm ? MB_YESNO | MB_ICONQUESTION : MB_OK | MB_ICONINFORMATION) == IDYES; }
-extern "C" void WFE_Complete(MWContext *context, int status) { BrowserFrame *frame = frame_for(context); if (frame) { frame->completed = true; frame->load_status = status; WFE_Invalidate(context); } }
+extern "C" void WFE_Complete(MWContext *context, int status) { BrowserFrame *frame = frame_for(context); if (frame) { frame->completed = true; frame->resizing = false; frame->load_status = status; WFE_Invalidate(context); } }
 extern "C" MWContext *WFE_NewWindow(const char *address)
 {
     BrowserFrame *frame = new BrowserFrame;
@@ -755,11 +888,105 @@ static void browser_smoke_wait(BrowserFrame *frame)
     ULONGLONG deadline = GetTickCount64() + 12000, quiet = 0;
     while (GetTickCount64() < deadline) {
         mail_smoke_pump();
-        if (frame->completed && !NET_AreThereActiveConnectionsForWindow(&frame->context)) {
+        if (frame->completed && !XP_IsContextBusy(&frame->context)) {
             if (!quiet) quiet = GetTickCount64();
             if (GetTickCount64() - quiet >= 200) break;
         } else quiet = 0;
     }
+}
+static std::string frame_text(BrowserFrame *frame)
+{
+    if (!frame) return "";
+    CClientDC screen(&frame->view); CDC memory; memory.CreateCompatibleDC(&screen);
+    CBitmap bitmap; bitmap.CreateCompatibleBitmap(&screen, 1800, 1200);
+    CBitmap *previous = memory.SelectObject(&bitmap);
+    frame->view.drawn_text.clear(); frame->view.link_text.clear(); frame->view.links.clear();
+    CRect area; frame->view.GetClientRect(area);
+    frame->view.Render(memory, area.Width(), area.Height());
+    memory.SelectObject(previous);
+    return frame->view.drawn_text;
+}
+static BrowserFrame *named_frame(MWContext *root, const char *name)
+{
+    return frame_for(XP_FindNamedContextInList(root, (char *)name));
+}
+static bool click_frame_link(BrowserFrame *frame, const char *label)
+{
+    frame_text(frame);
+    if (!frame) return false;
+    for (const auto &link : frame->view.links) if (link.first.find(label) != std::string::npos) {
+        CPoint point = link.second;
+        frame->view.SendMessage(WM_LBUTTONUP, 0, MAKELPARAM(point.x, point.y));
+        return true;
+    }
+    return false;
+}
+static int WFE_RunFramesSmoke(const char *report, const char *url)
+{
+    BrowserFrame *root = frame_for(WFE_NewWindow(nullptr));
+    if (!root) return 2;
+    root->Navigate(url); browser_smoke_wait(root);
+    BrowserFrame *navigation = named_frame(&root->context, "navigation");
+    BrowserFrame *content = named_frame(&root->context, "content");
+    int count = XP_ListCount(root->context.grid_children);
+    bool initial = count == 2 && frame_text(navigation).find("Navigation frame") != std::string::npos
+        && frame_text(content).find("Initial content frame") != std::string::npos
+        && content->view.drawn_images.size() == 1;
+    bool form = false, header_target = false, targeted = false, resized = false, nested = false, parent_target = false, top_target = false;
+    if (initial) {
+        HWND query = WFE_FormFindControl(&content->context, "query", 0);
+        HWND submit = WFE_FormFindControl(&content->context, "go", 0);
+        if (query && submit) {
+            SetWindowTextA(query, "frame & value"); SendMessage(submit, BM_CLICK, 0, 0);
+            browser_smoke_wait(root);
+            form = frame_text(content).find("Frame form submitted") != std::string::npos;
+        }
+        bool header_clicked = click_frame_link(navigation, "Header target"); browser_smoke_wait(root);
+        std::string header = frame_text(content);
+        header_target = header_clicked && header.find("Header transfer finished") != std::string::npos
+            && frame_text(navigation).find("Navigation frame") != std::string::npos;
+        bool clicked = click_frame_link(navigation, "Open target"); browser_smoke_wait(root);
+        targeted = clicked && content == named_frame(&root->context, "content")
+            && frame_text(content).find("Targeted content frame") != std::string::npos
+            && frame_text(navigation).find("Navigation frame") != std::string::npos;
+    }
+    if (targeted) {
+        CRect before; navigation->GetWindowRect(before);
+        root->completed = false; root->MoveWindow(60,60,950,690);
+        browser_smoke_wait(root);
+        navigation = named_frame(&root->context, "navigation"); content = named_frame(&root->context, "content");
+        CRect after; if (navigation) navigation->GetWindowRect(after);
+        resized = navigation && content && before.Width() != after.Width()
+            && frame_text(content).find("Targeted content frame") != std::string::npos;
+        if (!resized) fprintf(stderr, "Frame resize: before=%d after=%d navigation=%p content=%p body=%s\n", before.Width(), after.Width(), navigation, content, frame_text(content).c_str());
+    }
+    if (resized) {
+        bool clicked = click_frame_link(content, "Open nested"); browser_smoke_wait(root);
+        nested = clicked && frame_text(named_frame(&root->context, "nestedTop")).find("Nested top frame") != std::string::npos
+            && frame_text(named_frame(&root->context, "nestedBottom")).find("Nested bottom frame") != std::string::npos;
+    }
+    if (nested) {
+        bool clicked = click_frame_link(named_frame(&root->context, "nestedTop"), "Parent target");
+        browser_smoke_wait(root);
+        content = named_frame(&root->context, "content");
+        parent_target = clicked && content && frame_text(content).find("Parent target frame") != std::string::npos
+            && named_frame(&root->context, "navigation") && XP_ListCount(content->context.grid_children) == 0;
+    }
+    if (parent_target) {
+        bool clicked = click_frame_link(content, "Top target"); browser_smoke_wait(root);
+        top_target = clicked && XP_ListCount(root->context.grid_children) == 0
+            && frame_text(root).find("Top target document") != std::string::npos
+            && frame_text(root).find("Top transfer finished") != std::string::npos;
+    }
+    root->Navigate("about:"); browser_smoke_wait(root);
+    bool cleanup = XP_ListCount(root->context.grid_children) == 0 && browser_contexts.size() == 1;
+    root->SendMessage(WM_CLOSE);
+    cleanup = cleanup && browser_contexts.empty();
+    FILE *output = fopen(report, "wb");
+    if (!output) return 3;
+    fprintf(output, "child_count=%d\ninitial_render=%d\nform=%d\nheader_target=%d\ntargeted=%d\nresized=%d\nnested=%d\nparent_target=%d\ntop_target=%d\ncleanup=%d\nerror=%s\n", count, initial, form, header_target, targeted, resized, nested, parent_target, top_target, cleanup, smoke_error.c_str());
+    fclose(output);
+    return initial && form && header_target && targeted && resized && nested && parent_target && top_target && cleanup ? 0 : 4;
 }
 static bool image_pixel(CDC &dc, LO_ImageStruct *image, int column, int row, COLORREF expected, int tolerance)
 {
@@ -1017,7 +1244,7 @@ public:
         POSITION position = arguments.GetHeadPosition();
         CString first = position ? arguments.GetNext(position) : "about:";
         smoke_mode = first == "--smoke-test" || first == "--mailnews-smoke" || first == "--composer-delivery-smoke"
-            || first == "--images-smoke" || first == "--forms-smoke";
+            || first == "--images-smoke" || first == "--forms-smoke" || first == "--frames-smoke";
         if (smoke_mode) {
             SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
 #ifdef _DEBUG
@@ -1035,6 +1262,7 @@ public:
                 m_nExitCode = first == "--mailnews-smoke" ? WFE_RunMailNewsSmoke(report, url == "news", server) : WFE_RunComposerDeliverySmoke(report, url == "news", server);
             } else if (first == "--images-smoke") m_nExitCode = WFE_RunImageSmoke(report, url);
             else if (first == "--forms-smoke") m_nExitCode = WFE_RunFormsSmoke(report, url);
+            else if (first == "--frames-smoke") m_nExitCode = WFE_RunFramesSmoke(report, url);
             else m_nExitCode = WFE_RunSmokeTest(report, url.IsEmpty() ? nullptr : (const char *)url);
             WFE_Shutdown();
             backend_initialized = false;

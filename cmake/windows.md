@@ -670,3 +670,29 @@ browser rather than replacing the message. The `windows_browser_links` fixture
 selects real popup items, checks exact clipboard URLs, separate windows and
 named child-frame targets, and closes a browser while its popup is active.
 Queued messages for destroyed windows are filtered before MFC examines them.
+
+Frame dividers use the original LO edge visibility, movement bounds and
+NORESIZE state. A nonactivating drag indicator follows the captured pointer;
+releasing commits through `LO_MoveGridEdge`. Escape, capture loss, navigation
+and edge destruction cancel the operation. Visible edges use classic beveled
+painting. Parent framesets occupy the full pane without scrollbars, matching
+the original full-window callback contract and allowing LO to restore resized
+grid geometry from same-size history. Child recreation retains saved form/grid
+data. When the window dimensions change, LO recalculates the frameset using
+its original sizing rules. The `windows_frame_dividers` fixture checks both
+axes, clamping, resize cursors, tracking-before-release, cancellation, NORESIZE
+(including double-click), form retention, history and window resizing.
+
+Cancellation is retained through the next mouse-up: releasing a canceled drag
+over a link cannot activate it or submit an image input. Clipboard URL writes
+retry a brief competing lock (up to 200 ms) without pumping a reentrant window
+loop, and report a busy clipboard if it remains unavailable. Regressions cover
+capture-loss and navigation cancellation plus a real competing clipboard owner.
+
+Browser interaction verification on 2026-11-04: the complete standard edition
+suite passed 21/21 in both Win32 Debug and Release; Gold passed 24/24 in both
+configurations. These runs include the original mail/news, printing, preferences
+and Gold editing/publishing workflows as well as the new selection, link and
+frame-divider fixtures. The native selection and frame captures were reviewed.
+An independent review found one cancellation issue; its new failing regressions
+passed after the fix, followed by all four complete suites.

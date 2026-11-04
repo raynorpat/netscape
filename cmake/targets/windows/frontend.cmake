@@ -13,6 +13,7 @@ add_executable(netscape-win32 WIN32
  "${PROJECT_SOURCE_DIR}/cmd/winfe/mailui.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/find.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/browser-links.cpp"
+ "${PROJECT_SOURCE_DIR}/cmd/winfe/frame-divider.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/printing.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/frontend.c"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/platform.c"
@@ -122,6 +123,10 @@ if(BUILD_TESTING)
   "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_interaction.py"
   --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/links-test" --mode links)
  set_tests_properties(windows_browser_links PROPERTIES TIMEOUT 90)
+ add_test(NAME windows_frame_dividers COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_interaction.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/dividers-test" --mode dividers)
+ set_tests_properties(windows_frame_dividers PROPERTIES TIMEOUT 90)
 endif()
 
 if(BUILD_TESTING AND NETSCAPE_BUILD_WINDOWS_EDITOR)

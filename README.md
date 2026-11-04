@@ -31,8 +31,9 @@ cmake --build out/cmake --parallel
 The browser requires Linux, Python 3, Perl, gperf, POSIX text utilities, and zlib/X11/Motif development libraries. Java and Mocha default to disabled. See the CMake guide for library-only builds, dependency prefixes, Sun Java source targets and imported-runtime mode, and verification limits.
 
 Native Win32 core libraries, NSPR and MFC browser/mail/news windows are available,
-including image rendering, HTML forms, message reading and composition. The
-optional `NETSCAPE_BUILD_WINDOWS_EDITOR=ON` configuration adds the original Gold
+including image rendering, HTML forms, message reading and composition. Browser
+views support mouse selection and link context menus, with draggable frame
+dividers using the original layout engine. The optional `NETSCAPE_BUILD_WINDOWS_EDITOR=ON` configuration adds the original Gold
 HTML editing engine and a native editor opened with `--edit [path]`; use a
 separate `out/windows-gold` build directory. Native print/preview, Editor
 Preferences, independent templates, an offline wizard and HTTP/FTP publishing

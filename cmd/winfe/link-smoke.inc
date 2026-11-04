@@ -3,6 +3,15 @@ static const char *link_popup_label=nullptr;
 static bool link_popup_found=false;
 static UINT link_popup_attempts=0;
 static HWND link_popup_close=nullptr;
+struct LinkClipboardHold {HANDLE ready;bool opened=false;};
+static DWORD WINAPI link_hold_clipboard(void *data)
+{
+    LinkClipboardHold *hold=(LinkClipboardHold *)data;
+    HWND window=CreateWindowExA(0,"STATIC","",0,0,0,0,0,HWND_MESSAGE,nullptr,nullptr,nullptr);
+    hold->opened=window && ::OpenClipboard(window)!=FALSE;SetEvent(hold->ready);
+    if(hold->opened) {Sleep(120);CloseClipboard();}
+    if(window) DestroyWindow(window);return 0;
+}
 static void CALLBACK link_popup_timer(HWND,UINT,UINT_PTR timer,DWORD)
 {
     HWND popup=nullptr;
@@ -84,6 +93,16 @@ static int WFE_RunLinkSmoke(const char *report,const char *base)
         targeted=link_popup(child,point,"Open this Link");browser_smoke_wait(target);
         targeted=targeted&&target->current_url==std::string(base)+"opened?x=1&y=two"&&child->current_url==std::string(base)+"links";
     }
+    LinkClipboardHold hold={CreateEvent(nullptr,TRUE,FALSE,nullptr)};
+    HANDLE worker=CreateThread(nullptr,0,link_hold_clipboard,&hold,0,nullptr);
+    bool busy_clipboard=false;
+    if(worker && WaitForSingleObject(hold.ready,2000)==WAIT_OBJECT_0 && hold.opened) {
+        BrowserLinkHit hit;hit.link=std::string(base)+"busy-copy";
+        WFE_BrowserLinkCommand(&frame->context,hit,ID_BROWSER_COPY_LINK);
+        WaitForSingleObject(worker,2000);
+        interaction_record(report,"busycopy",interaction_clipboard(frame));busy_clipboard=true;
+    }
+    if(worker) {WaitForSingleObject(worker,2000);CloseHandle(worker);}CloseHandle(hold.ready);
     BrowserFrame *closing=frame_for(WFE_NewWindow(nullptr));bool close_safe=false;
     if(closing) {
         closing->Navigate((std::string(base)+"links").c_str());browser_smoke_wait(closing);closing->ShowWindow(SW_SHOW);
@@ -91,7 +110,7 @@ static int WFE_RunLinkSmoke(const char *report,const char *base)
         link_popup(closing,interaction_point(closing,"Targeted text link",3),"");
         close_safe=!::IsWindow(link_popup_close);link_popup_close=nullptr;
     }
-    bool passed=hover&&hand&&leave&&copy&&new_window&&image_copy&&map_copy&&server_copy&&view_image&&targeted&&child_hover&&close_safe;
+    bool passed=hover&&hand&&leave&&copy&&new_window&&image_copy&&map_copy&&server_copy&&view_image&&targeted&&child_hover&&close_safe&&busy_clipboard;
     FILE *file=fopen(report,"wb");if(!file) return 2;
     fprintf(file,"passed=%d\nhover=%d\nhand=%d\nleave=%d\ncopy=%d\nnew_window=%d\nimage_copy=%d\nmap_copy=%d\nserver_copy=%d\nview_image=%d\ntargeted=%d\nchild_hover=%d\nclose_safe=%d\n",passed,hover,hand,leave,copy,new_window,image_copy,map_copy,server_copy,view_image,targeted,child_hover,close_safe);
     fclose(file);frame->SendMessage(WM_CLOSE);return passed?0:1;

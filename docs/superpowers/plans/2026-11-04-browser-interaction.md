@@ -33,12 +33,12 @@ requests, rather than accepting only success flags.
 
 ## Task 3: Frame dividers
 
-- [ ] Add failing divider gestures for vertical/horizontal edges, clamping,
+- [x] Add failing divider gestures for vertical/horizontal edges, clamping,
   NORESIZE, capture loss and resize/history preservation.
-- [ ] Draw visible original LO edges, provide resize cursors and capture with
+- [x] Draw visible original LO edges, provide resize cursors and capture with
   bounded movement, invoke LO_MoveGridEdge on commit, invalidate safely on
   document navigation and closure.
-- [ ] Run standard and Gold Debug/Release suites, review actual captures,
+- [x] Run standard and Gold Debug/Release suites, review actual captures,
   document the verified limits and commit.
 
 ## Review focus
@@ -61,3 +61,21 @@ URLs and target windows. Closing the owner inside the native popup reproduced
 an MFC message-filter assertion; guarding invalid queued HWNDs fixes it.
 Clipboard assertions retry boundedly because Windows clipboard history briefly
 locks the clipboard after the application releases it.
+
+Final review found one P2: canceled drag followed by a mouse-up over a link.
+Capture-loss/navigation regressions reproduced it; cancellation now suppresses
+that release until a new mouse-down. A full-suite clipboard failure also led to
+a deterministic competing-owner regression; bounded clipboard-write retries
+pass it. Both fixes passed the three browser interaction fixtures.
+
+Grid-history investigation: the full-window callback measured a pane before
+removing its scrollbars, so LO rejected saved grid geometry on Back. Matching
+the original XFE callback contract fixes same-size restoration. Child creation
+also discarded SHIST savedData; retaining it fixes form values on Back/resize.
+
+Final verification: standard Debug 21/21 (88.86s), standard Release 21/21
+(87.41s), Gold Debug 24/24 (96.55s), Gold Release 24/24 (97.34s). All are complete
+suite runs on the final implementation. Native selection/frame captures and
+original menu-resource regeneration checks passed. The independent review's
+sole P2 was reproduced and fixed; no additional actionable findings remained.
+The refreshed standard and Gold ZIPs are checked against these Release binaries.

@@ -329,10 +329,10 @@ void FE_GetJavaAppSize(MWContext *context, LO_JavaAppStruct *applet, NET_ReloadM
 void FE_FreeEmbedElement(MWContext *context, LO_EmbedStruct *embed) { }
 void FE_FreeJavaAppElement(MWContext *context, LJAppletData *applet) { }
 void FE_HideJavaAppElement(MWContext *context, void *applet) { }
-void FE_FreeEdgeElement(MWContext *context, LO_EdgeStruct *edge) { }
+void FE_FreeEdgeElement(MWContext *context, LO_EdgeStruct *edge) { WFE_FreeGridEdge(context,edge); }
 void FE_DisplayEmbed(MWContext *context, int location, LO_EmbedStruct *embed) { WFE_Rect(context, embed->x, embed->y, embed->width, embed->height, RGB(128,128,128), 0); }
 void FE_DisplayJavaApp(MWContext *context, int location, LO_JavaAppStruct *applet) { }
-void FE_DisplayEdge(MWContext *context, int location, LO_EdgeStruct *edge) { }
+void FE_DisplayEdge(MWContext *context, int location, LO_EdgeStruct *edge) { WFE_GridEdge(context,edge); }
 void FE_DisplayTable(MWContext *context, int location, LO_TableStruct *table) { if (table->border_width > 0) WFE_Rect(context, table->x, table->y, table->width, table->height, RGB(128,128,128), 0); }
 void FE_DisplayCell(MWContext *context, int location, LO_CellStruct *cell) { }
 void FE_DisplaySubDoc(MWContext *context, int location, LO_SubDocStruct *doc) { }
@@ -350,8 +350,8 @@ MWContext *FE_MakeGridWindow(MWContext *context, void *history, int32 x, int32 y
 void *FE_FreeGridWindow(MWContext *context, XP_Bool save) { return WFE_FreeGridWindow(context, save); }
 void FE_RestructureGridWindow(MWContext *context, int32 x, int32 y, int32 width, int32 height) { WFE_ResizeGridWindow(context, x, y, width, height); }
 void FE_LoadGridCellFromHistory(MWContext *context, void *history, NET_ReloadMethod reload) { WFE_LoadGridHistory(context, history, reload); }
-void FE_GetFullWindowSize(MWContext *context, int32 *width, int32 *height) { WFE_WindowSize(context, width, height); }
-void FE_GetEdgeMinSize(MWContext *context, int32 *size, Bool no_edge) { *size = 0; }
+void FE_GetFullWindowSize(MWContext *context, int32 *width, int32 *height) { WFE_FullWindowSize(context, width, height); }
+void FE_GetEdgeMinSize(MWContext *context, int32 *size, Bool no_edge) { *size = no_edge?0:5; }
 int32 FE_GetContextID(MWContext *context) { return (int32)context; }
 void FE_URLEcho(URL_Struct *url, int status, MWContext *context) { }
 void FE_UrlChangedContext(URL_Struct *url, MWContext *old_context, MWContext *new_context) { WFE_TransferURL(url, old_context, new_context); }

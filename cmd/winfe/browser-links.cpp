@@ -48,7 +48,15 @@ void WFE_BrowserLinkMenu(CMenu &menu,const BrowserLinkHit &hit)
 }
 static void copy_location(MWContext *context,const std::string &text)
 {
-    if(text.empty() || !::OpenClipboard(WFE_DocumentWindow(context))) return;
+    if(text.empty()) return;
+    /* Windows clipboard history may briefly lock it after a preceding copy.
+     * Bound the retry without pumping messages that could destroy context. */
+    bool opened=false;
+    for(int i=0;i<20;++i) {
+        if(::OpenClipboard(WFE_DocumentWindow(context))) {opened=true;break;}
+        Sleep(10);
+    }
+    if(!opened) {WFE_Status(context,"Clipboard is busy. Try Copy again.");return;}
     HGLOBAL data=GlobalAlloc(GMEM_MOVEABLE,text.size()+1);
     void *memory=data?GlobalLock(data):nullptr;
     if(memory) {

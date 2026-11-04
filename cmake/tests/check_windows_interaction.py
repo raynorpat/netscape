@@ -15,6 +15,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.server.requests.append(self.path)
         if self.path == '/pixel.gif':
             body = base64.b64decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7')
+        elif self.path == '/divider-left':
+            body = b'<html><body><form><input name="retain" value="default"></form><p>Divider left</p></body></html>'
+        elif self.path == '/dividers':
+            body = (b'<html><frameset cols="40%,60%"><frame name="dividerLeft" src="/divider-left">'
+                    b'<frameset rows="50%,50%"><frame name="dividerUpper" src="/links">'
+                    b'<frame name="dividerLower" src="/selection"></frameset></frameset></html>')
+        elif self.path == '/noresize':
+            body = b'<html><frameset cols="40%,60%"><frame noresize src="/divider-left"><frame src="/blank"></frameset></html>'
         elif self.path == '/links':
             body = (b'<html><body><p><a href="/opened?x=1&amp;y=two" target="linkTarget">Targeted text link</a></p>'
                     b'<p><a href="/image-link"><img src="/pixel.gif" width="40" height="30"></a></p>'
@@ -47,7 +55,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--executable', required=True)
     parser.add_argument('--output', required=True)
-    parser.add_argument('--mode', choices=['selection', 'links'], default='selection')
+    parser.add_argument('--mode', choices=['selection', 'links', 'dividers'], default='selection')
     args = parser.parse_args()
     output = Path(args.output).resolve()
     output.mkdir(parents=True, exist_ok=True)
@@ -61,7 +69,8 @@ def main():
     env = os.environ.copy()
     env['NETSCAPE_PROFILE_DIR'] = str(run / 'profile')
     try:
-        result = subprocess.run([args.executable, '--links-smoke' if args.mode == 'links' else '--interaction-smoke', str(report),
+        command = {'selection': '--interaction-smoke', 'links': '--links-smoke', 'dividers': '--dividers-smoke'}[args.mode]
+        result = subprocess.run([args.executable, command, str(report),
                                  'http://127.0.0.1:%d/' % server.server_port],
                                 env=env, capture_output=True, timeout=75)
     finally:
@@ -73,18 +82,30 @@ def main():
     values = dict(line.split('=', 1) for line in report.read_text().splitlines() if '=' in line) if report.exists() else {}
     print('Report:', report, values)
     assert result.returncode == 0, (result.returncode, values)
+    if args.mode == 'dividers':
+        required = ['passed', 'vertical', 'horizontal', 'bounds', 'cancel', 'noresize',
+                    'history', 'form', 'navigation', 'tracking', 'cursor', 'escape', 'resize']
+        assert all(values.get(key) == '1' for key in required), values
+        # Moving dividers must reuse the current document. Later independent
+        # framesets may legitimately fetch their own copy of the same URL.
+        assert server.requests[:server.requests.index('/blank')].count('/divider-left') == 1, server.requests
+        assert Path(str(report) + '.frames.bmp').read_bytes()[:2] == b'BM'
+        print('Native frame divider gestures, bounds and retained state verified')
+        return
     if args.mode == 'links':
         assert all(value == '1' for value in values.values()), values
         base = 'http://127.0.0.1:%d/' % server.server_port
         for name, suffix in [('copylink', 'opened?x=1&y=two'), ('copyimage', 'pixel.gif'),
-                             ('copymap', 'mapped'), ('copyservermap', 'server-map?5,6')]:
+                             ('copymap', 'mapped'), ('copyservermap', 'server-map?5,6'),
+                             ('busycopy', 'busy-copy')]:
             assert Path(str(report) + '.' + name).read_text(encoding='latin1') == base + suffix, name
         assert server.requests.count('/opened?x=1&y=two') >= 1, server.requests
         print('Native link menus, image maps, hover and target routing verified')
         return
     assert all(values.get(key) == '1' for key in ['passed', 'drag_link', 'capture', 'capture_cancel',
                                                 'navigation_cancel', 'autoscroll', 'capture_released',
-                                                'clicked', 'frame_selection']), values
+                                                'clicked', 'frame_selection', 'capture_link_cancel',
+                                                'navigation_link_cancel']), values
     for name, expected in [('forward', 'Bravo Charlie'), ('backward', 'Bravo Charlie'),
                            # LO's original word selection includes following spaces.
                            ('clipboard', 'Bravo Charlie'), ('word', 'Bravo '),

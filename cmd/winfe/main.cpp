@@ -46,6 +46,7 @@ static void invalid_parameter(const wchar_t *expression, const wchar_t *function
 #include "mailui.h"
 #include "find.h"
 #include "browser-links.h"
+#include "frame-divider.h"
 #include "preferences.h"
 #include "printing.h"
 #ifdef EDITOR
@@ -93,9 +94,12 @@ public:
     void Render(CDC &dc, int width, int height);
     bool selecting=false;
     bool selection_dragged=false;
+    bool suppress_release=false;
     CPoint selection_origin,selection_pointer;
     std::string hovered_link,hover_status;
     void ClearHover();
+    FrameDivider divider;
+    bool grid_document=false;
     void CancelInput();
     bool printing=false;
     std::vector<std::pair<int,int>> *print_spans=nullptr;
@@ -585,6 +589,7 @@ void BrowserFrame::OnSize(UINT type, int width, int height)
 BOOL BrowserFrame::PreTranslateMessage(MSG *message)
 {
     FocusedDocument();
+    if(message->message==WM_KEYDOWN && message->wParam==VK_ESCAPE && view.divider.Active()) {view.CancelInput();return TRUE;}
 #ifdef EDITOR
     if(editing && ::GetFocus()==view.GetSafeHwnd() && WFE_EditorKey(&context,message)) return TRUE;
 #endif
@@ -1293,6 +1298,7 @@ void BrowserFrame::OnDestroy()
 {
     KillTimer(1);
     KillTimer(2);
+    view.CancelInput();
 #ifdef EDITOR
     if(editing) {WFE_EditorPublishForget(&context);WFE_EditorDestroyUI(&context);WFE_EditorForget(&context);}
 #endif
@@ -1336,6 +1342,13 @@ void BrowserView::OnLButtonDown(UINT flags,CPoint point)
     if(frame->editing) return;
 #endif
     if(!frame->initialized) return;
+    suppress_release=false;
+    LO_Element *element=LO_XYToElement(&frame->context,point.x+scroll_x,point.y+scroll_y);
+    if(element && element->type==LO_EDGE) {
+        ClearHover();SetFocus();
+        if(divider.Begin(&frame->context,&element->lo_edge,CPoint(point.x+scroll_x,point.y+scroll_y))) SetCapture();
+        return;
+    }
     SetFocus();selection_origin=selection_pointer=point;
     selection_dragged=(flags&MK_SHIFT)!=0;selecting=true;SetCapture();
     if(flags&MK_SHIFT) LO_ExtendSelection(&frame->context,point.x+scroll_x,point.y+scroll_y);
@@ -1344,6 +1357,7 @@ void BrowserView::OnLButtonDown(UINT flags,CPoint point)
 }
 void BrowserView::OnMouseMove(UINT flags,CPoint point)
 {
+    if(divider.Active()) {divider.Move(CPoint(point.x+scroll_x,point.y+scroll_y));return;}
 #ifdef EDITOR
     if(frame->editing && selecting && (flags&MK_LBUTTON)) {EDT_ExtendSelection(&frame->context,point.x+scroll_x,point.y+scroll_y);return;}
 #endif
@@ -1369,7 +1383,10 @@ void BrowserView::OnMouseMove(UINT flags,CPoint point)
             TRACKMOUSEEVENT track={sizeof(track),TME_LEAVE,GetSafeHwnd(),0};TrackMouseEvent(&track);
         }
     }
-    ::SetCursor(::LoadCursor(nullptr,!hit.link.empty()?IDC_HAND:hit.text?IDC_IBEAM:IDC_ARROW));
+    LO_Element *element=LO_XYToElement(&frame->context,point.x+scroll_x,point.y+scroll_y);
+    LPCTSTR cursor=element && element->type==LO_EDGE && element->lo_edge.movable?
+        (element->lo_edge.is_vertical?IDC_SIZEWE:IDC_SIZENS):!hit.link.empty()?IDC_HAND:hit.text?IDC_IBEAM:IDC_ARROW;
+    ::SetCursor(::LoadCursor(nullptr,cursor));
 }
 void BrowserView::ClearHover()
 {
@@ -1384,6 +1401,10 @@ BOOL BrowserView::OnSetCursor(CWnd *window,UINT hit,UINT message)
     if(hit==HTCLIENT && frame->initialized && !frame->editing) {
         CPoint point;GetCursorPos(&point);ScreenToClient(&point);
         BrowserLinkHit link=WFE_BrowserLinkAt(&frame->context,point.x+scroll_x,point.y+scroll_y);
+        LO_Element *element=LO_XYToElement(&frame->context,point.x+scroll_x,point.y+scroll_y);
+        if(element && element->type==LO_EDGE && element->lo_edge.movable) {
+            ::SetCursor(::LoadCursor(nullptr,element->lo_edge.is_vertical?IDC_SIZEWE:IDC_SIZENS));return TRUE;
+        }
         ::SetCursor(::LoadCursor(nullptr,!link.link.empty()?IDC_HAND:link.text?IDC_IBEAM:IDC_ARROW));return TRUE;
     }
     return CWnd::OnSetCursor(window,hit,message);
@@ -1395,6 +1416,8 @@ void BrowserView::OnLButtonDblClk(UINT flags,CPoint point)
     if(frame->editing) return;
 #endif
     if(frame->initialized) {
+        LO_Element *element=LO_XYToElement(&frame->context,point.x+scroll_x,point.y+scroll_y);
+        if(element && element->type==LO_EDGE) return;
         SetFocus();LO_DoubleClick(&frame->context,point.x+scroll_x,point.y+scroll_y);
         selecting=true;selection_dragged=true;selection_pointer=point;SetCapture();Invalidate();
     }
@@ -1402,11 +1425,15 @@ void BrowserView::OnLButtonDblClk(UINT flags,CPoint point)
 void BrowserView::CancelInput()
 {
     ClearHover();
+    if(selecting || divider.Active()) suppress_release=true;
+    divider.End(false);
     selecting=false;selection_dragged=false;KillTimer(71);
     if(::GetCapture()==GetSafeHwnd()) ReleaseCapture();
 }
 void BrowserView::OnCaptureChanged(CWnd *window)
 {
+    if(selecting || divider.Active()) suppress_release=true;
+    divider.End(false);
     selecting=false;selection_dragged=false;KillTimer(71);
     CWnd::OnCaptureChanged(window);
 }
@@ -1470,11 +1497,18 @@ BOOL BrowserView::OnMouseWheel(UINT, short delta, CPoint) { OnVScroll(delta > 0 
 void BrowserView::OnLButtonUp(UINT flags, CPoint point)
 {
     SetFocus();
+    if(divider.Active()) {
+        divider.Move(CPoint(point.x+scroll_x,point.y+scroll_y));divider.End(true);
+        if(::GetCapture()==GetSafeHwnd()) ReleaseCapture();Invalidate();return;
+    }
 #ifdef EDITOR
     if(frame->editing) {if(selecting) {selecting=false;ReleaseCapture();EDT_EndSelection(&frame->context,point.x+scroll_x,point.y+scroll_y);}return;}
 #endif
+    /* Capture loss or a load may cancel the gesture before this release.
+     * Keep that cancellation until a fresh mouse-down starts another click. */
+    if(suppress_release) {suppress_release=false;CancelInput();return;}
     bool suppress_link=selecting && (selection_dragged || (flags&MK_SHIFT));
-    if(selecting) {LO_EndSelection(&frame->context);CancelInput();Invalidate();}
+    if(selecting) {LO_EndSelection(&frame->context);selecting=false;CancelInput();Invalidate();}
     if(suppress_link) return;
     LO_Element *element = LO_XYToElement(&frame->context, point.x + scroll_x, point.y + scroll_y);
     if (element && element->type == LO_IMAGE) {
@@ -1535,6 +1569,20 @@ extern "C" HWND WFE_DocumentWindow(MWContext *context)
 {
     BrowserFrame *frame = frame_for(context);
     return frame ? frame->view.GetSafeHwnd() : nullptr;
+}
+extern "C" void WFE_GridEdge(MWContext *context,LO_EdgeStruct *edge)
+{
+    BrowserFrame *frame=frame_for(context);if(!frame) return;
+    if(frame->view.drawing) WFE_PaintFrameEdge(frame->view.drawing->GetSafeHdc(),edge);
+    else WFE_Invalidate(context);
+}
+extern "C" void WFE_FreeGridEdge(MWContext *context,LO_EdgeStruct *edge)
+{
+    BrowserFrame *frame=frame_for(context);if(!frame) return;
+    if(frame->view.divider.Active()) {
+        frame->view.divider.Forget(edge);
+        if(!frame->view.divider.Active()) frame->view.CancelInput();
+    }
 }
 extern "C" void FE_RaiseWindow(MWContext *context)
 {
@@ -1600,7 +1648,7 @@ extern "C" MWContext *WFE_NewGridWindow(MWContext *parent, void *history,
                              : NET_CreateURLStruct(address ? address : "about:blank", NET_DONT_RELOAD);
     if (url) {
         url->force_reload = reload;
-        memset(&url->savedData, 0, sizeof(url->savedData));
+        /* Retain SHIST's saved form/grid data when recreating a child. */
         FE_GetURL(&frame->context, url);
     }
     return &frame->context;
@@ -1743,13 +1791,25 @@ extern "C" void WFE_ChromeProgress(MWContext *context, int32 received, int32 len
 extern "C" void WFE_Title(MWContext *context, const char *title) { BrowserFrame *frame = frame_for(context); if (frame) { std::string caption = std::string(frame->editing ? "Netscape Editor - [" : frame->mode==1 ? "Netscape Mail - [" : frame->mode==2 ? "Netscape News - [" : "Netscape - [") + (title ? title : "Untitled") + "]"; frame->SetWindowText(caption.c_str()); } }
 extern "C" void WFE_Invalidate(MWContext *context) { BrowserFrame *frame = frame_for(context); if (frame && frame->view.GetSafeHwnd()) frame->view.Invalidate(); }
 extern "C" void WFE_WindowSize(MWContext *context, int32 *width, int32 *height) { BrowserFrame *frame = frame_for(context); CRect area(0,0,800,600); if (frame) frame->view.GetClientRect(area); *width = area.Width(); *height = area.Height(); }
+extern "C" void WFE_FullWindowSize(MWContext *context,int32 *width,int32 *height)
+{
+    /* As in XFE, framesets occupy the entire pane, without parent scrollbars.
+     * Measuring before removing them changes the grid's stored dimensions and
+     * makes LO discard resized frame geometry when restoring history. */
+    BrowserFrame *frame=frame_for(context);
+    if(frame) {
+        frame->view.grid_document=true;frame->view.scroll_x=frame->view.scroll_y=0;
+        frame->view.ShowScrollBar(SB_BOTH,FALSE);
+    }
+    WFE_WindowSize(context,width,height);
+}
 extern "C" void WFE_DocumentSize(MWContext *context, int32 width, int32 height)
 {
     BrowserFrame *frame = frame_for(context);
     if (!frame) return;
     BrowserView &view = frame->view;
     view.document_width = width; view.document_height = height;
-    if (context->is_grid_cell && frame->grid_scrolling == LO_SCROLL_NO) {
+    if (view.grid_document || (context->is_grid_cell && frame->grid_scrolling == LO_SCROLL_NO)) {
         view.ShowScrollBar(SB_BOTH, FALSE);
         return;
     }
@@ -1804,6 +1864,7 @@ extern "C" void WFE_DocumentDefaults(MWContext *context)
 {
     BrowserFrame *frame=frame_for(context);if(!frame) return;
     frame->view.CancelInput();
+    frame->view.grid_document=false;
     const GeneralPreferences &preferences=frame->document_preferences;
     COLORREF color=preferences.background_custom?preferences.colors[0]:RGB(255,255,255);
     frame->view.background=color;WFE_ImageBackground(context,GetRValue(color),GetGValue(color),GetBValue(color));
@@ -3035,6 +3096,7 @@ static int WFE_RunWorkflowSmoke(const char *report,const char *url,const char *d
 
 #include "interaction-smoke.inc"
 #include "link-smoke.inc"
+#include "divider-smoke.inc"
 
 class NetscapeApplication : public CWinApp {
 public:
@@ -3057,7 +3119,7 @@ public:
         POSITION position = arguments.GetHeadPosition();
         bool explicit_command=position!=nullptr;
         CString first = position ? arguments.GetNext(position) : "about:";
-        smoke_mode = first == "--links-smoke" || first == "--interaction-smoke" || first == "--printing-smoke" || first == "--smoke-test" || first == "--mailnews-smoke" || first == "--composer-delivery-smoke"
+        smoke_mode = first == "--dividers-smoke" || first == "--links-smoke" || first == "--interaction-smoke" || first == "--printing-smoke" || first == "--smoke-test" || first == "--mailnews-smoke" || first == "--composer-delivery-smoke"
             || first == "--images-smoke" || first == "--forms-smoke" || first == "--frames-smoke" || first == "--downloads-smoke" || first == "--history-smoke" || first == "--history-reopen-smoke" || first == "--bookmarks-smoke" || first == "--chrome-smoke" || first == "--ui-gallery" || first == "--preferences-ui-smoke" || first == "--preferences-reopen-smoke" || first == "--news-ui-smoke" || first == "--mail-ui-smoke" || first == "--compose-ui-smoke"
 #ifdef EDITOR
             || first == "--editor-smoke"
@@ -3087,7 +3149,8 @@ public:
             }
             else
 #endif
-            if(first=="--links-smoke") m_nExitCode=WFE_RunLinkSmoke(report,url);
+            if(first=="--dividers-smoke") m_nExitCode=WFE_RunDividerSmoke(report,url);
+            else if(first=="--links-smoke") m_nExitCode=WFE_RunLinkSmoke(report,url);
             else if(first=="--interaction-smoke") m_nExitCode=WFE_RunInteractionSmoke(report,url);
             else if(first=="--printing-smoke") m_nExitCode=WFE_RunPrintingSmoke(report,url);
             else if(first=="--preferences-ui-smoke"||first=="--preferences-reopen-smoke") { CString page=position?arguments.GetNext(position):"";m_nExitCode=WFE_RunPreferencesSmoke(report,url,page,first=="--preferences-reopen-smoke"); }

@@ -60,6 +60,20 @@ static int WFE_RunInteractionSmoke(const char *report,const char *base)
     interaction_mouse(frame->view,WM_MOUSEMOVE,link_end,MK_LBUTTON);
     interaction_mouse(frame->view,WM_LBUTTONUP,link_end);browser_smoke_wait(frame);
     bool drag_link=frame->current_url==source;interaction_record(report,"linkdrag",interaction_selection(frame));
+    interaction_mouse(frame->view,WM_LBUTTONDOWN,link,MK_LBUTTON);
+    interaction_mouse(frame->view,WM_MOUSEMOVE,link_end,MK_LBUTTON);
+    frame->SetCapture();::ReleaseCapture();
+    interaction_mouse(frame->view,WM_LBUTTONUP,link_end);browser_smoke_wait(frame);
+    bool capture_link_cancel=frame->current_url==source;
+    frame->Navigate(source.c_str());browser_smoke_wait(frame);
+    link=interaction_point(frame,"Drag this link",0);link_end=interaction_point(frame,"Drag this link",13);
+    interaction_mouse(frame->view,WM_LBUTTONDOWN,link,MK_LBUTTON);
+    interaction_mouse(frame->view,WM_MOUSEMOVE,link_end,MK_LBUTTON);
+    frame->Navigate(source.c_str());browser_smoke_wait(frame);
+    interaction_mouse(frame->view,WM_LBUTTONUP,interaction_point(frame,"Drag this link",3));browser_smoke_wait(frame);
+    bool navigation_link_cancel=frame->current_url==source;
+    frame->Navigate(source.c_str());browser_smoke_wait(frame);
+    first=interaction_point(frame,"Alpha Bravo Charlie Delta Echo",6);
     interaction_mouse(frame->view,WM_LBUTTONDOWN,first,MK_LBUTTON);
     bool capture=::GetCapture()==frame->view.GetSafeHwnd();
     frame->SetCapture();bool cancelled=!frame->view.selecting;::ReleaseCapture();
@@ -91,8 +105,9 @@ static int WFE_RunInteractionSmoke(const char *report,const char *base)
         child_selection=child->view.scroll_y==300 && interaction_selection(child)=="Scrolling";
         frame->SendMessage(WM_COMMAND,ID_EDIT_COPY);interaction_record(report,"frameclipboard",interaction_clipboard(frame));
     }
-    bool passed=forward=="Bravo Charlie"&&drag_link&&capture&&cancelled&&navigation&&autoscroll&&capture_released&&clicked&&child_selection;
+    bool passed=forward=="Bravo Charlie"&&drag_link&&capture&&cancelled&&navigation&&autoscroll&&capture_released&&clicked&&child_selection&&capture_link_cancel&&navigation_link_cancel;
     FILE *file=fopen(report,"wb");if(!file) return 2;
     fprintf(file,"passed=%d\ndrag_link=%d\ncapture=%d\ncapture_cancel=%d\nnavigation_cancel=%d\nautoscroll=%d\ncapture_released=%d\nclicked=%d\nframe_selection=%d\n",passed,drag_link,capture,cancelled,navigation,autoscroll,capture_released,clicked,child_selection);
+    fprintf(file,"capture_link_cancel=%d\nnavigation_link_cancel=%d\n",capture_link_cancel,navigation_link_cancel);
     fclose(file);frame->SendMessage(WM_CLOSE);return passed?0:1;
 }

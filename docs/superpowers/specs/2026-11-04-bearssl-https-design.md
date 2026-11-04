@@ -1,6 +1,6 @@
 # Portable BearSSL HTTPS, Windows first
 
-Date: 2026-11-04. Status: proposed; awaiting user approval.
+Date: 2026-11-04. Status: approved by the user on 2026-11-04.
 
 Builder check: a fresh C networking/security reviewer reported "nothing
 important left" on 2026-11-04. This checks planning completeness, not code or

@@ -3105,7 +3105,7 @@ typedef struct {
     char *sig;
     struct methodblock *mb;
     bool_t isStaticCall;
-    va_list args;
+    va_list *args; /* Borrowed until synchronous mocha_CallJava returns. */
     long *raddr;
     size_t rsize;
 } mocha_ExecuteJavaMethod_data;
@@ -3120,7 +3120,7 @@ mocha_ExecuteJavaMethod_stub(void *d)
 				      data->self,
 				      data->name, data->sig,
 				      data->mb, data->isStaticCall,
-				      data->args,
+				      *data->args,
 				      (data->rsize > sizeof(long))
 					  ? &data->raddr[1] : NULL,
 				      FALSE);
@@ -3141,7 +3141,7 @@ mocha_ExecuteJavaMethod(MochaContext *mc, void *raddr, size_t rsize,
     data.sig = sig;
     data.mb = mb;
     data.isStaticCall = isStaticCall;
-    data.args = args;
+    data.args = &args;
     data.raddr = raddr;
     data.rsize = rsize;
 
@@ -3261,7 +3261,7 @@ typedef struct {
     char *name;
     ClassClass *cb;
     char *sig;
-    va_list args;
+    va_list *args; /* Borrowed until synchronous mocha_CallJava returns. */
     HObject *ret;
 } mocha_ConstructJava_data;
 
@@ -3282,7 +3282,7 @@ mocha_ConstructJava_stub(void *d)
     data->ret =
       execute_java_constructor_vararg(ee,
                                       data->name, data->cb,
-                                      data->sig, data->args);
+                                      data->sig, *data->args);
 }
 
 /* this can call arbitrary java code in class initialization */
@@ -3299,7 +3299,7 @@ mocha_ConstructJava(MochaContext *mc, char *name, ClassClass *cb,
     data.privileged = FALSE;
     data.cb = cb;
     data.sig = sig;
-    data.args = args;
+    data.args = &args;
     data.env = JRI_GetCurrentEnv();
 
     success = mocha_CallJava(mc, mocha_ConstructJava_stub, &data,
@@ -3324,7 +3324,7 @@ mocha_ConstructJavaPrivileged(MochaContext *mc, char *name, ClassClass *cb,
     data.name = name;
     data.cb = cb;
     data.sig = sig;
-    data.args = args;
+    data.args = &args;
     data.env = JRI_GetCurrentEnv();
 
     success = mocha_CallJava(mc, mocha_ConstructJava_stub, &data,

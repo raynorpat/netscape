@@ -52,4 +52,15 @@ The Linux portability source changes were selectively imported from [9M2PJU's fo
 
 ## Verification
 
-With GCC 15.2 and staged Ubuntu 26.04 x86_64 development packages, the baseline browser and the build with Mocha and security enabled compiled and linked successfully. The baseline executable also ran `-version`; the optional Mocha shell compiled and linked. JPEG, DBM and generated NSPR configuration had additionally been built independently. GUI operation, networking, security behavior, Java archive integration, AArch64, and 32-bit configurations have not been verified. Compiler warnings remain in the legacy source.
+With GCC 15.2 and staged Ubuntu 26.04 x86_64 development packages, the baseline browser and the build with Mocha and security enabled compiled and linked successfully. The baseline executable also ran `-version`; the optional Mocha shell compiled and linked. JPEG, DBM and generated NSPR configuration had additionally been built independently. The source-Java browser with Mocha also compiled and linked after fixing variadic argument forwarding in both JRI and the Mocha bridge. GUI operation, networking, security behavior, imported Java archive integration, AArch64, and 32-bit configurations have not been verified. Compiler warnings remain in the legacy source.
+
+## Remaining build coverage
+
+The checked configurations build the baseline browser, Mocha/security browser, standalone Sun Java aggregate, and source-Java/Mocha browser. The Makefile audit found these remaining areas:
+
+- Regeneration of the checked-in localized about/splash/message headers, embedded XP image/audio headers, and parser hash tables. Current builds consume the existing generated files; edits to their original inputs do not yet regenerate them through CMake.
+- Optional GNU `movemail`, sample plugin shared libraries, and standalone security/diagnostic programs. The browser's built-in movemail implementation is already compiled; the separate GNU helper serves the external-helper configuration.
+- Complete installation/packaging rules for application resources, licenses, compiler archives/launchers, and optional security policy data. Current install rules cover executables and the source-Java runtime class archive.
+- CTest registration for the focused Python/C regressions and migration of the legacy test programs.
+
+The original `nsinstall` export helper is replaced by CMake's build/install operations. Nonexistent directories still named in old Makefiles (such as `cmd/patcher` and `lib/libcgi`) are not missing source targets to migrate. Editor and alternate operating-system backends remain outside the Linux browser configuration.

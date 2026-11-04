@@ -14,7 +14,7 @@ cmake --build out/java --target netscape_sun_java --parallel
 
 To integrate the source runtime with the browser, use `-DNETSCAPE_ENABLE_JAVA=ON -DNETSCAPE_JAVA_PROVIDER=SOURCE`. The source provider is the default when browser Java is enabled. The prior prebuilt-archive mode remains available with `-DNETSCAPE_JAVA_PROVIDER=IMPORTED -DNETSCAPE_JAVA_ROOT=/path/to/legacy/dist`.
 
-The source runtime retains vintage ABI assumptions. Its JRI argument bridge now handles array-based `va_list` types using explicit ownership and `va_copy`/`va_end`. The complete `netscape_sun_java` aggregate, including the VM executable, compiles and links on x64 GCC 15. Java execution and the Java-enabled browser have not been verified; remaining pointer-width warnings mean this is not a certified x64 JVM port.
+The source runtime retains vintage ABI assumptions. Its JRI argument bridge now handles array-based `va_list` types using explicit ownership and `va_copy`/`va_end`. The complete `netscape_sun_java` aggregate, including the VM executable, compiles and links on x64 GCC 15. The Java-enabled browser with Mocha also compiles and links. Java execution has not been verified; remaining pointer-width warnings mean this is not a certified x64 JVM port.
 
 ## Targets
 
@@ -64,6 +64,12 @@ On Linux x86_64 with GCC 15, CMake configured the source target graph and succes
 
 ```sh
 python3 sun-java/tests/test_jri_varargs.py --sanitize
+```
+
+The Java-enabled browser with Mocha also compiled and linked after correcting three borrowed `va_list` pointers in the Mocha-to-Java callbacks. A second isolated regression exercises those production callbacks, including register/stack overflow arguments and failed callbacks, under sanitizers:
+
+```sh
+python3 mocha/tests/test_java_varargs.py --sanitize
 ```
 
 Java execution, bootstrap class compilation and native-interface regeneration remain unverified.

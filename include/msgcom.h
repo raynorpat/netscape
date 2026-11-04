@@ -1294,6 +1294,10 @@ extern char *FE_PromptMessageSubject(MWContext *context);
 /* Get the URL associated with this context (the "X-Url" field.) */
 extern const char* MSG_GetAssociatedURL(MWContext* context);
 
+/* The quoted URL is translated in a separate text context. */
+extern XP_Bool MSG_QuoteInProgress(MWContext* context);
+extern void MSG_InterruptQuoting(MWContext* context);
+
 
 /* This is completely foul, but the FE needs to call this from within
    FE_MailCompositionAllConnectionsComplete() when the context->type is

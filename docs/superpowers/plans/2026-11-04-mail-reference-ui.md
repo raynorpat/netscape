@@ -29,10 +29,10 @@ approved visual direction within the continuing native UI work, with version
 - [x] Establish failing mail/composer geometry, chrome and command fixtures.
 - [x] Add mail pane/icon/column helper without backend ownership changes.
 - [x] Integrate mail-specific toolbar, menus, navigation, title and status.
-- [ ] Match compact composer controls, menus and toolbar; preserve hidden headers.
+- [x] Match compact composer controls, menus and toolbar; preserve hidden headers.
 - [x] Check actual populated-message captures and resize/selection behavior.
-- [ ] Review and run Release/Debug regressions; commit mail and composer separately.
-- [ ] Refresh install/ZIP and verify the installed UI.
+- [x] Review and run Release/Debug regressions; commit mail and composer separately.
+- [x] Refresh install/ZIP and verify the installed UI.
 
 ## Validation focus
 
@@ -54,3 +54,30 @@ both divider clamps and narrow windows. Actual GDI captures also exposed the
 wrong original folder glyph and an unintended border on MIME header tables;
 both were corrected and their pixel checks pass. Mail/news keep backend folder
 and message ownership. Windows continues to draw native title bars.
+
+## Composition implementation outcome
+
+The prior composition UI failed the native reference checks (missing menus,
+only two matching toolbar buttons and no compact header arrangement). The
+replacement preserves all backend headers, drafts, attachments and Send Later.
+Menu-toggle regressions were reproduced before correcting compact Bcc/Cc
+state. Address remains disabled. Quote uses the original translator; a narrow
+additive MSG API reports and aborts that separate context. Loopback tests prove
+that explicit Quote marks the editor dirty, Stop retains the composition and a
+second Quote succeeds. Active SMTP/NNTP send cancellation preserves recipients,
+body and attachment, and retry delivers exactly one message.
+
+All 15 CTests passed in Release (102.59 seconds) and Debug (89.63 seconds).
+The Linux browser rebuilt and reported 3.02 after the shared quotation change.
+Independent reviews covered pane lifetime, geometry and composer command/cancel
+behavior; reported defects were fixed and the relevant fixtures rerun. Actual
+full-window captures were checked against both references. Windows still owns
+system decorations; DPI checks beyond 96 DPI remain future work.
+
+Mail UI commit: `5c58f6a`. Composer is committed as the following roadmap item.
+
+The refreshed Release installation passed both reference-layout fixtures,
+including the loopback quotation test, from a directory containing spaces.
+CPack generated the Windows x86 ZIP; its executable exactly matches the tested
+Release and installed binaries, its PE machine is 0x14c and its Windows guide
+matches the current source. Shared Visual C++/MFC runtimes remain required.

@@ -93,4 +93,8 @@ if(BUILD_TESTING)
   "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_mail_ui.py"
   --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/mail-layout-test" --mode mail)
  set_tests_properties(windows_mail_layout PROPERTIES TIMEOUT 60)
+ add_test(NAME windows_composition_ui COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_mail_ui.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/composition-ui-test" --mode compose)
+ set_tests_properties(windows_composition_ui PROPERTIES TIMEOUT 60)
 endif()

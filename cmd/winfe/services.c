@@ -211,8 +211,8 @@ void FE_RememberPopPassword(MWContext *context, const char *password)
 
 MWContext *FE_GetAddressBook(MWContext *context, XP_Bool viewnow)
 {
-    (void)viewnow;
-    WFE_Unsupported(context, "Address book");
+    /* Composition performs optional lookups without asking to open this UI. */
+    if (viewnow) WFE_Unsupported(context, "Address book");
     return NULL;
 }
 

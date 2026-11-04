@@ -1935,7 +1935,7 @@ public:
         POSITION position = arguments.GetHeadPosition();
         CString first = position ? arguments.GetNext(position) : "about:";
         smoke_mode = first == "--smoke-test" || first == "--mailnews-smoke" || first == "--composer-delivery-smoke"
-            || first == "--images-smoke" || first == "--forms-smoke" || first == "--frames-smoke" || first == "--downloads-smoke" || first == "--history-smoke" || first == "--history-reopen-smoke" || first == "--bookmarks-smoke" || first == "--chrome-smoke" || first == "--ui-gallery" || first == "--mail-ui-smoke";
+            || first == "--images-smoke" || first == "--forms-smoke" || first == "--frames-smoke" || first == "--downloads-smoke" || first == "--history-smoke" || first == "--history-reopen-smoke" || first == "--bookmarks-smoke" || first == "--chrome-smoke" || first == "--ui-gallery" || first == "--mail-ui-smoke" || first == "--compose-ui-smoke";
         if (smoke_mode) {
             SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
 #ifdef _DEBUG
@@ -1950,6 +1950,14 @@ public:
             CString report = position ? arguments.GetNext(position) : "frontend-smoke.txt";
             CString url = position ? arguments.GetNext(position) : "";
             if(first=="--mail-ui-smoke") { m_nExitCode=WFE_RunMailUISmoke(report,url); }
+            else if(first=="--compose-ui-smoke") {
+                WFE_SetMailPreference("email","preview@example.invalid");WFE_ApplyMailPreferences();
+                MWContext *source=WFE_NewWindow("about:blank");
+                m_nExitCode=WFE_ComposerUISmoke(source,report,url);
+                CString quote_source=position?arguments.GetNext(position):"";
+                if(!m_nExitCode&&!quote_source.IsEmpty()) m_nExitCode=WFE_ComposerQuoteSmoke(report,quote_source);
+                if(source) WFE_CloseWindow(source);
+            }
             else if (first == "--ui-gallery") { m_nExitCode=WFE_UIGallery(report); }
             else if (first == "--mailnews-smoke" || first == "--composer-delivery-smoke") {
                 CString server = position ? arguments.GetNext(position) : "";

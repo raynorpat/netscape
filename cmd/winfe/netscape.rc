@@ -231,3 +231,5 @@ IDR_CLASSIC_LICENSE RCDATA "../../l10n/us/xp/LICENSE-export"
 544 BITMAP "res/classic/message-flag.bmp"
 
 #include "res/mail.rc"
+
+#include "res/composer.rc"

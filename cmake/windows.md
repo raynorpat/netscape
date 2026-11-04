@@ -231,6 +231,21 @@ checks actual captured GDI pixels for folder artwork and borderless headers.
 The new layout fixture and existing mail/news delivery tests passed in Win32
 Release and Debug on 2026-11-04.
 
+The composer now follows the supplied Message Composition reference: its own
+File/Edit/View/Options/Window menus, Send/Quote/Attach/Address/Stop toolbar,
+right-hand logo, compact Mail To/Cc/Subject/Attachment rows, a fixed-width body
+editor and segmented status bar. View exposes advanced recipient headers and
+newsgroups while retaining their backend values. Draft, Send Later, attachment
+removal, native editing shortcuts and Close remain available through the menus.
+Address is visibly disabled until an address book UI exists.
+
+Quote uses the original message translation path. Stop cancels that separate
+translation context, keeps the composition open and permits a retry. Explicit
+Quote marks the message as changed. Stop also preserves the editor, recipients
+and attachments during active SMTP or NNTP delivery so the same composition
+can retry. The additive MSG quotation-state/cancel API exposes the backend's
+existing translator lifetime without transferring ownership to the frontend.
+
 The composer supports recipient headers, newsgroups, subject, plain text body,
 attachments, Send, Send Later, Save Draft and cancellation. Drafts and queued
 messages use the original MIME generator and mailbox writer. Drafts may be
@@ -251,6 +266,18 @@ and real delivery to local SMTP/NNTP fixtures. It never relays to external serve
 All six native CTests passed in Win32 Release and Debug with MSVC 19.51 on
 2026-11-04. The Linux browser also rebuilt and reported version 3.02 after the
 shared MIME, mailbox-path, composition and NNTP fixes.
+
+`windows_composition_ui` checks the real compact and advanced layouts, header
+retention/toggles, menus, command states, narrow geometry and captured editor
+pixels. A loopback HTTP fixture verifies active Quote cancellation, dirty state,
+preserved fields and successful retry. The SMTP/NNTP fixtures also cancel an
+active send with an attachment and retry the same composer, checking one
+successful delivery. All fifteen native CTests passed in Win32 Release and
+Debug with MSVC 19.51 on 2026-11-04. The Linux browser rebuilt and reported
+version 3.02 after the shared quotation API addition. Actual full-window Mail
+and Message Composition captures were reviewed at 96 DPI.
+The refreshed Release installation also passed both native reference-layout
+fixtures, including Quote cancellation/retry, from a path containing spaces.
 
 ## Build and test
 

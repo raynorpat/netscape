@@ -1,5 +1,6 @@
 #include <afxwin.h>
 #include <afxdlgs.h>
+#include <afxcmn.h>
 #include <algorithm>
 #include <map>
 #include <string>
@@ -7,12 +8,15 @@
 #include <shlwapi.h>
 #include "composer.h"
 #include "classic.h"
+#include "chrome.h"
+#include "composer_resource.h"
 #include "resource.h"
 #include "mailsettings.h"
 #include "legacy/genedit.h"
 extern "C" {
 #include "msgcom.h"
 #include "xp_file.h"
+#include "shist.h"
 void WFE_RegisterNativeWindow(MWContext *, HWND);
 void WFE_UnregisterNativeWindow(MWContext *);
 /* Original libmsg mailbox writer, declared in lib/libmsg/msg.h. */
@@ -20,12 +24,6 @@ int msg_DoFCC(MWContext *, const char *, XP_FileType, const char *, XP_FileType,
               const char *, const char *);
 }
 
-enum {
-    IDC_COMPOSE_FIRST = 4100, IDC_COMPOSE_BODY = 4110,
-    IDC_COMPOSE_SEND = 4120, IDC_COMPOSE_LATER, IDC_COMPOSE_DRAFT,
-    IDC_COMPOSE_ATTACH, IDC_COMPOSE_CANCEL, IDC_COMPOSE_HEADERS,
-    IDC_COMPOSE_REMOVE, IDC_COMPOSE_ATTACHMENT
-};
 static const int header_count = 9;
 static const char *header_names[header_count] = {
     "From:", "Reply-To:", "To:", "Cc:", "Bcc:", "Fcc:",
@@ -36,6 +34,15 @@ static const MSG_HEADER_SET header_masks[header_count] = {
     MSG_CC_HEADER_MASK, MSG_BCC_HEADER_MASK, MSG_FCC_HEADER_MASK,
     MSG_NEWSGROUPS_HEADER_MASK, MSG_FOLLOWUP_TO_HEADER_MASK,
     MSG_SUBJECT_HEADER_MASK
+};
+static const MSG_CommandType header_commands[header_count] = {
+    MSG_ShowFrom, MSG_ShowReplyTo, MSG_ShowTo, MSG_ShowCC, MSG_ShowBCC,
+    MSG_ShowFCC, MSG_ShowPostTo, MSG_ShowFollowupTo, MSG_ShowSubject
+};
+
+class ComposerStatusBar : public ClassicStatusBar {
+public:
+    void SetWindowText(const char *text) { SetPaneText(1, text ? text : ""); }
 };
 
 class ComposerFrame;
@@ -62,10 +69,14 @@ static std::string edit_text(const char *text)
 class ComposerFrame : public CFrameWnd {
 public:
     MWContext context = {};
-    CStatic labels[header_count], attachment_label, attachment_text, status;
+    CStatic labels[header_count], attachment_text;
+    ComposerStatusBar status;
+    ClassicLogo logo;
     CGenericEdit fields[header_count], body;
-    ClassicButton send, later, draft, attach, cancel, headers, remove;
+    ClassicButton send, later, draft, attach, cancel, headers, remove, quote, address, stop;
+    ClassicButton mail_to, cc_to, attachment_button;
     MSG_HEADER_SET visible = 0x3ff;
+    bool compact = true, compact_news = false, headers_initialized = false;
     bool initialized = false, changing = false, dirty = false;
     bool destroying = false, backend_closed = false, delivery = false;
     bool completing = false;
@@ -85,6 +96,7 @@ public:
 protected:
     afx_msg int OnCreate(LPCREATESTRUCT create);
     afx_msg void OnSize(UINT type, int width, int height);
+    afx_msg void OnGetMinMaxInfo(MINMAXINFO *info);
     afx_msg BOOL OnEraseBkgnd(CDC *dc);
     afx_msg HBRUSH OnCtlColor(CDC *dc, CWnd *window, UINT type);
     afx_msg void OnTimer(UINT_PTR timer);
@@ -95,7 +107,14 @@ protected:
     afx_msg void OnDraft() { SaveDraft(); }
     afx_msg void OnAttach();
     afx_msg void OnRemove();
-    afx_msg void OnHeaders() { if (context.msg_cframe) MSG_Command(&context, MSG_ShowAllHeaders); }
+    afx_msg void OnHeaders();
+    afx_msg void OnQuote();
+    afx_msg void OnStop();
+    afx_msg void OnMailTo() { fields[2].SetFocus(); }
+    afx_msg void OnCcTo() { fields[3].SetFocus(); }
+    afx_msg void OnHeaderCommand(UINT id);
+    afx_msg void OnEditCommand(UINT id);
+    afx_msg void OnUpdateCommand(CCmdUI *command);
     afx_msg void OnHeaderChanged(UINT id);
     afx_msg void OnBodyChanged();
     DECLARE_MESSAGE_MAP()
@@ -104,6 +123,7 @@ protected:
 BEGIN_MESSAGE_MAP(ComposerFrame, CFrameWnd)
  ON_WM_CREATE()
  ON_WM_SIZE()
+ ON_WM_GETMINMAXINFO()
  ON_WM_ERASEBKGND()
  ON_WM_CTLCOLOR()
  ON_WM_TIMER()
@@ -116,6 +136,14 @@ BEGIN_MESSAGE_MAP(ComposerFrame, CFrameWnd)
  ON_COMMAND(IDC_COMPOSE_REMOVE, OnRemove)
  ON_COMMAND(IDC_COMPOSE_CANCEL, OnClose)
  ON_COMMAND(IDC_COMPOSE_HEADERS, OnHeaders)
+ ON_COMMAND(IDC_COMPOSE_QUOTE, OnQuote)
+ ON_COMMAND(IDC_COMPOSE_STOP, OnStop)
+ ON_COMMAND(IDC_COMPOSE_MAILTO, OnMailTo)
+ ON_COMMAND(IDC_COMPOSE_CC, OnCcTo)
+ ON_COMMAND(IDC_COMPOSE_ATTACHMENT_BUTTON, OnAttach)
+ ON_COMMAND_RANGE(IDC_COMPOSE_HEADER_FIRST, IDC_COMPOSE_HEADER_LAST, OnHeaderCommand)
+ ON_COMMAND_RANGE(IDC_COMPOSE_UNDO, IDC_COMPOSE_SELECT_ALL, OnEditCommand)
+ ON_UPDATE_COMMAND_UI_RANGE(IDC_COMPOSE_SEND, IDC_COMPOSE_HEADER_LAST, OnUpdateCommand)
  ON_CONTROL_RANGE(EN_CHANGE, IDC_COMPOSE_FIRST, IDC_COMPOSE_FIRST + header_count - 1, OnHeaderChanged)
  ON_CONTROL(EN_CHANGE, IDC_COMPOSE_BODY, OnBodyChanged)
 END_MESSAGE_MAP()
@@ -124,16 +152,27 @@ int ComposerFrame::OnCreate(LPCREATESTRUCT create)
 {
     if (CFrameWnd::OnCreate(create) == -1) return -1;
     CFont *font = ClassicUI::Font(this);
-    CButton *buttons[] = {&send, &later, &draft, &attach, &cancel, &headers};
-    const char *names[] = {"Send", "Send Later", "Save Draft", "Attach...", "Cancel", "All Headers"};
-    for (int i = 0; i < 6; ++i) {
-        if (!buttons[i]->Create(names[i], WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW,
-                                CRect(0,0,0,0), this, IDC_COMPOSE_SEND + i)) return -1;
+    ClassicButton *buttons[] = {&send, &quote, &attach, &address, &stop,
+        &later, &draft, &cancel, &headers, &remove, &mail_to, &cc_to, &attachment_button};
+    const char *names[] = {"Send", "Quote", "Attach", "Address", "Stop",
+        "Send Later", "Save Draft", "Cancel", "All Headers", "Remove All", "Mail To:", "Cc:", "Attachment:"};
+    UINT ids[] = {IDC_COMPOSE_SEND, IDC_COMPOSE_QUOTE, IDC_COMPOSE_ATTACH,
+        IDC_COMPOSE_ADDRESS, IDC_COMPOSE_STOP, IDC_COMPOSE_LATER, IDC_COMPOSE_DRAFT,
+        IDC_COMPOSE_CANCEL, IDC_COMPOSE_HEADERS, IDC_COMPOSE_REMOVE,
+        IDC_COMPOSE_MAILTO, IDC_COMPOSE_CC, IDC_COMPOSE_ATTACHMENT_BUTTON};
+    for (int i = 0; i < _countof(buttons); ++i) {
+        DWORD style = WS_CHILD | WS_TABSTOP | BS_OWNERDRAW;
+        if (i < 5 || i >= 10) style |= WS_VISIBLE;
+        if (!buttons[i]->Create(names[i], style, CRect(0,0,0,0), this, ids[i])) return -1;
         buttons[i]->SetFont(font);
     }
     send.SetBitmapResource(IDB_CLASSIC_SEND);  /* Original message toolbar artwork. */
     attach.SetBitmapResource(IDB_CLASSIC_ATTACH);
-    draft.SetBitmapResource(IDB_CLASSIC_COMPOSE);
+    quote.SetBitmapResource(IDB_CLASSIC_QUOTE);
+    address.SetBitmapResource(IDB_CLASSIC_ADDRESS);
+    stop.SetBitmapResource(IDB_CLASSIC_STOP);
+    if (!logo.Create("Netscape", WS_CHILD | WS_VISIBLE, CRect(0,0,0,0), this, IDC_COMPOSE_LOGO)) return -1;
+    logo.bitmap.LoadBitmap(IDB_CLASSIC_LOGO);
     for (int i = 0; i < header_count; ++i) {
         if (!labels[i].Create(header_names[i], WS_CHILD | WS_VISIBLE,
                                CRect(0,0,0,0), this)) return -1;
@@ -143,20 +182,20 @@ int ComposerFrame::OnCreate(LPCREATESTRUCT create)
         fields[i].SetFont(font);
         fields[i].LimitText(32767);
     }
-    if (!attachment_label.Create("Attachments:", WS_CHILD | WS_VISIBLE,
-                                  CRect(0,0,0,0), this) ||
-        !attachment_text.Create("None", WS_CHILD | WS_VISIBLE | SS_PATHELLIPSIS,
+    if (!attachment_text.Create("", WS_CHILD | WS_VISIBLE | SS_PATHELLIPSIS | SS_SUNKEN,
                                  CRect(0,0,0,0), this, IDC_COMPOSE_ATTACHMENT) ||
-        !remove.Create("Remove All", WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_OWNERDRAW,
-                         CRect(0,0,0,0), this, IDC_COMPOSE_REMOVE) ||
         !body.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | WS_VSCROLL |
                      ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN,
-                     CRect(0,0,0,0), this, IDC_COMPOSE_BODY) ||
-        !status.Create("Ready", WS_CHILD | WS_VISIBLE | SS_LEFT,
-                        CRect(0,0,0,0), this)) return -1;
-    attachment_label.SetFont(font);
+                     CRect(0,0,0,0), this, IDC_COMPOSE_BODY)) return -1;
+    UINT indicators[] = {ID_STATUS_NAVIGATOR, ID_SEPARATOR, ID_STATUS_PROGRESS, ID_STATUS_MAIL};
+    if (!status.Create(this) || !status.SetIndicators(indicators, _countof(indicators))) return -1;
+    status.SetDlgCtrlID(IDC_COMPOSE_STATUS);
+    status.SetPaneInfo(0, ID_STATUS_NAVIGATOR, SBPS_NORMAL, ClassicUI::Scale(this, 20));
+    status.SetPaneInfo(1, ID_SEPARATOR, SBPS_STRETCH, 0);
+    status.SetPaneInfo(2, ID_STATUS_PROGRESS, SBPS_NORMAL, ClassicUI::Scale(this, 80));
+    status.SetPaneInfo(3, ID_STATUS_MAIL, SBPS_NORMAL, ClassicUI::Scale(this, 22));
+    status.SetWindowText("Ready");
     attachment_text.SetFont(font);
-    remove.SetFont(font);
     body.LimitText(0x7ffffffe);
     status.SetFont(font);
     ClassicUI::Apply(this);
@@ -175,38 +214,51 @@ void ComposerFrame::Arrange()
     if (!body.GetSafeHwnd()) return;
     CRect area; GetClientRect(&area);
     auto s = [this](int value) { return ClassicUI::Scale(this, value); };
-    CButton *buttons[] = {&send, &later, &draft, &attach, &cancel, &headers};
-    int x = s(4), y = s(4);
-    for (int i = 0; i < 6; ++i) {
-        if (i && x + s(88) > area.Width() - s(4)) { x = s(4); y += s(48); }
-        buttons[i]->MoveWindow(x, y, s(88), s(46));
-        x += s(90);
+    CButton *buttons[] = {&send, &quote, &attach, &address, &stop};
+    int x = s(4), y = s(3), button_width = s(54);
+    for (int i = 0; i < _countof(buttons); ++i) {
+        buttons[i]->MoveWindow(x, y, button_width - s(2), s(38));
+        x += button_width;
     }
-    y += s(52);
-    for (int i = 0; i < header_count; ++i) {
-        bool show = (visible & header_masks[i]) != 0;
-        labels[i].ShowWindow(show ? SW_SHOW : SW_HIDE);
+    logo.MoveWindow((std::max)(x + s(4), area.Width() - s(43)), s(2), s(40), s(40));
+    y = s(49);
+    /* The backend's header mask and every edit field are retained even when
+       the compact front end hides advanced headers. */
+    int order[] = {2, 3, 8, 0, 1, 4, 5, 6, 7};
+    for (int row = 0; row < header_count; ++row) {
+        int i = order[row];
+        bool show = compact ? (i == 2 || i == 3 || i == 8 ||
+            (i == 6 && (compact_news || !Header(6).IsEmpty()))) : (visible & header_masks[i]) != 0;
+        bool button_label = i == 2 || i == 3;
+        labels[i].ShowWindow(show && !button_label ? SW_SHOW : SW_HIDE);
         fields[i].ShowWindow(show ? SW_SHOW : SW_HIDE);
+        if (i == 2) mail_to.ShowWindow(show ? SW_SHOW : SW_HIDE);
+        if (i == 3) cc_to.ShowWindow(show ? SW_SHOW : SW_HIDE);
         if (show) {
-            labels[i].MoveWindow(s(6), y + s(3), s(76), s(18));
-            fields[i].MoveWindow(s(84), y, (std::max)(area.Width() - s(90), s(20)), s(21));
-            y += s(24);
+            labels[i].MoveWindow(s(8), y + s(3), s(76), s(18));
+            if (i == 2) mail_to.MoveWindow(s(5), y, s(78), s(22));
+            if (i == 3) cc_to.MoveWindow(s(5), y, s(78), s(22));
+            fields[i].MoveWindow(s(88), y, (std::max)(area.Width() - s(94), s(20)), s(22));
+            y += s(25);
         }
     }
-    attachment_label.MoveWindow(s(6), y + s(3), s(76), s(18));
-    attachment_text.MoveWindow(s(84), y + s(3), (std::max)(area.Width() - s(186), s(20)), s(18));
-    remove.MoveWindow((std::max)(area.Width() - s(96), s(106)), y, s(90), s(22));
-    y += s(27);
-    body.MoveWindow(s(6), y, (std::max)(area.Width() - s(12), s(20)),
-                    (std::max)(area.Height() - y - s(26), s(20)));
-    status.MoveWindow(s(6), (std::max)(area.Height() - s(21), y + s(24)),
-                      (std::max)(area.Width() - s(12), s(20)), s(18));
+    attachment_button.MoveWindow(s(5), y, s(78), s(22));
+    attachment_text.MoveWindow(s(88), y, (std::max)(area.Width() - s(94), s(20)), s(22));
+    y += s(28);
+    int status_top = (std::max)(0, area.Height() - s(21));
+    body.MoveWindow(s(5), y, (std::max)(area.Width() - s(10), s(20)),
+                    (std::max)(status_top - y - s(3), s(20)));
+    status.MoveWindow(0, status_top, area.Width(), s(21));
+    Invalidate(FALSE);
 }
 
 BOOL ComposerFrame::OnEraseBkgnd(CDC *dc)
 {
     CRect area; GetClientRect(&area);
     dc->FillSolidRect(area, RGB(192,192,192));
+    int y = ClassicUI::Scale(this, 45);
+    dc->FillSolidRect(0, y, area.Width(), 1, RGB(128,128,128));
+    dc->FillSolidRect(0, y + 1, area.Width(), 1, RGB(255,255,255));
     return TRUE;
 }
 
@@ -219,6 +271,13 @@ void ComposerFrame::OnSize(UINT type, int width, int height)
 {
     CFrameWnd::OnSize(type, width, height);
     Arrange();
+}
+
+void ComposerFrame::OnGetMinMaxInfo(MINMAXINFO *info)
+{
+    CFrameWnd::OnGetMinMaxInfo(info);
+    info->ptMinTrackSize.x = ClassicUI::Scale(this, 360);
+    info->ptMinTrackSize.y = ClassicUI::Scale(this, 440);
 }
 
 BOOL ComposerFrame::PreTranslateMessage(MSG *message)
@@ -258,7 +317,6 @@ void ComposerFrame::OnHeaderChanged(UINT id)
     CString text = Header(index);
     MSG_SetHeaderContents(&context, header_masks[index], text);
     dirty = true;
-    if (index == 8) SetWindowText(text.IsEmpty() ? "Compose Message - Netscape" : text + " - Netscape");
 }
 
 void ComposerFrame::OnBodyChanged()
@@ -286,10 +344,115 @@ void ComposerFrame::UpdateButtons()
     later.EnableWindow(ready && command_enabled(&context, MSG_SendMessageLater));
     draft.EnableWindow(available);
     attach.EnableWindow(available);
+    attachment_button.EnableWindow(available);
+    mail_to.EnableWindow(available);
+    cc_to.EnableWindow(available);
+    quote.EnableWindow(ready && !MSG_QuoteInProgress(&context) && command_enabled(&context, MSG_QuoteMessage));
+    /* This native front end has no address picker. */
+    address.EnableWindow(FALSE);
+    stop.EnableWindow(!saving && !backend_closed && (XP_IsContextStoppable(&context) || MSG_QuoteInProgress(&context)));
+    status.busy = XP_IsContextBusy(&context) || MSG_QuoteInProgress(&context);
+    status.Invalidate(FALSE);
     remove.EnableWindow(available && MSG_GetAttachmentList(&context) != nullptr);
     headers.EnableWindow(ready);
     for (int i = 0; i < header_count; ++i) fields[i].EnableWindow(available);
     body.EnableWindow(available);
+}
+
+void ComposerFrame::OnHeaders()
+{
+    if (!context.msg_cframe || saving) return;
+    compact = !compact;
+    if (!compact) {
+        XP_Bool enabled = FALSE, plural = FALSE;
+        MSG_COMMAND_CHECK_STATE checked = MSG_NotUsed;
+        const char *name = nullptr;
+        MSG_CommandStatus(&context, MSG_ShowAllHeaders, &enabled, &checked, &name, &plural);
+        if (enabled && checked != MSG_Checked) MSG_Command(&context, MSG_ShowAllHeaders);
+    }
+    Arrange();
+}
+
+void ComposerFrame::OnHeaderCommand(UINT id)
+{
+    if (!context.msg_cframe || saving) return;
+    int index = id - IDC_COMPOSE_HEADER_FIRST;
+    bool shown = compact ? index == 2 || index == 3 || index == 8 ||
+        (index == 6 && (compact_news || !Header(6).IsEmpty())) : (visible & header_masks[index]) != 0;
+    bool backend_shown = (visible & header_masks[index]) != 0;
+    compact = false;
+    /* Entering the backend layout already inverts a mismatched compact row. */
+    if (shown == backend_shown) MSG_Command(&context, header_commands[index]);
+    Arrange();
+}
+
+void ComposerFrame::OnQuote()
+{
+    if (saving || backend_closed || MSG_QuoteInProgress(&context) || !command_enabled(&context, MSG_QuoteMessage)) return;
+    MWContext *target = &context;
+    MSG_Command(target, MSG_QuoteMessage);
+    ComposerFrame *frame = composer_for(target);
+    if (frame && !frame->backend_closed && target->msg_cframe) frame->dirty = true;
+}
+
+void ComposerFrame::OnStop()
+{
+    if (saving || backend_closed || (!XP_IsContextStoppable(&context) && !MSG_QuoteInProgress(&context))) return;
+    /* Interrupt callbacks can run synchronously. They must not treat this
+       cancelled delivery as a completed message and close its editor. */
+    delivery = false;
+    MWContext *target = &context;
+    MSG_InterruptQuoting(target);
+    ComposerFrame *frame = composer_for(target);
+    if (frame && !frame->backend_closed && target->msg_cframe && XP_IsContextStoppable(target))
+        XP_InterruptContext(target);
+    frame = composer_for(target);
+    if (frame && !frame->backend_closed) {
+        frame->status.SetWindowText("Stopped");
+        frame->UpdateButtons();
+    }
+}
+
+void ComposerFrame::OnEditCommand(UINT id)
+{
+    CWnd *focus = GetFocus();
+    if (!focus || !focus->IsWindowEnabled() || focus->GetParent() != this ||
+        !focus->IsKindOf(RUNTIME_CLASS(CEdit))) return;
+    if (id != IDC_COMPOSE_COPY && id != IDC_COMPOSE_SELECT_ALL &&
+        (saving || backend_closed || !command_enabled(&context, MSG_SendMessage))) return;
+    UINT messages[] = {EM_UNDO, WM_CUT, WM_COPY, WM_PASTE, EM_SETSEL};
+    focus->SendMessage(messages[id - IDC_COMPOSE_UNDO], 0, id == IDC_COMPOSE_SELECT_ALL ? -1 : 0);
+}
+
+void ComposerFrame::OnUpdateCommand(CCmdUI *command)
+{
+    UINT id = command->m_nID;
+    bool ready = !saving && !backend_closed && context.msg_cframe;
+    bool enabled = ready && command_enabled(&context, MSG_SendMessage);
+    if (id == IDC_COMPOSE_CANCEL) enabled = !saving;
+    else if (id == IDC_COMPOSE_ADDRESS) enabled = false;
+    else if (id == IDC_COMPOSE_STOP) enabled = !saving && !backend_closed && (XP_IsContextStoppable(&context) || MSG_QuoteInProgress(&context));
+    else if (id == IDC_COMPOSE_QUOTE) enabled = ready && !MSG_QuoteInProgress(&context) && command_enabled(&context, MSG_QuoteMessage);
+    else if (id == IDC_COMPOSE_LATER) enabled = ready && command_enabled(&context, MSG_SendMessageLater);
+    else if (id == IDC_COMPOSE_REMOVE) enabled = enabled && MSG_GetAttachmentList(&context) != nullptr;
+    else if (id == IDC_COMPOSE_HEADERS) { enabled = ready; command->SetCheck(!compact); }
+    else if (id >= IDC_COMPOSE_HEADER_FIRST && id <= IDC_COMPOSE_HEADER_LAST) {
+        int index = id - IDC_COMPOSE_HEADER_FIRST;
+        enabled = ready;
+        command->SetCheck(compact ? index == 2 || index == 3 || index == 8 ||
+            (index == 6 && (compact_news || !Header(6).IsEmpty())) : (visible & header_masks[index]) != 0);
+    } else if (id >= IDC_COMPOSE_UNDO && id <= IDC_COMPOSE_SELECT_ALL) {
+        CWnd *focus = GetFocus();
+        enabled = enabled && focus && focus->GetParent() == this && focus->IsKindOf(RUNTIME_CLASS(CEdit));
+        if (enabled && id == IDC_COMPOSE_UNDO) enabled = focus->SendMessage(EM_CANUNDO) != 0;
+        if (enabled && id == IDC_COMPOSE_PASTE) enabled = IsClipboardFormatAvailable(CF_TEXT) != FALSE;
+        if (enabled && (id == IDC_COMPOSE_CUT || id == IDC_COMPOSE_COPY)) {
+            DWORD start = 0, end = 0;
+            focus->SendMessage(EM_GETSEL, (WPARAM)&start, (LPARAM)&end);
+            enabled = start != end;
+        }
+    }
+    command->Enable(enabled);
 }
 
 void ComposerFrame::OnTimer(UINT_PTR timer)
@@ -321,7 +484,7 @@ void ComposerFrame::Deliver(MSG_CommandType command)
 void ComposerFrame::RefreshAttachments()
 {
     char *text = MSG_GetAttachmentString(&context);
-    attachment_text.SetWindowText(text && *text ? text : "None");
+    attachment_text.SetWindowText(text && *text ? text : "");
     if (text) XP_FREE(text);
 }
 
@@ -462,8 +625,9 @@ void ComposerFrame::OnDestroy()
 extern "C" MWContext *FE_MakeMessageCompositionContext(MWContext *)
 {
     ComposerFrame *frame = new ComposerFrame;
-    if (!frame->Create(nullptr, "Compose Message - Netscape", WS_OVERLAPPEDWINDOW,
-                        CRect(90,70,900,790))) return nullptr;
+    if (!frame->Create(nullptr, "Netscape - [Message Composition]", WS_OVERLAPPEDWINDOW,
+                        CRect(90,70,850,690), nullptr, MAKEINTRESOURCE(IDR_COMPOSER_MENU))) return nullptr;
+    frame->LoadAccelTable(MAKEINTRESOURCE(IDR_COMPOSER_ACCEL));
     return &frame->context;
 }
 
@@ -519,7 +683,14 @@ extern "C" void FE_DestroyMailCompositionContext(MWContext *context)
 extern "C" void FE_MsgShowHeaders(MWContext *context, MSG_HEADER_SET mask)
 {
     ComposerFrame *frame = composer_for(context);
-    if (frame) { frame->visible = mask; frame->Arrange(); }
+    if (frame) {
+        if (!frame->headers_initialized) {
+            frame->compact_news = (mask & MSG_NEWSGROUPS_HEADER_MASK) != 0;
+            frame->headers_initialized = true;
+        }
+        frame->visible = mask;
+        frame->Arrange();
+    }
 }
 
 extern "C" int FE_GetMessageBody(MWContext *context, char **body, uint32 *length, MSG_FontCode **fonts)
@@ -741,6 +912,172 @@ extern "C" int WFE_ComposerSmoke(MWContext *source, const char *report, int is_n
         saved && encoded && queued ? 0 : 1;
 }
 
+static CRect compose_control_rect(ComposerFrame *frame, int id)
+{
+    CRect rect(0,0,0,0);
+    CWnd *control = frame->GetDlgItem(id);
+    if (control && control->IsWindowVisible()) {
+        control->GetWindowRect(&rect); frame->ScreenToClient(&rect);
+    }
+    return rect;
+}
+
+static bool compose_capture(ComposerFrame *frame, const char *path, bool client = true)
+{
+    if (!path || !*path) return false;
+    CRect area;
+    if (client) frame->GetClientRect(&area); else frame->GetWindowRect(&area);
+    HDC window = ::GetDC(frame->GetSafeHwnd());
+    HDC memory = CreateCompatibleDC(window);
+    BITMAPINFO info = {};
+    info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    info.bmiHeader.biWidth = area.Width(); info.bmiHeader.biHeight = -area.Height();
+    info.bmiHeader.biPlanes = 1; info.bmiHeader.biBitCount = 32;
+    void *pixels = nullptr;
+    HBITMAP bitmap = CreateDIBSection(window, &info, DIB_RGB_COLORS, &pixels, nullptr, 0);
+    bool captured = false;
+    if (bitmap && memory) {
+        HGDIOBJ old = SelectObject(memory, bitmap);
+        captured = PrintWindow(frame->GetSafeHwnd(), memory, client ? PW_CLIENTONLY : 0) != FALSE;
+        if (captured) {
+            FILE *output = fopen(path, "wb");
+            captured = output != nullptr;
+            if (output) {
+                DWORD bytes = area.Width() * area.Height() * 4;
+                BITMAPFILEHEADER header = {};
+                header.bfType = 0x4d42;
+                header.bfOffBits = sizeof(header) + sizeof(BITMAPINFOHEADER);
+                header.bfSize = header.bfOffBits + bytes;
+                captured = fwrite(&header, sizeof(header), 1, output) == 1 &&
+                    fwrite(&info.bmiHeader, sizeof(BITMAPINFOHEADER), 1, output) == 1 &&
+                    fwrite(pixels, bytes, 1, output) == 1;
+                fclose(output);
+            }
+        }
+        SelectObject(memory, old);
+    }
+    if (bitmap) DeleteObject(bitmap);
+    if (memory) DeleteDC(memory);
+    ::ReleaseDC(frame->GetSafeHwnd(), window);
+    return captured;
+}
+
+extern "C" int WFE_ComposerUISmoke(MWContext *source, const char *report, const char *snapshot)
+{
+    MWContext *context = MSG_ComposeMessage(source, nullptr, nullptr,
+        "recipient@example.test", "copy@example.test", "blind@example.test",
+        nullptr, nullptr, nullptr, nullptr, "Hello", nullptr, nullptr,
+        nullptr, nullptr, nullptr, FALSE, FALSE);
+    ComposerFrame *frame = composer_for(context);
+    if (!frame) return 1;
+    frame->body.SetWindowText("Hello,\r\n\r\nThis is a message composed in Netscape.\r\n\r\nRegards,\r\nPat\r\n");
+    frame->SetHeader(1, "reply@example.test");
+    frame->SetHeader(5, "Sent");
+    frame->SetWindowPos(nullptr, 0, 0, ClassicUI::Scale(frame, 760), ClassicUI::Scale(frame, 620), SWP_NOMOVE | SWP_NOZORDER);
+    frame->ShowWindow(SW_SHOWNORMAL); frame->UpdateWindow();
+    for (int i = 0; i < 5; ++i) smoke_pump();
+    std::string menu_labels, toolbar_labels;
+    CMenu *menu = frame->GetMenu();
+    if (menu) for (int i = 0; i < menu->GetMenuItemCount(); ++i) {
+        CString text; menu->GetMenuString(i, text, MF_BYPOSITION); text.Remove('&');
+        if (i) menu_labels += '|'; menu_labels += (const char *)text;
+    }
+    int toolbar_ids[] = {IDC_COMPOSE_SEND, IDC_COMPOSE_QUOTE, IDC_COMPOSE_ATTACH, IDC_COMPOSE_ADDRESS, IDC_COMPOSE_STOP};
+    int toolbar_count = 0;
+    CRect toolbar(0,0,0,0);
+    for (int i = 0; i < 5; ++i) {
+        CWnd *control = frame->GetDlgItem(toolbar_ids[i]);
+        if (control && control->IsWindowVisible()) {
+            CString text; control->GetWindowText(text);
+            if (toolbar_count) toolbar_labels += '|'; toolbar_labels += (const char *)text;
+            CRect rect = compose_control_rect(frame, toolbar_ids[i]);
+            if (toolbar_count) toolbar.UnionRect(toolbar, rect); else toolbar = rect;
+            ++toolbar_count;
+        }
+    }
+    CRect client; frame->GetClientRect(&client);
+    CRect full = client;
+    CRect editor = compose_control_rect(frame, IDC_COMPOSE_BODY);
+    CRect mail_to = compose_control_rect(frame, IDC_COMPOSE_FIRST + 2);
+    CRect cc = compose_control_rect(frame, IDC_COMPOSE_FIRST + 3);
+    CRect subject = compose_control_rect(frame, IDC_COMPOSE_FIRST + 8);
+    CRect attachment = compose_control_rect(frame, IDC_COMPOSE_ATTACHMENT);
+    CWnd *to_button = frame->GetDlgItem(IDC_COMPOSE_MAILTO), *cc_button = frame->GetDlgItem(IDC_COMPOSE_CC), *attachment_button = frame->GetDlgItem(IDC_COMPOSE_ATTACHMENT_BUTTON);
+    CString to_label, cc_label, attachment_label;
+    if (to_button) to_button->GetWindowText(to_label);
+    if (cc_button) cc_button->GetWindowText(cc_label);
+    if (attachment_button) attachment_button->GetWindowText(attachment_label);
+    bool compact_labels = to_label == "Mail To:" && cc_label == "Cc:" && attachment_label == "Attachment:";
+    bool compact = !frame->fields[0].IsWindowVisible() && !frame->fields[1].IsWindowVisible() &&
+        !frame->fields[4].IsWindowVisible() && !frame->fields[5].IsWindowVisible() &&
+        mail_to.top >= toolbar.bottom && cc.top > mail_to.top && subject.top > cc.top &&
+        attachment.top > subject.top && editor.top >= attachment.bottom &&
+        editor.Height() > client.Height() / 2;
+    frame->SyncHeaders();
+    bool retained = frame->Header(4) == "blind@example.test" &&
+        frame->Header(1) == "reply@example.test" && frame->Header(5) == "Sent";
+    /* A compact header can be hidden while its backend mask is already set. */
+    frame->SendMessage(WM_COMMAND, IDC_COMPOSE_HEADER_FIRST + 4);
+    bool bcc_toggle = frame->fields[4].IsWindowVisible() && frame->Header(4) == "blind@example.test";
+    frame->SendMessage(WM_COMMAND, IDC_COMPOSE_HEADERS);
+    frame->SendMessage(WM_COMMAND, IDC_COMPOSE_HEADERS);
+    bool advanced = frame->fields[4].IsWindowVisible() && retained;
+    /* Conversely, compact Cc stays visible after an advanced user hides it. */
+    frame->SendMessage(WM_COMMAND, IDC_COMPOSE_HEADER_FIRST + 3);
+    frame->SendMessage(WM_COMMAND, IDC_COMPOSE_HEADERS);
+    frame->SendMessage(WM_COMMAND, IDC_COMPOSE_HEADER_FIRST + 3);
+    bool cc_toggle = !frame->fields[3].IsWindowVisible() && frame->Header(3) == "copy@example.test";
+    frame->SendMessage(WM_COMMAND, IDC_COMPOSE_HEADERS);
+    frame->Arrange(); frame->UpdateWindow();
+    bool captured = compose_capture(frame, snapshot);
+    bool window_captured = snapshot && *snapshot &&
+        compose_capture(frame, (std::string(snapshot) + ".window.bmp").c_str(), false);
+    UINT commands[] = {IDC_COMPOSE_DRAFT, IDC_COMPOSE_ATTACH, IDC_COMPOSE_CANCEL};
+    bool menu_commands[3] = {};
+    for (int c = 0; menu && c < 3; ++c)
+        for (int i = 0; i < menu->GetMenuItemCount(); ++i) {
+            CMenu *sub = menu->GetSubMenu(i);
+            if (sub && sub->GetMenuState(commands[c], MF_BYCOMMAND) != (UINT)-1) menu_commands[c] = true;
+        }
+    CWnd *bar = frame->GetDlgItem(IDC_COMPOSE_STATUS);
+    int parts = bar ? (int)bar->SendMessage(SB_GETPARTS) : 0;
+    frame->SetWindowPos(nullptr, 0, 0, ClassicUI::Scale(frame, 480), ClassicUI::Scale(frame, 500),
+                         SWP_NOMOVE | SWP_NOZORDER);
+    frame->Arrange(); frame->GetClientRect(&client);
+    CRect narrow = compose_control_rect(frame, IDC_COMPOSE_BODY);
+    bool narrow_ok = narrow.Width() > 0 && narrow.Height() > 0 && narrow.left >= 0 &&
+        narrow.right <= client.right && narrow.bottom <= client.bottom &&
+        frame->Header(4) == "blind@example.test";
+    CString title; frame->GetWindowText(title);
+    bool titled = title == "Netscape - [Message Composition]";
+    CWnd *address = frame->GetDlgItem(IDC_COMPOSE_ADDRESS), *quote = frame->GetDlgItem(IDC_COMPOSE_QUOTE), *stop = frame->GetDlgItem(IDC_COMPOSE_STOP);
+    bool address_disabled = address && !address->IsWindowEnabled();
+    bool quote_backend = quote && (quote->IsWindowEnabled() != FALSE) == command_enabled(context, MSG_QuoteMessage);
+    bool stop_idle = stop && !stop->IsWindowEnabled();
+    bool passed = titled && compact_labels && address_disabled && quote_backend && stop_idle && menu_labels == "File|Edit|View|Options|Window" &&
+        toolbar_labels == "Send|Quote|Attach|Address|Stop" && toolbar_count == 5 &&
+        compact && advanced && bcc_toggle && cc_toggle && retained && narrow_ok && parts >= 2 && captured && window_captured &&
+        menu_commands[0] && menu_commands[1] && menu_commands[2];
+    FILE *output = report ? fopen(report, "a") : nullptr;
+    if (output) {
+        fprintf(output, "menu_labels=%s\ntoolbar_labels=%s\ntoolbar_count=%d\n", menu_labels.c_str(), toolbar_labels.c_str(), toolbar_count);
+        fprintf(output, "compact_headers=%d\nadvanced_headers=%d\nhidden_headers_retained=%d\n", compact, advanced, retained);
+        fprintf(output, "compact_labels=%d\n", compact_labels);
+        fprintf(output, "bcc_toggle=%d\ncc_toggle=%d\n", bcc_toggle, cc_toggle);
+        fprintf(output, "window_snapshot=%d\n", window_captured);
+        fprintf(output, "composition_title=%d\naddress_disabled=%d\nquote_backend=%d\nstop_idle=%d\n", titled, address_disabled, quote_backend, stop_idle);
+        fprintf(output, "draft_command=%d\nattachment_command=%d\ncancel_command=%d\nstatus_panes=%d\n", menu_commands[0], menu_commands[1], menu_commands[2], parts);
+        fprintf(output, "client=%d,%d\ntoolbar=%d,%d,%d,%d\neditor=%d,%d,%d,%d\n", full.Width(), full.Height(), toolbar.left, toolbar.top, toolbar.right, toolbar.bottom, editor.left, editor.top, editor.right, editor.bottom);
+        const char *names[] = {"mail_to", "cc", "subject", "attachment"};
+        CRect rows[] = {mail_to, cc, subject, attachment};
+        for (int i = 0; i < 4; ++i) fprintf(output, "%s=%d,%d,%d,%d\n", names[i], rows[i].left, rows[i].top, rows[i].right, rows[i].bottom);
+        fprintf(output, "narrow_client=%d,%d\nnarrow_editor=%d,%d,%d,%d\nnarrow_layout=%d\nsnapshot=%d\npassed=%d\ncompleted=1\n", client.Width(), client.Height(), narrow.left, narrow.top, narrow.right, narrow.bottom, narrow_ok, captured, passed);
+        fclose(output);
+    }
+    frame->backend_closed = true; frame->DestroyWindow();
+    return passed ? 0 : 1;
+}
+
 static bool loopback_endpoint(const char *endpoint)
 {
     if (!endpoint) return false;
@@ -757,12 +1094,81 @@ static bool loopback_endpoint(const char *endpoint)
     return port != 0;
 }
 
+extern "C" int WFE_ComposerQuoteSmoke(const char *report, const char *url)
+{
+    bool quote_dirty = false, quote_stop_active = false, quote_stop_survived = false, quote_retry = false;
+    std::string address = url ? url : "";
+    size_t slash = address.find('/', 7);
+    std::string endpoint = address.size() > 7 ? address.substr(7, slash == std::string::npos ? slash : slash - 7) : "";
+    bool guarded = address.compare(0, 7, "http://") == 0 && loopback_endpoint(endpoint.c_str());
+    if (guarded) {
+        /* Seed a source history entry without fetching it as an attachment. */
+        MWContext source = {};
+        WFE_InitContext(&source, nullptr);
+        URL_Struct *entry_url = NET_CreateURLStruct(url, NET_DONT_RELOAD);
+        History_entry *entry = entry_url ? SHIST_CreateHistoryEntry(entry_url, (char *)"Quote fixture") : nullptr;
+        if (entry) SHIST_AddDocument(&source, entry);
+        if (entry_url) NET_FreeURLStruct(entry_url);
+        MWContext *context = entry ? MSG_ComposeMessage(&source, nullptr, nullptr,
+            "recipient@example.test", nullptr, "blind@example.test", nullptr,
+            nullptr, nullptr, nullptr, "Quote fixture", nullptr, nullptr,
+            nullptr, nullptr, nullptr, FALSE, FALSE) : nullptr;
+        ComposerFrame *frame = composer_for(context);
+        if (frame) {
+            frame->body.SetWindowText("Quote fixture body\r\n");
+            frame->body.SetSel(-1, -1);
+            frame->dirty = false;
+            frame->SendMessage(WM_COMMAND, IDC_COMPOSE_QUOTE);
+            DWORD started = GetTickCount();
+            /* Permit the server to receive the slow first request. */
+            while (composer_for(context) && MSG_QuoteInProgress(context) && GetTickCount() - started < 150) smoke_pump();
+            frame = composer_for(context);
+            quote_dirty = frame && frame->dirty;
+            if (frame) frame->UpdateButtons();
+            quote_stop_active = frame && MSG_QuoteInProgress(context) && frame->stop.IsWindowEnabled();
+            if (quote_stop_active) frame->SendMessage(WM_COMMAND, IDC_COMPOSE_STOP);
+            started = GetTickCount();
+            while (composer_for(context) && MSG_QuoteInProgress(context) && GetTickCount() - started < 5000) smoke_pump();
+            frame = composer_for(context);
+            if (frame) {
+                CString body; frame->body.GetWindowText(body);
+                quote_stop_survived = quote_stop_active && context->msg_cframe &&
+                    !MSG_QuoteInProgress(context) && !frame->backend_closed &&
+                    body == "Quote fixture body\r\n" && frame->Header(2) == "recipient@example.test" &&
+                    frame->Header(4) == "blind@example.test";
+                if (quote_stop_survived) {
+                    frame->SendMessage(WM_COMMAND, IDC_COMPOSE_QUOTE);
+                    started = GetTickCount();
+                    while (composer_for(context) && MSG_QuoteInProgress(context) && GetTickCount() - started < 10000) smoke_pump();
+                    frame = composer_for(context);
+                    if (frame) {
+                        frame->body.GetWindowText(body);
+                        quote_retry = !MSG_QuoteInProgress(context) && body.Find("Quoted reference text") >= 0 &&
+                            frame->Header(4) == "blind@example.test";
+                    }
+                }
+            }
+            frame = composer_for(context);
+            if (frame) { frame->backend_closed = true; frame->DestroyWindow(); }
+        }
+        WFE_DestroyContext(&source);
+    }
+    FILE *output = report ? fopen(report, "a") : nullptr;
+    if (output) {
+        fprintf(output, "quote_guard=%d\nquote_dirty=%d\nquote_stop_active=%d\nquote_stop_survived=%d\nquote_retry=%d\n",
+            guarded, quote_dirty, quote_stop_active, quote_stop_survived, quote_retry);
+        fclose(output);
+    }
+    return guarded && quote_dirty && quote_stop_active && quote_stop_survived && quote_retry ? 0 : 1;
+}
+
 extern "C" int WFE_ComposerDeliverSmoke(MWContext *source, const char *report, int is_news)
 {
     const char *protocol = is_news ? "nntp" : "smtp";
     std::string endpoint = WFE_MailPreference(is_news ? "news" : "smtp");
     bool guarded = loopback_endpoint(endpoint.c_str());
     bool delivered = false;
+    bool stop_active = false, stop_survived = false, stop_attachment = false, stop_retry = false;
     const char *error = guarded ? "could_not_create_composer" : "endpoint_must_be_loopback_with_port";
     if (guarded) {
         WFE_ApplyMailPreferences();
@@ -782,14 +1188,41 @@ extern "C" int WFE_ComposerDeliverSmoke(MWContext *source, const char *report, i
             frame->RefreshAttachments();
             frame->body.SetWindowText("Native delivery body\r\n");
             MSG_MessageBodyEdited(context);
+            std::string attachment_path = std::string(WFE_ProfileDirectory()) + "\\delivery-stop-attachment.txt";
+            FILE *attachment = fopen(attachment_path.c_str(), "wb");
+            bool attachment_ready = false;
+            if (attachment) {
+                fputs("Attachment retained across native Stop.\r\n", attachment);
+                fclose(attachment);
+                attachment_ready = frame->AttachPath(attachment_path.c_str()) && smoke_wait_ready(context);
+            }
+            if (attachment_ready) {
+                const MSG_AttachmentData *list = MSG_GetAttachmentList(context);
+                std::string attachment_url = list && list[0].url ? list[0].url : "";
+                frame->SendMessage(WM_COMMAND, IDC_COMPOSE_SEND);
+                frame = composer_for(context);
+                stop_active = frame && frame->delivery && XP_IsContextStoppable(context);
+                if (stop_active) frame->SendMessage(WM_COMMAND, IDC_COMPOSE_STOP);
+                bool ready = smoke_wait_ready(context);
+                frame = composer_for(context);
+                if (frame) {
+                    CString body; frame->body.GetWindowText(body);
+                    stop_survived = stop_active && ready && context->msg_cframe &&
+                        !frame->delivery && !frame->backend_closed && body == "Native delivery body\r\n";
+                    list = MSG_GetAttachmentList(context);
+                    stop_attachment = !attachment_url.empty() && list && list[0].url &&
+                        attachment_url == list[0].url && !list[1].url;
+                }
+            }
             delivery_observers[context] = &delivered;
-            if (smoke_wait_ready(context)) {
+            if (stop_survived && stop_attachment && smoke_wait_ready(context)) {
                 /* Same WM_COMMAND route used by the native Send button. */
                 frame->SendMessage(WM_COMMAND, IDC_COMPOSE_SEND);
                 DWORD started = GetTickCount();
                 while (composer_for(context) && GetTickCount() - started < 15000) smoke_pump();
+                stop_retry = delivered;
                 error = delivered ? "" : "backend_delivery_did_not_complete";
-            } else error = "composer_did_not_become_ready";
+            } else error = "stop_did_not_preserve_composition";
             delivery_observers.erase(context);
             frame = composer_for(context);
             if (frame) {
@@ -802,7 +1235,9 @@ extern "C" int WFE_ComposerDeliverSmoke(MWContext *source, const char *report, i
     if (output) {
         fprintf(output, "protocol=%s\nendpoint=%s\ndelivery_guard=%d\ndelivered=%d\ndelivery_error=%s\n",
             protocol, endpoint.c_str(), guarded, delivered, error);
+        fprintf(output, "stop_active=%d\nstop_survived=%d\nstop_attachment=%d\nstop_retry=%d\n",
+            stop_active, stop_survived, stop_attachment, stop_retry);
         fclose(output);
     }
-    return delivered ? 0 : 1;
+    return delivered && stop_active && stop_survived && stop_attachment && stop_retry ? 0 : 1;
 }

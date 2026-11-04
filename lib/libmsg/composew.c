@@ -14,6 +14,9 @@
 #include "xpgetstr.h"
 #include "prefapi.h"
 
+/* Text translation owns the private quoting context. */
+extern void XL_AbortTextTranslation(XL_TextTranslation);
+
 extern int MK_MSG_MSG_COMPOSITION;
 
 extern int MK_COMMUNICATIONS_ERROR;
@@ -922,6 +925,24 @@ msg_get_url_done(PrintSetup* p)
 }
 
   
+
+XP_Bool
+MSG_QuoteInProgress(MWContext* context)
+{
+  MSG_ComposeFrame* f;
+  if (!context || context->type != MWContextMessageComposition) return FALSE;
+  f = context->msg_cframe;
+  return (f && f->quoteurl && f->textContext);
+}
+
+void
+MSG_InterruptQuoting(MWContext* context)
+{
+  if (MSG_QuoteInProgress(context))
+    XL_AbortTextTranslation(context->msg_cframe->textContext);
+  /* The normal completion callback clears the handle and updates the FE. */
+}
+
 
 int
 msg_QuoteMessage(MWContext* context)

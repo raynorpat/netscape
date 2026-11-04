@@ -168,3 +168,10 @@ if(BUILD_TESTING)
   --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/preferences-test")
  set_tests_properties(windows_preferences PROPERTIES TIMEOUT 140)
 endif()
+
+if(BUILD_TESTING)
+ add_test(NAME windows_background_preferences COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_background.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/background-test")
+ set_tests_properties(windows_background_preferences PROPERTIES TIMEOUT 170)
+endif()

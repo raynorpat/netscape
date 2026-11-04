@@ -696,3 +696,16 @@ and Gold editing/publishing workflows as well as the new selection, link and
 frame-divider fixtures. The native selection and frame captures were reviewed.
 An independent review found one cancellation issue; its new failing regressions
 passed after the fix, followed by all four complete suites.
+
+## Background image preferences
+
+The original Colors page now enables Image File, its path field and Browse.
+The image path/mode are saved with General Preferences; Cancel and failed writes
+retain the old settings. Local paths with spaces and percent signs are converted
+to file URLs for LO's default backdrop. A page's background wins unless Always
+Use My Colors is selected. Choosing Default/Custom clears the user backdrop on
+subsequent layout. Missing configured files fall back to Default at startup
+without rewriting the saved preferences. GIF/JPEG/XBM decoding uses the original
+image engine. The background fixture checks actual tiled GDI pixels, persistence
+across processes, failed saves, invalid files and removal; Gold additionally
+checks that a user backdrop is absent from the editor's document properties.

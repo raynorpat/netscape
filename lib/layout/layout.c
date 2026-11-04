@@ -68,14 +68,10 @@ lo_SavedGridData *		lo_NewDocumentGridData(void);
 void
 LO_SetDefaultBackdrop(char *url)
 {
-	if ((url != NULL)&&(*url != '\0'))
-	{
-		Master_backdrop_url = XP_STRDUP(url);
-	}
-	else
-	{
-		Master_backdrop_url = NULL;
-	}
+	char *replacement = ((url != NULL)&&(*url != '\0')) ? XP_STRDUP(url) : NULL;
+	if ((url != NULL)&&(*url != '\0')&&(replacement == NULL)) return;
+	if (Master_backdrop_url != NULL) XP_FREE(Master_backdrop_url);
+	Master_backdrop_url = replacement;
 }
 
 

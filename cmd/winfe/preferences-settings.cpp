@@ -2,6 +2,7 @@
 #include "frontend.h"
 #include "preferences.h"
 #include "glhist.h"
+#include <shlwapi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -82,6 +83,15 @@ bool WFE_ValidateGeneralPreferences(const GeneralPreferences &p, std::string *er
             return wfe_preference_error(error, "Choose a valid 24-bit color.");
     if (p.dither < 0 || p.dither > 2)
         return wfe_preference_error(error, "Select an image color mode.");
+    if (!wfe_safe_string(p.background_file, MAX_PATH, true))
+        return wfe_preference_error(error, "Choose a background image path shorter than 260 characters, without control characters.");
+    if (p.background_image) {
+        const std::string &path=p.background_file;
+        bool absolute=(path.size()>2 && ((path[0]>='A'&&path[0]<='Z')||(path[0]>='a'&&path[0]<='z')) && path[1]==':' && (path[2]=='\\'||path[2]=='/')) || path.compare(0,2,"\\\\")==0;
+        DWORD attributes=GetFileAttributesA(path.c_str());
+        if(!absolute || attributes==INVALID_FILE_ATTRIBUTES || (attributes&FILE_ATTRIBUTE_DIRECTORY))
+            return wfe_preference_error(error, "Choose an existing background image file using its full path.");
+    }
     if (!wfe_valid_languages(p.languages))
         return wfe_preference_error(error, "Use unique language tags with letters, digits and single hyphens.");
     return true;
@@ -107,6 +117,10 @@ static void wfe_apply_general(void)
         LO_SetDefaultColor(i, GetRValue(color), GetGValue(color), GetBValue(color));
     }
     LO_SetUserOverride(wfe_general.override_colors ? TRUE : FALSE);
+    char background_url[3*MAX_PATH]={};DWORD url_size=sizeof(background_url);
+    if(wfe_general.background_image && SUCCEEDED(UrlCreateFromPathA(wfe_general.background_file.c_str(),background_url,&url_size,0)))
+        LO_SetDefaultBackdrop(background_url);
+    else LO_SetDefaultBackdrop(NULL);
     GH_SetGlobalHistoryTimeout(wfe_general.expire ? (int32)wfe_general.days * 86400 : -1);
     wfe_languages = wfe_join_languages(wfe_general.languages);
 }
@@ -171,9 +185,15 @@ extern "C" int WFE_PreferencesInit(void)
     p.visited_custom = wfe_read_int("VisitedCustom", p.visited_custom, 0, 1) != 0;
     p.background_custom = wfe_read_int("BackgroundCustom", p.background_custom, 0, 1) != 0;
     p.override_colors = wfe_read_int("OverrideColors", p.override_colors, 0, 1) != 0;
+    p.background_image = wfe_read_int("BackgroundImage", p.background_image, 0, 1) != 0;
     p.dither = wfe_read_int("Dither", p.dither, 0, 2);
     p.incremental = wfe_read_int("Incremental", p.incremental, 0, 1) != 0;
     std::string value;
+    if(wfe_read_string("General","BackgroundFile",value) && wfe_safe_string(value,MAX_PATH,true)) p.background_file=value;
+    if(p.background_image) {
+        std::string problem;
+        if(!WFE_ValidateGeneralPreferences(p,&problem)) p.background_image=false;
+    }
     bool present = false;
     bool home = wfe_read_string("General", "Home", value, &present);
     if (!present) home = wfe_read_string("Browser", "Home", value);
@@ -263,6 +283,7 @@ bool WFE_SaveGeneralPreferences(const GeneralPreferences &p, std::string *error)
         WRITE_INT("TextCustom", text_custom); WRITE_INT("LinkCustom", link_custom);
         WRITE_INT("VisitedCustom", visited_custom); WRITE_INT("BackgroundCustom", background_custom);
         WRITE_INT("OverrideColors", override_colors); WRITE_INT("Dither", dither);
+        WRITE_INT("BackgroundImage", background_image);
         WRITE_INT("Incremental", incremental);
 #undef WRITE_INT
         for (int i = 0; ok && i < 4; ++i) {
@@ -273,7 +294,8 @@ bool WFE_SaveGeneralPreferences(const GeneralPreferences &p, std::string *error)
             wfe_write_string(temporary, "Browser", "Home", p.home) &&
             wfe_write_string(temporary, "General", "Proportional", p.proportional) &&
             wfe_write_string(temporary, "General", "Fixed", p.fixed) &&
-            wfe_write_string(temporary, "General", "Languages", wfe_join_languages(p.languages));
+            wfe_write_string(temporary, "General", "Languages", wfe_join_languages(p.languages)) &&
+            wfe_write_string(temporary, "General", "BackgroundFile", p.background_file);
         /* The cache-flush form can return zero even after a successful write.
          * Check the actual file flush below before replacing the destination. */
         if (ok) WritePrivateProfileStringA(NULL, NULL, NULL, temporary);

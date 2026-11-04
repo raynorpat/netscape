@@ -14,6 +14,8 @@ struct GeneralPreferences {
     int proportional_size = 12, fixed_size = 12;
     bool text_custom = false, link_custom = false, visited_custom = false;
     bool background_custom = false, override_colors = false;
+    bool background_image = false;
+    std::string background_file;
     unsigned long colors[4] = {0xffffff, 0x000000, 0xff0000, 0x800080}; /* COLORREF: background,text,link,visited */
     int dither = 0; /* automatic, dither, closest */
     bool incremental = true;

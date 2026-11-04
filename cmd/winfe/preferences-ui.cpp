@@ -111,6 +111,10 @@ public:
         Control(0,IDC_PREF_HOME_URL)->EnableWindow(Checked(0,IDC_PREF_HOME));
         Control(0,IDC_PREF_DAYS)->EnableWindow(Checked(0,IDC_PREF_EXPIRE));
     }
+    void UpdateBackground() {
+        bool image=Checked(2,IDC_PREF_BG_IMAGE);
+        Control(2,IDC_PREF_BG_FILE)->EnableWindow(image);Control(2,IDC_PREF_BG_BROWSE)->EnableWindow(image);
+    }
     void RefreshAccepted() {
         CListBox *list=(CListBox *)Control(6,IDC_PREF_ACCEPTED); list->ResetContent();
         for(const auto &tag:values.languages) {
@@ -144,7 +148,9 @@ protected:
         ++help_count;
         if(!testing) MessageBox("Choose how Netscape starts and displays documents, images, and links.\n\n"
             "Language entries are sent in the order shown in the Accept List.\n"
-            "Disabled application, helper-editing, and background-image controls are not available in this version.\n\n"
+            "Background image files supply the default, unless a document supplies its own background.\n"
+            "Always Use My Colors also overrides document backgrounds.\n"
+            "Disabled application and helper-editing controls are not available in this version.\n\n"
             "OK saves all pages. Cancel discards changes. Expire Now takes effect when you choose OK.",
             "Preferences Help",MB_OK|MB_ICONINFORMATION);
     }
@@ -257,12 +263,13 @@ BOOL GeneralPreferencesDialog::OnInitDialog()
     Radio(2,"Custom",196,171,76,IDC_PREF_BG_CUSTOM);
     Add(2,"STATIC","",SS_OWNERDRAW,280,175,54,14,IDC_PREF_SWATCH_BG);
     Button(2,"Choose Color...",339,171,83,23,IDC_PREF_CHOOSE_BG);
-    Radio(2,"Image File:",121,200,75,IDC_PREF_BG_IMAGE); Control(2,IDC_PREF_BG_IMAGE)->EnableWindow(FALSE);
-    Edit(2,"",195,201,139,7340,false); Button(2,"Browse...",339,200,83,23,7341,false);
+    Radio(2,"Image File:",121,200,75,IDC_PREF_BG_IMAGE);
+    Edit(2,values.background_file.c_str(),195,201,139,IDC_PREF_BG_FILE); Button(2,"Browse...",339,200,83,23,IDC_PREF_BG_BROWSE);
     Label(2,"Sometimes a document will provide its own colors and background.",17,247,429);
     Tick(2,"Always Use My Colors, Overriding Document",121,262,324,IDC_PREF_OVERRIDE);
     Check(2,IDC_PREF_LINK_CUSTOM,values.link_custom); Check(2,IDC_PREF_VISITED_CUSTOM,values.visited_custom);
-    Check(2,IDC_PREF_TEXT_CUSTOM,values.text_custom); Check(2,values.background_custom?IDC_PREF_BG_CUSTOM:IDC_PREF_BG_DEFAULT,true);
+    Check(2,IDC_PREF_TEXT_CUSTOM,values.text_custom); Check(2,values.background_image?IDC_PREF_BG_IMAGE:values.background_custom?IDC_PREF_BG_CUSTOM:IDC_PREF_BG_DEFAULT,true);
+    UpdateBackground();
     Check(2,IDC_PREF_OVERRIDE,values.override_colors); SetSwatches();
 
     Group(3,"Images",10,16,449,150);
@@ -340,6 +347,14 @@ bool GeneralPreferencesDialog::PageCommand(int page,WPARAM w,LPARAM)
         if(id==IDC_PREF_EXPIRE_NOW) { expire_now=true; Control(0,id)->EnableWindow(FALSE); }
     }
     if(page==1 && notification==BN_CLICKED && (id==IDC_PREF_PROP_FONT || id==IDC_PREF_FIXED_FONT)) { ChooseFont(id==IDC_PREF_FIXED_FONT); return true; }
+    if(page==2 && notification==BN_CLICKED) {
+        if(id==IDC_PREF_BG_IMAGE || id==IDC_PREF_BG_DEFAULT || id==IDC_PREF_BG_CUSTOM) UpdateBackground();
+        if(id==IDC_PREF_BG_BROWSE) {
+            CFileDialog picker(TRUE,nullptr,Text(2,IDC_PREF_BG_FILE),OFN_FILEMUSTEXIST|OFN_HIDEREADONLY|OFN_NOCHANGEDIR,
+                "Images|*.gif;*.jpg;*.jpeg;*.jpe;*.xbm|All files|*.*||",this);
+            if(picker.DoModal()==IDOK) SetText(2,IDC_PREF_BG_FILE,picker.GetPathName());return true;
+        }
+    }
     if(page==2 && notification==BN_CLICKED && id>=IDC_PREF_CHOOSE_BG && id<=IDC_PREF_CHOOSE_VISITED) {
         int n=id-IDC_PREF_CHOOSE_BG; CColorDialog picker(values.colors[n],CC_FULLOPEN,this);
         if(picker.DoModal()==IDOK) { values.colors[n]=picker.GetColor();SetSwatches(); }
@@ -410,6 +425,7 @@ bool GeneralPreferencesDialog::ReadControls()
     values.link_custom=Checked(2,IDC_PREF_LINK_CUSTOM);values.visited_custom=Checked(2,IDC_PREF_VISITED_CUSTOM);
     values.text_custom=Checked(2,IDC_PREF_TEXT_CUSTOM);values.background_custom=Checked(2,IDC_PREF_BG_CUSTOM);
     values.override_colors=Checked(2,IDC_PREF_OVERRIDE);
+    values.background_image=Checked(2,IDC_PREF_BG_IMAGE);values.background_file=(const char *)Text(2,IDC_PREF_BG_FILE);
     values.dither=Checked(3,IDC_PREF_AUTOMATIC)?0:Checked(3,IDC_PREF_DITHER)?1:2;
     values.incremental=Checked(3,IDC_PREF_WHILE_LOADING);
     CString pending=Text(6,IDC_PREF_LANG_CUSTOM);pending.TrimLeft();pending.TrimRight();
@@ -459,6 +475,7 @@ static bool same_preferences(const GeneralPreferences &a,const GeneralPreference
         a.proportional_size==b.proportional_size && a.fixed_size==b.fixed_size &&
         a.text_custom==b.text_custom && a.link_custom==b.link_custom && a.visited_custom==b.visited_custom &&
         a.background_custom==b.background_custom && a.override_colors==b.override_colors &&
+        a.background_image==b.background_image && a.background_file==b.background_file &&
         !memcmp(a.colors,b.colors,sizeof(a.colors)) && a.dither==b.dither && a.incremental==b.incremental && a.languages==b.languages;
 }
 
@@ -559,3 +576,5 @@ int WFE_PreferencesUISmoke(CWnd *parent,const char *report,const char *snapshot)
     fclose(output);
     return menu && labels && appearance && bounds && keyboard && cancelled && validation && retained && save_failure && saved && reopened && captured ? 0 : 1;
 }
+
+#include "preferences-background-smoke.inc"

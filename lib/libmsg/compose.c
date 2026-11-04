@@ -3506,6 +3506,10 @@ msg_start_message_delivery(MWContext *context,
 									  state->subject, state->references,
 									  state->organization,
 									  state->other_random_headers);
+  /* Local draft generation permits an unfinished recipient list.
+     Actual SMTP/NNTP delivery still requires recipients. */
+  if (dont_deliver_p && failure == MK_MIME_NO_RECIPIENTS)
+    failure = 0;
   if (failure) goto FAIL;
 
   state->digest_p = digest_p;
@@ -4625,6 +4629,7 @@ FAIL:
   else
 	{
 	  MWContext *context = state->context;
+	  XP_Bool no_attachments = (state->attachment_count == 0);
 	  FE_Progress(context, XP_GetString(MK_MSG_QUEUED));
 
 	  /* The message has now been queued successfully. */
@@ -4640,7 +4645,7 @@ FAIL:
 		 attaching, and not delivering right away, we don't actually open
 		 any URLs, so we need to destroy the window ourself.  Ugh!!
 	   */
-	  if (state->attachment_count == 0)
+	  if (no_attachments)
 		MSG_MailCompositionAllConnectionsComplete (context);
 	}
 }

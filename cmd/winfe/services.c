@@ -1,5 +1,6 @@
 /* Optional user-interface services for the 3.02 browser frontend. */
 #include "frontend.h"
+#include "mailsettings.h"
 #include "bkmks.h"
 #include "msgcom.h"
 #include "mime.h"
@@ -23,19 +24,20 @@ wfe_Environment(const char *name)
 
 const char *FE_UsersMailAddress(void)
 {
-    return wfe_Environment("EMAIL");
+    const char *value = WFE_MailPreference("email");
+    return *value ? value : NULL;
 }
 
 const char *FE_UsersFullName(void)
 {
-    const char *name = wfe_Environment("NAME");
-    if (!name) name = wfe_Environment("USERNAME");
-    return name;
+    const char *value = WFE_MailPreference("name");
+    return *value ? value : NULL;
 }
 
 const char *FE_UsersOrganization(void)
 {
-    return wfe_Environment("ORGANIZATION");
+    const char *value = WFE_MailPreference("organization");
+    return *value ? value : NULL;
 }
 
 const char *FE_UsersSignature(void)
@@ -208,68 +210,6 @@ void FE_RememberPopPassword(MWContext *context, const char *password)
     WFE_Unsupported(context, "Saving mail passwords");
 }
 
-MWContext *FE_MakeMessageCompositionContext(MWContext *context)
-{
-    WFE_Unsupported(context, "Mail and news composition");
-    return NULL;
-}
-
-void FE_InitializeMailCompositionContext(MWContext *context,
-    const char *from, const char *reply_to, const char *to, const char *cc,
-    const char *bcc, const char *fcc, const char *newsgroups,
-    const char *followup_to, const char *subject, const char *attachment)
-{
-    (void)from; (void)reply_to; (void)to; (void)cc; (void)bcc; (void)fcc;
-    (void)newsgroups; (void)followup_to; (void)subject; (void)attachment;
-    WFE_Unsupported(context, "Mail and news composition");
-}
-
-void FE_InsertMessageCompositionText(MWContext *context, const char *text,
-                                     XP_Bool leave_cursor)
-{
-    (void)text; (void)leave_cursor;
-    WFE_Unsupported(context, "Mail and news composition");
-}
-
-void FE_RaiseMailCompositionWindow(MWContext *context)
-{
-    WFE_Unsupported(context, "Mail and news composition");
-}
-
-void FE_DestroyMailCompositionContext(MWContext *context)
-{
-    /* No composition context is ever created by this frontend. */
-    WFE_Unsupported(context, "Mail and news composition");
-}
-
-char *FE_PromptMessageSubject(MWContext *context)
-{
-    WFE_Unsupported(context, "Message subject dialog");
-    return NULL;
-}
-
-void FE_MsgShowHeaders(MWContext *context, MSG_HEADER_SET headers)
-{
-    (void)headers;
-    WFE_Unsupported(context, "Mail composition headers");
-}
-
-int FE_GetMessageBody(MWContext *context, char **body, uint32 *length,
-                      MSG_FontCode **fonts)
-{
-    if (body) *body = NULL;
-    if (length) *length = 0;
-    if (fonts) *fonts = NULL;
-    WFE_Unsupported(context, "Mail and news composition");
-    return -1;
-}
-
-void FE_DoneWithMessageBody(MWContext *context, char *body, uint32 length)
-{
-    /* FE_GetMessageBody never lends or allocates a text buffer. */
-    (void)context; (void)body; (void)length;
-}
-
 MWContext *FE_GetAddressBook(MWContext *context, XP_Bool viewnow)
 {
     (void)viewnow;
@@ -279,8 +219,7 @@ MWContext *FE_GetAddressBook(MWContext *context, XP_Bool viewnow)
 
 const char *FE_GetFolderDirectory(MWContext *context)
 {
-    WFE_Unsupported(context, "Mail folders");
-    return NULL;
+    return WFE_MailURLDirectory();
 }
 
 void FE_UpdateFolderList(MWContext *context, int index, int length,
@@ -288,7 +227,7 @@ void FE_UpdateFolderList(MWContext *context, int index, int length,
 {
     (void)index; (void)length; (void)total; (void)visible;
     (void)select; (void)numselect;
-    WFE_Unsupported(context, "Mail folder list");
+    WFE_MailChanged(context, 1);
 }
 
 void FE_UpdateThreadList(MWContext *context, int index, int length,
@@ -296,18 +235,18 @@ void FE_UpdateThreadList(MWContext *context, int index, int length,
 {
     (void)index; (void)length; (void)total; (void)visible;
     (void)select; (void)numselect;
-    WFE_Unsupported(context, "Mail and news thread list");
+    WFE_MailChanged(context, 2);
 }
 
 void FE_UpdateFolderMenus(MWContext *context, MSG_FolderLine *lines, int count)
 {
     (void)lines; (void)count;
-    WFE_Unsupported(context, "Mail folder menus");
+    WFE_MailChanged(context, 1);
 }
 
 void FE_UpdateToolbar(MWContext *context)
 {
-    WFE_Unsupported(context, "Mail and news toolbar");
+    WFE_MailChanged(context, 4);
 }
 
 void FE_UpdateBiff(MSG_BIFF_STATE state)

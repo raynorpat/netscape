@@ -2,8 +2,9 @@
 
 This port builds the native Win32 core libraries and an optional MFC browser
 frontend adapted to the 3.02 backend interfaces. The initial frontend supports
-HTML text layout, local files, HTTP navigation, scrolling and links. Native
-mail/news windows and the remaining browser UI are still being ported.
+HTML text layout, local files, HTTP navigation, scrolling and links, plus native
+mail/news folder lists, message lists, a reader, and composer windows. Remaining
+browser features are tracked in [windows-roadmap.md](windows-roadmap.md).
 
 ## Windows browser frontend
 
@@ -47,11 +48,45 @@ serves the fixture locally and exercises the frontend's DNS/socket dispatch.
 Python 3 is required when frontend tests are enabled. Set `BUILD_TESTING=OFF` to
 build without the test runner dependency.
 
-Images and forms currently have placeholder geometry; frames, plugins, native
-mail/news windows, mail composition, bookmark dialogs, password prompts, Java,
-Mocha and SSL/security integration are incomplete. Optional operations return
-an unavailable/cancel result rather than claiming success. Linking the mail/news
-backend archives does not provide working native mail/news windows yet.
+Images and forms currently have placeholder geometry; frames, plugins, bookmark
+and history dialogs, downloads, printing, Java, Mocha and SSL/security integration
+remain incomplete. Text and password prompts use native dialogs.
+
+## Mail and news
+
+Use Messages > Open Mail / Open News, or launch `netscape.exe --mail`, `--news`,
+or `--compose`. Account settings configure name, email address, organization,
+SMTP, POP and NNTP hosts. Settings are stored in the profile's `mailnews.ini`,
+under `[MailNews]`, with keys `name`, `email`, `organization`, `smtp`, `pop`, and
+`news`. NNTP and SMTP accept `host:port`. The News location field can switch
+hosts with Connect. Empty server settings leave the service unconfigured.
+
+The folder and message controls call the original MSG backend; the reader uses
+its MIME conversion, HTML layout and native GDI text drawing. Local mail uses
+mbox files in the profile's `Mail` directory. Inbox, Drafts, Sent, Outbox and
+Trash are created only when missing. Message commands include reply, reply all,
+forward, mark read, delete mail, fetch mail/more news, and send queued messages.
+
+The composer supports recipient headers, newsgroups, subject, plain text body,
+attachments, Send, Send Later, Save Draft and cancellation. Drafts and queued
+messages use the original MIME generator and mailbox writer. Drafts may be
+saved before entering recipients. Draft saving does not preserve the temporary
+Fcc override as a distinct composition setting. Address book UI, rich text
+editing, full subscription management and attachment viewing are not implemented.
+
+Transport uses the original plaintext POP/SMTP/NNTP engines. TLS, modern mail
+provider authentication and modern server interoperability are not provided by
+this port. Local fixtures verify SMTP and NNTP delivery; POP retrieval and
+external servers have not been runtime verified.
+
+The `windows_mailnews` test exercises isolated profiles (including spaces and
+literal percent signs), native list selection and reader rendering, MIME header
+and body decoding, drafts, queueing, attachment changes, canceled-send state,
+and real delivery to local SMTP/NNTP fixtures. It never relays to external servers.
+`windows_news_empty` checks that an empty LIST fails once without a retry loop.
+All six native CTests passed in Win32 Release and Debug with MSVC 19.51 on
+2026-11-04. The Linux browser also rebuilt and reported version 3.02 after the
+shared MIME, mailbox-path, composition and NNTP fixes.
 
 ## Build and test
 
@@ -165,8 +200,7 @@ Windows frontend**. Concrete differences already found:
 
 The native frontend above provides the first MFC application shell, text
 rendering, event dispatch, asynchronous sockets/DNS, file services and resource
-targets. Image/form rendering, richer preferences and native mail/news windows
-remain integration work. The recovered source remains the implementation guide
+targets. Image/form rendering and richer preferences remain integration work. The recovered source remains the implementation guide
 while the 3.02 backend interfaces stay authoritative.
 
 Because usable Windows frontend source was recovered, binary reconstruction is

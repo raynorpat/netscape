@@ -30,6 +30,11 @@ void *WFE_SetTimer(TimeoutCallbackFunction callback, void *closure, uint32 milli
 void WFE_KillTimer(void *timer);
 const char *WFE_ProfileDirectory(void);
 int WFE_RunSmokeTest(const char *report, const char *url);
+void WFE_RegisterNativeWindow(MWContext *context, HWND window);
+void WFE_UnregisterNativeWindow(MWContext *context);
+void WFE_MailChanged(MWContext *context, unsigned int changes);
+MWContext *WFE_NewMailWindow(int is_news, const char *server);
+char *WFE_NativePrompt(MWContext *context, const char *message, const char *initial, int password);
 #ifdef __cplusplus
 }
 #endif

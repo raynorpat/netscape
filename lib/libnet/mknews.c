@@ -209,6 +209,7 @@ typedef struct _NewsConData {
     StatesEnum  next_state_after_response;
     int         type_wanted;     /* Article, List, or Group */
     int         response_code;   /* code returned from NNTP server */
+    uint32      list_rows;       /* Nonempty rows in this LIST response. */
     char       *response_txt;    /* text returned from NNTP server */
     Bool     pause_for_read;  /* should we pause for the next read? */
 
@@ -1713,6 +1714,8 @@ net_read_news_list_begin (ActiveEntry *cur_entry)
     NewsConData * connection_data = (NewsConData *)cur_entry->con_data;
 
     CD_NEXT_STATE = NNTP_READ_LIST;
+    connection_data->list_rows = 0;
+    CE_BYTES_RECEIVED = 0;  /* Count only this LIST body, not its response. */
 
 	NET_Progress(CE_WINDOW_ID, XP_GetString(XP_PROGRESS_RECEIVE_NEWSGROUP));
 	 
@@ -1790,6 +1793,7 @@ net_read_news_list (ActiveEntry *cur_entry)
 
 	/* store all the group names 
 	 */
+	if (*line) connection_data->list_rows++;
 	NET_StoreNewsGroup(CD_CC_HOSTNAME, CD_CC_SECURE, line);
 
     return(CE_STATUS);
@@ -2325,7 +2329,7 @@ net_DisplayNewsRC(ActiveEntry * cur_entry)
 			XP_FREE (CD_NEWSRC_LIST);
 			CD_NEWSRC_LIST = 0;
 		  }
-		else if (CD_RESPONSE_CODE == 215)  
+		else if (CD_RESPONSE_CODE == 215 && connection_data->list_rows == 0)
 		  {
 			/*
 			 * 5-9-96 jefft 

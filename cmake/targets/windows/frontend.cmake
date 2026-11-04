@@ -6,6 +6,8 @@ add_executable(netscape-win32 WIN32
  "${PROJECT_SOURCE_DIR}/cmd/winfe/frontend.c"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/platform.c"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/services.c"
+ "${PROJECT_SOURCE_DIR}/cmd/winfe/composer.cpp"
+ "${PROJECT_SOURCE_DIR}/cmd/winfe/mailsettings.c"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/netscape.rc"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/cmdparse.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/genedit.cpp")
@@ -22,6 +24,7 @@ install(FILES "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/LICENSE"
 install(FILES "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/README.md"
  DESTINATION share/doc/netscape RENAME Windows-source-provenance.md COMPONENT Runtime)
 install(FILES "${PROJECT_SOURCE_DIR}/cmake/windows.md"
+ "${PROJECT_SOURCE_DIR}/cmake/windows-roadmap.md"
  DESTINATION share/doc/netscape COMPONENT Runtime)
 if(BUILD_TESTING)
  add_test(NAME windows_frontend_local COMMAND netscape-win32 --smoke-test "${PROJECT_BINARY_DIR}/frontend-local.txt")
@@ -32,4 +35,14 @@ if(BUILD_TESTING)
   "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_frontend.py"
   --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/frontend-http")
  set_tests_properties(windows_frontend_http PROPERTIES TIMEOUT 40)
+ add_test(NAME windows_mailnews COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_mailnews.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/mailnews-test"
+  --mode all --delivery-fixtures)
+ set_tests_properties(windows_mailnews PROPERTIES TIMEOUT 120)
+ add_test(NAME windows_news_empty COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_mailnews.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/news-empty-test"
+  --mode empty-news)
+ set_tests_properties(windows_news_empty PROPERTIES TIMEOUT 40)
 endif()

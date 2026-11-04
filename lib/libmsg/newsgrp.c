@@ -956,8 +956,10 @@ msg_ShowNewsHosts (MWContext *context)
 		got_default_p = (def &&
 						 h->name &&
 						 !h->secure_p &&
-						 h->port == NEWS_PORT &&
-						 !strcasecomp (def, h->name));
+						 ((!strcasecomp (def, h->name) && h->port == NEWS_PORT)
+						  || (!strncasecomp (def, h->name, XP_STRLEN(h->name))
+						      && def[XP_STRLEN(h->name)] == ':'
+						      && atoi(def + XP_STRLEN(h->name) + 1) == h->port)));
 
 	  rest++;
 	}
@@ -1040,7 +1042,15 @@ msg_make_host_and_folder_for_file (MWContext *context, const char *file,
 	  name = XP_STRDUP (default_host);
 	  if (!name)
 		return 0;
-	  port = 0;
+	  {
+		char *colon = XP_STRCHR (name, ':');
+		if (colon) {
+		  unsigned long parsed_port = 0;
+		  *colon++ = 0;
+		  if (sscanf (colon, "%lu", &parsed_port) == 1)
+			port = parsed_port;
+		}
+	  }
 	}
 
   secure_p = (*file == 's' || *file == 'S');

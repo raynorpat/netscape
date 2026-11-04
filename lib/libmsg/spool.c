@@ -1031,11 +1031,19 @@ msg_CompressFolder(MWContext* context)
   URL_Struct* url;
   char* buf;
   char* pathname;
+  char* escaped;
   msg_undo_Initialize(context);
   msg_SaveMailSummaryChangesNow(context);
   if (!context->msgframe->opened_folder) return 0;
   pathname = context->msgframe->opened_folder->data.mail.pathname;
-  buf = PR_smprintf("mailbox:%s?compress-folder", pathname);
+#ifdef XP_MAC /* Giant Evil Mac Pathname Hack, as in messages.c. */
+  escaped = XP_STRDUP(pathname);
+#else
+  escaped = NET_Escape(pathname, URL_PATH);
+#endif
+  if (!escaped) return MK_OUT_OF_MEMORY;
+  buf = PR_smprintf("mailbox:%s?compress-folder", escaped);
+  XP_FREE(escaped);
   if (!buf) return MK_OUT_OF_MEMORY;
   url = NET_CreateURLStruct(buf, NET_NORMAL_RELOAD);
   XP_FREE(buf);

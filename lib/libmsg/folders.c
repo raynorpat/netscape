@@ -856,6 +856,28 @@ MSG_GetFolderNameUnfolded(MWContext* context, int line_number)
 
 
 
+/* Folder paths are raw filenames.  The mailbox protocol unescapes its URL
+   path, so quote literal percent signs and other URL delimiters here. */
+static char *
+msg_mailbox_folder_url(const char *pathname)
+{
+  char *path;
+  char *url;
+#ifdef XP_MAC /* Giant Evil Mac Pathname Hack, as in messages.c. */
+  path = XP_STRDUP(pathname);
+#else
+  path = NET_Escape(pathname, URL_PATH);
+#endif
+  if (!path) return 0;
+  url = (char *) XP_ALLOC(XP_STRLEN(path) + 9);
+  if (url) {
+    XP_STRCPY(url, "mailbox:");
+    XP_STRCAT(url, path);
+  }
+  XP_FREE(path);
+  return url;
+}
+
 static void
 msg_open_folder_cb (MWContext *context, char *file_name, void *closure)
 {
@@ -864,12 +886,10 @@ msg_open_folder_cb (MWContext *context, char *file_name, void *closure)
   XP_ASSERT (context->type == MWContextMail);
   if (context->type != MWContextMail) return;
   if (!file_name) return;
-  url = (char *) XP_ALLOC (XP_STRLEN (file_name) + 20);
-  if (! url) return /* MK_OUT_OF_MEMORY */;
-  XP_STRCPY (url, "mailbox:");
   /* Assumes file_name is in unix (url) form: /a/b/c/foo */
-  XP_STRCAT (url, file_name);
+  url = msg_mailbox_folder_url(file_name);
   XP_FREE (file_name);
+  if (!url) return /* MK_OUT_OF_MEMORY */;
   url_struct = NET_CreateURLStruct(url, NET_DONT_RELOAD);
   XP_FREE (url);
   msg_GetURL (context, url_struct, FALSE);
@@ -1747,10 +1767,8 @@ msg_SelectAndOpenFolder(MWContext *context, MSG_Folder *folder,
 									MSG_FOLDER_FLAG_DIRECTORY |
 									MSG_FOLDER_FLAG_ELIDED)));
 
-	  url = (char *) XP_ALLOC (XP_STRLEN (folder->data.mail.pathname) + 20);
+	  url = msg_mailbox_folder_url(folder->data.mail.pathname);
 	  if (!url) return MK_OUT_OF_MEMORY;
-	  XP_STRCPY (url, "mailbox:");
-	  XP_STRCAT (url, folder->data.mail.pathname);
 	  msg_ClearThreadList (context);
 	  break;
     case MWContextNews:

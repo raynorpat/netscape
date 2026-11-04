@@ -906,7 +906,7 @@ NET_SaveNewsgroupsToDisk(char * hostname, XP_Bool is_secure)
 	XP_FileWrite(")" LINEBREAK "# This is a generated file!  Do not edit."
 				 LINEBREAK LINEBREAK, -1, fp);
 
-	PR_snprintf(large_buffer, BUFFER_SIZE, "%ld%s", NET_NewsGroupsLastUpdate, LINEBREAK);
+	PR_snprintf(large_buffer, BUFFER_SIZE, "%ld%s", (long) NET_NewsGroupsLastUpdate, LINEBREAK);
 	XP_FileWrite(large_buffer, XP_STRLEN(large_buffer), fp);
 
 	if(BaseSGStruct)

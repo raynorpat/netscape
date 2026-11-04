@@ -2012,7 +2012,8 @@ char *IntlDecodeMimePartIIStr(const char *header, int wincsid, XP_Bool plaindeco
 			convbuf = NULL;
 			if (obj->cvtfunc)
 				convbuf = (char*)obj->cvtfunc(obj, (unsigned char *)text, strlen((char*)text));
-			else if (csid == wincsid)
+			else if (csid == wincsid ||
+			         (csid == CS_ASCII && wincsid == CS_LATIN1))
 			{    /* pass through if no conversion needed */
 				StrAllocCopy(convbuf, (const char *)text);
 			}

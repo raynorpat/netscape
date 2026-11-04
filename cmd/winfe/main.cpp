@@ -1,6 +1,7 @@
 #include <afxwin.h>
 #include <afxext.h>
 #include <afxcoll.h>
+#include <afxcmn.h>
 #include <shlwapi.h>
 #include <map>
 #include <algorithm>
@@ -28,11 +29,18 @@ static void invalid_parameter(const wchar_t *expression, const wchar_t *function
 #include "legacy/genedit.h"
 #include "legacy/cmdparse.h"
 #include "frontend.h"
+#include "msgcom.h"
+#include "libi18n.h"
+#include "mailsettings.h"
+#include "composer.h"
 
 class BrowserFrame;
 static bool smoke_mode = false;
 static std::string smoke_error;
 static std::vector<BrowserFrame *> browser_windows;
+static std::map<MWContext *, BrowserFrame *> browser_contexts;
+static std::map<MWContext *, HWND> native_windows;
+static const UINT WM_MAIL_CHANGED = WM_APP + 30;
 
 class BrowserView : public CWnd {
 public:
@@ -58,13 +66,20 @@ public:
     CGenericEdit address;
     CButton go;
     CStatusBar status;
+    CListCtrl folders, messages;
     MWContext context;
+    int mode = 0; /* browser, mail, news */
+    bool updating_lists = false;
+    bool mail_update_pending = false;
+    unsigned int mail_changes = 0;
     bool initialized = false, completed = false;
     int load_status = 0;
     std::string current_url;
     std::vector<std::string> history;
     size_t history_position = 0;
     void Navigate(const char *url, bool remember = true);
+    void RefreshMailLists();
+    void InitializeMessaging(const char *server);
     BOOL PreTranslateMessage(MSG *message) override;
     void PostNcDestroy() override { delete this; }
 protected:
@@ -80,6 +95,25 @@ protected:
     afx_msg void OnAbout();
     afx_msg void OnClose();
     afx_msg void OnDestroy();
+    afx_msg void OnMail();
+    afx_msg void OnNews();
+    afx_msg void OnCompose();
+    afx_msg void OnPost();
+    afx_msg void OnReply();
+    afx_msg void OnReplyAll();
+    afx_msg void OnForwardMessage();
+    afx_msg void OnGetMail();
+    afx_msg void OnSendQueued();
+    afx_msg void OnShowAllMessages();
+    afx_msg void OnShowUnreadMessages();
+    afx_msg void OnDeleteMessage();
+    afx_msg void OnMarkRead();
+    afx_msg void OnSettings();
+    afx_msg void OnFolderSelection(NMHDR *header, LRESULT *result);
+    afx_msg void OnMessageSelection(NMHDR *header, LRESULT *result);
+    afx_msg void OnFolderDoubleClick(NMHDR *header, LRESULT *result);
+    afx_msg void OnMessageDoubleClick(NMHDR *header, LRESULT *result);
+    afx_msg LRESULT OnMailChanged(WPARAM, LPARAM);
     DECLARE_MESSAGE_MAP()
 };
 
@@ -96,6 +130,25 @@ BEGIN_MESSAGE_MAP(BrowserFrame, CFrameWnd)
  ON_COMMAND(ID_NAV_BACK, OnBack)
  ON_COMMAND(ID_NAV_FORWARD, OnForward)
  ON_COMMAND(ID_BROWSER_ABOUT, OnAbout)
+ ON_COMMAND(ID_CLIENT_MAIL, OnMail)
+ ON_COMMAND(ID_CLIENT_NEWS, OnNews)
+ ON_COMMAND(ID_CLIENT_COMPOSE, OnCompose)
+ ON_COMMAND(ID_CLIENT_POST, OnPost)
+ ON_COMMAND(ID_MESSAGE_REPLY, OnReply)
+ ON_COMMAND(ID_MESSAGE_REPLY_ALL, OnReplyAll)
+ ON_COMMAND(ID_MESSAGE_FORWARD, OnForwardMessage)
+ ON_COMMAND(ID_MESSAGE_GET, OnGetMail)
+ ON_COMMAND(ID_MESSAGE_SEND_QUEUED, OnSendQueued)
+ ON_COMMAND(ID_MESSAGE_SHOW_ALL, OnShowAllMessages)
+ ON_COMMAND(ID_MESSAGE_SHOW_UNREAD, OnShowUnreadMessages)
+ ON_COMMAND(ID_MESSAGE_DELETE, OnDeleteMessage)
+ ON_COMMAND(ID_MESSAGE_READ, OnMarkRead)
+ ON_COMMAND(ID_MAIL_SETTINGS, OnSettings)
+ ON_NOTIFY(LVN_ITEMCHANGED, ID_FOLDER_LIST, OnFolderSelection)
+ ON_NOTIFY(LVN_ITEMCHANGED, ID_MESSAGE_LIST, OnMessageSelection)
+ ON_NOTIFY(NM_DBLCLK, ID_FOLDER_LIST, OnFolderDoubleClick)
+ ON_NOTIFY(NM_DBLCLK, ID_MESSAGE_LIST, OnMessageDoubleClick)
+ ON_MESSAGE(WM_MAIL_CHANGED, OnMailChanged)
 END_MESSAGE_MAP()
 BEGIN_MESSAGE_MAP(BrowserView, CWnd)
  ON_WM_PAINT()
@@ -107,7 +160,24 @@ END_MESSAGE_MAP()
 
 static BrowserFrame *frame_for(MWContext *context)
 {
-    return context ? reinterpret_cast<BrowserFrame *>(context->fe.cx) : nullptr;
+    auto found = browser_contexts.find(context);
+    return found == browser_contexts.end() ? nullptr : found->second;
+}
+
+extern "C" void WFE_RegisterNativeWindow(MWContext *context, HWND window)
+{
+    native_windows[context] = window;
+    if (!AfxGetApp()->m_pMainWnd) AfxGetApp()->m_pMainWnd = CWnd::FromHandlePermanent(window);
+}
+extern "C" void WFE_UnregisterNativeWindow(MWContext *context)
+{
+    auto found = native_windows.find(context);
+    if (found == native_windows.end()) return;
+    HWND closing = found->second;
+    native_windows.erase(found);
+    if (AfxGetApp()->m_pMainWnd && AfxGetApp()->m_pMainWnd->GetSafeHwnd() == closing
+        && !native_windows.empty())
+        AfxGetApp()->m_pMainWnd = CWnd::FromHandlePermanent(native_windows.begin()->second);
 }
 
 static std::string as_url(const char *input)
@@ -134,6 +204,22 @@ int BrowserFrame::OnCreate(LPCREATESTRUCT create)
                        "Document", WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_HSCROLL,
                        CRect(0,40,800,600), this, 112)) return -1;
     if (!status.Create(this) || !status.SetIndicators(indicators, 1)) return -1;
+    if (mode) {
+        DWORD style = WS_CHILD | WS_VISIBLE | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS;
+        if (!folders.Create(style, CRect(0,40,260,550), this, ID_FOLDER_LIST)
+            || !messages.Create(style, CRect(265,40,800,250), this, ID_MESSAGE_LIST)) return -1;
+        folders.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+        messages.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+        folders.InsertColumn(0, mode == 2 ? "Server / newsgroup" : "Folder", LVCFMT_LEFT, 155);
+        folders.InsertColumn(1, "Unread", LVCFMT_RIGHT, 48);
+        folders.InsertColumn(2, "Total", LVCFMT_RIGHT, 48);
+        messages.InsertColumn(0, "Subject", LVCFMT_LEFT, 300);
+        messages.InsertColumn(1, "Sender", LVCFMT_LEFT, 190);
+        messages.InsertColumn(2, "Date", LVCFMT_LEFT, 130);
+        address.SetReadOnly(mode == 1);
+        go.SetWindowText(mode == 2 ? "Connect" : "Refresh");
+    }
+    browser_contexts[&context] = this;
     WFE_InitContext(&context, this);
     initialized = true;
     SetTimer(1, 10, nullptr);
@@ -146,7 +232,13 @@ void BrowserFrame::OnSize(UINT type, int width, int height)
     if (!view.GetSafeHwnd()) return;
     address.MoveWindow(8, 8, (std::max)(width - 84, 20), 24);
     go.MoveWindow((std::max)(width - 68, 8), 8, 60, 24);
-    view.MoveWindow(0, 40, width, (std::max)(height - 62, 1));
+    if (mode && folders.GetSafeHwnd()) {
+        int left = (std::min)(260, (std::max)(100, width / 3));
+        int list_height = (std::max)(100, (height - 62) / 3);
+        folders.MoveWindow(0, 40, left, (std::max)(height - 62, 1));
+        messages.MoveWindow(left + 4, 40, (std::max)(width - left - 4, 1), list_height);
+        view.MoveWindow(left + 4, list_height + 44, (std::max)(width - left - 4, 1), (std::max)(height - list_height - 66, 1));
+    } else view.MoveWindow(0, 40, width, (std::max)(height - 62, 1));
 }
 BOOL BrowserFrame::PreTranslateMessage(MSG *message)
 {
@@ -169,13 +261,177 @@ void BrowserFrame::Navigate(const char *input, bool remember)
     WFE_Load(&context, current_url.c_str());
 }
 void BrowserFrame::OnTimer(UINT_PTR timer) { if (timer == 1) WFE_Pump(); else CFrameWnd::OnTimer(timer); }
-void BrowserFrame::OnGo() { CString text; address.GetWindowText(text); if (!text.IsEmpty()) Navigate(text); }
+void BrowserFrame::OnGo() { CString text; address.GetWindowText(text); if (mode == 1) { MSG_MailDirectoryChanged(&context); RefreshMailLists(); } else if (mode == 2) { if (!text.IsEmpty() && WFE_SetMailPreference("news", text)) { WFE_ApplyMailPreferences(); MSG_NewsHostChanged(&context, text); RefreshMailLists(); } } else if (!text.IsEmpty()) Navigate(text); }
 void BrowserFrame::OnOpen() { CFileDialog dialog(TRUE, "html", nullptr, OFN_FILEMUSTEXIST, "Documents|*.html;*.htm;*.txt|All files|*.*||", this); if (dialog.DoModal() == IDOK) Navigate(dialog.GetPathName()); }
 void BrowserFrame::OnStop() { NET_InterruptWindow(&context); }
 void BrowserFrame::OnReload() { if (!current_url.empty()) Navigate(current_url.c_str(), false); }
 void BrowserFrame::OnBack() { if (history_position > 0) { --history_position; Navigate(history[history_position].c_str(), false); } }
 void BrowserFrame::OnForward() { if (history_position + 1 < history.size()) { ++history_position; Navigate(history[history_position].c_str(), false); } }
 void BrowserFrame::OnAbout() { Navigate("about:"); }
+void BrowserFrame::InitializeMessaging(const char *server)
+{
+    WFE_ApplyMailPreferences();
+    context.type = mode == 2 ? MWContextNews : MWContextMail;
+    MSG_SetAutoShowFirstUnread(FALSE);
+    if (mode == 2) {
+        MSG_InitializeNewsContext(&context);
+        const char *host = server && *server ? server : WFE_MailPreference("news");
+        address.SetWindowText(host);
+        MSG_FolderLine line;
+        for (int i = 0; context.msgframe && MSG_GetFolderLine(&context, i, &line, nullptr); ++i) {
+            if ((line.flags & MSG_FOLDER_FLAG_NEWS_HOST) && line.name
+                && (!_stricmp(line.name, host)
+                    || (!_strnicmp(line.name, host, strlen(host))
+                        && !strncmp(line.name + strlen(host), " (", 2)))) {
+                if (line.flags & MSG_FOLDER_FLAG_ELIDED) MSG_ToggleFolderExpansion(&context, i);
+                break;
+            }
+        }
+        WFE_MailChanged(&context, 8);
+    } else {
+        address.SetWindowText(WFE_MailDirectory());
+        MSG_InitializeMailContext(&context);
+    }
+    RefreshMailLists();
+    CRect area; GetClientRect(area); OnSize(SIZE_RESTORED, area.Width(), area.Height());
+}
+static CString display_header(MWContext *context, const char *raw)
+{
+    char *decoded = IntlDecodeMimePartIIStr(raw ? raw : "", context->win_csid, FALSE);
+    CString text(decoded ? decoded : (raw ? raw : ""));
+    free(decoded);
+    return text;
+}
+void BrowserFrame::RefreshMailLists()
+{
+    if (!initialized || !mode || !context.msgframe || updating_lists) return;
+    updating_lists = true;
+    folders.SetRedraw(FALSE); messages.SetRedraw(FALSE);
+    int folder_selection = -1, message_selection = -1;
+    folders.DeleteAllItems(); messages.DeleteAllItems();
+    MSG_FolderLine folder;
+    for (int i = 0; i < 100000 && MSG_GetFolderLine(&context, i, &folder, nullptr); ++i) {
+        CString name(' ', (int)folder.depth * 2);
+        if (folder.flags & MSG_FOLDER_FLAG_DIRECTORY) name += folder.flags & MSG_FOLDER_FLAG_ELIDED ? "+ " : "- ";
+        name += folder.name ? folder.name : "";
+        folders.InsertItem(i, name);
+        if (!(folder.flags & MSG_FOLDER_FLAG_DIRECTORY)) {
+            CString value; value.Format("%d", folder.unseen); folders.SetItemText(i, 1, value);
+            value.Format("%d", folder.total); folders.SetItemText(i, 2, value);
+        }
+        if (folder.flags & MSG_FOLDER_FLAG_SELECTED) folder_selection = i;
+    }
+    MSG_MessageLine message;
+    for (int i = 0; i < 100000 && MSG_GetThreadLine(&context, i, &message, nullptr); ++i) {
+        CString subject(' ', (int)message.depth * 2);
+        if (message.flags & MSG_FLAG_HAS_RE) subject += "Re: ";
+        subject += message.subject ? display_header(&context, message.subject) : CString("(no subject)");
+        messages.InsertItem(i, subject);
+        messages.SetItemText(i, 1, display_header(&context, message.from));
+        messages.SetItemText(i, 2, MSG_FormatDate(&context, message.date));
+        if (message.flags & MSG_FLAG_SELECTED) message_selection = i;
+    }
+    if (folder_selection >= 0 && folder_selection < folders.GetItemCount()) folders.SetItemState(folder_selection, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+    if (message_selection >= 0 && message_selection < messages.GetItemCount()) messages.SetItemState(message_selection, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+    folders.SetRedraw(TRUE); messages.SetRedraw(TRUE);
+    folders.Invalidate(); messages.Invalidate();
+    updating_lists = false;
+}
+LRESULT BrowserFrame::OnMailChanged(WPARAM, LPARAM)
+{
+    unsigned int changes = mail_changes;
+    mail_changes = 0; mail_update_pending = false;
+    if ((changes & 8) && mode == 2 && context.msgframe
+        && !NET_AreThereActiveConnectionsForWindow(&context)
+        && MSG_GetToggleStatus(&context, MSG_ShowAllNewsGroups) != MSG_Checked)
+        MSG_Command(&context, MSG_ShowAllNewsGroups);
+    RefreshMailLists();
+    return 0;
+}
+void BrowserFrame::OnFolderSelection(NMHDR *header, LRESULT *result)
+{
+    *result = 0;
+    NMLISTVIEW *change = (NMLISTVIEW *)header;
+    if (!updating_lists && initialized && change->iItem >= 0 && (change->uChanged & LVIF_STATE)
+        && (change->uNewState & LVIS_SELECTED) && !(change->uOldState & LVIS_SELECTED)) {
+        MSG_SelectFolder(&context, change->iItem, TRUE);
+        RefreshMailLists();
+    }
+}
+void BrowserFrame::OnMessageSelection(NMHDR *header, LRESULT *result)
+{
+    *result = 0;
+    NMLISTVIEW *change = (NMLISTVIEW *)header;
+    if (!updating_lists && initialized && change->iItem >= 0 && (change->uChanged & LVIF_STATE)
+        && (change->uNewState & LVIS_SELECTED) && !(change->uOldState & LVIS_SELECTED)) {
+        completed = false; view.drawn_text.clear(); view.drawn_runs = 0;
+        MSG_SelectMessage(&context, change->iItem, TRUE);
+    }
+}
+void BrowserFrame::OnFolderDoubleClick(NMHDR *, LRESULT *result) { *result = 0; int item = folders.GetNextItem(-1, LVNI_SELECTED); if (item >= 0) { MSG_ToggleFolderExpansion(&context, item); RefreshMailLists(); } }
+void BrowserFrame::OnMessageDoubleClick(NMHDR *, LRESULT *result) { *result = 0; int item = messages.GetNextItem(-1, LVNI_SELECTED); if (item >= 0) { MSG_ToggleThreadExpansion(&context, item); RefreshMailLists(); } }
+void BrowserFrame::OnMail() { WFE_NewMailWindow(0, nullptr); }
+void BrowserFrame::OnNews() { WFE_NewMailWindow(1, nullptr); }
+void BrowserFrame::OnCompose() { WFE_NewComposer(&context, 0); }
+void BrowserFrame::OnPost() { if (mode == 2) MSG_Command(&context, MSG_PostNew); else WFE_NewComposer(&context, 1); }
+void BrowserFrame::OnReply() { if (mode) MSG_Command(&context, MSG_ReplyToSender); }
+void BrowserFrame::OnReplyAll() { if (mode) MSG_Command(&context, MSG_ReplyToAll); }
+void BrowserFrame::OnForwardMessage() { if (mode) MSG_Command(&context, MSG_ForwardMessage); }
+void BrowserFrame::OnGetMail() { if (mode == 1) MSG_Command(&context, MSG_GetNewMail); else if (mode == 2) MSG_Command(&context, MSG_GetMoreMessages); }
+void BrowserFrame::OnSendQueued() { if (mode == 1) MSG_Command(&context, MSG_DeliverQueuedMessages); }
+void BrowserFrame::OnShowAllMessages() { if (mode) MSG_Command(&context, MSG_ShowAllMessages); }
+void BrowserFrame::OnShowUnreadMessages() { if (mode) MSG_Command(&context, MSG_ShowOnlyUnreadMessages); }
+void BrowserFrame::OnDeleteMessage() { if (mode == 1) MSG_Command(&context, MSG_DeleteMessage); }
+void BrowserFrame::OnMarkRead() { if (mode) MSG_Command(&context, MSG_MarkSelectedRead); }
+
+class MailSettingsDialog : public CDialog {
+public:
+    explicit MailSettingsDialog(CWnd *parent) : CDialog(IDD_MAIL_SETTINGS, parent) { }
+    BOOL OnInitDialog() override {
+        CDialog::OnInitDialog();
+        const char *keys[] = {"email", "name", "organization", "smtp", "pop", "news"};
+        for (int i = 0; i < 6; ++i) SetDlgItemText(ID_SETTING_EMAIL + i, WFE_MailPreference(keys[i]));
+        return TRUE;
+    }
+    void OnOK() override {
+        const char *keys[] = {"email", "name", "organization", "smtp", "pop", "news"};
+        for (int i = 0; i < 6; ++i) {
+            CString value; GetDlgItemText(ID_SETTING_EMAIL + i, value);
+            if (!WFE_SetMailPreference(keys[i], value)) { MessageBox("Could not save account settings. Check the values and profile directory."); return; }
+        }
+        WFE_ApplyMailPreferences();
+        CDialog::OnOK();
+    }
+};
+void BrowserFrame::OnSettings() { MailSettingsDialog dialog(this); if (dialog.DoModal() == IDOK && mode == 2 && *WFE_MailPreference("news")) { address.SetWindowText(WFE_MailPreference("news")); MSG_NewsHostChanged(&context, WFE_MailPreference("news")); } }
+
+class NativePrompt : public CDialog {
+public:
+    CString label, value;
+    bool password;
+    NativePrompt(const char *message, const char *initial, bool secret, CWnd *parent)
+        : CDialog(IDD_NATIVE_PROMPT, parent), label(message ? message : ""), value(initial ? initial : ""), password(secret) { }
+    BOOL OnInitDialog() override { CDialog::OnInitDialog(); SetDlgItemText(ID_PROMPT_LABEL, label); SetDlgItemText(ID_PROMPT_VALUE, value); CEdit *edit = (CEdit *)GetDlgItem(ID_PROMPT_VALUE); if (password) edit->SetPasswordChar('*'); edit->SetSel(0,-1); edit->SetFocus(); return FALSE; }
+    void OnOK() override { GetDlgItemText(ID_PROMPT_VALUE, value); CDialog::OnOK(); }
+};
+extern "C" char *WFE_NativePrompt(MWContext *context, const char *message, const char *initial, int password)
+{
+    if (smoke_mode) { smoke_error = message ? message : "Unexpected prompt"; return nullptr; }
+    auto found = native_windows.find(context);
+    NativePrompt prompt(message, initial, password != 0, found == native_windows.end() ? nullptr : CWnd::FromHandle(found->second));
+    return prompt.DoModal() == IDOK ? _strdup(prompt.value) : nullptr;
+}
+extern "C" void WFE_MailChanged(MWContext *context, unsigned int changes)
+{
+    BrowserFrame *frame = frame_for(context);
+    if (frame && frame->initialized && frame->mode) {
+        frame->mail_changes |= changes;
+        if (!frame->mail_update_pending) {
+            frame->mail_update_pending = true;
+            if (!frame->PostMessage(WM_MAIL_CHANGED)) frame->mail_update_pending = false;
+        }
+    }
+}
 void BrowserFrame::OnClose()
 {
     CFrameWnd::OnClose();
@@ -183,11 +439,11 @@ void BrowserFrame::OnClose()
 void BrowserFrame::OnDestroy()
 {
     KillTimer(1);
-    if (initialized) { WFE_DestroyContext(&context); initialized = false; }
+    if (initialized) { initialized = false; WFE_DestroyContext(&context); }
+    browser_contexts.erase(&context);
+    WFE_UnregisterNativeWindow(&context);
     auto found = std::find(browser_windows.begin(), browser_windows.end(), this);
     if (found != browser_windows.end()) browser_windows.erase(found);
-    if (AfxGetApp()->m_pMainWnd == this && !browser_windows.empty())
-        AfxGetApp()->m_pMainWnd = browser_windows.front();
     CFrameWnd::OnDestroy();
 }
 
@@ -292,7 +548,7 @@ extern "C" void WFE_Rect(MWContext *context, int32 x, int32 y, int32 width, int3
     if (fill) frame->view.drawing->FillSolidRect(area, color);
     else { CBrush brush(color); frame->view.drawing->FrameRect(area, &brush); }
 }
-extern "C" void WFE_Status(MWContext *context, const char *message) { BrowserFrame *frame = frame_for(context); if (frame && frame->status.GetSafeHwnd()) frame->status.SetPaneText(0, message ? message : ""); }
+extern "C" void WFE_Status(MWContext *context, const char *message) { BrowserFrame *frame = frame_for(context); if (frame && frame->status.GetSafeHwnd()) frame->status.SetPaneText(0, message ? message : ""); else WFE_ComposerStatus(context, message); }
 extern "C" void WFE_Title(MWContext *context, const char *title) { BrowserFrame *frame = frame_for(context); if (frame) { std::string caption = std::string(title ? title : "Untitled") + " - Netscape 3.02"; frame->SetWindowText(caption.c_str()); } }
 extern "C" void WFE_Invalidate(MWContext *context) { BrowserFrame *frame = frame_for(context); if (frame && frame->view.GetSafeHwnd()) frame->view.Invalidate(); }
 extern "C" void WFE_WindowSize(MWContext *context, int32 *width, int32 *height) { BrowserFrame *frame = frame_for(context); CRect area(0,0,800,600); if (frame) frame->view.GetClientRect(area); *width = area.Width(); *height = area.Height(); }
@@ -310,12 +566,33 @@ extern "C" MWContext *WFE_NewWindow(const char *address)
     frame->SetIcon(AfxGetApp()->LoadIcon(IDR_MAIN), TRUE);
     frame->LoadAccelTable(MAKEINTRESOURCE(IDR_MAIN));
     browser_windows.push_back(frame);
+    WFE_RegisterNativeWindow(&frame->context, frame->GetSafeHwnd());
     if (!AfxGetApp()->m_pMainWnd) AfxGetApp()->m_pMainWnd = frame;
     if (!smoke_mode) frame->ShowWindow(SW_SHOW);
     if (address) frame->Navigate(address);
     return &frame->context;
 }
-extern "C" void WFE_CloseWindow(MWContext *context) { BrowserFrame *frame = frame_for(context); if (frame) frame->SendMessage(WM_CLOSE); }
+extern "C" void WFE_CloseWindow(MWContext *context) { BrowserFrame *frame = frame_for(context); if (frame) frame->SendMessage(WM_CLOSE); else WFE_ComposerClose(context); }
+extern "C" MWContext *WFE_NewMailWindow(int is_news, const char *server)
+{
+    if (!WFE_MailURLDirectory()) { WFE_Message(nullptr, "Could not prepare the profile's Mail directory.", 0); return nullptr; }
+    int mode = is_news ? 2 : 1;
+    for (BrowserFrame *existing : browser_windows) {
+        if (existing->mode == mode) { if (!smoke_mode) existing->SetForegroundWindow(); return &existing->context; }
+    }
+    if (is_news && server && *server) { WFE_SetMailPreference("news", server); WFE_ApplyMailPreferences(); }
+    BrowserFrame *frame = new BrowserFrame;
+    frame->mode = mode;
+    if (!frame->Create(nullptr, is_news ? "Netscape News" : "Netscape Mail", WS_OVERLAPPEDWINDOW,
+                       CRect(70,70,1200,850), nullptr, MAKEINTRESOURCE(IDR_MAIN))) return nullptr;
+    frame->SetIcon(AfxGetApp()->LoadIcon(IDR_MAIN), TRUE);
+    frame->LoadAccelTable(MAKEINTRESOURCE(IDR_MAIN));
+    browser_windows.push_back(frame);
+    WFE_RegisterNativeWindow(&frame->context, frame->GetSafeHwnd());
+    frame->InitializeMessaging(server);
+    if (!smoke_mode) frame->ShowWindow(SW_SHOW);
+    return &frame->context;
+}
 
 struct NativeTimer { TimeoutCallbackFunction callback; void *closure; ULONGLONG due; };
 static std::map<UINT_PTR, NativeTimer> timers;
@@ -383,10 +660,103 @@ extern "C" int WFE_RunSmokeTest(const char *report, const char *url)
     return passed ? 0 : 4;
 }
 
+static void mail_smoke_pump()
+{
+    MSG message;
+    for (int count = 0; count < 64 && PeekMessage(&message, nullptr, 0, 0, PM_REMOVE); ++count) {
+        if (message.message == WM_QUIT) continue;
+        TranslateMessage(&message); DispatchMessage(&message);
+    }
+    WFE_Pump();
+    MsgWaitForMultipleObjects(0, nullptr, FALSE, 10, QS_ALLINPUT);
+}
+static int find_folder(MWContext *context, const char *name)
+{
+    MSG_FolderLine line;
+    for (int i = 0; i < 100000 && MSG_GetFolderLine(context, i, &line, nullptr); ++i)
+        if (line.name && strstr(line.name, name)) return i;
+    return -1;
+}
+static int WFE_RunMailNewsSmoke(const char *report, int news, const char *server)
+{
+    WFE_SetMailPreference("email", "native@example.test");
+    WFE_SetMailPreference("name", "Native Test");
+    WFE_ApplyMailPreferences();
+    MWContext *context = WFE_NewMailWindow(news, server);
+    BrowserFrame *frame = frame_for(context);
+    if (!frame || !context->msgframe) return 2;
+    ULONGLONG deadline = GetTickCount64() + 12000;
+    int folder = -1;
+    while (GetTickCount64() < deadline && (folder = find_folder(context, news ? "test.native" : "Inbox")) < 0
+           && !(frame->completed && frame->load_status < 0)) mail_smoke_pump();
+    if (folder >= 0) {
+        while (GetTickCount64() < deadline && NET_AreThereActiveConnectionsForWindow(context)) mail_smoke_pump();
+        frame->SendMessage(WM_COMMAND, ID_MESSAGE_SHOW_ALL);
+        frame->RefreshMailLists();
+        frame->folders.SetItemState(-1, 0, LVIS_SELECTED);
+        frame->folders.SetItemState(folder, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+    }
+    MSG_MessageLine message;
+    deadline = GetTickCount64() + 12000;
+    while (folder >= 0 && GetTickCount64() < deadline && !MSG_GetThreadLine(context, 1, &message, nullptr)) mail_smoke_pump();
+    frame->RefreshMailLists();
+    std::string folders, subjects;
+    for (int i = 0; i < frame->folders.GetItemCount(); ++i) { if (i) folders += '|'; folders += frame->folders.GetItemText(i, 0); }
+    for (int i = 0; i < frame->messages.GetItemCount(); ++i) { if (i) subjects += '|'; subjects += frame->messages.GetItemText(i, 0); }
+    const int folder_count = frame->folders.GetItemCount(), message_count = frame->messages.GetItemCount();
+    std::string selected_subject;
+    if (MSG_GetThreadLine(context, 0, &message, nullptr)) {
+        selected_subject = message.subject ? message.subject : "";
+        frame->completed = false; frame->view.drawn_text.clear(); frame->view.drawn_runs = 0;
+        frame->messages.SetItemState(-1, 0, LVIS_SELECTED);
+        frame->messages.SetItemState(0, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+        deadline = GetTickCount64() + 12000;
+        while (!frame->completed && GetTickCount64() < deadline) mail_smoke_pump();
+    }
+    CClientDC screen(&frame->view); CDC memory; memory.CreateCompatibleDC(&screen);
+    CBitmap bitmap; bitmap.CreateCompatibleBitmap(&screen, 1024, 768);
+    CBitmap *previous = memory.SelectObject(&bitmap);
+    frame->view.Render(memory, 1024, 768);
+    memory.SelectObject(previous);
+    std::string reader = frame->view.drawn_text;
+    std::replace(reader.begin(), reader.end(), '\n', ' ');
+    std::replace(reader.begin(), reader.end(), '\r', ' ');
+    bool read = frame->completed && frame->load_status >= 0 && frame->view.drawn_runs > 0;
+    bool controls = frame->folders.GetSafeHwnd() && frame->messages.GetSafeHwnd() && frame->view.GetSafeHwnd();
+    const int load_status = frame->load_status;
+    int composer = read && WFE_ComposerSmoke(context, report, news) == 0;
+    BrowserFrame *survivor = frame_for(WFE_NewWindow(nullptr));
+    frame->SendMessage(WM_CLOSE);
+    bool survived = survivor && IsWindow(survivor->GetSafeHwnd()) && AfxGetApp()->m_pMainWnd == survivor;
+    if (survivor) survivor->SendMessage(WM_CLOSE);
+    bool passed = controls && folder >= 0 && message_count >= 2 && read && composer && survived;
+    FILE *output = fopen(report, "ab");
+    if (!output) return 3;
+    fprintf(output, "passed=%d\nmode=%s\nbackend=MSG\nfolder_count=%d\nmessage_count=%d\nfolders=%s\nsubjects=%s\nselected_subject=%s\nreader_text=%s\nstatus=%d\ncomposer=%d\nwindow_survived=%d\nerror=%s\n",
+            passed, news ? "news" : "mail", folder_count, message_count, folders.c_str(), subjects.c_str(),
+            selected_subject.c_str(), reader.c_str(), load_status, composer, survived, smoke_error.c_str());
+    fclose(output);
+    return passed ? 0 : 4;
+}
+
+static int WFE_RunComposerDeliverySmoke(const char *report, int news, const char *server)
+{
+    WFE_SetMailPreference("email", "native@example.test");
+    WFE_SetMailPreference("name", "Native Test");
+    if (!WFE_SetMailPreference(news ? "news" : "smtp", server)) return 2;
+    WFE_ApplyMailPreferences();
+    MWContext *source = WFE_NewMailWindow(0, nullptr);
+    int status = WFE_ComposerDeliverSmoke(source, report, news);
+    WFE_CloseWindow(source);
+    return status;
+}
+
 class NetscapeApplication : public CWinApp {
 public:
     BOOL InitInstance() override {
         CWinApp::InitInstance();
+        INITCOMMONCONTROLSEX controls = {sizeof(controls), ICC_LISTVIEW_CLASSES};
+        InitCommonControlsEx(&controls);
         SetRegistryKey("NetscapeLegacy");
         CStringList arguments;
         if (strlen(m_lpCmdLine) >= 511) return FALSE;
@@ -394,7 +764,7 @@ public:
         if (!parser.ProcessCmdLine()) return FALSE;
         POSITION position = arguments.GetHeadPosition();
         CString first = position ? arguments.GetNext(position) : "about:";
-        smoke_mode = first == "--smoke-test";
+        smoke_mode = first == "--smoke-test" || first == "--mailnews-smoke" || first == "--composer-delivery-smoke";
         if (smoke_mode) {
             SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
 #ifdef _DEBUG
@@ -407,15 +777,22 @@ public:
         if (smoke_mode) {
             CString report = position ? arguments.GetNext(position) : "frontend-smoke.txt";
             CString url = position ? arguments.GetNext(position) : "";
-            m_nExitCode = WFE_RunSmokeTest(report, url.IsEmpty() ? nullptr : (const char *)url);
+            if (first == "--mailnews-smoke" || first == "--composer-delivery-smoke") {
+                CString server = position ? arguments.GetNext(position) : "";
+                m_nExitCode = first == "--mailnews-smoke" ? WFE_RunMailNewsSmoke(report, url == "news", server) : WFE_RunComposerDeliverySmoke(report, url == "news", server);
+            } else m_nExitCode = WFE_RunSmokeTest(report, url.IsEmpty() ? nullptr : (const char *)url);
             WFE_Shutdown();
             backend_initialized = false;
             return FALSE;
         }
+        if (first == "-mail" || first == "--mail" || first.Left(8) == "mailbox:") return WFE_NewMailWindow(0, nullptr) != nullptr;
+        if (first == "-news" || first == "--news" || first.Left(5) == "news:") return WFE_NewMailWindow(1, nullptr) != nullptr;
+        if (first == "--compose") { WFE_NewComposer(nullptr, 0); return WFE_ComposerWindowCount() != 0; }
         return WFE_NewWindow(first) != nullptr;
     }
     int ExitInstance() override {
         while (!browser_windows.empty()) browser_windows.back()->DestroyWindow();
+        WFE_ComposerCloseAll();
         if (backend_initialized) WFE_Shutdown();
         for (const auto &timer : timers) KillTimer(nullptr, timer.first);
         timers.clear();

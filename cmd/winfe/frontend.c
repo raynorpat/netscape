@@ -7,6 +7,9 @@
 #include "csid.h"
 #include "mkformat.h"
 #include "gui.h"
+#include "msgcom.h"
+#include "mailsettings.h"
+#include "composer.h"
 #include "np.h"
 #include <nspr/prglobal.h>
 #include <stdio.h>
@@ -113,12 +116,17 @@ int WFE_Init(void)
     PA_ParserInit(&parser_functions);
     parser_data.output_func = LO_ProcessTag;
     if (NET_InitNetLib(32768, 20) < 0) { WFE_PlatformShutdown(); return 0; }
+    WFE_ApplyMailPreferences();
     NET_SetDiskCacheSize(0);
     NET_SetMemoryCacheSize(4 * 1024 * 1024);
     NET_RegisterContentTypeConverter(TEXT_HTML, FO_PRESENT, NULL, INTL_ConvCharCode);
     NET_RegisterContentTypeConverter(INTERNAL_PARSER, FO_PRESENT, &parser_data, PA_BeginParseMDL);
     NET_RegisterContentTypeConverter(TEXT_PLAIN, FO_PRESENT, NULL, NET_PlainTextConverter);
     NET_RegisterContentTypeConverter(UNKNOWN_CONTENT_TYPE, FO_PRESENT, NULL, NET_PlainTextConverter);
+    MSG_RegisterConverters();
+    NET_RegisterContentTypeConverter(TEXT_HTML, FO_QUOTE_MESSAGE, NULL, INTL_ConvCharCode);
+    NET_RegisterContentTypeConverter(INTERNAL_PARSER, FO_QUOTE_MESSAGE, &parser_data, PA_BeginParseMDL);
+    NET_RegisterContentTypeConverter(TEXT_PLAIN, FO_QUOTE_MESSAGE, NULL, NET_PlainTextConverter);
     NPL_Init();
     return 1;
 }
@@ -155,6 +163,9 @@ void WFE_DestroyContext(MWContext *context)
 {
     NET_InterruptWindow(context);
     WFE_PlatformForgetContext(context);
+    if (context->msgframe && context->type == MWContextMail) MSG_CleanupMailContext(context);
+    else if (context->msgframe && context->type == MWContextNews) MSG_CleanupNewsContext(context);
+    if (context->msg_cframe) MSG_CleanupMessageCompositionContext(context);
     LO_DiscardDocument(context);
     IL_DeleteImages(context);
     IL_ScourContext(context);
@@ -211,9 +222,9 @@ void FE_EndPreSection(MWContext *context) { }
 void FE_Progress(MWContext *context, const char *message) { WFE_Status(context, message); }
 void FE_Alert(MWContext *context, const char *message) { WFE_Message(context, message, 0); }
 XP_Bool FE_Confirm(MWContext *context, const char *message) { return WFE_Message(context, message, 1); }
-char *FE_Prompt(MWContext *context, const char *message, const char *initial) { WFE_Unsupported(context, "Text input prompt"); return NULL; }
-char *FE_PromptPassword(MWContext *context, const char *message) { WFE_Unsupported(context, "Password input"); return NULL; }
-XP_Bool FE_PromptUsernameAndPassword(MWContext *context, const char *message, char **user, char **password) { return FALSE; }
+char *FE_Prompt(MWContext *context, const char *message, const char *initial) { return WFE_NativePrompt(context, message, initial, 0); }
+char *FE_PromptPassword(MWContext *context, const char *message) { return WFE_NativePrompt(context, message, "", 1); }
+XP_Bool FE_PromptUsernameAndPassword(MWContext *context, const char *message, char **user, char **password) { char *name = WFE_NativePrompt(context, message, user && *user ? *user : "", 0); char *secret; if (!name) return FALSE; secret = FE_PromptPassword(context, "Password"); if (!secret) { free(name); return FALSE; } if (user) { *user = name; } else free(name); if (password) { *password = secret; } else free(secret); return TRUE; }
 void FE_SetProgressBarPercent(MWContext *context, int32 percent) { }
 void FE_GraphProgressInit(MWContext *context, URL_Struct *url, int32 length) { }
 void FE_GraphProgressDestroy(MWContext *context, URL_Struct *url, int32 length, int32 total) { }
@@ -223,7 +234,7 @@ XP_Bool FE_UseFancyNewsgroupListing(MWContext *context) { return TRUE; }
 int FE_FileSortMethod(MWContext *context) { return SORT_BY_NAME; }
 XP_Bool FE_ShowAllNewsArticles(MWContext *context) { return FALSE; }
 void FE_EnableClicking(MWContext *context) { }
-void FE_AllConnectionsComplete(MWContext *context) { WFE_Invalidate(context); }
+void FE_AllConnectionsComplete(MWContext *context) { if (context->type == MWContextMessageComposition) WFE_ComposerComplete(context); else { WFE_Invalidate(context); if (context->type == MWContextNews) WFE_MailChanged(context, 8); } }
 void FE_UpdateStopState(MWContext *context) { }
 int FE_EnableBackButton(MWContext *context) { return 0; }
 int FE_DisableBackButton(MWContext *context) { return 0; }
@@ -278,7 +289,7 @@ void FE_DeleteUrlData(URL_Struct *url) { }
 XP_Bool FE_UseExternalProtocolModule(MWContext *context, FO_Present_Types format, URL_Struct *url, Net_GetUrlExitFunc *exit_func) { return FALSE; }
 void *FE_AboutData(const char *which, char **data, int32 *length, char **content_type)
 {
-    static char about[] = "<html><title>Netscape 3.02 Windows</title><h1>Netscape 3.02</h1><p>Native Windows frontend port.</p><p>Browser text layout and navigation use the original 3.02 core. Images, forms, frames, plugins, mail/news windows, Java and security UI are still being ported.</p></html>";
+    static char about[] = "<html><title>Netscape 3.02 Windows</title><h1>Netscape 3.02</h1><p>Native Windows frontend port.</p><p>Browser text layout and navigation use the original 3.02 core. Native mail/news lists, reader and composer are available from Messages. Images, forms, frames, plugins, Java and security UI are still being ported.</p></html>";
     *data = about; *length = sizeof(about) - 1; *content_type = "text/html"; return about;
 }
 void FE_FreeAboutData(void *data, const char *which) { }

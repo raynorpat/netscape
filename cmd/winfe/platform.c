@@ -1,5 +1,6 @@
 /* Native Win32 file and network services for the 3.02 front end. */
 #include "frontend.h"
+#include "mailsettings.h"
 #include "xp_file.h"
 #include "msgcom.h"
 #include "mkgeturl.h"
@@ -194,6 +195,21 @@ char *WH_FileName(const char *name, XP_FileType type)
     case xpEditColorScheme: if (!*name) fixed = "colors"; break;
     case xpNewsRC: case xpSNewsRC: case xpTemporaryNewsRC:
     case xpNewsgroups: case xpSNewsgroups:
+        {
+        int secure = type == xpSNewsRC || type == xpSNewsgroups;
+        int groups = type == xpNewsgroups || type == xpSNewsgroups;
+        char *mapped = NET_MapNewsrcHostToFilename((char *)name, secure, groups);
+        if (mapped) {
+            result = (mapped[0] == '\\' || mapped[0] == '/' ||
+                      (mapped[0] && mapped[1] == ':')) ? _strdup(mapped) : wfe_join(directory, mapped);
+            if (result && type == xpTemporaryNewsRC) {
+                char *temporary = (char *)malloc(strlen(result) + 5);
+                if (temporary) { strcpy(temporary, result); strcat(temporary, ".tmp"); }
+                free(result);
+                result = temporary;
+            }
+            return result;
+        }
         if (strlen(name) + 20 >= sizeof(decorated)) { errno = ENAMETOOLONG; return NULL; }
         sprintf(decorated, "%s%s%s%s",
                 (type == xpSNewsRC || type == xpSNewsgroups) ? "s" : "",
@@ -203,9 +219,19 @@ char *WH_FileName(const char *name, XP_FileType type)
             if (*p == ':') *p = '#';
             else if (*p == '/' || *p == '\\') *p = '_';
         } }
+        if (*name && type != xpTemporaryNewsRC) {
+            result = wfe_join(directory, decorated);
+            if (!result) return NULL;
+            if (!NET_RegisterNewsrcFile(result, (char *)name, secure, groups)) {
+                free(result); errno = ENOMEM; return NULL;
+            }
+            NET_SaveNewsrcFileMappings();
+            return result;
+        }
         if (type == xpTemporaryNewsRC) strcat(decorated, ".tmp");
         fixed = decorated;
         break;
+        }
     case xpMailFolderSummary:
         result = WH_FileName(name, xpMailFolder);
         if (result) {
@@ -220,7 +246,13 @@ char *WH_FileName(const char *name, XP_FileType type)
         sprintf(decorated, "xover-cache\\%s", name);
         fixed = decorated;
         break;
-    case xpMailFolder: break;
+    case xpMailFolder:
+        /* Libmsg keeps raw paths in /D|/dir form, not escaped URLs. */
+        if (name[0] == '\\' || name[0] == '/' || (name[0] && name[1] == ':'))
+            return wfe_url_path(name);
+        directory = WFE_MailDirectory();
+        if (!directory) { errno = EIO; return NULL; }
+        break;
     default: errno = EINVAL; return NULL;
     }
     if (!fixed && (name[0] == '\\' || name[0] == '/' || (name[0] && name[1] == ':')))

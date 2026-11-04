@@ -7,53 +7,94 @@ IDR_MAIN MENU
 BEGIN
  POPUP "&File"
  BEGIN
+  MENUITEM "&New Browser Window\tCtrl+N", ID_BROWSER_NEW
   MENUITEM "&Open...\tCtrl+O", ID_BROWSER_OPEN
-  MENUITEM "&Save page as...\tCtrl+S", ID_BROWSER_SAVE
+  MENUITEM "Open &Location...\tCtrl+L", ID_FOCUS_LOCATION
+  MENUITEM "&Save As...\tCtrl+S", ID_BROWSER_SAVE
+  MENUITEM "&Print...", ID_BROWSER_PRINT, GRAYED
   MENUITEM SEPARATOR
-  MENUITEM "E&xit", 0xE141
+  MENUITEM "&Close", 0xE141
  END
- POPUP "&Navigate"
+ POPUP "&Edit"
+ BEGIN
+  MENUITEM "&Undo\tCtrl+Z", 0xE12B
+  MENUITEM SEPARATOR
+  MENUITEM "Cu&t\tCtrl+X", 0xE123
+  MENUITEM "&Copy\tCtrl+C", 0xE122
+  MENUITEM "&Paste\tCtrl+V", 0xE125
+  MENUITEM "Select &All\tCtrl+A", 0xE12A
+  MENUITEM SEPARATOR
+  MENUITEM "&Find...\tCtrl+F", ID_BROWSER_FIND
+ END
+ POPUP "&View"
+ BEGIN
+  MENUITEM "&Toolbar", ID_VIEW_TOOLBAR, CHECKED
+  MENUITEM "&Location", ID_VIEW_LOCATION, CHECKED
+  MENUITEM "&Directory Buttons", ID_VIEW_DIRECTORY, CHECKED
+  MENUITEM "&Status Bar", ID_VIEW_STATUS, CHECKED
+  MENUITEM SEPARATOR
+  MENUITEM "&Reload\tF5", ID_NAV_RELOAD
+  MENUITEM "Load &Images", ID_BROWSER_IMAGES, GRAYED
+ END
+ POPUP "&Go"
  BEGIN
   MENUITEM "&Back\tAlt+Left", ID_NAV_BACK
   MENUITEM "&Forward\tAlt+Right", ID_NAV_FORWARD
-  MENUITEM "&Reload\tF5", ID_NAV_RELOAD
+  MENUITEM "&Home", ID_NAV_HOME
   MENUITEM "&Stop\tEsc", ID_NAV_STOP
+  MENUITEM SEPARATOR
   MENUITEM "&History...", ID_BROWSER_HISTORY
  END
  POPUP "&Bookmarks"
  BEGIN
-  MENUITEM "&Add page\tCtrl+D", ID_BOOKMARKS_ADD
-  MENUITEM "&Manage bookmarks...", ID_BOOKMARKS_SHOW
+  MENUITEM "&Add Bookmark\tCtrl+D", ID_BOOKMARKS_ADD
+  MENUITEM "&Go to Bookmarks...", ID_BOOKMARKS_SHOW
  END
- POPUP "&Messages"
+ POPUP "&Options"
  BEGIN
-  MENUITEM "Open &Mail", ID_CLIENT_MAIL
-  MENUITEM "Open &News", ID_CLIENT_NEWS
-  MENUITEM "&Account settings...", ID_MAIL_SETTINGS
+  MENUITEM "Set Current Page as &Home", ID_BROWSER_SET_HOME
+  MENUITEM "&Mail and News Preferences...", ID_MAIL_SETTINGS
+ END
+ POPUP "&Directory"
+ BEGIN
+  MENUITEM "What's &New?", ID_DIRECTORY_FIRST
+  MENUITEM "What's &Cool?", ID_DIRECTORY_FIRST + 1
+  MENUITEM "&Destinations", ID_DIRECTORY_FIRST + 2
+  MENUITEM "Net &Search", ID_DIRECTORY_FIRST + 3
+  MENUITEM "&People", ID_DIRECTORY_FIRST + 4
+  MENUITEM "&Software", ID_DIRECTORY_LAST
+ END
+ POPUP "&Window"
+ BEGIN
+  MENUITEM "Netscape &Navigator", ID_BROWSER_NEW
+  MENUITEM "Netscape &Mail", ID_CLIENT_MAIL
+  MENUITEM "Netscape &News", ID_CLIENT_NEWS
   MENUITEM SEPARATOR
-  MENUITEM "&Compose mail", ID_CLIENT_COMPOSE
-  MENUITEM "&Post to newsgroup", ID_CLIENT_POST
-  MENUITEM "&Reply to sender", ID_MESSAGE_REPLY
-  MENUITEM "Reply to &all", ID_MESSAGE_REPLY_ALL
-  MENUITEM "&Forward", ID_MESSAGE_FORWARD
-  MENUITEM SEPARATOR
-  MENUITEM "&Get new mail", ID_MESSAGE_GET
-  MENUITEM "Send &queued messages", ID_MESSAGE_SEND_QUEUED
-  MENUITEM "&Delete message", ID_MESSAGE_DELETE
-  MENUITEM "Mark &read", ID_MESSAGE_READ
-  MENUITEM SEPARATOR
-  MENUITEM "Show all messages", ID_MESSAGE_SHOW_ALL
-  MENUITEM "Show unread messages", ID_MESSAGE_SHOW_UNREAD
+  MENUITEM "&Compose Message", ID_CLIENT_COMPOSE
+  MENUITEM "&Post News", ID_CLIENT_POST
+  MENUITEM "&Bookmarks", ID_BOOKMARKS_SHOW
+  POPUP "&Messages"
+  BEGIN
+   MENUITEM "&Reply to Sender", ID_MESSAGE_REPLY
+   MENUITEM "Reply to &All", ID_MESSAGE_REPLY_ALL
+   MENUITEM "&Forward", ID_MESSAGE_FORWARD
+   MENUITEM "&Get New Mail", ID_MESSAGE_GET
+   MENUITEM "&Send Queued Messages", ID_MESSAGE_SEND_QUEUED
+   MENUITEM "&Delete Message", ID_MESSAGE_DELETE
+   MENUITEM "Mark &Read", ID_MESSAGE_READ
+   MENUITEM "Show All Messages", ID_MESSAGE_SHOW_ALL
+   MENUITEM "Show Unread Messages", ID_MESSAGE_SHOW_UNREAD
+  END
  END
  POPUP "&Help"
  BEGIN
-  MENUITEM "&About", ID_BROWSER_ABOUT
+  MENUITEM "&About Netscape", ID_BROWSER_ABOUT
  END
 END
 IDD_MAIL_SETTINGS DIALOGEX 0, 0, 310, 170
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Mail and news account settings"
-FONT 9, "Segoe UI"
+FONT 8, "MS Sans Serif"
 BEGIN
  LTEXT "Email address", -1, 8, 10, 80, 12
  EDITTEXT ID_SETTING_EMAIL, 92, 8, 208, 14, ES_AUTOHSCROLL
@@ -73,7 +114,7 @@ END
 IDD_NATIVE_PROMPT DIALOGEX 0, 0, 300, 100
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Netscape"
-FONT 9, "Segoe UI"
+FONT 8, "MS Sans Serif"
 BEGIN
  LTEXT "", ID_PROMPT_LABEL, 8, 8, 284, 34
  EDITTEXT ID_PROMPT_VALUE, 8, 45, 284, 15, ES_AUTOHSCROLL
@@ -82,6 +123,15 @@ BEGIN
 END
 IDR_MAIN ACCELERATORS
 BEGIN
+ "L", ID_FOCUS_LOCATION, VIRTKEY, CONTROL
+ "D", ID_FOCUS_LOCATION, VIRTKEY, ALT
+ "N", ID_BROWSER_NEW, VIRTKEY, CONTROL
+ "F", ID_BROWSER_FIND, VIRTKEY, CONTROL
+ "C", 0xE122, VIRTKEY, CONTROL
+ "X", 0xE123, VIRTKEY, CONTROL
+ "V", 0xE125, VIRTKEY, CONTROL
+ "A", 0xE12A, VIRTKEY, CONTROL
+ "Z", 0xE12B, VIRTKEY, CONTROL
  "O", ID_BROWSER_OPEN, VIRTKEY, CONTROL
  "S", ID_BROWSER_SAVE, VIRTKEY, CONTROL
  "D", ID_BOOKMARKS_ADD, VIRTKEY, CONTROL
@@ -110,3 +160,62 @@ BEGIN
   VALUE "Translation", 0x409, 1252
  END
 END
+
+524 BITMAP "res/classic/compose.bmp"
+522 BITMAP "res/classic/send.bmp"
+523 BITMAP "res/classic/attach.bmp"
+500 BITMAP "res/classic/back.bmp"
+501 BITMAP "res/classic/forward.bmp"
+502 BITMAP "res/classic/home.bmp"
+503 BITMAP "res/classic/edit.bmp"
+504 BITMAP "res/classic/reload.bmp"
+505 BITMAP "res/classic/images.bmp"
+506 BITMAP "res/classic/open.bmp"
+507 BITMAP "res/classic/print.bmp"
+508 BITMAP "res/classic/find.bmp"
+509 BITMAP "res/classic/stop.bmp"
+510 BITMAP "res/classic/logo.bmp"
+511 BITMAP "res/classic/getmail.bmp"
+512 BITMAP "res/classic/reply.bmp"
+513 BITMAP "res/classic/replyall.bmp"
+514 BITMAP "res/classic/forwardmsg.bmp"
+515 BITMAP "res/classic/next.bmp"
+516 BITMAP "res/classic/previous.bmp"
+517 BITMAP "res/classic/delete.bmp"
+518 BITMAP "res/classic/mail.bmp"
+519 BITMAP "res/classic/news.bmp"
+
+STRINGTABLE
+BEGIN
+ ID_STATUS_NAVIGATOR "Navigator"
+ ID_STATUS_PROGRESS "Progress"
+ ID_STATUS_MAIL "Mail"
+END
+
+624 BITMAP "res/classic/compose-disabled.bmp"
+622 BITMAP "res/classic/send-disabled.bmp"
+623 BITMAP "res/classic/attach-disabled.bmp"
+600 BITMAP "res/classic/back-disabled.bmp"
+601 BITMAP "res/classic/forward-disabled.bmp"
+602 BITMAP "res/classic/home-disabled.bmp"
+603 BITMAP "res/classic/edit-disabled.bmp"
+604 BITMAP "res/classic/reload-disabled.bmp"
+605 BITMAP "res/classic/images-disabled.bmp"
+606 BITMAP "res/classic/open-disabled.bmp"
+607 BITMAP "res/classic/print-disabled.bmp"
+608 BITMAP "res/classic/find-disabled.bmp"
+609 BITMAP "res/classic/stop-disabled.bmp"
+610 BITMAP "res/classic/logo-disabled.bmp"
+611 BITMAP "res/classic/getmail-disabled.bmp"
+612 BITMAP "res/classic/reply-disabled.bmp"
+613 BITMAP "res/classic/replyall-disabled.bmp"
+614 BITMAP "res/classic/forwardmsg-disabled.bmp"
+615 BITMAP "res/classic/next-disabled.bmp"
+616 BITMAP "res/classic/previous-disabled.bmp"
+617 BITMAP "res/classic/delete-disabled.bmp"
+618 BITMAP "res/classic/mail-disabled.bmp"
+619 BITMAP "res/classic/news-disabled.bmp"
+
+IDR_CLASSIC_ABOUT RCDATA "res/about.html"
+IDR_CLASSIC_ABOUT_LOGO RCDATA "../../lib/xp/biglogo.gif"
+IDR_CLASSIC_LICENSE RCDATA "../../l10n/us/xp/LICENSE-export"

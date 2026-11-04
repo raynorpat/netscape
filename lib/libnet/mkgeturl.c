@@ -4227,6 +4227,9 @@ PRIVATE int net_output_about_url(ActiveEntry * cur_entry)
 		if(!stream)
 		  {
 			cur_entry->status = MK_UNABLE_TO_CONVERT;
+#ifdef WFE_OWNED_ABOUT_DATA
+            if (uses_fe_data) FE_FreeAboutData(fe_data, which);
+#endif
 		  	return(MK_UNABLE_TO_CONVERT);
 		  }
 
@@ -4244,7 +4247,7 @@ PRIVATE int net_output_about_url(ActiveEntry * cur_entry)
 
 	if(uses_fe_data)
 	  {
-#ifdef XP_MAC
+#if defined(XP_MAC) || defined(WFE_OWNED_ABOUT_DATA)
 		FE_FreeAboutData (fe_data, which);
 #endif /* XP_MAC */
 	  }

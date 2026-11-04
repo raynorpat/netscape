@@ -16,6 +16,7 @@
 #include "downloads.h"
 #include "history.h"
 #include "bookmarks.h"
+#include "resource.h"
 #include "np.h"
 #include <nspr/prglobal.h>
 #include <stdio.h>
@@ -255,7 +256,7 @@ XP_Bool FE_PromptUsernameAndPassword(MWContext *context, const char *message, ch
 void FE_SetProgressBarPercent(MWContext *context, int32 percent) { }
 void FE_GraphProgressInit(MWContext *context, URL_Struct *url, int32 length) { }
 void FE_GraphProgressDestroy(MWContext *context, URL_Struct *url, int32 length, int32 total) { }
-void FE_GraphProgress(MWContext *context, URL_Struct *url, int32 received, int32 delta, int32 length) { WFE_DownloadProgress(context, url, received, length); }
+void FE_GraphProgress(MWContext *context, URL_Struct *url, int32 received, int32 delta, int32 length) { WFE_DownloadProgress(context, url, received, length); WFE_ChromeProgress(context, received, length); }
 XP_Bool FE_UseFancyFTP(MWContext *context) { return TRUE; }
 XP_Bool FE_UseFancyNewsgroupListing(MWContext *context) { return TRUE; }
 int FE_FileSortMethod(MWContext *context) { return SORT_BY_NAME; }
@@ -302,12 +303,32 @@ void FE_URLEcho(URL_Struct *url, int status, MWContext *context) { }
 void FE_UrlChangedContext(URL_Struct *url, MWContext *old_context, MWContext *new_context) { WFE_TransferURL(url, old_context, new_context); }
 void FE_DeleteUrlData(URL_Struct *url) { }
 XP_Bool FE_UseExternalProtocolModule(MWContext *context, FO_Present_Types format, URL_Struct *url, Net_GetUrlExitFunc *exit_func) { return FALSE; }
+static int about_allocations;
+int WFE_AboutOutstanding(void) { return about_allocations; }
 void *FE_AboutData(const char *which, char **data, int32 *length, char **content_type)
 {
-    static char about[] = "<html><title>Netscape 3.02 Windows</title><h1>Netscape 3.02</h1><p>Native Windows frontend port.</p><p>Browser text layout and navigation use the original 3.02 core. Native mail/news lists, reader and composer are available from Messages. Native images and HTML forms use the original core. Native nested frames use the original layout engine. Plugins, Java and security UI are still being ported.</p></html>";
-    *data = about; *length = sizeof(about) - 1; *content_type = "text/html"; return about;
+    HMODULE module = GetModuleHandleA(NULL);
+    int identifier = IDR_CLASSIC_ABOUT;
+    HRSRC resource;
+    HGLOBAL loaded;
+    static char blank[] = "<html><body></body></html>";
+    *content_type = "text/html";
+    if (which && !stricmp(which, "blank")) {
+        *data = _strdup(blank); *length = *data ? sizeof(blank) - 1 : 0; if (*data) ++about_allocations; return *data;
+    }
+    if (which && !stricmp(which, "logo")) { identifier = IDR_CLASSIC_ABOUT_LOGO; *content_type = "image/gif"; }
+    else if (which && !stricmp(which, "license")) { identifier = IDR_CLASSIC_LICENSE; *content_type = "text/plain"; }
+    resource = FindResourceA(module, MAKEINTRESOURCEA(identifier), RT_RCDATA);
+    loaded = resource ? LoadResource(module, resource) : NULL;
+    *length = loaded ? (int32)SizeofResource(module, resource) : 0;
+    /* The legacy parser temporarily writes terminators into its input. Resource
+     * sections are read-only; each request therefore owns a writable copy. */
+    *data = loaded ? (char *)malloc(*length + 1) : NULL;
+    if (*data) { memcpy(*data, LockResource(loaded), *length); (*data)[*length] = 0; ++about_allocations; }
+    else *length = 0;
+    return *data;
 }
-void FE_FreeAboutData(void *data, const char *which) { }
+void FE_FreeAboutData(void *data, const char *which) { if (data) { --about_allocations; free(data); } }
 BOOL PMS_RegisterContentTypeConverter(char *input, FO_Present_Types output, void *data, NET_Converter *converter, BOOL automated) { RealNET_RegisterContentTypeConverter(input, output, data, converter); return TRUE; }
 long random(void) { return rand(); }
 char *XP_GetString(int16 identifier)

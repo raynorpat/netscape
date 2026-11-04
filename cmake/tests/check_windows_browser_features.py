@@ -210,7 +210,7 @@ def run_browser(executable, output, server, mode, page, baseline,
 
 
 def check_image_report(text, fields):
-    for name, expected in (("title", "Windows image smoke"), ("image_pixels_ok", "1"), ("noerrors", "1")):
+    for name, expected in (("title", "Netscape - [Windows image smoke]"), ("image_pixels_ok", "1"), ("noerrors", "1")):
         if fields.get(name) != expected:
             raise RuntimeError("Image report has unexpected {}:\n{}".format(name, text))
     if int(fields.get("image_count", "0")) < 5:

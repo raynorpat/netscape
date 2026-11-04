@@ -1,8 +1,16 @@
 enable_language(CXX)
 enable_language(RC)
 set(CMAKE_MFC_FLAG 2)
+# This frontend returns writable, request-owned about: buffers. Limit the
+# release contract to these two consumers; other platform frontends differ.
+set_property(SOURCE "${PROJECT_SOURCE_DIR}/lib/libnet/mkgeturl.c"
+ "${PROJECT_SOURCE_DIR}/lib/libmsg/spool.c" APPEND PROPERTY COMPILE_DEFINITIONS WFE_OWNED_ABOUT_DATA)
+
 add_executable(netscape-win32 WIN32
  "${PROJECT_SOURCE_DIR}/cmd/winfe/main.cpp"
+ "${PROJECT_SOURCE_DIR}/cmd/winfe/classic.cpp"
+ "${PROJECT_SOURCE_DIR}/cmd/winfe/chrome.cpp"
+ "${PROJECT_SOURCE_DIR}/cmd/winfe/find.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/frontend.c"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/platform.c"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/services.c"
@@ -73,4 +81,8 @@ if(BUILD_TESTING)
   "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_bookmarks.py"
   --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/bookmarks-test")
  set_tests_properties(windows_bookmarks PROPERTIES TIMEOUT 80)
+ add_test(NAME windows_classic_chrome COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_chrome.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/chrome-test")
+ set_tests_properties(windows_classic_chrome PROPERTIES TIMEOUT 60)
 endif()

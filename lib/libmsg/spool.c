@@ -182,7 +182,7 @@ msg_EnsureInboxExists (MWContext *context)
 		}
 	  }
 		  
-#ifdef XP_MAC
+#if defined(XP_MAC) || defined(WFE_OWNED_ABOUT_DATA)
 	  FE_FreeAboutData (fe_data, about_url);
 #endif /* XP_MAC */
 

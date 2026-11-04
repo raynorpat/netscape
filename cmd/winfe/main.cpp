@@ -46,6 +46,11 @@ static void invalid_parameter(const wchar_t *expression, const wchar_t *function
 #include "mailui.h"
 #include "find.h"
 #include "preferences.h"
+#ifdef EDITOR
+#include "editor.h"
+#include "editor_resource.h"
+#include "edt.h"
+#endif
 #include "glhist.h"
 #include "merrors.h"
 extern "C" {
@@ -82,6 +87,7 @@ public:
     std::string link_text;
     std::map<std::string, CPoint> links;
     void Render(CDC &dc, int width, int height);
+    bool selecting=false;
 protected:
     BOOL OnCommand(WPARAM command, LPARAM control) override;
     afx_msg void OnPaint();
@@ -89,6 +95,11 @@ protected:
     afx_msg void OnVScroll(UINT code, UINT position, CScrollBar *bar);
     afx_msg void OnHScroll(UINT code, UINT position, CScrollBar *bar);
     afx_msg BOOL OnMouseWheel(UINT flags, short delta, CPoint point);
+    afx_msg void OnLButtonDown(UINT flags,CPoint point);
+    afx_msg void OnMouseMove(UINT flags,CPoint point);
+    afx_msg void OnLButtonDblClk(UINT flags,CPoint point);
+    afx_msg void OnSetFocus(CWnd *old);
+    afx_msg void OnKillFocus(CWnd *next);
     afx_msg void OnLButtonUp(UINT flags, CPoint point);
     afx_msg void OnContextMenu(CWnd *window, CPoint point);
     DECLARE_MESSAGE_MAP()
@@ -101,7 +112,7 @@ public:
     ClassicButton go;
     ClassicChrome chrome;
     ClassicStatusBar status;
-    bool status_visible = true;
+    bool status_visible = true, editing = false;
     CListCtrl folders, messages;
     MailPaneUI mail_panes;
     MWContext context;
@@ -126,6 +137,7 @@ public:
     void MailCaptionStatus();
     void InitializeMessaging(const char *server);
     BOOL PreTranslateMessage(MSG *message) override;
+    BOOL OnCmdMsg(UINT id,int code,void *extra,AFX_CMDHANDLERINFO *info) override;
     void PostNcDestroy() override { delete this; }
 protected:
     afx_msg int OnCreate(LPCREATESTRUCT create);
@@ -138,6 +150,8 @@ protected:
     afx_msg void OnHome();
     afx_msg void OnFind();
     afx_msg void OnLoadImages();
+    afx_msg void OnGoldCommand(UINT command);
+    afx_msg void OnUpdateGold(CCmdUI *command);
     afx_msg void OnNewBrowser() { WFE_NewWindow("about:"); }
     afx_msg void OnSetHome();
     afx_msg void OnDirectory(UINT command);
@@ -205,10 +219,13 @@ BEGIN_MESSAGE_MAP(BrowserFrame, CFrameWnd)
  ON_WM_CLOSE()
  ON_WM_DESTROY()
  ON_WM_INITMENUPOPUP()
+ ON_COMMAND_RANGE(42000,42999,OnGoldCommand)
+ ON_UPDATE_COMMAND_UI_RANGE(42000,42999,OnUpdateGold)
+ ON_COMMAND_RANGE(ID_BROWSER_EDIT,ID_BROWSER_EDIT,OnGoldCommand)
  ON_COMMAND_RANGE(35000,35149,OnMenuCommand)
  ON_UPDATE_COMMAND_UI_RANGE(35000,35149,OnUpdateMenu)
- ON_COMMAND_RANGE(36000,36199,OnMenuCommand)
- ON_UPDATE_COMMAND_UI_RANGE(36000,36199,OnUpdateMenu)
+ ON_COMMAND_RANGE(48000,48199,OnMenuCommand)
+ ON_UPDATE_COMMAND_UI_RANGE(48000,48199,OnUpdateMenu)
  ON_COMMAND_RANGE(36500,36599,OnMenuCommand)
  ON_UPDATE_COMMAND_UI_RANGE(36500,36599,OnUpdateMenu)
  ON_COMMAND_RANGE(37000,37999,OnMenuCommand)
@@ -286,6 +303,11 @@ BEGIN_MESSAGE_MAP(BrowserView, CWnd)
  ON_WM_VSCROLL()
  ON_WM_HSCROLL()
  ON_WM_MOUSEWHEEL()
+ ON_WM_LBUTTONDOWN()
+ ON_WM_MOUSEMOVE()
+ ON_WM_LBUTTONDBLCLK()
+ ON_WM_SETFOCUS()
+ ON_WM_KILLFOCUS()
  ON_WM_LBUTTONUP()
  ON_WM_CONTEXTMENU()
 END_MESSAGE_MAP()
@@ -295,13 +317,42 @@ static BrowserFrame *frame_for(MWContext *context)
     auto found = browser_contexts.find(context);
     return found == browser_contexts.end() ? nullptr : found->second;
 }
+BOOL BrowserFrame::OnCmdMsg(UINT id,int code,void *extra,AFX_CMDHANDLERINFO *info)
+{
+#ifdef EDITOR
+    if(editing && initialized && !info) {
+        if(code==CN_COMMAND && WFE_EditorCommand(&context,id)) return TRUE;
+        if(code==CN_UPDATE_COMMAND_UI && extra && WFE_EditorUpdate(&context,(CCmdUI *)extra)) return TRUE;
+    }
+#endif
+    return CFrameWnd::OnCmdMsg(id,code,extra,info);
+}
+void BrowserFrame::OnGoldCommand(UINT command)
+{
+#ifdef EDITOR
+    if(command==42279) WFE_NewEditorWindow(nullptr);
+    else if(command==42151) {
+        CFileDialog file(TRUE,"html",nullptr,OFN_FILEMUSTEXIST,"HTML documents|*.html;*.htm|All files|*.*||",this);
+        if(file.DoModal()==IDOK) WFE_NewEditorWindow(file.GetPathName());
+    } else if(command==42003 || command==ID_BROWSER_EDIT) WFE_NewEditorWindow(current_url.empty()?nullptr:current_url.c_str());
+#endif
+}
+void BrowserFrame::OnUpdateGold(CCmdUI *command)
+{
+#ifdef EDITOR
+    command->Enable(command->m_nID==42279 || command->m_nID==42151 || command->m_nID==42003);
+#else
+    command->Enable(FALSE);
+#endif
+}
 
 static std::map<HWND,std::vector<std::pair<MWContext *,HWND>>> window_menu_entries;
 static std::map<HWND,std::vector<int32>> go_menu_entries;
 bool WFE_IsWindowMenu(CMenu *menu)
 {
-    return menu && menu->GetMenuState(ID_CLIENT_MAIL,MF_BYCOMMAND)!=(UINT)-1
-        && menu->GetMenuState(ID_CLIENT_NEWS,MF_BYCOMMAND)!=(UINT)-1;
+    return menu && (menu->GetMenuState(ID_MENU_WINDOW_ANCHOR,MF_BYCOMMAND)!=(UINT)-1 ||
+        (menu->GetMenuState(ID_CLIENT_MAIL,MF_BYCOMMAND)!=(UINT)-1
+        && menu->GetMenuState(ID_CLIENT_NEWS,MF_BYCOMMAND)!=(UINT)-1));
 }
 void WFE_PopulateWindowMenu(CMenu *menu,CWnd *owner)
 {
@@ -311,12 +362,14 @@ void WFE_PopulateWindowMenu(CMenu *menu,CWnd *owner)
     menu->AppendMenu(MF_STRING,ID_CLIENT_NEWS,"Netscape &News");
     menu->AppendMenu(MF_SEPARATOR);
     menu->AppendMenu(MF_STRING|MF_GRAYED,ID_MENU_ADDRESS_BOOK,"&Address Book");
-    menu->AppendMenu(MF_STRING,ID_BOOKMARKS_SHOW,"&Bookmarks\tCtrl+B");
+    bool editor_owner=false;
+    for(auto frame:browser_windows) if(frame->GetSafeHwnd()==owner->GetSafeHwnd()) editor_owner=frame->editing;
+    menu->AppendMenu(MF_STRING,editor_owner?ID_WINDOW_BOOKMARKS:ID_BOOKMARKS_SHOW,"&Bookmarks\tCtrl+B");
     menu->AppendMenu(MF_STRING,ID_BROWSER_HISTORY,"&History\tCtrl+H");
     menu->AppendMenu(MF_SEPARATOR);
     auto &entries=window_menu_entries[owner->GetSafeHwnd()];entries.clear();
     for(auto item:native_windows) {
-        if(item.first->type!=MWContextBrowser && item.first->type!=MWContextMessageComposition) continue;
+        if(item.first->type!=MWContextBrowser && item.first->type!=MWContextMessageComposition && item.first->type!=MWContextEditor) continue;
         HWND handle=item.second;if(!::IsWindow(handle)||(::GetWindowLong(handle,GWL_STYLE)&WS_CHILD)) continue;
         char caption[512]={0};::GetWindowTextA(handle,caption,sizeof(caption));
         if(!*caption || entries.size()>=200) continue;
@@ -324,14 +377,14 @@ void WFE_PopulateWindowMenu(CMenu *menu,CWnd *owner)
         if(item.first->type==MWContextMessageComposition) caption_text="Compose:Message Composition";
         else if(caption_text.Left(12)=="Netscape - [" && caption_text.Right(1)=="]") caption_text="Netscape:"+caption_text.Mid(12,caption_text.GetLength()-13);
         caption_text.Replace("&","&&");CString text;text.Format("&%u %s",(unsigned)entries.size(),(const char *)caption_text);text.Replace("\t"," ");
-        menu->AppendMenu(MF_STRING|(handle==owner->GetSafeHwnd()?MF_CHECKED:0),36000+(UINT)entries.size(),text);
+        menu->AppendMenu(MF_STRING|(handle==owner->GetSafeHwnd()?MF_CHECKED:0),48000+(UINT)entries.size(),text);
         entries.push_back(item);
     }
 }
 bool WFE_WindowCommand(CWnd *owner,UINT command)
 {
-    if(command>=36000 && command<36200 && owner) {
-        auto list=window_menu_entries.find(owner->GetSafeHwnd());size_t index=command-36000;
+    if(command>=48000 && command<48200 && owner) {
+        auto list=window_menu_entries.find(owner->GetSafeHwnd());size_t index=command-48000;
         if(list!=window_menu_entries.end() && index<list->second.size()) {
             auto entry=list->second[index];auto live=native_windows.find(entry.first);
             if(live!=native_windows.end() && live->second==entry.second && ::IsWindow(entry.second)) {
@@ -345,12 +398,12 @@ bool WFE_WindowCommand(CWnd *owner,UINT command)
     if(command==ID_CLIENT_MAIL) { WFE_NewMailWindow(0,nullptr);return true; }
     if(command==ID_CLIENT_NEWS) { WFE_NewMailWindow(1,nullptr);return true; }
     if(command==ID_BROWSER_NEW) { WFE_NewWindow("about:");return true; }
-    if(command==ID_BOOKMARKS_SHOW || command==ID_BROWSER_HISTORY) {
+    if(command==ID_BOOKMARKS_SHOW || command==ID_WINDOW_BOOKMARKS || command==ID_BROWSER_HISTORY) {
         MWContext *source=nullptr;
-        for(auto frame:browser_windows) if(owner && frame->GetSafeHwnd()==owner->GetSafeHwnd() && !frame->mode) {source=&frame->context;break;}
-        if(!source) for(auto frame:browser_windows) if(!frame->grid_parent && !frame->mode) {source=&frame->context;break;}
+        for(auto frame:browser_windows) if(owner && frame->GetSafeHwnd()==owner->GetSafeHwnd() && !frame->mode && !frame->editing) {source=&frame->context;break;}
+        if(!source) for(auto frame:browser_windows) if(!frame->grid_parent && !frame->mode && !frame->editing) {source=&frame->context;break;}
         if(!source) source=WFE_NewWindow("about:blank");
-        if(source) { if(command==ID_BOOKMARKS_SHOW) WFE_BookmarksShow(source);else WFE_NavigateTarget(source,"about:global",nullptr); }
+        if(source) { if(command==ID_BOOKMARKS_SHOW || command==ID_WINDOW_BOOKMARKS) WFE_BookmarksShow(source);else WFE_NavigateTarget(source,"about:global",nullptr); }
         return true;
     }
     return false;
@@ -359,8 +412,8 @@ bool WFE_WindowUpdateCommand(CWnd *owner,CCmdUI *command)
 {
     UINT id=command->m_nID;
     if(id==ID_MENU_ADDRESS_BOOK) {command->Enable(FALSE);return true;}
-    if((id>=36000&&id<36200) || id==ID_CLIENT_MAIL || id==ID_CLIENT_NEWS ||
-       id==ID_BOOKMARKS_SHOW || id==ID_BROWSER_HISTORY || id==ID_BROWSER_NEW) {
+    if((id>=48000&&id<48200) || id==ID_CLIENT_MAIL || id==ID_CLIENT_NEWS ||
+       id==ID_BOOKMARKS_SHOW || id==ID_WINDOW_BOOKMARKS || id==ID_BROWSER_HISTORY || id==ID_BROWSER_NEW) {
         command->Enable(TRUE);return true;
     }
     return false;
@@ -459,6 +512,13 @@ int BrowserFrame::OnCreate(LPCREATESTRUCT create)
     browser_contexts[&context] = this;
     document_preferences=WFE_GeneralPreferences();
     WFE_InitContext(&context, this);
+#ifdef EDITOR
+    if(editing) {
+        context.type=MWContextEditor;context.is_editor=TRUE;
+        chrome.toolbar_visible=chrome.location_visible=chrome.directory_visible=false;chrome.ShowWindow(SW_HIDE);
+        if(!WFE_EditorCreateUI(&context,this)) return -1;
+    }
+#endif
     initialized = true;
     SetTimer(1, 10, nullptr);
     return 0;
@@ -474,6 +534,9 @@ void BrowserFrame::OnSize(UINT type, int width, int height)
         return;
     }
     int top = chrome.Arrange(width);
+#ifdef EDITOR
+    if(editing) top=WFE_EditorArrange(&context,width);
+#endif
     int footer = status_visible ? ClassicUI::Scale(this, 20) : 0;
     status.ShowWindow(status_visible ? SW_SHOW : SW_HIDE);
     if (status_visible) status.MoveWindow(0,(std::max)(0,height-footer),width,footer);
@@ -487,6 +550,9 @@ void BrowserFrame::OnSize(UINT type, int width, int height)
 BOOL BrowserFrame::PreTranslateMessage(MSG *message)
 {
     FocusedDocument();
+#ifdef EDITOR
+    if(editing && ::GetFocus()==view.GetSafeHwnd() && WFE_EditorKey(&context,message)) return TRUE;
+#endif
     if (WFE_FormKey(&context, message->hwnd, message->message, message->wParam, message->lParam)) return TRUE;
     if(message->message==WM_KEYDOWN && message->wParam==VK_TAB && ::GetFocus()==view.GetSafeHwnd()) {
         chrome.FocusBar((GetKeyState(VK_SHIFT)&0x8000)!=0);return TRUE;
@@ -499,6 +565,9 @@ void BrowserFrame::Navigate(const char *input, bool remember)
 {
     (void)remember;
     force_images=false;
+#ifdef EDITOR
+    if(editing && !WFE_EditorCheckSave(&context)) return;
+#endif
     WFE_HistorySavePosition(&context);
     current_url = as_url(input);
     if (address.GetSafeHwnd()) address.SetWindowText(current_url.c_str());
@@ -526,6 +595,9 @@ void BrowserFrame::OnTimer(UINT_PTR timer)
         KillTimer(2);
         if (!initialized || current_url.empty()) return;
         if (resizing || XP_IsContextBusy(&context)) { SetTimer(2, 120, nullptr); return; }
+#ifdef EDITOR
+        if(editing) {if(EDT_HaveEditBuffer(&context) && !EDT_IsBlocked(&context)) EDT_RefreshLayout(&context);return;}
+#endif
         History_entry *entry = SHIST_GetCurrent(&context.hist);
         if (!entry || entry->method != URL_GET_METHOD) return;
         WFE_HistorySavePosition(&context);
@@ -746,7 +818,10 @@ void BrowserFrame::OnMenuCommand(UINT command)
 void BrowserFrame::OnUpdateChrome(CCmdUI *command)
 {
     bool enabled=true;
-    if(command->m_nID==ID_BROWSER_EDIT || command->m_nID==ID_BROWSER_PRINT) enabled=false;
+    if(command->m_nID==ID_BROWSER_PRINT) enabled=false;
+#ifndef EDITOR
+    if(command->m_nID==ID_BROWSER_EDIT) enabled=false;
+#endif
     if(command->m_nID==ID_BROWSER_IMAGES) {
         MWContext *document=FocusedDocument();History_entry *entry=SHIST_GetCurrent(&document->hist);
         enabled=XP_DOCID(document)!=0 && (mode || (entry && entry->method==URL_GET_METHOD));
@@ -1174,12 +1249,18 @@ extern "C" void WFE_MailChanged(MWContext *context, unsigned int changes)
 }
 void BrowserFrame::OnClose()
 {
+#ifdef EDITOR
+    if(editing && !WFE_EditorCheckSave(&context)) return;
+#endif
     CFrameWnd::OnClose();
 }
 void BrowserFrame::OnDestroy()
 {
     KillTimer(1);
     KillTimer(2);
+#ifdef EDITOR
+    if(editing) {WFE_EditorDestroyUI(&context);WFE_EditorForget(&context);}
+#endif
     if (initialized) { initialized = false; WFE_DestroyContext(&context); }
     browser_contexts.erase(&context);
     WFE_UnregisterNativeWindow(&context);
@@ -1208,6 +1289,46 @@ BOOL BrowserView::OnCommand(WPARAM command, LPARAM control)
     return CWnd::OnCommand(command, control);
 }
 void BrowserView::OnPaint() { CPaintDC dc(this); CRect area; GetClientRect(area); if (frame->initialized) Render(dc, area.Width(), area.Height()); }
+void BrowserView::OnLButtonDown(UINT flags,CPoint point)
+{
+#ifdef EDITOR
+    if(frame->editing && EDT_HaveEditBuffer(&frame->context) && !EDT_IsBlocked(&frame->context)) {
+        SetFocus();selecting=true;SetCapture();
+        if(flags&MK_SHIFT) EDT_ExtendSelection(&frame->context,point.x+scroll_x,point.y+scroll_y);
+        else EDT_StartSelection(&frame->context,point.x+scroll_x,point.y+scroll_y);
+        return;
+    }
+#endif
+    CWnd::OnLButtonDown(flags,point);
+}
+void BrowserView::OnMouseMove(UINT flags,CPoint point)
+{
+#ifdef EDITOR
+    if(frame->editing && selecting && (flags&MK_LBUTTON)) {EDT_ExtendSelection(&frame->context,point.x+scroll_x,point.y+scroll_y);return;}
+#endif
+    CWnd::OnMouseMove(flags,point);
+}
+void BrowserView::OnLButtonDblClk(UINT flags,CPoint point)
+{
+#ifdef EDITOR
+    if(frame->editing && EDT_HaveEditBuffer(&frame->context)) {EDT_DoubleClick(&frame->context,point.x+scroll_x,point.y+scroll_y);return;}
+#endif
+    CWnd::OnLButtonDblClk(flags,point);
+}
+void BrowserView::OnSetFocus(CWnd *old)
+{
+    CWnd::OnSetFocus(old);
+#ifdef EDITOR
+    if(frame->editing) WFE_EditorRefreshCaret(&frame->context);
+#endif
+}
+void BrowserView::OnKillFocus(CWnd *next)
+{
+#ifdef EDITOR
+    if(frame->editing) HideCaret();
+#endif
+    CWnd::OnKillFocus(next);
+}
 static int scroll_position(int current, UINT code, UINT position, int maximum, int page)
 {
     if (code == SB_TOP) current = 0;
@@ -1219,12 +1340,31 @@ static int scroll_position(int current, UINT code, UINT position, int maximum, i
     else if (code == SB_THUMBTRACK || code == SB_THUMBPOSITION) current = position;
     return (std::max)(0, (std::min)(current, (std::max)(0, maximum - page)));
 }
-void BrowserView::OnVScroll(UINT code, UINT position, CScrollBar *) { CRect area; GetClientRect(area); scroll_y = scroll_position(scroll_y, code, position, document_height, area.Height()); SetScrollPos(SB_VERT, scroll_y); WFE_FormPositionAll(&frame->context); Invalidate(); }
-void BrowserView::OnHScroll(UINT code, UINT position, CScrollBar *) { CRect area; GetClientRect(area); scroll_x = scroll_position(scroll_x, code, position, document_width, area.Width()); SetScrollPos(SB_HORZ, scroll_x); WFE_FormPositionAll(&frame->context); Invalidate(); }
+void BrowserView::OnVScroll(UINT code, UINT position, CScrollBar *)
+{
+    CRect area; GetClientRect(area);
+    scroll_y = scroll_position(scroll_y, code, position, document_height, area.Height());
+    SetScrollPos(SB_VERT, scroll_y); WFE_FormPositionAll(&frame->context); Invalidate();
+#ifdef EDITOR
+    if(frame->editing) { EDT_WindowScrolled(&frame->context);WFE_EditorRefreshCaret(&frame->context); }
+#endif
+}
+void BrowserView::OnHScroll(UINT code, UINT position, CScrollBar *)
+{
+    CRect area; GetClientRect(area);
+    scroll_x = scroll_position(scroll_x, code, position, document_width, area.Width());
+    SetScrollPos(SB_HORZ, scroll_x); WFE_FormPositionAll(&frame->context); Invalidate();
+#ifdef EDITOR
+    if(frame->editing) { EDT_WindowScrolled(&frame->context);WFE_EditorRefreshCaret(&frame->context); }
+#endif
+}
 BOOL BrowserView::OnMouseWheel(UINT, short delta, CPoint) { OnVScroll(delta > 0 ? SB_LINEUP : SB_LINEDOWN, 0, nullptr); return TRUE; }
 void BrowserView::OnLButtonUp(UINT, CPoint point)
 {
     SetFocus();
+#ifdef EDITOR
+    if(frame->editing) {if(selecting) {selecting=false;ReleaseCapture();EDT_EndSelection(&frame->context,point.x+scroll_x,point.y+scroll_y);}return;}
+#endif
     LO_Element *element = LO_XYToElement(&frame->context, point.x + scroll_x, point.y + scroll_y);
     if (element && element->type == LO_TEXT && element->lo_text.anchor_href) {
         char *address = (char *)element->lo_text.anchor_href->anchor;
@@ -1251,6 +1391,9 @@ void BrowserView::OnLButtonUp(UINT, CPoint point)
 }
 void BrowserView::OnContextMenu(CWnd *, CPoint point)
 {
+#ifdef EDITOR
+    if(frame->editing) return;
+#endif
     if (point.x == -1 && point.y == -1) { point = CPoint(8,8); ClientToScreen(&point); }
     CPoint document = point; ScreenToClient(&document);
     LO_Element *element = LO_XYToElement(&frame->context, document.x + scroll_x, document.y + scroll_y);
@@ -1440,10 +1583,19 @@ extern "C" void WFE_Text(MWContext *context, LO_TextStruct *text, int32 start, i
         SetTextColor(dc, RGB(attribute->fg.red, attribute->fg.green, attribute->fg.blue));
         SetBkColor(dc, RGB(attribute->bg.red, attribute->bg.green, attribute->bg.blue));
     }
-    bool selected = (text->ele_attrmask & LO_ELE_SELECTED) && start <= text->sel_end && end > text->sel_start;
-    SetBkMode(dc, background || selected ? OPAQUE : TRANSPARENT);
-    TextOutA(dc, text->x + text->x_offset + offset.cx, text->y + text->y_offset,
-             (char *)text->text + start, end - start);
+    bool selection=(text->ele_attrmask&LO_ELE_SELECTED)!=0;
+    int first=selection?(std::max)((int)start,text->sel_start<0?0:(int)text->sel_start):(int)end;
+    int last=selection?(std::min)((int)end,text->sel_end<0?(int)text->text_len:(int)text->sel_end+1):(int)end;
+    auto draw=[&](int begin,int finish,bool selected) {
+        if(finish<=begin) return;
+        SIZE prefix={0,0};if(begin) GetTextExtentPoint32A(dc,(char *)text->text,begin,&prefix);
+        SetTextColor(dc,selected?GetSysColor(COLOR_HIGHLIGHTTEXT):attribute?RGB(attribute->fg.red,attribute->fg.green,attribute->fg.blue):RGB(0,0,0));
+        SetBkColor(dc,selected?GetSysColor(COLOR_HIGHLIGHT):attribute?RGB(attribute->bg.red,attribute->bg.green,attribute->bg.blue):RGB(255,255,255));
+        SetBkMode(dc,background||selected?OPAQUE:TRANSPARENT);
+        TextOutA(dc,text->x+text->x_offset+prefix.cx,text->y+text->y_offset,(char *)text->text+begin,finish-begin);
+    };
+    if(selection && first<last) {draw(start,first,false);draw(first,last,true);draw(last,end,false);}
+    else draw(start,end,false);
     SelectObject(dc, previous);
     DeleteObject(font);
     if (smoke_mode) {
@@ -1475,7 +1627,7 @@ extern "C" void WFE_ChromeProgress(MWContext *context, int32 received, int32 len
     int value=length>0 ? (int)((std::min)(100LL,(std::max)(0LL,((long long)received*100)/length))) : 0;
     if(value!=frame->status.progress) { frame->status.progress=value;frame->status.Invalidate(); }
 }
-extern "C" void WFE_Title(MWContext *context, const char *title) { BrowserFrame *frame = frame_for(context); if (frame) { std::string caption = std::string(frame->mode==1 ? "Netscape Mail - [" : frame->mode==2 ? "Netscape News - [" : "Netscape - [") + (title ? title : "Untitled") + "]"; frame->SetWindowText(caption.c_str()); } }
+extern "C" void WFE_Title(MWContext *context, const char *title) { BrowserFrame *frame = frame_for(context); if (frame) { std::string caption = std::string(frame->editing ? "Netscape Editor - [" : frame->mode==1 ? "Netscape Mail - [" : frame->mode==2 ? "Netscape News - [" : "Netscape - [") + (title ? title : "Untitled") + "]"; frame->SetWindowText(caption.c_str()); } }
 extern "C" void WFE_Invalidate(MWContext *context) { BrowserFrame *frame = frame_for(context); if (frame && frame->view.GetSafeHwnd()) frame->view.Invalidate(); }
 extern "C" void WFE_WindowSize(MWContext *context, int32 *width, int32 *height) { BrowserFrame *frame = frame_for(context); CRect area(0,0,800,600); if (frame) frame->view.GetClientRect(area); *width = area.Width(); *height = area.Height(); }
 extern "C" void WFE_DocumentSize(MWContext *context, int32 width, int32 height)
@@ -1496,7 +1648,27 @@ extern "C" void WFE_DocumentSize(MWContext *context, int32 width, int32 height)
     }
     view.SetScrollInfo(SB_VERT, &vertical); view.SetScrollInfo(SB_HORZ, &horizontal);
 }
-extern "C" void WFE_Scroll(MWContext *context, int32 x, int32 y) { BrowserFrame *frame = frame_for(context); if (frame) { frame->view.scroll_x = x; frame->view.scroll_y = y; WFE_FormPositionAll(context); WFE_Invalidate(context); } }
+extern "C" void WFE_Scroll(MWContext *context, int32 x, int32 y)
+{
+    BrowserFrame *frame = frame_for(context);
+    if (frame) {
+#ifdef EDITOR
+        if(frame->editing) {
+            CRect area;frame->view.GetClientRect(area);
+            x=(std::max)(0L,(std::min)(x,(long)(std::max)(0,frame->view.document_width-area.Width())));
+            y=(std::max)(0L,(std::min)(y,(long)(std::max)(0,frame->view.document_height-area.Height())));
+        }
+#endif
+        frame->view.scroll_x = x; frame->view.scroll_y = y;
+        WFE_FormPositionAll(context); WFE_Invalidate(context);
+#ifdef EDITOR
+        if(frame->editing) {
+            frame->view.SetScrollPos(SB_HORZ,x);frame->view.SetScrollPos(SB_VERT,y);
+            EDT_WindowScrolled(context);WFE_EditorRefreshCaret(context);
+        }
+#endif
+    }
+}
 extern "C" void WFE_Position(MWContext *context, int32 *x, int32 *y) { BrowserFrame *frame = frame_for(context); *x = frame ? frame->view.scroll_x : 0; *y = frame ? frame->view.scroll_y : 0; }
 extern "C" void WFE_ConfigureChrome(MWContext *context,const Chrome *chrome)
 {
@@ -1552,6 +1724,26 @@ extern "C" MWContext *WFE_NewWindow(const char *address)
     return &frame->context;
 }
 extern "C" void WFE_CloseWindow(MWContext *context) { BrowserFrame *frame = frame_for(context); if (frame) frame->SendMessage(WM_CLOSE); else WFE_ComposerClose(context); }
+#ifdef EDITOR
+extern "C" const char *WFE_CurrentDocumentURL(MWContext *context)
+{
+    BrowserFrame *frame=frame_for(context);return frame?frame->current_url.c_str():"";
+}
+extern "C" MWContext *WFE_NewEditorWindow(const char *address)
+{
+    if(address && *address) {
+        std::string url=as_url(address);
+        for(auto existing:browser_windows) if(existing->editing && existing->current_url==url) {existing->ShowWindow(SW_SHOW);existing->SetForegroundWindow();return &existing->context;}
+    }
+    BrowserFrame *frame=new BrowserFrame;frame->editing=true;
+    if(!frame->Create(nullptr,"Netscape Editor - [file:///Untitled]",WS_OVERLAPPEDWINDOW,CRect(80,80,1185,845),nullptr,MAKEINTRESOURCE(IDR_EDITOR))) return nullptr;
+    frame->SetIcon(AfxGetApp()->LoadIcon(IDR_EDITOR),TRUE);
+    frame->SetIcon(AfxGetApp()->LoadIcon(IDR_EDITOR),FALSE);frame->LoadAccelTable(MAKEINTRESOURCE(IDR_EDITOR_ACCEL));
+    fit_reference_window(frame,1105,765);browser_windows.push_back(frame);WFE_RegisterNativeWindow(&frame->context,frame->GetSafeHwnd());
+    if(!smoke_mode) frame->ShowWindow(SW_SHOW);
+    frame->Navigate(address&&*address?address:"about:editfilenew");return &frame->context;
+}
+#endif
 extern "C" MWContext *WFE_NewMailWindow(int is_news, const char *server)
 {
     if (!WFE_MailURLDirectory()) { WFE_Message(nullptr, "Could not prepare the profile's Mail directory.", 0); return nullptr; }
@@ -1719,6 +1911,9 @@ static bool dump_native_menus(const char *report)
     const char *names[]={"browser","mail","news","composer"};
     const int ids[]={IDR_MAIN,IDR_MAIL,IDR_NEWS,IDR_COMPOSER_MENU};bool loaded=true;
     for(int i=0;i<4;++i) {CMenu menu;loaded=menu.LoadMenu(ids[i])&&loaded;dump_native_menu(file,names[i],&menu,0);}
+#ifdef EDITOR
+    CMenu editor;loaded=editor.LoadMenu(IDR_EDITOR)&&loaded;dump_native_menu(file,"editor",&editor,0);
+#endif
     return fclose(file)==0&&loaded;
 }
 static bool original_image_menu_smoke(BrowserFrame *frame,const char *report,const char *base)
@@ -1753,8 +1948,12 @@ static int WFE_RunChromeSmoke(const char *report,const char *url,const char *sna
         if(!menu_labels.IsEmpty()) menu_labels+='|';menu_labels+=text;
     }
     auto enabled=[frame](UINT id){ CWnd *b=frame->chrome.Button(id);return b&&b->IsWindowEnabled(); };
+    bool edit_enabled=false;
+#ifdef EDITOR
+    edit_enabled=true;
+#endif
     bool state=!enabled(ID_NAV_BACK)&&!enabled(ID_NAV_FORWARD)&&enabled(ID_NAV_HOME)&&enabled(ID_NAV_RELOAD)&&
-        !enabled(ID_BROWSER_EDIT)&&enabled(ID_BROWSER_IMAGES)&&!enabled(ID_BROWSER_PRINT)&&enabled(ID_BROWSER_FIND)&&!enabled(ID_NAV_STOP);
+        enabled(ID_BROWSER_EDIT)==edit_enabled&&enabled(ID_BROWSER_IMAGES)&&!enabled(ID_BROWSER_PRINT)&&enabled(ID_BROWSER_FIND)&&!enabled(ID_NAV_STOP);
     bool find=WFE_FindDialogSmoke(&frame->context,"Classic toolbar needle")!=0;
     LO_Element *first=nullptr,*last=nullptr;int32 a=0,b=0;
     LO_GetSelectionEndpoints(&frame->context,&first,&last,&a,&b);
@@ -1790,12 +1989,20 @@ static int WFE_RunChromeSmoke(const char *report,const char *url,const char *sna
         chrome_client_size(about,655,410);about->ShowWindow(SW_SHOWNOACTIVATE);browser_smoke_wait(about);
         std::string text=frame_text(about);
         about_page=text.find("Netscape Navigator")!=std::string::npos&&text.find("3.02")!=std::string::npos&&about->view.drawn_images.size()==1&&WFE_AboutOutstanding()==0;
+#ifdef EDITOR
+        about_page=about_page&&text.find("3.02Gold")!=std::string::npos;
+#endif
         chrome_capture(about,(std::string(snapshot)+".about.bmp").c_str(),true);
         about->SendMessage(WM_CLOSE);
     }
     bool passed=complete&&state&&find&&location&&history&&toggles&&narrow&&capture&&about_page;
     FILE *file=fopen(report,"wb");
     if(file) {
+#ifdef EDITOR
+        fputs("edition=gold\n",file);
+#else
+        fputs("edition=standard\n",file);
+#endif
         fprintf(file,"passed=%d\ncompleted=%d\ntoolbar_state=%d\nlocation_enter=%d\nhistory_state=%d\nfind_text=%d\nview_toggles=%d\nnarrow_layout=%d\nlocation_dropdown=%d\ntoolbar_labels=%s\nmenu_labels=%s\ntoolbar_count=%u\ndirectory_count=6\nstatus_panes=4\nnarrow_client=%d,%d\nnarrow_view=%d,%d,%d,%d\ncapture=%d\nabout_page=%d\n",
             passed,complete,state,location,history,find,toggles,narrow,dropdown,(const char*)labels,(const char*)menu_labels,
             (unsigned)frame->chrome.ButtonCount(),client.Width(),client.Height(),view.left,view.top,view.right,view.bottom,capture,about_page);
@@ -2249,6 +2456,9 @@ static bool ui_drag(CWnd *owner,int id,CPoint target)
     divider->SendMessage(WM_LBUTTONUP,0,MAKELPARAM(target.x,target.y));return true;
 }
 #include "menu-smoke.inc"
+#ifdef EDITOR
+#include "editor-smoke.inc"
+#endif
 
 static int WFE_RunMailUISmoke(const char *report,const char *snapshot)
 {
@@ -2610,7 +2820,11 @@ public:
         bool explicit_command=position!=nullptr;
         CString first = position ? arguments.GetNext(position) : "about:";
         smoke_mode = first == "--smoke-test" || first == "--mailnews-smoke" || first == "--composer-delivery-smoke"
-            || first == "--images-smoke" || first == "--forms-smoke" || first == "--frames-smoke" || first == "--downloads-smoke" || first == "--history-smoke" || first == "--history-reopen-smoke" || first == "--bookmarks-smoke" || first == "--chrome-smoke" || first == "--ui-gallery" || first == "--preferences-ui-smoke" || first == "--preferences-reopen-smoke" || first == "--news-ui-smoke" || first == "--mail-ui-smoke" || first == "--compose-ui-smoke";
+            || first == "--images-smoke" || first == "--forms-smoke" || first == "--frames-smoke" || first == "--downloads-smoke" || first == "--history-smoke" || first == "--history-reopen-smoke" || first == "--bookmarks-smoke" || first == "--chrome-smoke" || first == "--ui-gallery" || first == "--preferences-ui-smoke" || first == "--preferences-reopen-smoke" || first == "--news-ui-smoke" || first == "--mail-ui-smoke" || first == "--compose-ui-smoke"
+#ifdef EDITOR
+            || first == "--editor-smoke"
+#endif
+            ;
         if (smoke_mode) {
             SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
 #ifdef _DEBUG
@@ -2625,6 +2839,10 @@ public:
         if (smoke_mode) {
             CString report = position ? arguments.GetNext(position) : "frontend-smoke.txt";
             CString url = position ? arguments.GetNext(position) : "";
+#ifdef EDITOR
+            if(first=="--editor-smoke") m_nExitCode=WFE_RunEditorSmoke(report,url);
+            else
+#endif
             if(first=="--preferences-ui-smoke"||first=="--preferences-reopen-smoke") { CString page=position?arguments.GetNext(position):"";m_nExitCode=WFE_RunPreferencesSmoke(report,url,page,first=="--preferences-reopen-smoke"); }
             else if(first=="--news-ui-smoke") { CString server=position?arguments.GetNext(position):"";m_nExitCode=WFE_RunNewsUISmoke(report,url,server); }
             else if(first=="--mail-ui-smoke") { m_nExitCode=WFE_RunMailUISmoke(report,url); }
@@ -2667,6 +2885,12 @@ public:
             return FALSE;
         }
         if(!explicit_command) return open_preferred_startup();
+#ifdef EDITOR
+        if(first=="--edit" || first=="--editor" || first=="-edit") {
+            CString page=position?arguments.GetNext(position):"";
+            return WFE_NewEditorWindow(page.IsEmpty()?nullptr:(const char *)page)!=nullptr;
+        }
+#endif
         if (first == "-mail" || first == "--mail" || first.Left(8) == "mailbox:") return WFE_NewMailWindow(0, nullptr) != nullptr;
         if (first == "-news" || first == "--news" || first.Left(5) == "news:") return WFE_NewMailWindow(1, nullptr) != nullptr;
         if (first == "--compose") { WFE_NewComposer(nullptr, 0); return WFE_ComposerWindowCount() != 0; }

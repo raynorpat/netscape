@@ -14,11 +14,19 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE = ROOT / "cmake/tests/fixtures/windows302-menus.json"
+GOLD_FIXTURE = ROOT / "cmake/tests/fixtures/windows302-gold-browser-menu.json"
+GOLD_EDITOR_FIXTURE = ROOT / "cmake/tests/fixtures/windows302-gold-editor-menu.json"
 GENERATED = ("browser", "mail", "news")
 
 
-def load_manifest(path=FIXTURE):
-    return json.loads(Path(path).read_text(encoding="utf-8"))
+def load_manifest(path=FIXTURE, edition="standard"):
+    manifest = json.loads(Path(path).read_text(encoding="utf-8"))
+    if edition == "gold":
+        gold = json.loads(GOLD_FIXTURE.read_text(encoding="utf-8"))
+        manifest["menus"]["browser"] = gold["menu"]
+        editor = json.loads(GOLD_EDITOR_FIXTURE.read_text(encoding="utf-8"))
+        manifest["menus"]["editor"] = editor["menu"]
+    return manifest
 
 
 def expanded_items(manifest, name):
@@ -28,7 +36,8 @@ def expanded_items(manifest, name):
         for item in items:
             item = dict(item)
             if "items" in item:
-                item["items"] = copy_items(manifest["runtime_window_items"] if item["label"] == "&Window" else item["items"])
+                expand_window = item["label"] == "&Window" and manifest["menus"][name].get("expand_runtime_window", True)
+                item["items"] = copy_items(manifest["runtime_window_items"] if expand_window else item["items"])
             result.append(item)
         return result
 
@@ -152,7 +161,7 @@ def render_links(manifest):
 
 def command_values():
     values = {}
-    for filename in ("resource.h", "menu_resource.h", "composer_resource.h"):
+    for filename in ("resource.h", "menu_resource.h", "composer_resource.h", "editor_resource.h"):
         source = (ROOT / "cmd/winfe" / filename).read_text(encoding="utf-8")
         for name, expr in re.findall(r"^#define[ \t]+(\w+)[ \t]+([^\r\n]+)", source, re.M):
             try:
@@ -188,7 +197,7 @@ def expected_rows(manifest, name, values=None):
 def compare_native(manifest, path):
     actual = {}
     aliases = {str(value): name for name, value in (("browser", 0), ("mail", 1), ("news", 2), ("composer", 3))}
-    aliases.update({"100": "browser", "102": "mail", "106": "news", "103": "composer"})
+    aliases.update({"100": "browser", "102": "mail", "106": "news", "103": "composer", "108": "editor"})
     for line in Path(path).read_text(encoding="utf-8").splitlines():
         if not line or line.startswith("#"):
             continue
@@ -217,8 +226,12 @@ def main():
     parser.add_argument("--dump-expected", action="store_true", help="print expanded numeric trees as JSON")
     parser.add_argument("--compare", type=Path, help="compare a native .menus.tsv dump")
     parser.add_argument("--fixture", type=Path, default=FIXTURE)
+    parser.add_argument("--edition", choices=("standard", "gold"), default="standard",
+                        help="edition of a native menu dump (standard by default)")
     args = parser.parse_args()
-    manifest = load_manifest(args.fixture)
+    if args.edition == "gold" and not (args.compare or args.dump_expected):
+        parser.error("--edition gold is supported with --compare or --dump-expected")
+    manifest = load_manifest(args.fixture, args.edition)
     if args.dump_expected:
         print(json.dumps({name: expected_rows(manifest, name) for name in manifest["menus"]}, indent=2))
         return 0

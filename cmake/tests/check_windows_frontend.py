@@ -14,6 +14,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--executable", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--edition", choices=("standard", "gold"), default="standard")
     args = parser.parse_args()
     executable = args.executable.resolve()
     output = args.output.resolve()
@@ -103,7 +104,8 @@ def main():
             raise RuntimeError("Expected HTTP document text was not rendered:\n" + text)
         if "/index.html" not in requests:
             raise RuntimeError("The local server did not receive the document request")
-        if not user_agents or any(value != "Mozilla/3.02 (Win32)" for value in user_agents):
+        expected_agent = "Mozilla/3.02Gold (Win32)" if args.edition == "gold" else "Mozilla/3.02 (Win32)"
+        if not user_agents or any(value != expected_agent for value in user_agents):
             raise RuntimeError("Unexpected HTTP User-Agent: {!r}".format(user_agents))
     except subprocess.TimeoutExpired as error:
         for name, value in (("stdout", error.stdout), ("stderr", error.stderr)):

@@ -1040,7 +1040,16 @@ CStreamOutFile::CStreamOutFile( XP_File hFile, XP_Bool bBinary ){
 }
 
 CStreamOutFile::~CStreamOutFile(){
-    XP_FileClose( m_outputFile );
+    Close();
+}
+
+IStreamOut::EOutStreamStatus CStreamOutFile::Close(){
+    if( m_outputFile ){
+        if( XP_FileFlush( m_outputFile ) != 0 ) m_status = EOS_DeviceFull;
+        if( XP_FileClose( m_outputFile ) != 0 ) m_status = EOS_DeviceFull;
+        m_outputFile = NULL;
+    }
+    return m_status;
 }
 
 void CStreamOutFile::Write( char *pBuffer, int32 iCount ){

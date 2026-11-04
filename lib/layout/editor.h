@@ -1458,7 +1458,7 @@ public:
 
     int Offset() { return m_iOffset; }
     CEditElement* Element() { return m_pElement; }
-    IsPositioned(){ return m_pElement != 0; }
+    int IsPositioned(){ return m_pElement != 0; }
 };
 
 
@@ -2975,6 +2975,7 @@ private:
 public:
     CStreamOutFile(  XP_File hFile, XP_Bool bBinary  );
     ~CStreamOutFile();
+    EOutStreamStatus Close();
     virtual void Write( char *pBuffer, int32 iCount );
     virtual EOutStreamStatus Status(){ return m_status; }
 };

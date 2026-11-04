@@ -1,10 +1,17 @@
 #include <windows.h>
 #include "resource.h"
 #include "menu_resource.h"
+#ifdef EDITOR
+#include "editor_resource.h"
+#endif
 #define RESOURCE_STR
 #include "allxpstr.rc"
 IDR_MAIN ICON "res/netscape.ico"
+#ifdef EDITOR
+#include "res/gold-browser-menu.rc"
+#else
 #include "res/browser-menu.rc"
+#endif
 IDD_MAIL_SETTINGS DIALOGEX 0, 0, 310, 170
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Mail and news account settings"
@@ -71,7 +78,11 @@ BEGIN
  BEGIN
   BLOCK "040904e4"
   BEGIN
+#ifdef EDITOR
+   VALUE "FileDescription", "Netscape 3.02Gold Windows frontend port\0"
+#else
    VALUE "FileDescription", "Netscape 3.02 Windows frontend port\0"
+#endif
    VALUE "FileVersion", "3.02\0"
    VALUE "ProductName", "Netscape legacy Windows port\0"
   END
@@ -137,7 +148,11 @@ END
 618 BITMAP "res/classic/mail-disabled.bmp"
 619 BITMAP "res/classic/news-disabled.bmp"
 
+#ifdef EDITOR
+IDR_CLASSIC_ABOUT RCDATA "res/gold/about.html"
+#else
 IDR_CLASSIC_ABOUT RCDATA "res/about.html"
+#endif
 IDR_CLASSIC_ABOUT_LOGO RCDATA "../../lib/xp/biglogo.gif"
 IDR_CLASSIC_LICENSE RCDATA "../../l10n/us/xp/LICENSE-export"
 
@@ -178,3 +193,7 @@ IDR_CLASSIC_LICENSE RCDATA "../../l10n/us/xp/LICENSE-export"
 #include "res/preferences.rc"
 
 554 BITMAP "res/classic/priority-header.bmp"
+
+#ifdef EDITOR
+#include "res/editor.rc"
+#endif

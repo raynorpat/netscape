@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil -*-
  */
-#ifdef MOCHA
+#if defined(MOCHA) || defined(EDITOR)
 /*
  * Mocha layout interface.
  */
@@ -13,6 +13,7 @@
 #include "mo_java.h"
 #endif
 
+#ifdef MOCHA
 void
 lo_MarkMochaTopState(lo_TopState *top_state, MWContext *context)
 {
@@ -26,6 +27,7 @@ lo_MarkMochaTopState(lo_TopState *top_state, MWContext *context)
     LM_PutMochaDecoder(decoder);
     top_state->mocha_mark = TRUE;
 }
+#endif /* MOCHA */
 
 lo_TopState *
 lo_GetTopState(MWContext *context)
@@ -40,6 +42,7 @@ lo_GetTopState(MWContext *context)
     return top_state;
 }
 
+#ifdef MOCHA
 lo_TopState *
 lo_GetMochaTopState(MWContext *context)
 {
@@ -645,6 +648,7 @@ LO_EnumerateEmbeds(MWContext *context)
     return count;
 }
 #endif /* JAVA */
+#endif /* MOCHA */
 
 
 /* XXX lo_DocState should use a colors[LO_NCOLORS] array to shrink code here
@@ -719,6 +723,7 @@ LO_SetDocumentColor(MWContext *context, int type, LO_Color *color)
     }
 }
 
+#ifdef MOCHA
 void
 lo_ProcessContextEventHandlers(MWContext *context, lo_DocState *doc_state,
                                PA_Tag *tag)
@@ -839,3 +844,4 @@ lo_RestoreContextEventHandlers(MWContext *context, lo_DocState *doc_state,
 }
 
 #endif /* MOCHA */
+#endif /* MOCHA || EDITOR */

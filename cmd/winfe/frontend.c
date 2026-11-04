@@ -2,6 +2,13 @@
  * fail explicitly; browser rendering, navigation and event dispatch are real. */
 #include "frontend.h"
 #include "preferences.h"
+#ifdef EDITOR
+#include "editor.h"
+#include "edt.h"
+#define WFE_PARSE_TAG EDT_ProcessTag
+#else
+#define WFE_PARSE_TAG LO_ProcessTag
+#endif
 #include "il.h"
 #include "shist.h"
 #include "libi18n.h"
@@ -125,11 +132,15 @@ int WFE_Init(void)
     PR_Init("Netscape-Win32", 1, 1, 0);
     XP_AppName = "Netscape";
     XP_AppCodeName = "Mozilla";
+#ifdef EDITOR
+    XP_AppVersion = "3.02Gold (Win32)";
+#else
     XP_AppVersion = "3.02 (Win32)";
+#endif
     memset(&parser_functions, 0, sizeof(parser_functions));
-    parser_functions.PA_ParsedTag = LO_ProcessTag;
+    parser_functions.PA_ParsedTag = WFE_PARSE_TAG;
     PA_ParserInit(&parser_functions);
-    parser_data.output_func = LO_ProcessTag;
+    parser_data.output_func = WFE_PARSE_TAG;
     if (NET_InitNetLib(32768, 20) < 0) { WFE_PlatformShutdown(); return 0; }
     WFE_ApplyMailPreferences();
     if(!WFE_PreferencesInit()) { NET_ShutdownNetLib(); WFE_PlatformShutdown(); return 0; }
@@ -138,6 +149,10 @@ int WFE_Init(void)
     NET_RegisterMIMEDecoders();
     NET_RegisterContentTypeConverter(TEXT_HTML, FO_PRESENT, NULL, INTL_ConvCharCode);
     NET_RegisterContentTypeConverter(INTERNAL_PARSER, FO_PRESENT, &parser_data, PA_BeginParseMDL);
+#ifdef EDITOR
+    NET_RegisterContentTypeConverter(TEXT_HTML, FO_EDIT, NULL, INTL_ConvCharCode);
+    NET_RegisterContentTypeConverter(INTERNAL_PARSER, FO_EDIT, &parser_data, PA_BeginParseMDL);
+#endif
     NET_RegisterContentTypeConverter(TEXT_PLAIN, FO_PRESENT, NULL, NET_PlainTextConverter);
     NET_RegisterContentTypeConverter(TEXT_HTML, FO_VIEW_SOURCE, TEXT_HTML, net_ColorHTMLStream);
     NET_RegisterContentTypeConverter("*", FO_VIEW_SOURCE, TEXT_PLAIN, net_ColorHTMLStream);
@@ -201,6 +216,9 @@ void WFE_DestroyContext(MWContext *context)
     if (context->msgframe && context->type == MWContextMail) MSG_CleanupMailContext(context);
     else if (context->msgframe && context->type == MWContextNews) MSG_CleanupNewsContext(context);
     if (context->msg_cframe) MSG_CleanupMessageCompositionContext(context);
+#ifdef EDITOR
+    if(context->is_editor) EDT_DestroyEditBuffer(context);
+#endif
     LO_DiscardDocument(context);
     WFE_FormForgetContext(context);
     IL_DeleteImages(context);
@@ -221,11 +239,28 @@ void WFE_Load(MWContext *context, const char *address)
     if (!url) { WFE_Status(context, "Could not allocate a URL"); return; }
     WFE_BeginLoad(context, url->address);
     WFE_Status(context, address);
-    NET_GetURL(url, context->type == MWContextBrowser ? FO_CACHE_AND_PRESENT : FO_PRESENT, context, url_complete);
+    NET_GetURL(url,
+#ifdef EDITOR
+        context->is_editor ? FO_EDIT :
+#endif
+        context->type == MWContextBrowser ? FO_CACHE_AND_PRESENT : FO_PRESENT, context, url_complete);
 }
 
 void WFE_Pump(void) { WFE_PollNetworking(); }
-int FE_GetURL(MWContext *context, URL_Struct *url) { context = WFE_URLTarget(context, url); if (!context) { NET_FreeURLStruct(url); return -1; } if (context->type == MWContextBrowser) { WFE_HistorySavePosition(context); XP_InterruptContext(context); } WFE_BeginLoad(context, url->address); return NET_GetURL(url, context->type == MWContextBrowser ? FO_CACHE_AND_PRESENT : FO_PRESENT, context, url_complete); }
+int FE_GetURL(MWContext *context,URL_Struct *url)
+{
+    context=WFE_URLTarget(context,url);
+    if(!context) {NET_FreeURLStruct(url);return -1;}
+#ifdef EDITOR
+    if(context->is_editor && !WFE_EditorCheckSave(context)) {NET_FreeURLStruct(url);return MK_INTERRUPTED;}
+#endif
+    if(context->type==MWContextBrowser) {WFE_HistorySavePosition(context);XP_InterruptContext(context);}
+    WFE_BeginLoad(context,url->address);
+#ifdef EDITOR
+    if(context->is_editor) return NET_GetURL(url,FO_EDIT,context,url_complete);
+#endif
+    return NET_GetURL(url,context->type==MWContextBrowser?FO_CACHE_AND_PRESENT:FO_PRESENT,context,url_complete);
+}
 MWContext *FE_CreateNewDocWindow(MWContext *context, URL_Struct *url) { return WFE_NewWindow(url ? url->address : NULL); }
 MWContext *FE_MakeNewWindow(MWContext *context, URL_Struct *url, char *name, Chrome *chrome) { MWContext *created = WFE_NewWindow(NULL); if(created && chrome) WFE_ConfigureChrome(created,chrome); if (created && name && name[0] != '_') created->name = _strdup(name); if (created && url) { free(url->window_target); url->window_target = _strdup(""); FE_GetURL(created, url); } return created; }
 MWContext *FE_MakeBlankWindow(MWContext *context, URL_Struct *url, char *name) { return FE_CreateNewDocWindow(context, url); }
@@ -242,12 +277,17 @@ void FE_LayoutNewDocument(MWContext *context, URL_Struct *url, int32 *width, int
 {
     if(url && url->address) WFE_DocumentAddress(context,url->address);
     WFE_DocumentDefaults(context);
-    if (context->type == MWContextBrowser) SHIST_AddDocument(context, SHIST_CreateHistoryEntry(url, ""));
+    if (context->type == MWContextBrowser
+#ifdef EDITOR
+        || context->is_editor
+#endif
+    ) SHIST_AddDocument(context, SHIST_CreateHistoryEntry(url, ""));
     WFE_WindowSize(context, width, height);
     if (!context->is_grid_cell) *margin_width = *margin_height = 8;
     WFE_Scroll(context, 0, 0);
 }
-void FE_SetDocTitle(MWContext *context, char *title) { SHIST_SetTitleOfCurrentDoc(&context->hist, title); WFE_Title(context, title); }
+/* Save As can pass the current history title, which SHIST replaces and frees. */
+void FE_SetDocTitle(MWContext *context, char *title) { char *copy=title?XP_STRDUP(title):NULL; SHIST_SetTitleOfCurrentDoc(&context->hist, copy); WFE_Title(context, copy); free(copy); }
 void FE_FinishedLayout(MWContext *context) { WFE_Invalidate(context); }
 char *FE_TranslateISOText(MWContext *context, int charset, char *text) { return text; }
 int FE_GetTextInfo(MWContext *context, LO_TextStruct *text, LO_TextInfo *info) { WFE_TextMetrics(context, text, info); return 0; }
@@ -331,7 +371,7 @@ void *FE_AboutData(const char *which, char **data, int32 *length, char **content
         const char *plugins="<html><head><title>About Plug-ins</title></head><body bgcolor=\"#C0C0C0\"><h1>Installed plug-ins</h1><p>No plug-ins are loaded. Native plug-in loading is not available in this port.</p></body></html>";
         *data=_strdup(plugins);*length=*data?(int32)strlen(*data):0;if(*data) ++about_allocations;return *data;
     }
-    if (which && !stricmp(which, "blank")) {
+    if (which && (!stricmp(which, "blank") || !stricmp(which,"editfilenew"))) {
         *data = _strdup(blank); *length = *data ? sizeof(blank) - 1 : 0; if (*data) ++about_allocations; return *data;
     }
     if (which && !stricmp(which, "logo")) { identifier = IDR_CLASSIC_ABOUT_LOGO; *content_type = "image/gif"; }

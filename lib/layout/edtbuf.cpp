@@ -5686,13 +5686,14 @@ int CEditBuffer::WriteToFile( XP_File hFile ){ //char *pFileName ){
     printState.Reset( pOutFile, this );
     Reduce( m_pRoot );
     PrintTree( m_pRoot );
-    SetDirtyFlag( FALSE );
     printState.Reset( 0, this );
-    if( pOutFile->Status() != IStreamOut::EOS_NoError ){
+    // Flush and close before deciding whether to commit the backup transaction.
+    if( pOutFile->Close() != IStreamOut::EOS_NoError ){
         iResult = -1;
     }
     else {
         iResult = 0;
+        SetDirtyFlag( FALSE );
     }
     delete pOutFile;
     // To Jack: this is a problem

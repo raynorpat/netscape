@@ -8,6 +8,9 @@ static const ChromeCommand browser_tools[] = {
     {ID_NAV_BACK,"Back",IDB_CLASSIC_BACK,"Back one page"},
     {ID_NAV_FORWARD,"Forward",IDB_CLASSIC_FORWARD,"Forward one page"},
     {ID_NAV_HOME,"Home",IDB_CLASSIC_HOME,"Open the home page"},
+#ifdef EDITOR
+    {ID_BROWSER_EDIT,"Edit",IDB_CLASSIC_EDIT,"Edit this document"},
+#endif
     {ID_NAV_RELOAD,"Reload",IDB_CLASSIC_RELOAD,"Reload the current page"},
     {ID_BROWSER_IMAGES,"Images",IDB_CLASSIC_IMAGES,"Images are loaded automatically"},
     {ID_BROWSER_OPEN,"Open",IDB_CLASSIC_OPEN,"Open a local document"},

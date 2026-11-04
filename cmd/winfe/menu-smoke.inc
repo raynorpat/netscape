@@ -192,8 +192,8 @@ bool original_browser_menu_smoke(BrowserFrame *frame, const char *report, const 
         if (entries != window_menu_entries.end()) {
             for (size_t index = 0; index < entries->second.size(); ++index) {
                 if (entries->second[index].first == entry.first && entries->second[index].second == handle) {
-                    found = windows && windows->GetMenuState(36000 + (UINT)index, MF_BYCOMMAND) != (UINT)-1;
-                    if (source_frame && handle == source_frame->GetSafeHwnd()) activate = 36000 + (UINT)index;
+                    found = windows && windows->GetMenuState(48000 + (UINT)index, MF_BYCOMMAND) != (UINT)-1;
+                    if (source_frame && handle == source_frame->GetSafeHwnd()) activate = 48000 + (UINT)index;
                 }
             }
         }

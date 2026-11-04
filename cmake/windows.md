@@ -5,6 +5,8 @@ frontend adapted to the 3.02 backend interfaces. The initial frontend supports
 HTML layout, GIF/JPEG/XBM images, native HTML forms, local files, HTTP navigation,
 frames, history, bookmarks, saving/downloads, scrolling and links, plus native mail/news folder lists, message lists, a reader, and composer windows. Remaining
 browser features are tracked in [windows-roadmap.md](windows-roadmap.md).
+An optional Gold configuration adds the original HTML editing engine and a
+native Windows editor interface; its build and verification scope are below.
 
 ## Windows browser frontend
 
@@ -143,6 +145,68 @@ the installed executable passed the image/form fixtures. The native suite includ
 the existing browser/mail checks. Configuration-specific verification is recorded
 below as each roadmap item is completed.
 
+## Optional Gold HTML editor
+
+Use a separate build directory for Gold. `NETSCAPE_BUILD_WINDOWS_EDITOR` defaults
+to `OFF` and requires both the native Windows core and MFC frontend. Enabling it
+defines `EDITOR` and `GOLD` consistently across the participating targets and
+builds the original `lib/layout` editor sources alongside the parser, layout and
+image engines.
+
+```powershell
+cmake -S . -B out/windows-gold -G "Visual Studio 18 2026" -A Win32 -DNETSCAPE_BUILD_WINDOWS_FRONTEND=ON -DNETSCAPE_BUILD_WINDOWS_EDITOR=ON
+cmake --build out/windows-gold --config Release --parallel
+ctest --test-dir out/windows-gold -C Release --output-on-failure
+.\out\windows-gold\Release\netscape.exe --edit
+.\out\windows-gold\Release\netscape.exe --edit "C:\Documents\page.html"
+```
+
+`--edit [path]` opens a new editor or loads the supplied document. Gold browser
+menus also expose new/open editor commands and editing of the current page.
+The document uses the original EDT model and LO layout with native GDI drawing
+and a Windows caret. `editor-ui.cpp` supplies native commands and property
+dialogs; `editor-platform.cpp` supplies the original editor frontend callbacks,
+local file saving and cancellable progress. Save calls `EDT_SaveFile`, including
+its image/link handling and backup transaction; failed or cancelled saves retain
+unsaved changes in the editor. Publishing is disabled.
+
+The interface transcribes Gold RT_MENU 101 for the editor and RT_MENU 2 for its
+browser. It has three icon-only bars, paragraph and size selectors, a 104px
+toolbar area at 96 DPI, and a chosen 1105 x 765 outer reference size constrained
+to the monitor work area. Toolbar cells come from the original Gold 3.02 bitmap
+resources 2001, 2004 and 2005; see the
+[artwork provenance](../cmd/winfe/res/gold/README.md). These measurements describe
+the selected reference configuration, not an established historical placement
+default.
+
+The native command surface includes text entry and selection, clipboard editing,
+undo/redo, basic character and paragraph formatting, lists/alignment, local
+Save/Save As and browser preview. Insert/property dialogs expose links, images,
+targets, HTML tags, horizontal rules, tables and document/text properties.
+Printing, publishing, templates, the page wizard, advanced editor preferences
+and external source editing remain visibly disabled.
+
+The Gold-specific `windows_gold_editor` fixture is registered when testing and
+the editor option are enabled. On 2026-11-04, all eighteen Gold CTests passed in
+Win32 Debug and Release with MSVC 19.51; the standard edition retained seventeen
+passing tests in both configurations. The editor fixture checks new documents,
+keyboard and mouse selection, typing, bold, undo/redo, rich clipboard,
+HTML save/reopen and browser display, relative links/images, failed-save dirty
+state, final buffered-write errors, close/navigation cancellation and reentrant
+close events. It compares every compiled Gold menu item with the independently
+decoded original resources and captures the actual GDI window at 96 DPI.
+The Save As title regression has an exact caption assertion. Final affected
+navigation/menu checks were rerun after the save guards were added.
+
+The installed Release executable passed the same editor fixture from a path
+containing spaces. CPack produces a separate
+`netscape-legacy-gold-3.02-Windows-x86.zip` so the Gold build does not replace
+the standard edition's package. Shared MFC/Visual C++ runtimes are still required.
+
+Advanced property-dialog equivalence, asynchronous image-save cancellation,
+high-DPI behavior and non-Latin-1 editing remain unverified. The limited original Gold observations are recorded in
+[windows-reference.md](windows-reference.md).
+
 ## Classic Windows interface
 
 The browser now follows the supplied Navigator reference: raised icon/text
@@ -163,8 +227,9 @@ Find (Ctrl+F) uses the original layout search and selection APIs, with case,
 direction and wrap options. It retains the focused document when a toolbar
 button takes focus, including nested frames. Copy and Select All use native
 edit controls or layout selections as appropriate. Full mouse text-selection
-work remains separate. Print and the unavailable Gold page editor are visibly
-disabled; Images is disabled because images already load automatically.
+work remains separate. Print is visibly disabled. Gold page editing is available
+in the optional editor configuration above; it remains disabled in the standard
+build. Images is disabled because images already load automatically.
 
 Mail/news use command-specific classic toolbars and backend command states.
 Composer, bookmarks, history, downloads, account settings and prompts share

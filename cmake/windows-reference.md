@@ -18,7 +18,8 @@ historical checksum was authenticated. The standard extracted `netscape.exe`
 is 2992128 bytes, SHA-256
 `26e86c5b7acebc3af39a66441955720301af4c58c33b9e853f44e44ca3ae0794`.
 Its file/product version and running About page identify version 3.02. The Gold
-version resource identifies Gold 3.02; Gold was extracted but not runtime tested.
+version resource identifies Gold 3.02. The later Gold runtime checks described
+below were limited to a blank editor and a single physical keypress.
 
 The installers use classic InstallShield archives. The inspected Python
 [setup30 extractor](https://github.com/ostrich/setup30) unpacked DATA.Z,
@@ -39,7 +40,8 @@ association changes, external mail delivery or news posting was performed.
 
 | Area | Original observation | Port comparison / remaining work |
 | --- | --- | --- |
-| Browser | Running standard 3.02 About page; nine icon/caption toolbar buttons, Location, six directory shortcuts and nine top-level menus. | Standard nine-button toolbar and menu structure now match. Gold editing is a separate integration task; native printing is still absent. |
+| Browser | Running standard 3.02 About page; nine icon/caption toolbar buttons, Location, six directory shortcuts and nine top-level menus. | Standard nine-button toolbar and menu structure now match. The optional Gold build uses its own browser/menu resources; native printing is still absent. |
+| Gold editor | Opened a blank original Gold editor; three icon-only toolbar bars and editor MENU 101. A physical `g` keypress produced a visible character. Sky's Unicode `type_text` injection did not enter the intended text. | Optional native EDT integration uses the same menu inventory, bitmap cells and editor icon, with a 104px toolbar area at 96 DPI and chosen 1105 x 765 outer reference size. Native editing/save fixtures pass as described below; these observations do not establish general original input, formatting, save or property-dialog equivalence. |
 | Mail | Opened Inbox containing the same two synthetic MIME messages used by our fixture; selected and read the base64 message. Ten toolbar buttons, eight menus, folder/message lists above a full-width reader. | At matching reference sizes, the port now uses the observed 303px folder column and 203px upper lists. Original list left the fixture's US-ASCII encoded-word headers literal; the port decodes them. |
 | Composer | Opened a new unsent composition. Five toolbar buttons, five menus, compact Mail To/Cc/Subject/Attachment rows and fixed-width editor. | Structure agrees. Original Address is enabled; ours is disabled pending address-book UI. Fresh original window was approximately 534 x 953 pixels; the port now uses those dimensions, constrained to the monitor work area. |
 | News | Opened the original empty News window: twelve buttons, eight menus, server/group tree, three subscribed default groups and unknown unread counts. Default host `news` failed DNS. | Original reply-button order and Re:Both caption, separate priority/flag columns, Date, yellow subscription boxes and white empty reader now match. No original article retrieval was verified. |
@@ -111,12 +113,47 @@ capture now matches 502 x 442 at 96 DPI. The port provides standard tab keyboard
 navigation and applies Expire Now only after a successful OK, preserving Cancel
 semantics. Destructive history operations were not exercised in the original.
 
+## Gold resource and runtime scope
+
+The optional `NETSCAPE_BUILD_WINDOWS_EDITOR=ON` build transcribes the Gold
+editor's RT_MENU 101 and browser's RT_MENU 2, independently of the standard
+browser menu. The browser transcription is recorded in
+`cmake/tests/fixtures/windows302-gold-browser-menu.json`; the editor fixture is
+`cmake/tests/fixtures/windows302-gold-editor-menu.json`. Its 177 rows, including
+33 separators, come directly from the original MENU 101. Both complete compiled
+trees are checked by the native fixtures. Toolbar artwork consists of unchanged 20 x 18 pixel
+cells cropped from original RT_BITMAP 2001, 2004 and 2005 resources, with source
+details in [the Gold artwork record](../cmd/winfe/res/gold/README.md).
+
+The native implementation uses the original 3.02 EDT document engine and LO/GDI
+rendering, with native commands for basic formatting, insertions, property
+dialogs and local saving. The three bars occupy 104px at 96 DPI. The 1105 x 765
+outer window size is a selected comparison size, constrained to the monitor work
+area, rather than an independently established original default. Print,
+Publish, templates, wizard, advanced editor preferences and external source
+editing are disabled pending their integrations.
+
+Original runtime evidence currently consists of opening the blank Gold editor
+and confirming a visible `g` from a physical key event. The failed Unicode text
+injection limits that automation method; it does not establish a limitation of
+ordinary typing in the original program. No original formatted-document,
+clipboard, save/reopen, table or property-dialog workflow was verified.
+
+The port's eighteen-test Gold suite passed in Win32 Debug and Release on
+2026-11-04. Its native EDT fixture exercises typing, selection, rich clipboard,
+format/undo/redo, new documents, HTML save/reopen/browser viewing, relative
+links/images, failed saves, buffered final-write errors and cancellation of
+close/navigation with nested close events. Native captures confirm the 104px
+bars, editor icon, disabled glyphs and corrected Save As caption. These tests
+establish the port's observed behavior, not untested original-release equivalence.
+
 ## Coverage limits and next comparisons
 
 Original runtime inspection covered browser chrome/About, local mail reading,
-empty News, new composition and the seven General Preferences pages. It did not verify
+empty News, new composition, the seven General Preferences pages and the limited
+blank Gold editor input observation above. It did not verify
 original POP/SMTP/NNTP sessions, sending, printing, address-book workflows,
-plugins, Java, JavaScript, security, Gold editing, all menu actions, or startup
+plugins, Java, JavaScript, security, broader Gold editing, all menu actions, or startup
 combinations. Our loopback tests establish the port's tested behavior, not
 automatic equivalence with every original operation.
 

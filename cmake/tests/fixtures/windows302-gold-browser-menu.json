@@ -1,0 +1,920 @@
+{
+  "schema_version": 1,
+  "source": {
+    "product": "Netscape Navigator Gold 3.02, English, Windows",
+    "executable_sha256": "607189837b428c738c04850b50d84787a6967a79f0d0d426bf25b151c6ee1ea0",
+    "menu_resource_sha256": "097ced5f32c670507c8c640128820abd37b25e35d562c5ceb82ce5f0f9cb11d5",
+    "original_resource_id": 2,
+    "menu_language": 1033,
+    "transcription": "Decoded original standard-format RT_MENU 2 bytes from gold-resources/.rsrc/MENU/2, extracted from the Gold executable by 7-Zip. UTF-16LE labels, accelerator text, nesting, original flags, command IDs and separators are preserved. Native command mappings and disabled states were checked against cmd/winfe/res/gold-browser-menu.rc.",
+    "policy": "Only metadata is committed. No vendor executable or resource binary is included.",
+    "shared_menus": "Mail, news and message composition retain the standard-edition fixtures; this fixture replaces only the Gold browser menu. The Window placeholder is checked before runtime population."
+  },
+  "menu": {
+    "original_resource_id": 2,
+    "resource": "IDR_MAIN",
+    "file": "cmd/winfe/res/gold-browser-menu.rc",
+    "expand_runtime_window": false,
+    "items": [
+      {
+        "original_flags": 16,
+        "label": "&File",
+        "items": [
+          {
+            "original_flags": 0,
+            "original_id": 32770,
+            "label": "New &Web Browser\tCtrl+N",
+            "command": "ID_BROWSER_NEW",
+            "disabled": false
+          },
+          {
+            "original_flags": 16,
+            "label": "&New Document",
+            "items": [
+              {
+                "original_flags": 0,
+                "original_id": 42279,
+                "label": "&Blank",
+                "command": "ID_EDITOR_NEW",
+                "disabled": false
+              },
+              {
+                "original_flags": 0,
+                "original_id": 34401,
+                "label": "From &Template",
+                "command": "ID_EDITOR_TEMPLATE",
+                "disabled": true
+              },
+              {
+                "original_flags": 128,
+                "original_id": 65021,
+                "label": "From &Wizard...",
+                "command": "ID_EDITOR_WIZARD",
+                "disabled": true
+              }
+            ]
+          },
+          {
+            "original_flags": 0,
+            "original_id": 0,
+            "label": "",
+            "command": null,
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 42003,
+            "label": "&Edit Document",
+            "command": "ID_EDITOR_EDIT_DOCUMENT",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 0,
+            "label": "",
+            "command": null,
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 32879,
+            "label": "New &Mail Message\tCtrl+M",
+            "command": "ID_CLIENT_COMPOSE",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 32810,
+            "label": "Ma&il Document...",
+            "command": "ID_MENU_MAIL_DOCUMENT",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 0,
+            "label": "",
+            "command": null,
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 32769,
+            "label": "Open &Location...\tCtrl+L",
+            "command": "ID_FOCUS_LOCATION",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 57601,
+            "label": "Open &File in Browser...\tCtrl+O",
+            "command": "ID_BROWSER_OPEN",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 42151,
+            "label": "Open File in E&ditor...",
+            "command": "ID_EDITOR_OPEN",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 32771,
+            "label": "&Save As...\tCtrl+S",
+            "command": "ID_BROWSER_SAVE",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 34366,
+            "label": "&Upload File...",
+            "command": "ID_MENU_UPLOAD_FILE",
+            "disabled": true
+          },
+          {
+            "original_flags": 0,
+            "original_id": 0,
+            "label": "",
+            "command": null,
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 57605,
+            "label": "Pa&ge Setup...",
+            "command": "ID_MENU_PAGE_SETUP",
+            "disabled": true
+          },
+          {
+            "original_flags": 0,
+            "original_id": 57607,
+            "label": "&Print...",
+            "command": "ID_BROWSER_PRINT",
+            "disabled": true
+          },
+          {
+            "original_flags": 0,
+            "original_id": 57609,
+            "label": "Print Pre&view",
+            "command": "ID_MENU_PRINT_PREVIEW",
+            "disabled": true
+          },
+          {
+            "original_flags": 0,
+            "original_id": 0,
+            "label": "",
+            "command": null,
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 57602,
+            "label": "&Close\tCtrl+W",
+            "command": "0xE141",
+            "disabled": false
+          },
+          {
+            "original_flags": 128,
+            "original_id": 57665,
+            "label": "E&xit",
+            "command": "ID_MENU_EXIT",
+            "disabled": false
+          }
+        ]
+      },
+      {
+        "original_flags": 16,
+        "label": "&Edit",
+        "items": [
+          {
+            "original_flags": 0,
+            "original_id": 57643,
+            "label": "&Undo\tCtrl+Z",
+            "command": "0xE12B",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 0,
+            "label": "",
+            "command": null,
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 57635,
+            "label": "Cu&t\tCtrl+X",
+            "command": "0xE123",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 57634,
+            "label": "&Copy\tCtrl+C",
+            "command": "0xE122",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 57637,
+            "label": "&Paste\tCtrl+V",
+            "command": "0xE125",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 0,
+            "label": "",
+            "command": null,
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 57642,
+            "label": "&Select All\tCtrl+A",
+            "command": "0xE12A",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 0,
+            "label": "",
+            "command": null,
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 32819,
+            "label": "&Find...\tCtrl+F",
+            "command": "ID_BROWSER_FIND",
+            "disabled": false
+          },
+          {
+            "original_flags": 128,
+            "original_id": 32880,
+            "label": "Find A&gain\tF3",
+            "command": "ID_MENU_FIND_AGAIN",
+            "disabled": false
+          }
+        ]
+      },
+      {
+        "original_flags": 16,
+        "label": "&View",
+        "items": [
+          {
+            "original_flags": 0,
+            "original_id": 32782,
+            "label": "&Reload\tCtrl+R",
+            "command": "ID_NAV_RELOAD",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 32881,
+            "label": "Reload &Frame",
+            "command": "ID_MENU_RELOAD_FRAME",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 32804,
+            "label": "Load &Images\tCtrl+I",
+            "command": "ID_BROWSER_IMAGES",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 32783,
+            "label": "Re&fresh",
+            "command": "ID_MENU_REFRESH",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 0,
+            "label": "",
+            "command": null,
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 32789,
+            "label": "Document &Source",
+            "command": "ID_MENU_DOCUMENT_SOURCE",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 32846,
+            "label": "Document I&nfo",
+            "command": "ID_MENU_DOCUMENT_INFO",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 0,
+            "label": "",
+            "command": null,
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 34404,
+            "label": "Frame Source",
+            "command": "ID_MENU_FRAME_SOURCE",
+            "disabled": false
+          },
+          {
+            "original_flags": 128,
+            "original_id": 34405,
+            "label": "Frame Info",
+            "command": "ID_MENU_FRAME_INFO",
+            "disabled": false
+          }
+        ]
+      },
+      {
+        "original_flags": 16,
+        "label": "&Go",
+        "items": [
+          {
+            "original_flags": 0,
+            "original_id": 32780,
+            "label": "&Back\tAlt+<-",
+            "command": "ID_NAV_BACK",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 32781,
+            "label": "&Forward\tAlt+->",
+            "command": "ID_NAV_FORWARD",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 32807,
+            "label": "&Home",
+            "command": "ID_NAV_HOME",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 32795,
+            "label": "&Stop Loading\t<Esc>",
+            "command": "ID_NAV_STOP",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 0,
+            "label": "",
+            "command": null,
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 34402,
+            "label": "&Default Publish Location",
+            "command": "ID_EDITOR_PUBLISH_LOCATION",
+            "disabled": true
+          },
+          {
+            "original_flags": 128,
+            "original_id": 0,
+            "label": "",
+            "command": null,
+            "disabled": false
+          }
+        ]
+      },
+      {
+        "original_flags": 16,
+        "label": "&Bookmarks",
+        "items": [
+          {
+            "original_flags": 0,
+            "original_id": 32811,
+            "label": "&Add Bookmark\tCtrl+D",
+            "command": "ID_BOOKMARKS_ADD",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 32812,
+            "label": "&Go to Bookmarks...\tCtrl+B",
+            "command": "ID_BOOKMARKS_SHOW",
+            "disabled": false
+          },
+          {
+            "original_flags": 128,
+            "original_id": 0,
+            "label": "",
+            "command": null,
+            "disabled": false
+          }
+        ]
+      },
+      {
+        "original_flags": 16,
+        "label": "&Options",
+        "items": [
+          {
+            "original_flags": 0,
+            "original_id": 32791,
+            "label": "&General Preferences...",
+            "command": "ID_BROWSER_PREFERENCES",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 42040,
+            "label": "&Editor Preferences...",
+            "command": "ID_EDITOR_PREFERENCES",
+            "disabled": true
+          },
+          {
+            "original_flags": 0,
+            "original_id": 32882,
+            "label": "&Mail and News Preferences...",
+            "command": "ID_MAIL_SETTINGS",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 32884,
+            "label": "&Network Preferences...",
+            "command": "ID_MENU_NETWORK_PREFERENCES",
+            "disabled": true
+          },
+          {
+            "original_flags": 0,
+            "original_id": 32883,
+            "label": "&Security Preferences...",
+            "command": "ID_MENU_SECURITY_PREFERENCES",
+            "disabled": true
+          },
+          {
+            "original_flags": 0,
+            "original_id": 0,
+            "label": "",
+            "command": null,
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 59392,
+            "label": "Show &Toolbar",
+            "command": "ID_VIEW_TOOLBAR",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 32788,
+            "label": "Show &Location",
+            "command": "ID_VIEW_LOCATION",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 32840,
+            "label": "Show &Directory Buttons",
+            "command": "ID_VIEW_DIRECTORY",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 32878,
+            "label": "Show &Java Console",
+            "command": "ID_MENU_JAVA_CONSOLE",
+            "disabled": true
+          },
+          {
+            "original_flags": 0,
+            "original_id": 0,
+            "label": "",
+            "command": null,
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 32817,
+            "label": "&Auto Load Images",
+            "command": "ID_MENU_AUTO_IMAGES",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 0,
+            "label": "",
+            "command": null,
+            "disabled": false
+          },
+          {
+            "original_flags": 144,
+            "label": "Document &Encoding",
+            "items": [
+              {
+                "original_flags": 0,
+                "original_id": 33115,
+                "label": "Western(Latin1)",
+                "command": "ID_MENU_ENCODING_LATIN1",
+                "disabled": false
+              },
+              {
+                "original_flags": 0,
+                "original_id": 0,
+                "label": "",
+                "command": null,
+                "disabled": false
+              },
+              {
+                "original_flags": 0,
+                "original_id": 34369,
+                "label": "Central European(Win1250)",
+                "command": "ID_MENU_ENCODING_WIN1250",
+                "disabled": true
+              },
+              {
+                "original_flags": 0,
+                "original_id": 33116,
+                "label": "Central European(ISO8859-2)",
+                "command": "ID_MENU_ENCODING_LATIN2",
+                "disabled": true
+              },
+              {
+                "original_flags": 0,
+                "original_id": 0,
+                "label": "",
+                "command": null,
+                "disabled": false
+              },
+              {
+                "original_flags": 0,
+                "original_id": 33117,
+                "label": "Japanese(Auto-detect)",
+                "command": "ID_MENU_ENCODING_JAPANESE_AUTO",
+                "disabled": true
+              },
+              {
+                "original_flags": 0,
+                "original_id": 33118,
+                "label": "Japanese(ShiftJIS)",
+                "command": "ID_MENU_ENCODING_SHIFTJIS",
+                "disabled": true
+              },
+              {
+                "original_flags": 0,
+                "original_id": 33119,
+                "label": "Japanese(EUC)",
+                "command": "ID_MENU_ENCODING_JAPANESE_EUC",
+                "disabled": true
+              },
+              {
+                "original_flags": 0,
+                "original_id": 0,
+                "label": "",
+                "command": null,
+                "disabled": false
+              },
+              {
+                "original_flags": 0,
+                "original_id": 33120,
+                "label": "Traditional Chinese(Big5)",
+                "command": "ID_MENU_ENCODING_BIG5",
+                "disabled": true
+              },
+              {
+                "original_flags": 0,
+                "original_id": 33121,
+                "label": "Traditional Chinese(EUC)",
+                "command": "ID_MENU_ENCODING_CHINESE_EUC",
+                "disabled": true
+              },
+              {
+                "original_flags": 0,
+                "original_id": 0,
+                "label": "",
+                "command": null,
+                "disabled": false
+              },
+              {
+                "original_flags": 0,
+                "original_id": 33122,
+                "label": "Simplified Chinese",
+                "command": "ID_MENU_ENCODING_CHINESE_GB",
+                "disabled": true
+              },
+              {
+                "original_flags": 0,
+                "original_id": 0,
+                "label": "",
+                "command": null,
+                "disabled": false
+              },
+              {
+                "original_flags": 0,
+                "original_id": 33123,
+                "label": "Korean",
+                "command": "ID_MENU_ENCODING_KOREAN",
+                "disabled": true
+              },
+              {
+                "original_flags": 0,
+                "original_id": 0,
+                "label": "",
+                "command": null,
+                "disabled": false
+              },
+              {
+                "original_flags": 0,
+                "original_id": 34370,
+                "label": "Cyrillic(Win1251)",
+                "command": "ID_MENU_ENCODING_WIN1251",
+                "disabled": true
+              },
+              {
+                "original_flags": 0,
+                "original_id": 34371,
+                "label": "Cyrillic(ISO8859-5)",
+                "command": "ID_MENU_ENCODING_CYRILLIC_ISO",
+                "disabled": true
+              },
+              {
+                "original_flags": 0,
+                "original_id": 0,
+                "label": "",
+                "command": null,
+                "disabled": false
+              },
+              {
+                "original_flags": 0,
+                "original_id": 34372,
+                "label": "Cyrillic(KOI8-R)",
+                "command": "ID_MENU_ENCODING_KOI8R",
+                "disabled": true
+              },
+              {
+                "original_flags": 0,
+                "original_id": 0,
+                "label": "",
+                "command": null,
+                "disabled": false
+              },
+              {
+                "original_flags": 0,
+                "original_id": 34374,
+                "label": "Greek",
+                "command": "ID_MENU_ENCODING_GREEK",
+                "disabled": true
+              },
+              {
+                "original_flags": 0,
+                "original_id": 0,
+                "label": "",
+                "command": null,
+                "disabled": false
+              },
+              {
+                "original_flags": 0,
+                "original_id": 34376,
+                "label": "Turkish",
+                "command": "ID_MENU_ENCODING_TURKISH",
+                "disabled": true
+              },
+              {
+                "original_flags": 0,
+                "original_id": 0,
+                "label": "",
+                "command": null,
+                "disabled": false
+              },
+              {
+                "original_flags": 0,
+                "original_id": 34377,
+                "label": "Unicode(UTF8)",
+                "command": "ID_MENU_ENCODING_UTF8",
+                "disabled": true
+              },
+              {
+                "original_flags": 0,
+                "original_id": 0,
+                "label": "",
+                "command": null,
+                "disabled": false
+              },
+              {
+                "original_flags": 0,
+                "original_id": 33124,
+                "label": "User Defined",
+                "command": "ID_MENU_ENCODING_USER",
+                "disabled": true
+              },
+              {
+                "original_flags": 0,
+                "original_id": 0,
+                "label": "",
+                "command": null,
+                "disabled": false
+              },
+              {
+                "original_flags": 128,
+                "original_id": 32839,
+                "label": "&Set Default",
+                "command": "ID_MENU_ENCODING_DEFAULT",
+                "disabled": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "original_flags": 16,
+        "label": "&Directory",
+        "items": [
+          {
+            "original_flags": 0,
+            "original_id": 65000,
+            "label": "N&etscape's Home",
+            "command": "ID_MENU_DIRECTORY_HOME",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 65001,
+            "label": "What's &New?",
+            "command": "ID_DIRECTORY_FIRST",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 65002,
+            "label": "What's &Cool?",
+            "command": "ID_DIRECTORY_FIRST + 1",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 0,
+            "label": "",
+            "command": null,
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 65004,
+            "label": "Customer Sho&wcase",
+            "command": "ID_MENU_DIRECTORY_SHOWCASE",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 65005,
+            "label": "Netscape &Destinations",
+            "command": "ID_DIRECTORY_FIRST + 2",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 65006,
+            "label": "Internet &Search",
+            "command": "ID_DIRECTORY_FIRST + 3",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 65007,
+            "label": "&People",
+            "command": "ID_DIRECTORY_FIRST + 4",
+            "disabled": false
+          },
+          {
+            "original_flags": 128,
+            "original_id": 65008,
+            "label": "&About the Internet",
+            "command": "ID_MENU_DIRECTORY_INTERNET",
+            "disabled": false
+          }
+        ]
+      },
+      {
+        "original_flags": 16,
+        "label": "&Window",
+        "items": [
+          {
+            "original_flags": 128,
+            "original_id": 34003,
+            "label": "New Window",
+            "command": "ID_MENU_WINDOW_ANCHOR",
+            "disabled": true
+          }
+        ]
+      },
+      {
+        "original_flags": 144,
+        "label": "&Help",
+        "items": [
+          {
+            "original_flags": 0,
+            "original_id": 65199,
+            "label": "&About Netscape...",
+            "command": "ID_BROWSER_ABOUT",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 65018,
+            "label": "About &Plug-ins",
+            "command": "ID_MENU_HELP_PLUGINS",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 65010,
+            "label": "Registration &Information",
+            "command": "ID_MENU_HELP_REGISTRATION",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 65019,
+            "label": "Sof&tware",
+            "command": "ID_MENU_HELP_SOFTWARE",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 65020,
+            "label": "&Web Page Starter",
+            "command": "ID_EDITOR_STARTER",
+            "disabled": true
+          },
+          {
+            "original_flags": 0,
+            "original_id": 0,
+            "label": "",
+            "command": null,
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 65011,
+            "label": "&Handbook",
+            "command": "ID_MENU_HELP_HANDBOOK",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 65012,
+            "label": "&Release Notes",
+            "command": "ID_MENU_HELP_RELEASE_NOTES",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 65013,
+            "label": "&Frequently Asked Questions",
+            "command": "ID_MENU_HELP_FAQ",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 65014,
+            "label": "&On Security",
+            "command": "ID_MENU_HELP_SECURITY",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 0,
+            "label": "",
+            "command": null,
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 65015,
+            "label": "How to &Give Feedback",
+            "command": "ID_MENU_HELP_FEEDBACK",
+            "disabled": false
+          },
+          {
+            "original_flags": 0,
+            "original_id": 65016,
+            "label": "How to Get &Support",
+            "command": "ID_MENU_HELP_SUPPORT",
+            "disabled": false
+          },
+          {
+            "original_flags": 128,
+            "original_id": 65017,
+            "label": "How to &Create Web Services",
+            "command": "ID_MENU_HELP_WEB_SERVICES",
+            "disabled": false
+          }
+        ]
+      }
+    ]
+  }
+}

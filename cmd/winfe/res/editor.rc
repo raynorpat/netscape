@@ -1,0 +1,287 @@
+/* Native transcription of English Windows Netscape Navigator Gold 3.02
+ * RT_MENU 101; SHA256 14a9f98740851e8caee699c48b9a859c9f68155413dc72a04b4733c5a657f8ed.
+ * Labels, accelerators, order and separators are copied from that resource.
+ * Numeric IDs retain original Gold commands; named IDs route shared frontend commands.
+ * GRAYED marks unavailable facilities in this native port. */
+IDR_EDITOR MENU
+BEGIN
+ POPUP "&File"
+ BEGIN
+  MENUITEM "New &Web Browser", ID_BROWSER_NEW // Gold 32770
+  POPUP "&New Document\tCtrl+N"
+  BEGIN
+   MENUITEM "&Blank", 42279 // Gold 42279
+   MENUITEM "From &Template", 34401, GRAYED // Gold 34401
+   MENUITEM "From &Wizard...", ID_EDITOR_WIZARD, GRAYED // Gold 65021
+  END
+  MENUITEM SEPARATOR
+  MENUITEM "&Browse Document", 42021 // Gold 42021
+  MENUITEM SEPARATOR
+  MENUITEM "Open &Location...", 32769 // Gold 32769
+  MENUITEM "Open &File...\tCtrl+O", 42151 // Gold 42151
+  MENUITEM "&Save\tCtrl+S", 42001 // Gold 42001
+  MENUITEM "Save &As...", 42002 // Gold 42002
+  MENUITEM "P&ublish...", 42216, GRAYED // Gold 42216
+  MENUITEM SEPARATOR
+  MENUITEM "New &Mail Message...\tCtrl+M", ID_CLIENT_COMPOSE // Gold 32879
+  MENUITEM "Ma&il Document...", 32810, GRAYED // Gold 32810
+  MENUITEM SEPARATOR
+  MENUITEM "Pa&ge Setup...", 57605, GRAYED // Gold 57605
+  MENUITEM "&Print...", 57607, GRAYED // Gold 57607
+  MENUITEM "Print Pre&view", 57609, GRAYED // Gold 57609
+  MENUITEM SEPARATOR
+  MENUITEM "&Close\tCtrl+W", 0xE141 // Gold 57602
+  MENUITEM "E&xit", ID_MENU_EXIT // Gold 57665
+ END
+ POPUP "&Edit"
+ BEGIN
+  MENUITEM "&Undo\tCtrl+Z", 57643 // Gold 57643
+  MENUITEM "R&edo\tCtrl+Shift+Z", 57644 // Gold 57644
+  MENUITEM SEPARATOR
+  MENUITEM "Cu&t\tCtrl+X", 57635 // Gold 57635
+  MENUITEM "&Copy\tCtrl+C", 57634 // Gold 57634
+  MENUITEM "&Paste\tCtrl+V", 57637 // Gold 57637
+  MENUITEM "&Delete\tDel", 32871 // Gold 32871
+  MENUITEM "&Select All\tCtrl+A", 34338 // Gold 34338
+  MENUITEM SEPARATOR
+  MENUITEM "Select &Table", 42357 // Gold 42357
+  POPUP "De&lete Table"
+  BEGIN
+   MENUITEM "&Table", 42322 // Gold 42322
+   MENUITEM "&Row", 42323 // Gold 42323
+   MENUITEM "C&olumn", 42324 // Gold 42324
+   MENUITEM "&Cell", 42325 // Gold 42325
+  END
+  MENUITEM SEPARATOR
+  MENUITEM "&Remove Links", 42270 // Gold 42270
+  MENUITEM SEPARATOR
+  MENUITEM "&Find...\tCtrl+F", 32819 // Gold 32819
+  MENUITEM "Find &Again\tF3", 32880 // Gold 32880
+ END
+ POPUP "&View"
+ BEGIN
+  MENUITEM "&Reload\tCtrl+R", 32782 // Gold 32782
+  MENUITEM "Load &Images", 32804 // Gold 32804
+  MENUITEM "Re&fresh", 32783 // Gold 32783
+  MENUITEM SEPARATOR
+  MENUITEM "View Document &Source", 32789 // Gold 32789
+  MENUITEM "&Edit Document Source", 42217, GRAYED // Gold 42217
+  MENUITEM "Document I&nfo", 32846 // Gold 32846
+  MENUITEM SEPARATOR
+  MENUITEM "Display &Paragraph Marks", 42291 // Gold 42291
+  MENUITEM "Display &Tables", 42364 // Gold 42364
+ END
+ POPUP "&Insert"
+ BEGIN
+  MENUITEM "&Link...\tCtrl+L", 42134 // Gold 42134
+  MENUITEM "T&arget (Named Anchor)...", 42108 // Gold 42108
+  MENUITEM "&Image...", 42100 // Gold 42100
+  POPUP "&Table"
+  BEGIN
+   MENUITEM "&Table...", 42317 // Gold 42317
+   MENUITEM "&Row", 42318 // Gold 42318
+   MENUITEM "C&olumn", 42319 // Gold 42319
+   MENUITEM "&Cell", 42320 // Gold 42320
+  END
+  MENUITEM "H&orizontal Line", 42101 // Gold 42101
+  MENUITEM "&HTML Tag...", 42109 // Gold 42109
+  MENUITEM SEPARATOR
+  MENUITEM "&New Line Break\tShift+Enter", 42102 // Gold 42102
+  MENUITEM "&Break below Image(s)", 42105 // Gold 42105
+  MENUITEM "Nonbreaking &Space\tShift+Space", 42182 // Gold 42182
+ END
+ POPUP "&Properties"
+ BEGIN
+  MENUITEM "T&ext...", 42083 // Gold 42083
+  MENUITEM "&Link...\tCtrl+L", 42079 // Gold 42079
+  MENUITEM "T&arget (Named Anchor)...", 42086 // Gold 42086
+  MENUITEM "&Image...", 42077 // Gold 42077
+  MENUITEM "&Table...", 42332 // Gold 42332
+  MENUITEM "H&orizontal Line...", 42078 // Gold 42078
+  MENUITEM "&HTML Tag...", 42087 // Gold 42087
+  MENUITEM "&Document...", 42082 // Gold 42082
+  MENUITEM SEPARATOR
+  POPUP "&Character"
+  BEGIN
+   MENUITEM "&Bold\tCtrl+B", 42010 // Gold 42010
+   MENUITEM "&Italic\tCtrl+I", 42011 // Gold 42011
+   MENUITEM "&Underline\tCtrl+U", 42363 // Gold 42363
+   MENUITEM "&Fixed Width\tCtrl+T", 42012 // Gold 42012
+   MENUITEM "Su&perscript", 42013 // Gold 42013
+   MENUITEM "&Subscript", 42014 // Gold 42014
+   MENUITEM "S&trikethrough", 42015 // Gold 42015
+   MENUITEM "Blin&k", 42016 // Gold 42016
+   MENUITEM SEPARATOR
+   MENUITEM "Text &Color...", 36279 // Gold 36279
+   MENUITEM "&Default Color", 42225 // Gold 42225
+   MENUITEM SEPARATOR
+   MENUITEM "&JavaScript (Server)", 42293, GRAYED // Gold 42293
+   MENUITEM "Ja&vaScript (Client)", 42294, GRAYED // Gold 42294
+   MENUITEM SEPARATOR
+   MENUITEM "Clear &all styles\tCtrl+K", 42017 // Gold 42017
+  END
+  POPUP "Font &Size"
+  BEGIN
+   MENUITEM "-2", 36280 // Gold 36280
+   MENUITEM "-1", 36281 // Gold 36281
+   MENUITEM "+0", 36282 // Gold 36282
+   MENUITEM "+1", 36283 // Gold 36283
+   MENUITEM "+2", 36284 // Gold 36284
+   MENUITEM "+3", 36285 // Gold 36285
+   MENUITEM "+4", 36286 // Gold 36286
+  END
+  POPUP "&Paragraph"
+  BEGIN
+   MENUITEM "&Normal", 36012 // Gold 36012
+   MENUITEM "Heading &1", 36005 // Gold 36005
+   MENUITEM "Heading &2", 36006 // Gold 36006
+   MENUITEM "Heading &3", 36007 // Gold 36007
+   MENUITEM "Heading &4", 36008 // Gold 36008
+   MENUITEM "Heading &5", 36009 // Gold 36009
+   MENUITEM "Heading &6", 36010 // Gold 36010
+   MENUITEM "&Address", 36013 // Gold 36013
+   MENUITEM "&Formatted", 36017 // Gold 36017
+   MENUITEM "&List Item", 36023 // Gold 36023
+   MENUITEM "Description &Title", 36025 // Gold 36025
+   MENUITEM "Description Te&xt", 36026 // Gold 36026
+   MENUITEM SEPARATOR
+   MENUITEM "&Indent one level\tTab", 42097 // Gold 42097
+   MENUITEM "&Remove one indent level\tShift+Tab", 42098 // Gold 42098
+  END
+ END
+ POPUP "&Options"
+ BEGIN
+  MENUITEM "&General Preferences...", ID_BROWSER_PREFERENCES // Gold 32791
+  MENUITEM "&Editor Preferences...", 42040, GRAYED // Gold 42040
+  MENUITEM "&Mail and News Preferences...", ID_EDITOR_MAIL_PREFERENCES // Gold 32882
+  MENUITEM "&Network Preferences...", 32884, GRAYED // Gold 32884
+  MENUITEM "&Security Preferences...", 32883, GRAYED // Gold 32883
+  MENUITEM SEPARATOR
+  MENUITEM "Show &File/Edit Toolbar", 42004 // Gold 42004
+  MENUITEM "Show &Character Format Toolbar", 42006 // Gold 42006
+  MENUITEM "Show &Paragraph Format Toolbar", 42005 // Gold 42005
+  MENUITEM "Show &Java Console", 32878, GRAYED // Gold 32878
+  MENUITEM SEPARATOR
+  MENUITEM "&Auto Load Images", ID_MENU_AUTO_IMAGES // Gold 32817
+  MENUITEM SEPARATOR
+  POPUP "Doc&ument Encoding"
+  BEGIN
+   MENUITEM "Western(Latin1)", 33115 // Gold 33115
+   MENUITEM SEPARATOR
+   MENUITEM "Central European(Win1250)", 33116, GRAYED // Gold 33116
+   MENUITEM SEPARATOR
+   MENUITEM "Japanese(ShiftJIS)", 33118, GRAYED // Gold 33118
+   MENUITEM SEPARATOR
+   MENUITEM "Traditional Chinese(Big5)", 33120, GRAYED // Gold 33120
+   MENUITEM SEPARATOR
+   MENUITEM "Simplified Chinese", 33122, GRAYED // Gold 33122
+   MENUITEM SEPARATOR
+   MENUITEM "Korean", 33123, GRAYED // Gold 33123
+   MENUITEM SEPARATOR
+   MENUITEM "Cyrillic(Win1251)", 34370, GRAYED // Gold 34370
+   MENUITEM SEPARATOR
+   MENUITEM "Cyrillic(KOI8-R)", 34372, GRAYED // Gold 34372
+   MENUITEM SEPARATOR
+   MENUITEM "Greek", 34374, GRAYED // Gold 34374
+   MENUITEM SEPARATOR
+   MENUITEM "Turkish", 34376, GRAYED // Gold 34376
+   MENUITEM SEPARATOR
+   MENUITEM "User Defined", 33124, GRAYED // Gold 33124
+   MENUITEM SEPARATOR
+   MENUITEM "&Set Default", 32839, GRAYED // Gold 32839
+  END
+ END
+ POPUP "&Window"
+ BEGIN
+  MENUITEM "New Window", ID_MENU_WINDOW_ANCHOR, GRAYED // Gold 34003
+ END
+ POPUP "&Help"
+ BEGIN
+  MENUITEM "&About Netscape...", ID_BROWSER_ABOUT // Gold 65199
+  MENUITEM "About &Plug-ins", ID_MENU_HELP_PLUGINS // Gold 65018
+  MENUITEM "Registration &Information", ID_MENU_HELP_REGISTRATION // Gold 65010
+  MENUITEM "Sof&tware", ID_MENU_HELP_SOFTWARE // Gold 65019
+  MENUITEM "&Web Page Starter", 65020, GRAYED // Gold 65020
+  MENUITEM SEPARATOR
+  MENUITEM "&Handbook", ID_MENU_HELP_HANDBOOK // Gold 65011
+  MENUITEM "&Release Notes", ID_MENU_HELP_RELEASE_NOTES // Gold 65012
+  MENUITEM "&Frequently Asked Questions", ID_MENU_HELP_FAQ // Gold 65013
+  MENUITEM "&On Security", ID_MENU_HELP_SECURITY // Gold 65014
+  MENUITEM SEPARATOR
+  MENUITEM "How to &Give Feedback", ID_MENU_HELP_FEEDBACK // Gold 65015
+  MENUITEM "How to Get &Support", ID_MENU_HELP_SUPPORT // Gold 65016
+  MENUITEM "How to &Create Web Services", ID_MENU_HELP_WEB_SERVICES // Gold 65017
+ END
+END
+
+IDD_EDITOR_PROPERTIES DIALOGEX 0, 0, 300, 118
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Properties"
+FONT 8, "MS Sans Serif"
+BEGIN
+ LTEXT "", IDC_EDITOR_LABEL1, 8, 11, 88, 12
+ EDITTEXT IDC_EDITOR_VALUE1, 98, 8, 192, 14, ES_AUTOHSCROLL
+ LTEXT "", IDC_EDITOR_LABEL2, 8, 35, 88, 12
+ EDITTEXT IDC_EDITOR_VALUE2, 98, 32, 192, 14, ES_AUTOHSCROLL
+ LTEXT "", IDC_EDITOR_LABEL3, 8, 59, 88, 12
+ EDITTEXT IDC_EDITOR_VALUE3, 98, 56, 192, 14, ES_AUTOHSCROLL
+ DEFPUSHBUTTON "OK", IDOK, 180, 94, 52, 14
+ PUSHBUTTON "Cancel", IDCANCEL, 238, 94, 52, 14
+END
+
+IDR_EDITOR_ACCEL ACCELERATORS
+BEGIN
+ "N", ID_EDITOR_NEW, VIRTKEY, CONTROL
+ "O", ID_EDITOR_OPEN, VIRTKEY, CONTROL
+ "S", ID_EDITOR_SAVE, VIRTKEY, CONTROL
+ "W", 0xE141, VIRTKEY, CONTROL
+ "M", ID_CLIENT_COMPOSE, VIRTKEY, CONTROL
+ "Z", 0xE12B, VIRTKEY, CONTROL
+ "Z", 0xE12C, VIRTKEY, CONTROL, SHIFT
+ "X", 0xE123, VIRTKEY, CONTROL
+ "C", 0xE122, VIRTKEY, CONTROL
+ "V", 0xE125, VIRTKEY, CONTROL
+ "A", ID_EDITOR_SELECT_ALL, VIRTKEY, CONTROL
+ "B", ID_EDITOR_BOLD, VIRTKEY, CONTROL
+ "I", ID_EDITOR_ITALIC, VIRTKEY, CONTROL
+ "U", ID_EDITOR_UNDERLINE, VIRTKEY, CONTROL
+ "T", ID_EDITOR_FIXED, VIRTKEY, CONTROL
+ "K", ID_EDITOR_CLEAR_STYLES, VIRTKEY, CONTROL
+ "L", ID_EDITOR_LINK, VIRTKEY, CONTROL
+ "F", ID_EDITOR_FIND, VIRTKEY, CONTROL
+ "R", ID_EDITOR_RELOAD, VIRTKEY, CONTROL
+ VK_F3, ID_EDITOR_FIND_AGAIN, VIRTKEY
+END
+8000 BITMAP "res/gold/2001-0.bmp"
+8001 BITMAP "res/gold/2001-1.bmp"
+8002 BITMAP "res/gold/2001-2.bmp"
+8003 BITMAP "res/gold/2001-3.bmp"
+8004 BITMAP "res/gold/2001-4.bmp"
+8005 BITMAP "res/gold/2001-5.bmp"
+8006 BITMAP "res/gold/2001-6.bmp"
+8007 BITMAP "res/gold/2001-7.bmp"
+8008 BITMAP "res/gold/2001-8.bmp"
+8009 BITMAP "res/gold/2001-9.bmp"
+8020 BITMAP "res/gold/2004-0.bmp"
+8021 BITMAP "res/gold/2004-1.bmp"
+8022 BITMAP "res/gold/2004-2.bmp"
+8023 BITMAP "res/gold/2004-3.bmp"
+8024 BITMAP "res/gold/2004-4.bmp"
+8025 BITMAP "res/gold/2004-5.bmp"
+8026 BITMAP "res/gold/2004-6.bmp"
+8027 BITMAP "res/gold/2004-7.bmp"
+8028 BITMAP "res/gold/2004-8.bmp"
+8029 BITMAP "res/gold/2004-9.bmp"
+8030 BITMAP "res/gold/2004-10.bmp"
+8031 BITMAP "res/gold/2004-11.bmp"
+8032 BITMAP "res/gold/2004-12.bmp"
+8040 BITMAP "res/gold/2005-0.bmp"
+8041 BITMAP "res/gold/2005-1.bmp"
+8042 BITMAP "res/gold/2005-2.bmp"
+8043 BITMAP "res/gold/2005-3.bmp"
+8044 BITMAP "res/gold/2005-4.bmp"
+8045 BITMAP "res/gold/2005-5.bmp"
+8046 BITMAP "res/gold/2005-6.bmp"
+
+/* Original Gold editor RT_GROUP_ICON 101, RT_ICON 29 and 30. */
+IDR_EDITOR ICON "res/gold/editor.ico"

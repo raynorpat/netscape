@@ -27,6 +27,16 @@ add_executable(netscape-win32 WIN32
  "${PROJECT_SOURCE_DIR}/cmd/winfe/netscape.rc"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/cmdparse.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/genedit.cpp")
+if(NETSCAPE_BUILD_WINDOWS_EDITOR)
+ target_sources(netscape-win32 PRIVATE
+  "${PROJECT_SOURCE_DIR}/cmd/winfe/editor-platform.cpp"
+  "${PROJECT_SOURCE_DIR}/cmd/winfe/editor-ui.cpp")
+ if(BUILD_TESTING)
+  target_sources(netscape-win32 PRIVATE "${PROJECT_SOURCE_DIR}/cmd/winfe/editor-stream-smoke.cpp")
+  target_compile_definitions(netscape-win32 PRIVATE WFE_EDITOR_STREAM_TEST)
+ endif()
+endif()
+
 target_include_directories(netscape-win32 PRIVATE "${PROJECT_SOURCE_DIR}/cmd/winfe")
 target_compile_definitions(netscape-win32 PRIVATE _AFXDLL _MBCS)
 set_target_properties(netscape-win32 PROPERTIES OUTPUT_NAME netscape CXX_STANDARD 14 CXX_STANDARD_REQUIRED ON)
@@ -39,6 +49,10 @@ install(FILES "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/LICENSE"
  DESTINATION share/doc/netscape/licenses RENAME WinFE-NPL-1.0 COMPONENT Runtime)
 install(FILES "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/README.md"
  DESTINATION share/doc/netscape RENAME Windows-source-provenance.md COMPONENT Runtime)
+if(NETSCAPE_BUILD_WINDOWS_EDITOR)
+ install(FILES "${PROJECT_SOURCE_DIR}/cmd/winfe/res/gold/README.md"
+  DESTINATION share/doc/netscape RENAME Gold-resource-provenance.md COMPONENT Runtime)
+endif()
 install(FILES "${PROJECT_SOURCE_DIR}/cmake/windows.md"
  "${PROJECT_SOURCE_DIR}/cmake/windows-roadmap.md"
  "${PROJECT_SOURCE_DIR}/cmake/windows-reference.md"
@@ -50,7 +64,8 @@ if(BUILD_TESTING)
  find_package(Python3 REQUIRED COMPONENTS Interpreter)
  add_test(NAME windows_frontend_http COMMAND "${Python3_EXECUTABLE}"
   "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_frontend.py"
-  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/frontend-http")
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/frontend-http"
+  --edition "$<IF:$<BOOL:${NETSCAPE_BUILD_WINDOWS_EDITOR}>,gold,standard>")
  set_tests_properties(windows_frontend_http PROPERTIES TIMEOUT 40)
  add_test(NAME windows_mailnews COMMAND "${Python3_EXECUTABLE}"
   "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_mailnews.py"
@@ -87,8 +102,16 @@ if(BUILD_TESTING)
  set_tests_properties(windows_bookmarks PROPERTIES TIMEOUT 80)
  add_test(NAME windows_classic_chrome COMMAND "${Python3_EXECUTABLE}"
   "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_chrome.py"
-  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/chrome-test")
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/chrome-test"
+  --edition "$<IF:$<BOOL:${NETSCAPE_BUILD_WINDOWS_EDITOR}>,gold,standard>")
  set_tests_properties(windows_classic_chrome PROPERTIES TIMEOUT 60)
+endif()
+
+if(BUILD_TESTING AND NETSCAPE_BUILD_WINDOWS_EDITOR)
+ add_test(NAME windows_gold_editor COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_editor.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/editor-test")
+ set_tests_properties(windows_gold_editor PROPERTIES TIMEOUT 110)
 endif()
 
 if(BUILD_TESTING)

@@ -19,6 +19,7 @@ from urllib.parse import urlsplit
 
 
 TOOLBAR_LABELS = "Back|Forward|Home|Reload|Images|Open|Print|Find|Stop"
+GOLD_TOOLBAR_LABELS = "Back|Forward|Home|Edit|Reload|Images|Open|Print|Find|Stop"
 MENU_LABELS = "File|Edit|View|Go|Bookmarks|Options|Directory|Window|Help"
 PAGES = {
     "/": (
@@ -128,16 +129,19 @@ def check_bitmap(path, dpi=96):
     raise RuntimeError("Chrome capture lacks rendered text and artwork (fewer than eight colors)")
 
 
-def check_report(report):
+def check_report(report, edition="standard"):
     text = report.read_text(encoding="utf-8", errors="replace")
     fields = dict(line.split("=", 1) for line in text.splitlines() if "=" in line)
+    if fields.get("edition") != edition:
+        raise RuntimeError("Chrome report edition does not match {} fixture:\n{}".format(edition, text))
     for name in ("passed", "completed", "toolbar_state", "location_enter", "history_state",
                  "menu_auto_images", "menu_document_source", "menu_browser_find_again", "menu_window_list", "menu_window_activate", "menu_go_history",
                  "find_text", "view_toggles", "narrow_layout", "location_dropdown", "about_page"):
         if fields.get(name) != "1":
             raise RuntimeError("Chrome report has unexpected {}:\n{}".format(name, text))
-    for name, expected in (("toolbar_labels", TOOLBAR_LABELS), ("menu_labels", MENU_LABELS),
-                           ("toolbar_count", "9"), ("directory_count", "6")):
+    toolbar = GOLD_TOOLBAR_LABELS if edition == "gold" else TOOLBAR_LABELS
+    for name, expected in (("toolbar_labels", toolbar), ("menu_labels", MENU_LABELS),
+                           ("toolbar_count", "10" if edition == "gold" else "9"), ("directory_count", "6")):
         if fields.get(name) != expected:
             raise RuntimeError("Chrome report has unexpected {}:\n{}".format(name, text))
     if int(fields.get("status_panes", "0")) < 3:
@@ -156,7 +160,7 @@ def check_report(report):
     return fields
 
 
-def run_smoke(executable, output, server):
+def run_smoke(executable, output, server, edition="standard"):
     report = output / "chrome-smoke.txt"
     snapshot = output / "chrome-smoke.bmp"
     for path in (report, snapshot):
@@ -184,11 +188,11 @@ def run_smoke(executable, output, server):
     missing = [path for path in PAGES if path not in server.requests]
     if missing:
         raise RuntimeError("Chrome navigation omitted actual HTTP requests: " + ", ".join(missing))
-    subprocess.run([sys.executable, str(Path(__file__).resolve().parents[1] / "tools" / "generate_windows_menus.py"), "--compare", str(report) + ".menus.tsv"], check=True)
+    subprocess.run([sys.executable, str(Path(__file__).resolve().parents[1] / "tools" / "generate_windows_menus.py"), "--compare", str(report) + ".menus.tsv", "--edition", edition], check=True)
     for image in ("/automatic-a.gif", "/automatic-b.gif"):
         if server.requests.count(image) != 1:
             raise RuntimeError("Image menu did not defer/fetch exactly once: " + repr(server.requests))
-    fields = check_report(report)
+    fields = check_report(report, edition)
     width, height = check_bitmap(snapshot, int(fields.get("ui_dpi", "96")))
     (output / "chrome-capture.json").write_text(
         json.dumps({"width": width, "height": height}, indent=2) + "\n", encoding="utf-8")
@@ -198,12 +202,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--executable", "--exe", type=Path, required=True)
     parser.add_argument("--output", "--output-dir", type=Path, required=True)
+    parser.add_argument("--edition", choices=("standard", "gold"), default="standard")
     args = parser.parse_args()
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
     try:
         with fixture_server(output) as server:
-            run_smoke(args.executable.resolve(), output, server)
+            run_smoke(args.executable.resolve(), output, server, args.edition)
     except (OSError, RuntimeError, ValueError) as error:
         print("Windows chrome smoke failed: " + str(error), file=sys.stderr)
         return 1

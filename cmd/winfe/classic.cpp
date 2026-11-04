@@ -72,11 +72,11 @@ void ClassicButton::DrawItem(LPDRAWITEMSTRUCT item)
                   down ? ClassicUI::Face : RGB(128,128,128));
     inside.DeflateRect(2,1);
     if (down) inside.OffsetRect(1,1);
-    if (artwork.GetSafeHandle()) {
+    if (artwork.GetSafeHandle() && presentation!=1) {
         CBitmap *image = disabled && disabled_artwork.GetSafeHandle() ? &disabled_artwork : &artwork;
         BITMAP bitmap; image->GetBitmap(&bitmap);
         int size = ClassicUI::Scale(this, 16);
-        int x = inside.CenterPoint().x - size / 2, y = inside.top + ClassicUI::Scale(this, 1);
+        int x = inside.CenterPoint().x - size / 2, y = presentation==0 ? inside.CenterPoint().y-size/2 : inside.top + ClassicUI::Scale(this, 1);
         CDC memory; memory.CreateCompatibleDC(&dc);
         CBitmap *old = memory.SelectObject(image);
         TransparentBlt(dc, x,y,size,size,memory,0,0,bitmap.bmWidth,bitmap.bmHeight,ClassicUI::Face);
@@ -86,13 +86,13 @@ void ClassicButton::DrawItem(LPDRAWITEMSTRUCT item)
     CString caption; GetWindowText(caption);
     CFont *old_font = dc.SelectObject(ClassicUI::Font(this));
     dc.SetBkMode(TRANSPARENT);
-    if (disabled) {
+    if (disabled && presentation!=0) {
         CRect shadow(inside); shadow.OffsetRect(1,1);
         dc.SetTextColor(RGB(255,255,255));
         dc.DrawText(caption, shadow, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
     }
     dc.SetTextColor(disabled ? RGB(128,128,128) : RGB(0,0,0));
-    dc.DrawText(caption, inside, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+    if(presentation!=0) dc.DrawText(caption, inside, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
     if (item->itemState & ODS_FOCUS) { CRect focus(area); focus.DeflateRect(3,3); dc.DrawFocusRect(focus); }
     dc.SelectObject(old_font); dc.Detach();
 }

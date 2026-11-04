@@ -198,6 +198,54 @@ an optional development step using Python/Pillow:
 `python cmake/tools/generate_windows_toolbar.py`; normal builds use checked-in
 bitmaps. Source provenance is in `cmd/winfe/res/classic/README.md`.
 
+## General Preferences
+
+Options > General Preferences opens the classic seven-tab dialog in browser,
+Mail and News windows. Appearance controls toolbar pictures/text, default
+Browser/Mail/News startup windows, blank/home location, link underlining and
+visited-history expiration. Explicit command-line URLs and `--mail`, `--news`
+or `--compose` take precedence over default startup choices. The default home
+remains the offline `about:` page.
+
+Fonts selects Latin-1 proportional/fixed fonts and sizes through native pickers.
+Colors selects text/link/visited/background colors and document override. Image
+color and incremental-display options feed the original IL settings. Language
+supports ordered available/accepted lists and custom tags; actual requests use
+the saved Accept-Language value. Its validated 492-byte limit fits the original
+HTTP engine's fixed header buffer. Palette dithering on indexed displays and
+progressive timing need further runtime coverage.
+
+Apps and Helpers show the original rows and supported MIME actions, with
+unsupported external-app/helper editing disabled. Background-image preferences
+and non-Latin-1 font encodings are also disabled pending integration.
+
+Settings live in the profile's `browser.ini`, `[General]` section. Existing
+`[Browser] Home` migrates when the new key is absent and remains synchronized
+on save. OK validates, flushes a temporary copy and replaces the file before
+changing runtime settings; unrelated INI sections are preserved. Failed saves
+keep the dialog open and retain the prior file/settings. Cancel discards edits,
+including a pending Expire Now. Font/image settings are captured for each
+document load, and supported cached GET pages reflow after preference changes;
+POST responses are not silently submitted again.
+
+`windows_preferences` checks actual native tabs and keyboard controls, Cancel,
+validation, page retention, locked-file failure/retry, all three toolbar styles,
+cross-process persistence and legacy-home migration. It loads a real GIF and
+HTML page over loopback, checks the chosen font and captured background pixels,
+tests blank-browser startup, and inspects actual Accept-Language requests in two
+processes. Store checks cover malformed persisted values, unknown INI sections,
+temporary-file cleanup and the 492/493-byte header boundary.
+
+All seventeen native CTests passed in Win32 Release and Debug with MSVC 19.51
+on 2026-11-04. The installed Release executable passed the Preferences fixture
+from a path containing spaces. Actual dialog captures were inspected at 96 DPI;
+broader DPI, non-Latin-1 rendering and all startup combinations remain unverified.
+
+The original Windows release was also run and inspected. Provenance, exact
+download hashes, observed UI agreements and remaining differences are recorded
+in [windows-reference.md](windows-reference.md). This does not establish parity
+for every original menu action or optional engine.
+
 ## Mail and news
 
 Use Messages > Open Mail / Open News, or launch `netscape.exe --mail`, `--news`,
@@ -424,10 +472,11 @@ Windows frontend**. Concrete differences already found:
 
 The native frontend above provides the first MFC application shell, text
 rendering, event dispatch, asynchronous sockets/DNS, file services and resource
-targets. Richer preferences and optional engines remain integration work. The recovered source remains the implementation guide
+targets. General Preferences now covers supported browser settings; advanced
+helper/cache controls and optional engines remain integration work. The recovered source remains the implementation guide
 while the 3.02 backend interfaces stay authoritative.
 
-Because usable Windows frontend source was recovered, binary reconstruction is
-not needed at this stage. A verified 3.02 Windows executable can later serve as
-a behavior oracle for differences the source cannot explain; no Windows binary
-has been decompiled or its behavior claimed to match in this port.
+The recovered source guides implementation while the original 3.02 Windows
+release now supplies a runtime UI reference. See [windows-reference.md](windows-reference.md)
+for its provenance and the limits of the comparison. No Windows binary was
+decompiled, and complete behavior parity has not been established.

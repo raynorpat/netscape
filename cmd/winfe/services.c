@@ -1,5 +1,6 @@
 /* Optional user-interface services for the 3.02 browser frontend. */
 #include "frontend.h"
+#include "preferences.h"
 #include "downloads.h"
 #include "mailsettings.h"
 #include "bkmks.h"
@@ -50,6 +51,8 @@ const char *FE_UsersSignature(void)
 
 char *FE_GetAcceptLanguage(void)
 {
+    const char *preferred=WFE_PreferenceLanguages();
+    if(preferred && *preferred) return (char *)preferred;
     static char language[LOCALE_NAME_MAX_LENGTH];
     if (!language[0]) {
         if (!GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SISO639LANGNAME,

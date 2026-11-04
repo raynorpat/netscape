@@ -1,5 +1,6 @@
 /* GDI rendering adapter for the original 3.02 image library. */
 #include "images.h"
+#include "preferences.h"
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
@@ -66,7 +67,8 @@ extern "C" void WFE_ImageInitContext(MWContext *context)
     background.red = background.green = background.blue = 255;
     if (!context->colorSpace)
         IL_EnableTrueColor(context, 24, 16, 8, 0, 8, 8, 8, &background, 0);
-    IL_SetPreferences(context, TRUE, ilAuto);
+    IL_SetPreferences(context, WFE_PreferenceIncrementalImages()!=0,
+        WFE_PreferenceImageDither()==1?ilDither:WFE_PreferenceImageDither()==2?ilClosestColor:ilAuto);
 }
 
 extern "C" void WFE_ImageBackground(MWContext *context,

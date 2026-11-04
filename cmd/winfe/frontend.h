@@ -32,6 +32,7 @@ void WFE_Title(MWContext *context, const char *title);
 void WFE_Invalidate(MWContext *context);
 void WFE_WindowSize(MWContext *context, int32 *width, int32 *height);
 void WFE_DocumentSize(MWContext *context, int32 width, int32 height);
+void WFE_DocumentDefaults(MWContext *context);
 void WFE_Scroll(MWContext *context, int32 x, int32 y);
 void WFE_Position(MWContext *context, int32 *x, int32 *y);
 void WFE_Background(MWContext *context, unsigned long color);

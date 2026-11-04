@@ -1,5 +1,6 @@
 #include "chrome.h"
 #include "resource.h"
+#include "preferences.h"
 #include <algorithm>
 
 struct ChromeCommand { UINT id; const char *label; UINT bitmap; const char *tip; };
@@ -86,13 +87,14 @@ bool ClassicChrome::Create(CWnd *owner, CGenericEdit *address, ClassicButton *go
         shortcuts.push_back(std::move(button));
     }
     ClassicUI::Apply(this);
+    SetPresentation(WFE_GeneralPreferences().toolbar);
     return true;
 }
 
 int ClassicChrome::Arrange(int width)
 {
     auto s = [this](int n){ return ClassicUI::Scale(this,n); };
-    int y=s(3), button_width=s(mode==2 ? 50 : 44), button_height=s(mode ? 42 : 38);
+    int y=s(3), button_width=s(presentation==0 ? 30 : mode==2 ? 50 : 44), button_height=s(presentation==0 ? 26 : presentation==1 ? 24 : mode ? 42 : 38);
     int columns=(std::max)(1,(width-s(mode ? 48 : 8))/button_width);
     for (size_t i=0;i<buttons.size();++i) {
         buttons[i]->ShowWindow(toolbar_visible ? SW_SHOW : SW_HIDE);
@@ -128,6 +130,11 @@ int ClassicChrome::Arrange(int width)
     return y;
 }
 
+void ClassicChrome::SetPresentation(int style)
+{
+    presentation=style>=0&&style<=2?style:2;
+    for(auto &button:buttons) button->SetPresentation(presentation);
+}
 void ClassicChrome::UpdateCommands()
 {
     CCmdUI command;

@@ -45,6 +45,7 @@ BEGIN
  END
  POPUP "&Options"
  BEGIN
+  MENUITEM "&General Preferences...", ID_BROWSER_PREFERENCES
   MENUITEM "Mail and News &Preferences...", ID_MAIL_SETTINGS
  END
  POPUP "&Window"

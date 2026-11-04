@@ -1,6 +1,7 @@
 /* Native frontend boundary for the 3.02 core. Optional unavailable services
  * fail explicitly; browser rendering, navigation and event dispatch are real. */
 #include "frontend.h"
+#include "preferences.h"
 #include "il.h"
 #include "shist.h"
 #include "libi18n.h"
@@ -125,6 +126,7 @@ int WFE_Init(void)
     parser_data.output_func = LO_ProcessTag;
     if (NET_InitNetLib(32768, 20) < 0) { WFE_PlatformShutdown(); return 0; }
     WFE_ApplyMailPreferences();
+    if(!WFE_PreferencesInit()) { NET_ShutdownNetLib(); WFE_PlatformShutdown(); return 0; }
     NET_SetDiskCacheSize(0);
     NET_SetMemoryCacheSize(4 * 1024 * 1024);
     NET_RegisterMIMEDecoders();
@@ -209,6 +211,7 @@ void WFE_Load(MWContext *context, const char *address)
     XP_InterruptContext(context);
     url = NET_CreateURLStruct(address, NET_DONT_RELOAD);
     if (!url) { WFE_Status(context, "Could not allocate a URL"); return; }
+    WFE_BeginLoad(context, url->address);
     WFE_Status(context, address);
     NET_GetURL(url, context->type == MWContextBrowser ? FO_CACHE_AND_PRESENT : FO_PRESENT, context, url_complete);
 }
@@ -229,6 +232,7 @@ void FE_ShowScrollBars(MWContext *context, XP_Bool show) { }
 
 void FE_LayoutNewDocument(MWContext *context, URL_Struct *url, int32 *width, int32 *height, int32 *margin_width, int32 *margin_height)
 {
+    WFE_DocumentDefaults(context);
     if (context->type == MWContextBrowser) SHIST_AddDocument(context, SHIST_CreateHistoryEntry(url, ""));
     WFE_WindowSize(context, width, height);
     if (!context->is_grid_cell) *margin_width = *margin_height = 8;

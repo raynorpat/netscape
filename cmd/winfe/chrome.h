@@ -19,6 +19,8 @@ public:
     bool Create(CWnd *owner, CGenericEdit *edit, ClassicButton *go, int mode);
     int Arrange(int width);
     void UpdateCommands();
+    void SetPresentation(int style);
+    int Presentation() const { return presentation; }
     void Remember(const char *address);
     void FocusBar(bool backwards);
     size_t ButtonCount() const { return buttons.size(); }
@@ -26,7 +28,7 @@ public:
     CWnd *Button(UINT command);
     CComboBox location;
 private:
-    int mode = 0;
+    int mode = 0, presentation = 2;
     CGenericEdit *edit = nullptr;
     ClassicButton *go = nullptr;
     CStatic label;

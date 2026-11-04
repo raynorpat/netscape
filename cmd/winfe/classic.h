@@ -15,9 +15,11 @@ namespace ClassicUI {
 class ClassicButton : public CButton {
 public:
     void SetBitmapResource(UINT resource);
+    void SetPresentation(int style) { presentation=style; if(GetSafeHwnd()) Invalidate(); }
     void DrawItem(LPDRAWITEMSTRUCT item) override;
 private:
     CBitmap artwork, disabled_artwork;
+    int presentation = 2;
 };
 
 class ClassicDialog : public CDialog {

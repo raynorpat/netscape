@@ -43,6 +43,7 @@ static void invalid_parameter(const wchar_t *expression, const wchar_t *function
 #include "chrome.h"
 #include "mailui.h"
 #include "find.h"
+#include "preferences.h"
 #include "glhist.h"
 #include "merrors.h"
 extern "C" {
@@ -99,6 +100,7 @@ public:
     CListCtrl folders, messages;
     MailPaneUI mail_panes;
     MWContext context;
+    GeneralPreferences document_preferences;
     MWContext *grid_parent = nullptr;
     MWContext *last_document = nullptr;
     std::string grid_name;
@@ -170,6 +172,7 @@ protected:
     afx_msg void OnHeaderMode(UINT command);
     afx_msg void OnMessageColumn(NMHDR *header,LRESULT *result);
     afx_msg void OnSettings();
+    afx_msg void OnPreferences() { WFE_ShowGeneralPreferences(this); }
     afx_msg void OnNewsCommand(UINT command);
     afx_msg void OnUpdateNews(CCmdUI *command);
     afx_msg void OnFolderClick(NMHDR *header,LRESULT *result);
@@ -239,6 +242,7 @@ BEGIN_MESSAGE_MAP(BrowserFrame, CFrameWnd)
  ON_UPDATE_COMMAND_UI_RANGE(ID_MAIL_HEADERS_SOME, ID_MAIL_HEADERS_ALL, OnUpdateMessage)
  ON_NOTIFY(LVN_COLUMNCLICK, ID_MESSAGE_LIST, OnMessageColumn)
  ON_COMMAND(ID_MAIL_SETTINGS, OnSettings)
+ ON_COMMAND(ID_BROWSER_PREFERENCES, OnPreferences)
  ON_COMMAND_RANGE(ID_NEWS_REPLY_POST, ID_NEWS_THREADED, OnNewsCommand)
  ON_UPDATE_COMMAND_UI_RANGE(ID_NEWS_REPLY_POST, ID_NEWS_THREADED, OnUpdateNews)
  ON_UPDATE_COMMAND_UI(ID_CLIENT_POST, OnUpdateNews)
@@ -341,6 +345,7 @@ int BrowserFrame::OnCreate(LPCREATESTRUCT create)
         go.SetWindowText(mode == 2 ? "Connect" : "Refresh");
     }
     browser_contexts[&context] = this;
+    document_preferences=WFE_GeneralPreferences();
     WFE_InitContext(&context, this);
     initialized = true;
     SetTimer(1, 10, nullptr);
@@ -439,16 +444,21 @@ MWContext *BrowserFrame::FocusedDocument()
 }
 void BrowserFrame::OnHome()
 {
-    char home[32768]; std::string file=std::string(WFE_ProfileDirectory())+"/browser.ini";
-    GetPrivateProfileStringA("Browser","Home","about:",home,sizeof(home),file.c_str());
+    const char *home=WFE_GeneralPreferences().home.c_str();
     if(mode) WFE_NewWindow(home);else Navigate(home);
 }
 void BrowserFrame::OnSetHome()
 {
     if(current_url.empty()) return;
-    std::string file=std::string(WFE_ProfileDirectory())+"/browser.ini";
-    if(!WritePrivateProfileStringA("Browser","Home",current_url.c_str(),file.c_str()))
-        WFE_Message(&context,"Unable to save the home page.",0);
+    GeneralPreferences value=WFE_GeneralPreferences();value.home=current_url;std::string error;
+    if(!WFE_SaveGeneralPreferences(value,&error)) WFE_Message(&context,error.c_str(),0);
+}
+void WFE_GeneralPreferencesChanged()
+{
+    for(BrowserFrame *frame:browser_windows) if(!frame->grid_parent && frame->GetSafeHwnd()) {
+        frame->chrome.SetPresentation(WFE_GeneralPreferences().toolbar);
+        CRect area;frame->GetClientRect(area);frame->SendMessage(WM_SIZE,SIZE_RESTORED,MAKELPARAM(area.Width(),area.Height()));
+    }
 }
 void BrowserFrame::OnFind() { WFE_FindShow(FocusedDocument()); }
 void BrowserFrame::OnDirectory(UINT command)
@@ -976,15 +986,16 @@ void BrowserView::OnContextMenu(CWnd *, CPoint point)
     else if (command == ID_BROWSER_SAVE_IMAGE) WFE_SaveLink(&frame->context, image.c_str(), nullptr);
 }
 
-static HFONT text_font(LO_TextAttr *attribute)
+static HFONT text_font(LO_TextAttr *attribute,const GeneralPreferences &preferences,bool link)
 {
     static const int heights[] = {10,10,12,16,18,24,32,48};
     int size = attribute ? (std::max)(0, (std::min)(7, (int)attribute->size)) : 3;
     int mask = attribute ? attribute->fontmask : 0;
     int attributes = attribute ? attribute->attrmask : 0;
-    const char *face = attribute && attribute->font_face ? attribute->font_face : (mask & LO_FONT_FIXED ? "Courier New" : "Times New Roman");
-    return CreateFontA(-heights[size], 0, 0, 0, mask & LO_FONT_BOLD ? FW_BOLD : FW_NORMAL,
-                      !!(mask & LO_FONT_ITALIC), !!(attributes & LO_ATTR_UNDERLINE),
+    const char *face = attribute && attribute->font_face ? attribute->font_face : (mask & LO_FONT_FIXED ? preferences.fixed.c_str() : preferences.proportional.c_str());
+    int points=mask&LO_FONT_FIXED?preferences.fixed_size:preferences.proportional_size;
+    return CreateFontA(-MulDiv(heights[size],points,12), 0, 0, 0, mask & LO_FONT_BOLD ? FW_BOLD : FW_NORMAL,
+                      !!(mask & LO_FONT_ITALIC), !!(attributes & LO_ATTR_UNDERLINE) && (!link || preferences.underline),
                       !!(attributes & LO_ATTR_STRIKEOUT), ANSI_CHARSET, OUT_DEFAULT_PRECIS,
                       CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, face);
 }
@@ -1006,7 +1017,9 @@ extern "C" void FE_RaiseWindow(MWContext *context)
 extern "C" void WFE_BeginLoad(MWContext *context, const char *url)
 {
     BrowserFrame *frame = frame_for(context);
-    if (!frame || frame->mode || !url) return;
+    if (!frame || !url) return;
+    frame->document_preferences=WFE_GeneralPreferences();WFE_ImageInitContext(context);
+    if(frame->mode) return;
     WFE_HistorySavePosition(context);
     frame->current_url = url;
     BrowserFrame *owner=frame;
@@ -1110,7 +1123,7 @@ extern "C" void WFE_TextMetrics(MWContext *context, LO_TextStruct *text, LO_Text
 {
     BrowserFrame *frame = frame_for(context);
     CClientDC dc(frame ? &frame->view : nullptr);
-    HFONT font = text_font(text->text_attr);
+    HFONT font = text_font(text->text_attr,frame?frame->document_preferences:WFE_GeneralPreferences(),text->anchor_href!=nullptr);
     HGDIOBJ previous = SelectObject(dc, font);
     TEXTMETRICA metrics;
     SIZE size = {0,0};
@@ -1132,7 +1145,7 @@ extern "C" void WFE_Text(MWContext *context, LO_TextStruct *text, int32 start, i
     end = (std::min)((long)text->text_len, end);
     if (end <= start) return;
     CDC &dc = *frame->view.drawing;
-    HFONT font = text_font(text->text_attr);
+    HFONT font = text_font(text->text_attr,frame?frame->document_preferences:WFE_GeneralPreferences(),text->anchor_href!=nullptr);
     HGDIOBJ previous = SelectObject(dc, font);
     SIZE offset = {0,0};
     if (start) GetTextExtentPoint32A(dc, (char *)text->text, start, &offset);
@@ -1199,6 +1212,13 @@ extern "C" void WFE_DocumentSize(MWContext *context, int32 width, int32 height)
 }
 extern "C" void WFE_Scroll(MWContext *context, int32 x, int32 y) { BrowserFrame *frame = frame_for(context); if (frame) { frame->view.scroll_x = x; frame->view.scroll_y = y; WFE_FormPositionAll(context); WFE_Invalidate(context); } }
 extern "C" void WFE_Position(MWContext *context, int32 *x, int32 *y) { BrowserFrame *frame = frame_for(context); *x = frame ? frame->view.scroll_x : 0; *y = frame ? frame->view.scroll_y : 0; }
+extern "C" void WFE_DocumentDefaults(MWContext *context)
+{
+    BrowserFrame *frame=frame_for(context);if(!frame) return;
+    const GeneralPreferences &preferences=frame->document_preferences;
+    COLORREF color=preferences.background_custom?preferences.colors[0]:RGB(255,255,255);
+    frame->view.background=color;WFE_ImageBackground(context,GetRValue(color),GetGValue(color),GetBValue(color));
+}
 extern "C" void WFE_Background(MWContext *context, unsigned long color) { BrowserFrame *frame = frame_for(context); if (frame) frame->view.background = color; }
 extern "C" void WFE_Unsupported(MWContext *context, const char *feature) { std::string message = std::string(feature) + " is not available in this Windows port yet."; OutputDebugStringA(message.c_str()); WFE_Status(context, message.c_str()); }
 extern "C" int WFE_Message(MWContext *context, const char *message, int confirm) { if (smoke_mode) { smoke_error = message ? message : ""; return 0; } BrowserFrame *frame = frame_for(context); return MessageBoxA(frame ? frame->GetSafeHwnd() : nullptr, message ? message : "", "Netscape", confirm ? MB_YESNO | MB_ICONQUESTION : MB_OK | MB_ICONINFORMATION) == IDYES; }
@@ -2164,11 +2184,63 @@ static int WFE_RunComposerDeliverySmoke(const char *report, int news, const char
     return status;
 }
 
+static bool open_preferred_startup()
+{
+    const GeneralPreferences &preferences=WFE_GeneralPreferences();bool opened=false;
+    if(preferences.startup&1) opened=WFE_NewWindow(preferences.blank?"about:blank":preferences.home.c_str())!=nullptr;
+    if(preferences.startup&2) opened=WFE_NewMailWindow(0,nullptr)!=nullptr||opened;
+    if(preferences.startup&4) opened=WFE_NewMailWindow(1,nullptr)!=nullptr||opened;
+    return opened;
+}
+static int WFE_RunPreferencesSmoke(const char *report,const char *snapshot,const char *url,bool reopen)
+{
+    bool store=true;
+    if(!reopen) store=WFE_PreferencesStoreSmoke((std::string(report)+".store").c_str())==0;
+    BrowserFrame *frame=frame_for(WFE_NewWindow(nullptr));if(!frame) return 2;
+    chrome_client_size(frame,850,580);frame->ShowWindow(SW_SHOWNOACTIVATE);
+    int ui=reopen?0:WFE_PreferencesUISmoke(frame,report,snapshot);
+    GeneralPreferences accepted=WFE_GeneralPreferences();
+    bool persisted=accepted.toolbar==1&&accepted.startup==1&&accepted.blank&&!accepted.underline
+        &&accepted.days==17&&accepted.languages.size()==2&&accepted.languages[0]=="fr"&&accepted.languages[1]=="en";
+    CRect text_button;frame->chrome.Button(ID_NAV_HOME)->GetWindowRect(text_button);
+    bool toolbar=frame->chrome.Presentation()==1&&text_button.Height()<30;
+    if(!reopen) chrome_capture(frame,(std::string(snapshot)+".text.bmp").c_str());
+    std::string error;GeneralPreferences probe=accepted;probe.toolbar=0;
+    bool pictures=WFE_SaveGeneralPreferences(probe,&error);CRect picture_button;frame->chrome.Button(ID_NAV_HOME)->GetWindowRect(picture_button);
+    pictures=pictures&&frame->chrome.Presentation()==0&&picture_button.Width()<text_button.Width();
+    if(!reopen) chrome_capture(frame,(std::string(snapshot)+".pictures.bmp").c_str());
+    probe.toolbar=2;bool both=WFE_SaveGeneralPreferences(probe,&error);CRect both_button;frame->chrome.Button(ID_NAV_HOME)->GetWindowRect(both_button);
+    both=both&&frame->chrome.Presentation()==2&&both_button.Height()>text_button.Height();
+    if(!reopen) chrome_capture(frame,(std::string(snapshot)+".both.bmp").c_str());
+    probe.toolbar=1;probe.proportional="Arial";probe.proportional_size=14;probe.fixed_size=11;
+    probe.background_custom=true;probe.text_custom=true;probe.link_custom=true;probe.override_colors=true;
+    probe.colors[0]=RGB(242,230,200);probe.colors[1]=RGB(0,64,0);probe.colors[2]=RGB(170,0,0);
+    probe.incremental=false;probe.dither=2;
+    bool saved=WFE_SaveGeneralPreferences(probe,&error);
+    if(url&&*url) { frame->Navigate(url);browser_smoke_wait(frame); }
+    std::string content=frame_text(frame);
+    HFONT font=text_font(nullptr,frame->document_preferences,false);LOGFONT actual={};GetObject(font,sizeof(actual),&actual);DeleteObject(font);
+    bool fonts=!strcmp(actual.lfFaceName,"Arial")&&actual.lfHeight==-19;
+    bool page=frame->completed&&frame->load_status>=0&&content.find("Preferences fixture")!=std::string::npos;
+    bool images=frame->view.drawn_images.size()==1&&!WFE_PreferenceIncrementalImages()&&WFE_PreferenceImageDither()==2;
+    if(!reopen) chrome_capture(frame,(std::string(snapshot)+".page.bmp").c_str());
+    bool restored=WFE_SaveGeneralPreferences(accepted,&error);
+    size_t before=browser_windows.size();bool launched=open_preferred_startup();
+    BrowserFrame *startup=browser_windows.size()>before?browser_windows.back():nullptr;
+    bool startup_ok=launched&&startup&&startup->mode==0&&startup->current_url=="about:blank";
+    if(startup) startup->SendMessage(WM_CLOSE);
+    bool passed=store&&!ui&&persisted&&toolbar&&pictures&&both&&saved&&fonts&&page&&images&&restored&&startup_ok;
+    FILE *file=fopen(report,reopen?"wb":"ab");
+    if(file) { fprintf(file,"root_passed=%d\nstore=%d\npersisted=%d\ntext_toolbar=%d\npictures_toolbar=%d\nboth_toolbar=%d\nfont_effect=%d\npage_loaded=%d\nimage_effect=%d\nstartup_effect=%d\nrestored=%d\nroot_error=%s\n",passed,store,persisted,toolbar,pictures,both,fonts,page,images,startup_ok,restored,error.c_str());fclose(file); }
+    else passed=false;
+    frame->SendMessage(WM_CLOSE);return passed?0:1;
+}
+
 class NetscapeApplication : public CWinApp {
 public:
     BOOL InitInstance() override {
         CWinApp::InitInstance();
-        INITCOMMONCONTROLSEX controls = {sizeof(controls), ICC_LISTVIEW_CLASSES | ICC_PROGRESS_CLASS | ICC_TREEVIEW_CLASSES};
+        INITCOMMONCONTROLSEX controls = {sizeof(controls), ICC_TAB_CLASSES | ICC_LISTVIEW_CLASSES | ICC_PROGRESS_CLASS | ICC_TREEVIEW_CLASSES};
         InitCommonControlsEx(&controls);
         SetRegistryKey("NetscapeLegacy");
         CStringList arguments;
@@ -2176,9 +2248,10 @@ public:
         CCmdParse parser(m_lpCmdLine, arguments);
         if (!parser.ProcessCmdLine()) return FALSE;
         POSITION position = arguments.GetHeadPosition();
+        bool explicit_command=position!=nullptr;
         CString first = position ? arguments.GetNext(position) : "about:";
         smoke_mode = first == "--smoke-test" || first == "--mailnews-smoke" || first == "--composer-delivery-smoke"
-            || first == "--images-smoke" || first == "--forms-smoke" || first == "--frames-smoke" || first == "--downloads-smoke" || first == "--history-smoke" || first == "--history-reopen-smoke" || first == "--bookmarks-smoke" || first == "--chrome-smoke" || first == "--ui-gallery" || first == "--news-ui-smoke" || first == "--mail-ui-smoke" || first == "--compose-ui-smoke";
+            || first == "--images-smoke" || first == "--forms-smoke" || first == "--frames-smoke" || first == "--downloads-smoke" || first == "--history-smoke" || first == "--history-reopen-smoke" || first == "--bookmarks-smoke" || first == "--chrome-smoke" || first == "--ui-gallery" || first == "--preferences-ui-smoke" || first == "--preferences-reopen-smoke" || first == "--news-ui-smoke" || first == "--mail-ui-smoke" || first == "--compose-ui-smoke";
         if (smoke_mode) {
             SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
 #ifdef _DEBUG
@@ -2192,7 +2265,8 @@ public:
         if (smoke_mode) {
             CString report = position ? arguments.GetNext(position) : "frontend-smoke.txt";
             CString url = position ? arguments.GetNext(position) : "";
-            if(first=="--news-ui-smoke") { CString server=position?arguments.GetNext(position):"";m_nExitCode=WFE_RunNewsUISmoke(report,url,server); }
+            if(first=="--preferences-ui-smoke"||first=="--preferences-reopen-smoke") { CString page=position?arguments.GetNext(position):"";m_nExitCode=WFE_RunPreferencesSmoke(report,url,page,first=="--preferences-reopen-smoke"); }
+            else if(first=="--news-ui-smoke") { CString server=position?arguments.GetNext(position):"";m_nExitCode=WFE_RunNewsUISmoke(report,url,server); }
             else if(first=="--mail-ui-smoke") { m_nExitCode=WFE_RunMailUISmoke(report,url); }
             else if(first=="--compose-ui-smoke") {
                 WFE_SetMailPreference("email","preview@example.invalid");WFE_ApplyMailPreferences();
@@ -2232,6 +2306,7 @@ public:
             backend_initialized = false;
             return FALSE;
         }
+        if(!explicit_command) return open_preferred_startup();
         if (first == "-mail" || first == "--mail" || first.Left(8) == "mailbox:") return WFE_NewMailWindow(0, nullptr) != nullptr;
         if (first == "-news" || first == "--news" || first.Left(5) == "news:") return WFE_NewMailWindow(1, nullptr) != nullptr;
         if (first == "--compose") { WFE_NewComposer(nullptr, 0); return WFE_ComposerWindowCount() != 0; }

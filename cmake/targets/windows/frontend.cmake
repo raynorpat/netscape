@@ -17,6 +17,8 @@ add_executable(netscape-win32 WIN32
  "${PROJECT_SOURCE_DIR}/cmd/winfe/services.c"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/composer.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/mailsettings.c"
+ "${PROJECT_SOURCE_DIR}/cmd/winfe/preferences-settings.cpp"
+ "${PROJECT_SOURCE_DIR}/cmd/winfe/preferences-ui.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/images.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/forms.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/downloads.cpp"
@@ -39,6 +41,7 @@ install(FILES "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/README.md"
  DESTINATION share/doc/netscape RENAME Windows-source-provenance.md COMPONENT Runtime)
 install(FILES "${PROJECT_SOURCE_DIR}/cmake/windows.md"
  "${PROJECT_SOURCE_DIR}/cmake/windows-roadmap.md"
+ "${PROJECT_SOURCE_DIR}/cmake/windows-reference.md"
  DESTINATION share/doc/netscape COMPONENT Runtime)
 if(BUILD_TESTING)
  add_test(NAME windows_frontend_local COMMAND netscape-win32 --smoke-test "${PROJECT_BINARY_DIR}/frontend-local.txt")
@@ -104,4 +107,11 @@ if(BUILD_TESTING)
   "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_news_ui.py"
   --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/news-layout-test")
  set_tests_properties(windows_news_layout PROPERTIES TIMEOUT 65)
+endif()
+
+if(BUILD_TESTING)
+ add_test(NAME windows_preferences COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_preferences.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/preferences-test")
+ set_tests_properties(windows_preferences PROPERTIES TIMEOUT 140)
 endif()

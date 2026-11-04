@@ -53,6 +53,7 @@ BEGIN
  POPUP "&Options"
  BEGIN
   MENUITEM "Set Current Page as &Home", ID_BROWSER_SET_HOME
+  MENUITEM "&General Preferences...", ID_BROWSER_PREFERENCES
   MENUITEM "&Mail and News Preferences...", ID_MAIL_SETTINGS
  END
  POPUP "&Directory"
@@ -253,3 +254,5 @@ IDR_CLASSIC_LICENSE RCDATA "../../l10n/us/xp/LICENSE-export"
 652 BITMAP "res/classic/subscribed-disabled.bmp"
 553 BITMAP "res/classic/unsubscribed.bmp"
 653 BITMAP "res/classic/unsubscribed-disabled.bmp"
+
+#include "res/preferences.rc"

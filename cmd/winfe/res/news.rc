@@ -53,6 +53,7 @@ BEGIN
   MENUITEM "&All Newsgroups", ID_NEWS_ALL_GROUPS
   MENUITEM "&Subscribe to Selected Group\tSpace", ID_NEWS_SUBSCRIBE
   MENUITEM SEPARATOR
+  MENUITEM "&General Preferences...", ID_BROWSER_PREFERENCES
   MENUITEM "Mail and News &Preferences...", ID_MAIL_SETTINGS
  END
  POPUP "&Window"

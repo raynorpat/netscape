@@ -10,7 +10,7 @@ from check_windows_mailnews import WireHandler, fixture_server, message, DATES
 from check_windows_mail_ui import Bitmap, read_report, rectangle, require_fields
 
 GROUPS = ("news.announce.newusers", "news.announce.questions", "news.answers")
-TOOLBAR = "To:News|To:Mail|Re:News|Re:Mail|Re:All|Forward|Previous|Next|Thread|Group|Print|Stop"
+TOOLBAR = "To:News|To:Mail|Re:Mail|Re:News|Re:Both|Forward|Previous|Next|Thread|Group|Print|Stop"
 
 
 class NewsReferenceHandler(WireHandler):
@@ -89,7 +89,7 @@ def run(executable, output):
     text, fields = read_report(report)
     require_fields(fields, {
         "toolbar_labels": TOOLBAR, "menu_labels": "File|Edit|View|Message|Go|Options|Window|Help",
-        "folder_columns": "News Server|Status|Unread", "article_columns": "Sender|Status|Subject",
+        "folder_columns": "News Server|Status|Unread", "article_columns": "Sender|Status|Status|Subject|Date",
         "directory_counts": "1", "browser_post": "1", "leaf_guard": "1",
         "empty_commands": "1", "tree_keyboard": "1", "tree_mouse": "1",
         "subscription_keyboard": "1", "subscription_mouse": "1", "view_retained": "1",
@@ -100,7 +100,7 @@ def run(executable, output):
     if not all(g in fields.get("tree", "") for g in GROUPS):
         raise RuntimeError("News tree omits a loopback group")
     folders, messages, reader = [rectangle(fields, n) for n in ("folders", "messages", "reader")]
-    if not (folders[2] >= messages[2] * .42 and folders[3] > reader[3] * .55
+    if not (abs(folders[2] - 303) <= 8 and abs(folders[3] - folders[1] - 203) <= 8
             and reader[0] == 0 and reader[2] == messages[2] and reader[1] >= folders[3]):
         raise RuntimeError("News reference pane proportions differ: " + text)
     bitmap = Bitmap(snapshot)
@@ -108,14 +108,25 @@ def run(executable, output):
     if logo["colorful"] < 15 or logo["dark"] < 15:
         raise RuntimeError("News capture lacks the visible Netscape toolbar logo")
     region = bitmap.region((reader[0] + 5, reader[1] + 5, reader[2] - 22, reader[3] - 22))
-    gray = 0
+    white = 0
     for y in range(reader[1] + 5, reader[3] - 22):
         row = bitmap.height - 1 - y if bitmap.bottom_up else y
         for x in range(reader[0] + 5, reader[2] - 22):
             offset = bitmap.offset + row * bitmap.stride + x * bitmap.pixel_bytes
-            gray += bitmap.data[offset:offset + 3] == bytes((192, 192, 192))
-    if gray < region["pixels"] * .85:
-        raise RuntimeError("Empty News reader is not classic gray")
+            white += bitmap.data[offset:offset + 3] == bytes((255, 255, 255))
+    # The original Windows box uses yellow ink; the previous XFE substitute
+    # was green. Check the actual rendered subscription column, not the asset.
+    yellow = 0
+    for y in range(folders[1] + 20, folders[3]):
+        row = bitmap.height - 1 - y if bitmap.bottom_up else y
+        for x in range(folders[2] - 62, folders[2] - 38):
+            offset = bitmap.offset + row * bitmap.stride + x * bitmap.pixel_bytes
+            blue, green, red = bitmap.data[offset:offset + 3]
+            yellow += red > 180 and green > 140 and blue < 100
+    if yellow < 8:
+        raise RuntimeError("News capture lacks original yellow subscription checkmarks")
+    if white < region["pixels"] * .85:
+        raise RuntimeError("Empty News reader differs from the original white surface")
 
 
 def main():

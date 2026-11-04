@@ -78,7 +78,7 @@ public:
     CWnd *Add(int page, const char *kind, const char *label, DWORD style,
               int x, int y, int w, int h, int id = -1, DWORD extra = 0) {
         HWND control = ::CreateWindowExA(extra, kind, label, WS_CHILD | WS_VISIBLE | style,
-            ClassicUI::Scale(this,x), ClassicUI::Scale(this,y), ClassicUI::Scale(this,w), ClassicUI::Scale(this,h),
+            ClassicUI::Scale(this,MulDiv(x,453,467)), ClassicUI::Scale(this,MulDiv(y,330,337)), ClassicUI::Scale(this,MulDiv(w,453,467)), ClassicUI::Scale(this,MulDiv(h,330,337)),
             pages[page]->GetSafeHwnd(), (HMENU)(INT_PTR)id, AfxGetInstanceHandle(), nullptr);
         return CWnd::FromHandle(control);
     }
@@ -192,19 +192,19 @@ void PreferencesPage::OnDrawItem(int id,LPDRAWITEMSTRUCT item) {
 BOOL GeneralPreferencesDialog::OnInitDialog()
 {
     ClassicDialog::OnInitDialog();
-    CRect outer(0,0,ClassicUI::Scale(this,500),ClassicUI::Scale(this,410));
+    CRect outer(0,0,ClassicUI::Scale(this,486),ClassicUI::Scale(this,403));
     AdjustWindowRectEx(&outer,GetStyle(),FALSE,GetExStyle());
     SetWindowPos(nullptr,0,0,outer.Width(),outer.Height(),SWP_NOMOVE|SWP_NOZORDER);
     tabs.SubclassDlgItem(IDC_PREF_TABS,this);
-    tabs.MoveWindow(ClassicUI::Scale(this,7),ClassicUI::Scale(this,4),ClassicUI::Scale(this,487),ClassicUI::Scale(this,371));
+    tabs.MoveWindow(ClassicUI::Scale(this,7),ClassicUI::Scale(this,4),ClassicUI::Scale(this,473),ClassicUI::Scale(this,364));
     for(int i=0;i<7;i++) {
         tabs.InsertItem(i,preference_tabs[i]);
         pages[i].reset(new PreferencesPage(this,i)); pages[i]->Create(IDD_PREFERENCES_PAGE,this);
-        pages[i]->MoveWindow(ClassicUI::Scale(this,16),ClassicUI::Scale(this,29),ClassicUI::Scale(this,467),ClassicUI::Scale(this,337));
+        pages[i]->MoveWindow(ClassicUI::Scale(this,16),ClassicUI::Scale(this,29),ClassicUI::Scale(this,453),ClassicUI::Scale(this,330));
     }
-    GetDlgItem(IDOK)->MoveWindow(ClassicUI::Scale(this,258),ClassicUI::Scale(this,380),ClassicUI::Scale(this,75),ClassicUI::Scale(this,23));
-    GetDlgItem(IDCANCEL)->MoveWindow(ClassicUI::Scale(this,339),ClassicUI::Scale(this,380),ClassicUI::Scale(this,75),ClassicUI::Scale(this,23));
-    GetDlgItem(IDC_PREF_HELP)->MoveWindow(ClassicUI::Scale(this,420),ClassicUI::Scale(this,380),ClassicUI::Scale(this,75),ClassicUI::Scale(this,23));
+    GetDlgItem(IDOK)->MoveWindow(ClassicUI::Scale(this,244),ClassicUI::Scale(this,373),ClassicUI::Scale(this,75),ClassicUI::Scale(this,23));
+    GetDlgItem(IDCANCEL)->MoveWindow(ClassicUI::Scale(this,325),ClassicUI::Scale(this,373),ClassicUI::Scale(this,75),ClassicUI::Scale(this,23));
+    GetDlgItem(IDC_PREF_HELP)->MoveWindow(ClassicUI::Scale(this,406),ClassicUI::Scale(this,373),ClassicUI::Scale(this,75),ClassicUI::Scale(this,23));
 
     Group(0,"Toolbars",7,13,451,62);
     Label(0,"Show Main Toolbar as:",21,35,132);

@@ -1,4 +1,4 @@
-"""Regenerate checked-in Windows bitmaps from original GIF artwork (Pillow required).
+"""Regenerate checked-in Windows bitmaps from original artwork (Pillow required).
 
 This is a development tool; normal Windows builds use the checked-in resources.
 """
@@ -8,13 +8,17 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[2]
 ICONS = ROOT / "cmd/xfe/icons"
 OUTPUT = ROOT / "cmd/winfe/res/classic"
+WINDOWS_SOURCES = {
+    "subscribed": "719.bmp", "unsubscribed": "720.bmp",
+    "message-flag": "721.bmp", "priority-header": "725.bmp",
+}
 SOURCES = {
     "post": "MMsgPst", "post-reply": "MMsgPstR", "post-both": "MMsgPstF",
     "mark-thread": "MMarkT", "mark-group": "MMarkA",
-    "news-host": "HHost", "news-group": "HGroup", "subscribed": "HSub", "unsubscribed": "HUSub",
+    "news-host": "HHost", "news-group": "HGroup",
     "quote": "CQuote", "address": "CAddress",
     "folder": "GFolder", "folder-open": "GFolder",
-    "message-read": "HMsg", "message-unread": "HMsg", "message-flag": "HMarked",
+    "message-read": "HMsg", "message-unread": "HMsg",
     "back": "TBack", "forward": "TNext", "home": "THome", "edit": "ed_edit",
     "reload": "TReload", "images": "TLoadImages", "open": "TOpenUrl",
     "print": "TPrint", "find": "TFind", "stop": "TStop",
@@ -53,6 +57,21 @@ def main():
                 for x in range(image.width):
                     if image.getpixel((x, y)) != FACE:
                         disabled.putpixel((x, y), (128, 128, 128))
+        disabled.save(OUTPUT / (name + "-disabled.bmp"))
+    # The Windows 3.02 tick and header markers differ from the X11 GIFs.
+    # Retain the extracted source bitmaps, replacing only their magenta mask.
+    for name, source in WINDOWS_SOURCES.items():
+        image = Image.open(OUTPUT / "source-302" / source).convert("RGB")
+        for y in range(image.height):
+            for x in range(image.width):
+                if image.getpixel((x, y)) == (255, 0, 255):
+                    image.putpixel((x, y), FACE)
+        image.save(OUTPUT / (name + ".bmp"))
+        disabled = image.copy()
+        for y in range(image.height):
+            for x in range(image.width):
+                if image.getpixel((x, y)) != FACE:
+                    disabled.putpixel((x, y), (128, 128, 128))
         disabled.save(OUTPUT / (name + "-disabled.bmp"))
 
 

@@ -1,10 +1,13 @@
 #include <afxwin.h>
 #include <afxcmn.h>
 #include <algorithm>
+#include <map>
 #include <string>
+#include <vector>
 #include <shlwapi.h>
 #include "bookmarks.h"
 #include "classic.h"
+#include "resource.h"
 extern "C" {
 #include "bkmks.h"
 #include "shist.h"
@@ -26,6 +29,97 @@ static bool bookmarks_initialized;
 static BookmarksFrame *bookmarks_window;
 static MWContext *bookmarks_source;
 static std::string last_open_request;
+/* Menu commands retain owned addresses rather than borrowed BM_Entry pointers.
+ * A bookmark can be edited or removed while another window's menu is open. */
+static std::map<MWContext *, std::vector<std::string> > bookmark_menu_urls;
+
+static std::string bookmark_menu_label(const char *name)
+{
+    std::string result;
+    for (const char *p = name && *name ? name : "Untitled"; *p; ++p) {
+        result += *p;
+        if (*p == '&') result += '&';
+    }
+    return result;
+}
+
+static void append_bookmark_menu(CMenu *menu, BM_Entry *parent,
+                                std::vector<std::string> &addresses,
+                                std::vector<BM_Entry *> &ancestors)
+{
+    ancestors.push_back(parent);
+    for (BM_Entry *entry = BM_GetChildren(parent); entry; entry = BM_GetNext(entry)) {
+        BM_Entry *original = BM_IsAlias(entry) ? BM_GetAliasOriginal(entry) : entry;
+        if (!original) continue;
+        if (BM_IsSeparator(original)) { menu->AppendMenu(MF_SEPARATOR); continue; }
+        const char *name = BM_GetName(entry);
+        if (!name || !*name) name = BM_GetName(original);
+        const char *address = BM_IsUrl(original) ? BM_GetAddress(original) : nullptr;
+        if ((!name || !*name) && address) name = address;
+        std::string label = bookmark_menu_label(name);
+        if (BM_IsHeader(original)) {
+            /* A folder alias may refer to one of its own ancestors. */
+            if (std::find(ancestors.begin(), ancestors.end(), original) != ancestors.end()) {
+                menu->AppendMenu(MF_STRING | MF_GRAYED, 0, label.c_str());
+                continue;
+            }
+            CMenu child;
+            if (!child.CreatePopupMenu()) continue;
+            append_bookmark_menu(&child, original, addresses, ancestors);
+            UINT flags = MF_POPUP | MF_STRING;
+            if (!child.GetMenuItemCount()) flags |= MF_GRAYED;
+            if (menu->AppendMenu(flags, reinterpret_cast<UINT_PTR>(child.GetSafeHmenu()), label.c_str())) child.Detach();
+        } else if (address && *address && addresses.size() <= WFE_BOOKMARK_MENU_LAST - WFE_BOOKMARK_MENU_FIRST) {
+            UINT command = WFE_BOOKMARK_MENU_FIRST + (UINT)addresses.size();
+            if (menu->AppendMenu(MF_STRING, command, label.c_str())) addresses.push_back(address);
+        } else {
+            /* Keep the label visible when the native command range is exhausted. */
+            menu->AppendMenu(MF_STRING | MF_GRAYED, 0, label.c_str());
+        }
+    }
+    ancestors.pop_back();
+}
+
+void WFE_BookmarksPopulateMenu(MWContext *source, CMenu *menu)
+{
+    if (!source || !menu || !menu->GetSafeHmenu() || menu->GetMenuItemCount() < 3 ||
+        menu->GetMenuItemID(0) != ID_BOOKMARKS_ADD || menu->GetMenuItemID(1) != ID_BOOKMARKS_SHOW ||
+        !(menu->GetMenuState(2, MF_BYPOSITION) & MF_SEPARATOR)) return;
+    while (menu->GetMenuItemCount() > 3) {
+        if (!menu->DeleteMenu(3, MF_BYPOSITION)) return;
+    }
+    std::vector<std::string> &addresses = bookmark_menu_urls[source];
+    addresses.clear();
+    if (!WFE_BookmarksInit()) return;
+    BM_Entry *header = BM_GetMenuHeader(&bookmarks_context);
+    if (!header) header = BM_GetRoot(&bookmarks_context);
+    if (!header) return;
+    std::vector<BM_Entry *> ancestors;
+    append_bookmark_menu(menu, header, addresses, ancestors);
+}
+
+static bool bookmark_menu_address(MWContext *source, UINT command, std::string &address)
+{
+    if (command < WFE_BOOKMARK_MENU_FIRST || command > WFE_BOOKMARK_MENU_LAST) return false;
+    auto menu = bookmark_menu_urls.find(source);
+    size_t index = command - WFE_BOOKMARK_MENU_FIRST;
+    if (menu == bookmark_menu_urls.end() || index >= menu->second.size()) return false;
+    address = menu->second[index];
+    return !address.empty();
+}
+
+bool WFE_BookmarksMenuCommand(MWContext *source, UINT command)
+{
+    std::string address;
+    if (!bookmark_menu_address(source, command, address)) return false;
+    WFE_BookmarkNavigate(source, address.c_str());
+    return true;
+}
+
+void WFE_BookmarksForgetMenu(MWContext *source)
+{
+    bookmark_menu_urls.erase(source);
+}
 
 static bool can_open(BM_Entry *entry)
 {
@@ -331,6 +425,7 @@ extern "C" int WFE_BookmarksInit(void)
 
 extern "C" void WFE_BookmarksShutdown(void)
 {
+    bookmark_menu_urls.clear();
     if (!bookmarks_initialized) return;
     save_bookmarks(true);
     if (bookmarks_window) bookmarks_window->DestroyWindow();
@@ -404,6 +499,65 @@ static const char *smoke_retry_title = "Native retry \"quoted\" & <bookmark> &lt
 static const std::string smoke_url = std::string("https://example.invalid/path?q=\"one\"&tag=<bookmark>&literal=&lt;") +
                                      std::string(600, '&');
 
+static CMenu *smoke_bookmark_folder(CMenu *menu, const char *label)
+{
+    for (int i = 0; i < menu->GetMenuItemCount(); ++i) {
+        CString text;
+        menu->GetMenuString(i, text, MF_BYPOSITION);
+        if (text == label) return menu->GetSubMenu(i);
+    }
+    return nullptr;
+}
+
+static bool smoke_bookmark_menu(MWContext *source, BM_Entry *kept, FILE *file)
+{
+    CMenu menu;
+    bool created = menu.CreatePopupMenu() &&
+        menu.AppendMenu(MF_STRING, ID_BOOKMARKS_ADD, "&Add Bookmark\tCtrl+D") &&
+        menu.AppendMenu(MF_STRING, ID_BOOKMARKS_SHOW, "&Go to Bookmarks...\tCtrl+B") &&
+        menu.AppendMenu(MF_SEPARATOR);
+    if (!created) return false;
+    /* A stale dynamic row must be removed on every population. */
+    menu.AppendMenu(MF_STRING, WFE_BOOKMARK_MENU_LAST, "Obsolete bookmark");
+    WFE_BookmarksPopulateMenu(source, &menu);
+    int count = menu.GetMenuItemCount();
+    CMenu *folder = smoke_bookmark_folder(&menu, "Native && folders");
+    CString first, second, third;
+    if (folder) {
+        folder->GetMenuString(0, first, MF_BYPOSITION);
+        folder->GetMenuString(1, second, MF_BYPOSITION);
+        folder->GetMenuString(2, third, MF_BYPOSITION);
+    }
+    bool populated = folder && folder->GetMenuItemCount() == 3 && first == "Second bookmark" &&
+        second == bookmark_menu_label(smoke_title).c_str() && third == "Delete me" &&
+        menu.GetMenuItemID(0) == ID_BOOKMARKS_ADD && menu.GetMenuItemID(1) == ID_BOOKMARKS_SHOW &&
+        (menu.GetMenuState(2, MF_BYPOSITION) & MF_SEPARATOR) &&
+        menu.GetMenuItemID(count - 1) != WFE_BOOKMARK_MENU_LAST;
+    UINT kept_command = folder ? folder->GetMenuItemID(1) : 0;
+    std::string address;
+    bool cached = populated && bookmark_menu_address(source, kept_command, address) && address == smoke_url;
+    BM_SetAddress(&bookmarks_context, kept, "about:blank#edited-bookmark-menu");
+    cached = cached && bookmark_menu_address(source, kept_command, address) && address == smoke_url;
+    WFE_BookmarksPopulateMenu(source, &menu);
+    folder = smoke_bookmark_folder(&menu, "Native && folders");
+    kept_command = folder ? folder->GetMenuItemID(1) : 0;
+    bool rebuilt = folder && menu.GetMenuItemCount() == count && folder->GetMenuItemCount() == 3 &&
+        bookmark_menu_address(source, kept_command, address) && address == "about:blank#edited-bookmark-menu";
+    BM_SetAddress(&bookmarks_context, kept, smoke_url.c_str());
+    WFE_BookmarksPopulateMenu(source, &menu);
+    folder = smoke_bookmark_folder(&menu, "Native && folders");
+    UINT open_command = folder ? folder->GetMenuItemID(2) : 0;
+    /* Dispatch only the seed's about:blank row, never the invalid URL fixture. */
+    last_open_request.clear();
+    bool opened = folder && WFE_BookmarksMenuCommand(source, open_command) && last_open_request == "about:blank";
+    WFE_BookmarksForgetMenu(source);
+    rebuilt = rebuilt && !bookmark_menu_address(source, kept_command, address) &&
+        !WFE_BookmarksMenuCommand(source, open_command);
+    fprintf(file, "bookmarks_menu_populated=%d\nbookmarks_menu_cached=%d\nbookmarks_menu_rebuilt=%d\nbookmarks_menu_open_requested=%d\n",
+            populated, cached, rebuilt, opened);
+    return populated && cached && rebuilt && opened;
+}
+
 static bool smoke_read_locked(HANDLE file, std::string &bytes)
 {
     LARGE_INTEGER size, start = {};
@@ -471,6 +625,7 @@ extern "C" int WFE_BookmarksSmoke(MWContext *source, const char *report, const c
                     bookmarks_window->SendMessage(WM_COMMAND, IDC_BOOKMARK_DELETE);
                 }
             }
+            bool menu = smoke_bookmark_menu(source, kept, file);
             bookmarks_window->Select(deleted);
             last_open_request.clear();
             bookmarks_window->SendMessage(WM_COMMAND, IDC_BOOKMARK_OPEN);
@@ -484,7 +639,7 @@ extern "C" int WFE_BookmarksSmoke(MWContext *source, const char *report, const c
             bool saved = save_bookmarks(false);
             fprintf(file, "bookmarks_edited=%d\nbookmarks_add_page=%d\nbookmarks_deleted=%d\nbookmarks_manager=%d\nbookmarks_open_requested=%d\nbookmarks_persisted=%d\n",
                     edited, added_page, removed, manager, opened, saved);
-            result = edited && added_page && removed && manager && opened && saved ? 0 : 1;
+            result = edited && added_page && menu && removed && manager && opened && saved ? 0 : 1;
         }
     } else if (!strcmp(phase, "verify") || !strcmp(phase, "verify-retry") || !strcmp(phase, "verify-legacy")) {
         bool legacy = !strcmp(phase, "verify-legacy");

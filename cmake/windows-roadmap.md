@@ -18,8 +18,9 @@ child forms/images, independent scrolling, cache/history-based resize and cleanu
 Native saving/downloads now use independent transfer windows and checked binary
 streams. Native history traversal and its dialog now use SHIST, including frame history,
 forms/scroll state and persisted visited-page dates. A native bookmark manager
-uses the original tree and HTML persistence. Remaining browser UI and optional
-engines are separate porting tasks.
+uses the original tree and HTML persistence. Original menu trees, live Go/Bookmarks/Window entries and supported MSG command
+routes now have native coverage. Remaining browser UI and optional engines are
+separate porting tasks.
 
 ## Native frontend work
 
@@ -32,13 +33,13 @@ engines are separate porting tasks.
 | Implemented | History | Back/Forward and Reload use SHIST; a native history list and visited-pages view expose the core data. Fixtures cover form/scroll restoration, frame traversal, forward truncation, POST cancellation, persisted dates and malformed/expired records. |
 | Implemented | Bookmarks | Add page and a native tree manager support folders, editing, opening and deletion through the original BM APIs. Fixtures check escaped and long names/URLs, ordering, cross-process persistence and failed-save retry. Import/export, search, drag/drop and richer organization remain future work. |
 | Implemented | Classic mail/news UI | Own menus and ten-button toolbar, folder/message lists above a full-width reader, draggable dividers, original icons, sorting, Previous/Next, header modes, selected-message caption and mailbox status. Populated MIME captures, scrolling and narrow layouts are covered. Print remains disabled. |
-| Implemented | Classic News UI | Separate twelve-button post/mail/reply toolbar and menus; expandable server/group tree with subscription controls, unread counts and original artwork; taller lists and gray empty reader. Native gestures, composition routing, mark-thread/group and article-load view retention use loopback coverage. |
+| Implemented | Classic News UI | Separate twelve-button post/mail/reply toolbar and menus; expandable server/group tree with subscription controls, unread counts and original artwork; original pane dimensions and white empty reader. Native gestures, composition routing, mark-thread/group and article-load view retention use loopback coverage. |
 | Implemented | Classic composer UI | Reference menus, five-button toolbar/logo, compact recipient/attachment rows, fixed-width editor and segmented status. Advanced headers, drafts, Send Later and attachments are retained. Quote and active SMTP/NNTP Stop/retry are covered; Address remains disabled. |
 | Implemented | General Preferences | Seven original tabs, atomic profile persistence, toolbar style/startup/home, fonts, colors/override, history, IL options and ordered HTTP languages. Real UI, persistence and rendered-page checks exist. Background-image preferences, other encodings, external apps and editable helper associations remain disabled. Original release observations and gaps are in [windows-reference.md](windows-reference.md). |
 | 3 | Charset/text | The frontend defaults to Latin-1 and draws/measures through ANSI GDI. A subset of single-byte conversion tables uses Windows code pages; this does not establish correct multilingual rendering. Verify document charset changes, MIME headers, fonts, conversion failure, selection, and copy. |
 | 4 | Plugins | The plugin archive and `NPL_Init` are present, but discovery registers no descriptors, loading returns NULL, and embed streaming fails. Native module loading, NPAPI callbacks, embedded-window lifetime, and a controlled test plugin are separate work. |
 | Implemented | Classic chrome | Browser toolbar, location dropdown, shortcuts/logo, traditional menus and segmented status use original artwork and classic fonts/edges. Mail/news toolbars and composer/utility windows share the styling. Native Find supports selection, case/direction/wrap and focused frames. View toggles and keyboard location entry are covered. |
-| 4 | Other browser UI | Finish mouse selection, printing, advanced helper/background preferences, cache controls and remaining navigation/link actions. Copy/Select All and native Find exist; Gold editing and Print remain disabled. Printing/translation archives being linked does not supply native print UI. Disk cache is explicitly disabled at initialization. |
+| 4 | Other browser UI | Finish mouse selection, printing, advanced helper/background preferences, cache controls and remaining navigation/link actions. Copy/Select All, message finding, source/info, image loading and native Find exist; Gold editing and Print remain unavailable. Printing/translation archives being linked does not supply native print UI. Disk cache is explicitly disabled at initialization. |
 
 The direct evidence is in [frontend callbacks](../cmd/winfe/frontend.c),
 [services](../cmd/winfe/services.c), [window/navigation code](../cmd/winfe/main.cpp),

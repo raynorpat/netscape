@@ -22,6 +22,7 @@
 #include <nspr/prglobal.h>
 #include <stdio.h>
 #include <stdarg.h>
+extern NET_StreamClass *net_ColorHTMLStream(int,void *,URL_Struct *,MWContext *);
 
 extern int WFE_PlatformInit(void);
 extern void WFE_PlatformShutdown(void);
@@ -111,6 +112,11 @@ static void url_complete(URL_Struct *url, int status, MWContext *context)
     WFE_Complete(context, status);
     NET_FreeURLStruct(url);
 }
+void WFE_ViewSource(MWContext *context,const char *address)
+{
+    URL_Struct *url=NET_CreateURLStruct(address,NET_DONT_RELOAD);
+    if(url) NET_GetURL(url,FO_VIEW_SOURCE,context,url_complete);
+}
 
 int WFE_Init(void)
 {
@@ -133,6 +139,8 @@ int WFE_Init(void)
     NET_RegisterContentTypeConverter(TEXT_HTML, FO_PRESENT, NULL, INTL_ConvCharCode);
     NET_RegisterContentTypeConverter(INTERNAL_PARSER, FO_PRESENT, &parser_data, PA_BeginParseMDL);
     NET_RegisterContentTypeConverter(TEXT_PLAIN, FO_PRESENT, NULL, NET_PlainTextConverter);
+    NET_RegisterContentTypeConverter(TEXT_HTML, FO_VIEW_SOURCE, TEXT_HTML, net_ColorHTMLStream);
+    NET_RegisterContentTypeConverter("*", FO_VIEW_SOURCE, TEXT_PLAIN, net_ColorHTMLStream);
     NET_RegisterContentTypeConverter(UNKNOWN_CONTENT_TYPE, FO_PRESENT, NULL, NET_PlainTextConverter);
     MSG_RegisterConverters();
     MSG_SetPlaintextFont(NULL, TRUE);
@@ -219,7 +227,7 @@ void WFE_Load(MWContext *context, const char *address)
 void WFE_Pump(void) { WFE_PollNetworking(); }
 int FE_GetURL(MWContext *context, URL_Struct *url) { context = WFE_URLTarget(context, url); if (!context) { NET_FreeURLStruct(url); return -1; } if (context->type == MWContextBrowser) { WFE_HistorySavePosition(context); XP_InterruptContext(context); } WFE_BeginLoad(context, url->address); return NET_GetURL(url, context->type == MWContextBrowser ? FO_CACHE_AND_PRESENT : FO_PRESENT, context, url_complete); }
 MWContext *FE_CreateNewDocWindow(MWContext *context, URL_Struct *url) { return WFE_NewWindow(url ? url->address : NULL); }
-MWContext *FE_MakeNewWindow(MWContext *context, URL_Struct *url, char *name, Chrome *chrome) { MWContext *created = WFE_NewWindow(NULL); if (created && name && name[0] != '_') created->name = _strdup(name); if (created && url) { free(url->window_target); url->window_target = _strdup(""); FE_GetURL(created, url); } return created; }
+MWContext *FE_MakeNewWindow(MWContext *context, URL_Struct *url, char *name, Chrome *chrome) { MWContext *created = WFE_NewWindow(NULL); if(created && chrome) WFE_ConfigureChrome(created,chrome); if (created && name && name[0] != '_') created->name = _strdup(name); if (created && url) { free(url->window_target); url->window_target = _strdup(""); FE_GetURL(created, url); } return created; }
 MWContext *FE_MakeBlankWindow(MWContext *context, URL_Struct *url, char *name) { return FE_CreateNewDocWindow(context, url); }
 void FE_DestroyWindow(MWContext *context) { WFE_CloseWindow(context); }
 void FE_SetWindowLoading(MWContext *context, URL_Struct *url, Net_GetUrlExitFunc **exit_func) { WFE_BeginLoad(context, url->address); if (exit_func) *exit_func = url_complete; }
@@ -232,6 +240,7 @@ void FE_ShowScrollBars(MWContext *context, XP_Bool show) { }
 
 void FE_LayoutNewDocument(MWContext *context, URL_Struct *url, int32 *width, int32 *height, int32 *margin_width, int32 *margin_height)
 {
+    if(url && url->address) WFE_DocumentAddress(context,url->address);
     WFE_DocumentDefaults(context);
     if (context->type == MWContextBrowser) SHIST_AddDocument(context, SHIST_CreateHistoryEntry(url, ""));
     WFE_WindowSize(context, width, height);
@@ -318,6 +327,10 @@ void *FE_AboutData(const char *which, char **data, int32 *length, char **content
     HGLOBAL loaded;
     static char blank[] = "<html><body></body></html>";
     *content_type = "text/html";
+    if(which && !stricmp(which,"plugins")) {
+        const char *plugins="<html><head><title>About Plug-ins</title></head><body bgcolor=\"#C0C0C0\"><h1>Installed plug-ins</h1><p>No plug-ins are loaded. Native plug-in loading is not available in this port.</p></body></html>";
+        *data=_strdup(plugins);*length=*data?(int32)strlen(*data):0;if(*data) ++about_allocations;return *data;
+    }
     if (which && !stricmp(which, "blank")) {
         *data = _strdup(blank); *length = *data ? sizeof(blank) - 1 : 0; if (*data) ++about_allocations; return *data;
     }

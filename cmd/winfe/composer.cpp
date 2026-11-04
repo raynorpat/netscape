@@ -11,6 +11,8 @@
 #include "chrome.h"
 #include "composer_resource.h"
 #include "resource.h"
+#include "menu_resource.h"
+#include "window-menu.h"
 #include "mailsettings.h"
 #include "legacy/genedit.h"
 extern "C" {
@@ -76,7 +78,10 @@ public:
     ClassicButton send, later, draft, attach, cancel, headers, remove, quote, address, stop;
     ClassicButton mail_to, cc_to, attachment_button;
     MSG_HEADER_SET visible = 0x3ff;
+    MSG_HEADER_SET displayed_headers = MSG_TO_HEADER_MASK | MSG_CC_HEADER_MASK |
+        MSG_SUBJECT_HEADER_MASK | MSG_ATTACHMENTS_HEADER_MASK;
     bool compact = true, compact_news = false, headers_initialized = false;
+    bool wrap = true, deferred = false;
     bool initialized = false, changing = false, dirty = false;
     bool destroying = false, backend_closed = false, delivery = false;
     bool completing = false;
@@ -87,11 +92,13 @@ public:
     void UpdateButtons();
     void Deliver(MSG_CommandType command);
     void SaveDraft();
+    bool SaveBody(const char *path);
     void RefreshAttachments();
     bool AttachPath(const char *path);
     void SetHeader(int index, const char *text);
     CString Header(int index) { CString text; fields[index].GetWindowText(text); return text; }
     BOOL PreTranslateMessage(MSG *message) override;
+    BOOL OnCmdMsg(UINT id, int code, void *extra, AFX_CMDHANDLERINFO *info) override;
     void PostNcDestroy() override { delete this; }
 protected:
     afx_msg int OnCreate(LPCREATESTRUCT create);
@@ -102,7 +109,7 @@ protected:
     afx_msg void OnTimer(UINT_PTR timer);
     afx_msg void OnClose();
     afx_msg void OnDestroy();
-    afx_msg void OnSend() { Deliver(MSG_SendMessage); }
+    afx_msg void OnSend() { Deliver(deferred ? MSG_SendMessageLater : MSG_SendMessage); }
     afx_msg void OnLater() { Deliver(MSG_SendMessageLater); }
     afx_msg void OnDraft() { SaveDraft(); }
     afx_msg void OnAttach();
@@ -114,6 +121,13 @@ protected:
     afx_msg void OnCcTo() { fields[3].SetFocus(); }
     afx_msg void OnHeaderCommand(UINT id);
     afx_msg void OnEditCommand(UINT id);
+    afx_msg void OnSaveAs();
+    afx_msg void OnPasteQuotation();
+    afx_msg void OnWrap();
+    afx_msg void OnDelivery(UINT id);
+    afx_msg void OnAttachments();
+    afx_msg void OnSettings() { WFE_ShowMailSettings(&context); }
+    afx_msg void OnInitMenuPopup(CMenu *menu, UINT index, BOOL system);
     afx_msg void OnUpdateCommand(CCmdUI *command);
     afx_msg void OnHeaderChanged(UINT id);
     afx_msg void OnBodyChanged();
@@ -129,6 +143,7 @@ BEGIN_MESSAGE_MAP(ComposerFrame, CFrameWnd)
  ON_WM_TIMER()
  ON_WM_CLOSE()
  ON_WM_DESTROY()
+ ON_WM_INITMENUPOPUP()
  ON_COMMAND(IDC_COMPOSE_SEND, OnSend)
  ON_COMMAND(IDC_COMPOSE_LATER, OnLater)
  ON_COMMAND(IDC_COMPOSE_DRAFT, OnDraft)
@@ -141,6 +156,14 @@ BEGIN_MESSAGE_MAP(ComposerFrame, CFrameWnd)
  ON_COMMAND(IDC_COMPOSE_MAILTO, OnMailTo)
  ON_COMMAND(IDC_COMPOSE_CC, OnCcTo)
  ON_COMMAND(IDC_COMPOSE_ATTACHMENT_BUTTON, OnAttach)
+ ON_COMMAND(ID_COMPOSE_SAVE_AS, OnSaveAs)
+ ON_COMMAND(ID_COMPOSE_PASTE_QUOTATION, OnPasteQuotation)
+ ON_COMMAND(ID_COMPOSE_WRAP, OnWrap)
+ ON_COMMAND(ID_COMPOSE_ATTACHMENTS, OnAttachments)
+ ON_COMMAND_RANGE(ID_COMPOSE_IMMEDIATE, ID_COMPOSE_DEFERRED, OnDelivery)
+ ON_COMMAND(ID_MAIL_SETTINGS, OnSettings)
+ ON_UPDATE_COMMAND_UI(ID_MAIL_SETTINGS, OnUpdateCommand)
+ ON_UPDATE_COMMAND_UI_RANGE(ID_COMPOSE_SAVE_AS, ID_COMPOSE_ATTACHMENTS, OnUpdateCommand)
  ON_COMMAND_RANGE(IDC_COMPOSE_HEADER_FIRST, IDC_COMPOSE_HEADER_LAST, OnHeaderCommand)
  ON_COMMAND_RANGE(IDC_COMPOSE_UNDO, IDC_COMPOSE_SELECT_ALL, OnEditCommand)
  ON_UPDATE_COMMAND_UI_RANGE(IDC_COMPOSE_SEND, IDC_COMPOSE_HEADER_LAST, OnUpdateCommand)
@@ -215,7 +238,7 @@ void ComposerFrame::Arrange()
     CRect area; GetClientRect(&area);
     auto s = [this](int value) { return ClassicUI::Scale(this, value); };
     CButton *buttons[] = {&send, &quote, &attach, &address, &stop};
-    int x = s(4), y = s(3), button_width = s(54);
+    int x = s(4), y = s(3), button_width = s(44);
     for (int i = 0; i < _countof(buttons); ++i) {
         buttons[i]->MoveWindow(x, y, button_width - s(2), s(38));
         x += button_width;
@@ -227,8 +250,7 @@ void ComposerFrame::Arrange()
     int order[] = {2, 3, 8, 0, 1, 4, 5, 6, 7};
     for (int row = 0; row < header_count; ++row) {
         int i = order[row];
-        bool show = compact ? (i == 2 || i == 3 || i == 8 ||
-            (i == 6 && (compact_news || !Header(6).IsEmpty()))) : (visible & header_masks[i]) != 0;
+        bool show = (displayed_headers & header_masks[i]) != 0;
         bool button_label = i == 2 || i == 3;
         labels[i].ShowWindow(show && !button_label ? SW_SHOW : SW_HIDE);
         fields[i].ShowWindow(show ? SW_SHOW : SW_HIDE);
@@ -242,9 +264,14 @@ void ComposerFrame::Arrange()
             y += s(25);
         }
     }
-    attachment_button.MoveWindow(s(5), y, s(78), s(22));
-    attachment_text.MoveWindow(s(88), y, (std::max)(area.Width() - s(94), s(20)), s(22));
-    y += s(28);
+    bool attachments = (displayed_headers & MSG_ATTACHMENTS_HEADER_MASK) != 0;
+    attachment_button.ShowWindow(attachments ? SW_SHOW : SW_HIDE);
+    attachment_text.ShowWindow(attachments ? SW_SHOW : SW_HIDE);
+    if (attachments) {
+        attachment_button.MoveWindow(s(5), y, s(78), s(22));
+        attachment_text.MoveWindow(s(88), y, (std::max)(area.Width() - s(94), s(20)), s(22));
+        y += s(28);
+    }
     int status_top = (std::max)(0, area.Height() - s(21));
     body.MoveWindow(s(5), y, (std::max)(area.Width() - s(10), s(20)),
                     (std::max)(status_top - y - s(3), s(20)));
@@ -289,6 +316,20 @@ BOOL ComposerFrame::PreTranslateMessage(MSG *message)
         if (next) { ::SetFocus(next); return TRUE; }
     }
     return CFrameWnd::PreTranslateMessage(message);
+}
+
+BOOL ComposerFrame::OnCmdMsg(UINT id, int code, void *extra, AFX_CMDHANDLERINFO *info)
+{
+    if (code == CN_COMMAND && !info && WFE_WindowCommand(this, id)) return TRUE;
+    if (code == CN_UPDATE_COMMAND_UI && extra &&
+        WFE_WindowUpdateCommand(this, (CCmdUI *)extra)) return TRUE;
+    return CFrameWnd::OnCmdMsg(id, code, extra, info);
+}
+
+void ComposerFrame::OnInitMenuPopup(CMenu *menu, UINT index, BOOL system)
+{
+    if (!system && WFE_IsWindowMenu(menu)) WFE_PopulateWindowMenu(menu, this);
+    CFrameWnd::OnInitMenuPopup(menu, index, system);
 }
 
 void ComposerFrame::SetHeader(int index, const char *text)
@@ -340,7 +381,7 @@ void ComposerFrame::UpdateButtons()
     if (destroying) return;
     bool ready = !saving && !backend_closed && context.msg_cframe;
     bool available = ready && command_enabled(&context, MSG_SendMessage);
-    send.EnableWindow(available);
+    send.EnableWindow(ready && command_enabled(&context, deferred ? MSG_SendMessageLater : MSG_SendMessage));
     later.EnableWindow(ready && command_enabled(&context, MSG_SendMessageLater));
     draft.EnableWindow(available);
     attach.EnableWindow(available);
@@ -363,6 +404,9 @@ void ComposerFrame::OnHeaders()
 {
     if (!context.msg_cframe || saving) return;
     compact = !compact;
+    displayed_headers = compact ? MSG_TO_HEADER_MASK | MSG_CC_HEADER_MASK |
+        MSG_SUBJECT_HEADER_MASK | MSG_ATTACHMENTS_HEADER_MASK |
+        (compact_news ? MSG_NEWSGROUPS_HEADER_MASK : 0) : 0x3ff;
     if (!compact) {
         XP_Bool enabled = FALSE, plural = FALSE;
         MSG_COMMAND_CHECK_STATE checked = MSG_NotUsed;
@@ -377,12 +421,22 @@ void ComposerFrame::OnHeaderCommand(UINT id)
 {
     if (!context.msg_cframe || saving) return;
     int index = id - IDC_COMPOSE_HEADER_FIRST;
-    bool shown = compact ? index == 2 || index == 3 || index == 8 ||
-        (index == 6 && (compact_news || !Header(6).IsEmpty())) : (visible & header_masks[index]) != 0;
+    bool shown = (displayed_headers & header_masks[index]) != 0;
     bool backend_shown = (visible & header_masks[index]) != 0;
     compact = false;
-    /* Entering the backend layout already inverts a mismatched compact row. */
+    displayed_headers ^= header_masks[index];
+    /* A hidden compact row can already be set in the backend. Only toggle
+       the backend if its state differs from the requested individual row. */
     if (shown == backend_shown) MSG_Command(&context, header_commands[index]);
+    Arrange();
+}
+
+void ComposerFrame::OnAttachments()
+{
+    if (!context.msg_cframe || saving) return;
+    displayed_headers ^= MSG_ATTACHMENTS_HEADER_MASK;
+    if ((displayed_headers & MSG_ATTACHMENTS_HEADER_MASK) != (visible & MSG_ATTACHMENTS_HEADER_MASK))
+        MSG_Command(&context, MSG_ShowAttachments);
     Arrange();
 }
 
@@ -424,23 +478,133 @@ void ComposerFrame::OnEditCommand(UINT id)
     focus->SendMessage(messages[id - IDC_COMPOSE_UNDO], 0, id == IDC_COMPOSE_SELECT_ALL ? -1 : 0);
 }
 
+void ComposerFrame::OnPasteQuotation()
+{
+    if (saving || backend_closed || !command_enabled(&context, MSG_SendMessage) ||
+        !IsClipboardFormatAvailable(CF_TEXT) || !::OpenClipboard(GetSafeHwnd())) return;
+    HANDLE data = GetClipboardData(CF_TEXT);
+    const char *text = data ? (const char *)GlobalLock(data) : nullptr;
+    std::string quoted;
+    if (text) {
+        bool line_start = true;
+        for (const char *p = text; *p; ++p) {
+            if (line_start) quoted += "> ";
+            quoted += *p;
+            line_start = *p == '\n';
+        }
+        GlobalUnlock(data);
+    }
+    CloseClipboard();
+    if (!quoted.empty()) {
+        body.SetFocus();
+        body.ReplaceSel(edit_text(quoted.c_str()).c_str(), TRUE);
+    }
+}
+
+void ComposerFrame::OnWrap()
+{
+    if (saving || backend_closed || !command_enabled(&context, MSG_SendMessage)) return;
+    /* Windows EDIT determines horizontal wrapping when the HWND is created.
+       Recreate only that control, preserving its text, font and selection. */
+    CString text; body.GetWindowText(text);
+    int start = 0, end = 0; body.GetSel(start, end);
+    int first_line = body.GetFirstVisibleLine();
+    bool focused = GetFocus() == &body;
+    HFONT font = (HFONT)body.SendMessage(WM_GETFONT);
+    DWORD style = body.GetStyle();
+    CRect rect; body.GetWindowRect(&rect); ScreenToClient(&rect);
+    bool new_wrap = !wrap;
+    if (new_wrap) style &= ~(ES_AUTOHSCROLL | WS_HSCROLL);
+    else style |= ES_AUTOHSCROLL | WS_HSCROLL;
+    HWND replacement = ::CreateWindowEx(body.GetExStyle(), "EDIT", "", style & ~WS_VISIBLE,
+        rect.left, rect.top, rect.Width(), rect.Height(), GetSafeHwnd(),
+        nullptr, AfxGetInstanceHandle(), nullptr);
+    if (!replacement) return;
+    bool was_changing = changing; changing = true;
+    body.DestroyWindow();
+    body.SubclassWindow(replacement);
+    body.SetDlgCtrlID(IDC_COMPOSE_BODY);
+    wrap = new_wrap;
+    body.LimitText(0x7ffffffe);
+    body.SendMessage(WM_SETFONT, (WPARAM)font, TRUE);
+    body.SetWindowText(text); body.SetSel(start, end);
+    body.LineScroll(first_line - body.GetFirstVisibleLine());
+    changing = was_changing;
+    body.ShowWindow(SW_SHOW);
+    if (focused) body.SetFocus();
+    Arrange();
+}
+
+void ComposerFrame::OnDelivery(UINT id)
+{
+    if (saving || backend_closed || !context.msg_cframe) return;
+    deferred = id == ID_COMPOSE_DEFERRED;
+    send.SetWindowText(deferred ? "Send Later" : "Send");
+    UpdateButtons();
+}
+
+bool ComposerFrame::SaveBody(const char *path)
+{
+    CString text; body.GetWindowText(text);
+    CFile file;
+    CFileException error;
+    if (!file.Open(path, CFile::modeCreate | CFile::modeWrite | CFile::typeBinary, &error)) {
+        status.SetWindowText("Could not save the message text.");
+        return false;
+    }
+    try {
+        file.Write((const char *)text, text.GetLength());
+        file.Close();
+    } catch (CFileException *failure) {
+        failure->Delete(); file.Abort();
+        status.SetWindowText("Could not save the message text.");
+        return false;
+    }
+    /* A body export does not save recipients or attachments. Keep the draft
+       dirty so closing still protects all unsaved composition information. */
+    status.SetWindowText("Message text saved.");
+    return true;
+}
+
+void ComposerFrame::OnSaveAs()
+{
+    if (saving || backend_closed || !command_enabled(&context, MSG_SendMessage)) return;
+    CFileDialog dialog(FALSE, "txt", "message.txt", OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY,
+                       "Text files (*.txt)|*.txt|All files (*.*)|*.*||", this);
+    dialog.m_ofn.lpstrTitle = "Save Message As";
+    if (dialog.DoModal() == IDOK) SaveBody(dialog.GetPathName());
+}
+
 void ComposerFrame::OnUpdateCommand(CCmdUI *command)
 {
     UINT id = command->m_nID;
     bool ready = !saving && !backend_closed && context.msg_cframe;
     bool enabled = ready && command_enabled(&context, MSG_SendMessage);
     if (id == IDC_COMPOSE_CANCEL) enabled = !saving;
+    else if (id == IDC_COMPOSE_SEND) {
+        enabled = ready && command_enabled(&context, deferred ? MSG_SendMessageLater : MSG_SendMessage);
+        command->SetText(deferred ? "Send &Later\tCtrl+Enter" : "&Send Now\tCtrl+Enter");
+    }
+    else if (id == ID_MAIL_SETTINGS) enabled = ready;
+    else if (id == ID_COMPOSE_PASTE_QUOTATION) enabled = enabled && IsClipboardFormatAvailable(CF_TEXT);
+    else if (id == ID_COMPOSE_WRAP) command->SetCheck(wrap);
+    else if (id == ID_COMPOSE_IMMEDIATE || id == ID_COMPOSE_DEFERRED) {
+        enabled = ready;
+        command->SetRadio(id == ID_COMPOSE_DEFERRED ? deferred : !deferred);
+    } else if (id == ID_COMPOSE_ATTACHMENTS) {
+        enabled = ready;
+        command->SetCheck((displayed_headers & MSG_ATTACHMENTS_HEADER_MASK) != 0);
+    }
     else if (id == IDC_COMPOSE_ADDRESS) enabled = false;
     else if (id == IDC_COMPOSE_STOP) enabled = !saving && !backend_closed && (XP_IsContextStoppable(&context) || MSG_QuoteInProgress(&context));
     else if (id == IDC_COMPOSE_QUOTE) enabled = ready && !MSG_QuoteInProgress(&context) && command_enabled(&context, MSG_QuoteMessage);
     else if (id == IDC_COMPOSE_LATER) enabled = ready && command_enabled(&context, MSG_SendMessageLater);
     else if (id == IDC_COMPOSE_REMOVE) enabled = enabled && MSG_GetAttachmentList(&context) != nullptr;
-    else if (id == IDC_COMPOSE_HEADERS) { enabled = ready; command->SetCheck(!compact); }
+    else if (id == IDC_COMPOSE_HEADERS) { enabled = ready; command->SetCheck(displayed_headers == 0x3ff); }
     else if (id >= IDC_COMPOSE_HEADER_FIRST && id <= IDC_COMPOSE_HEADER_LAST) {
         int index = id - IDC_COMPOSE_HEADER_FIRST;
         enabled = ready;
-        command->SetCheck(compact ? index == 2 || index == 3 || index == 8 ||
-            (index == 6 && (compact_news || !Header(6).IsEmpty())) : (visible & header_masks[index]) != 0);
+        command->SetCheck((displayed_headers & header_masks[index]) != 0);
     } else if (id >= IDC_COMPOSE_UNDO && id <= IDC_COMPOSE_SELECT_ALL) {
         CWnd *focus = GetFocus();
         enabled = enabled && focus && focus->GetParent() == this && focus->IsKindOf(RUNTIME_CLASS(CEdit));
@@ -625,8 +789,21 @@ void ComposerFrame::OnDestroy()
 extern "C" MWContext *FE_MakeMessageCompositionContext(MWContext *)
 {
     ComposerFrame *frame = new ComposerFrame;
+    /* The reference 3.02 window is 534 by 953 at 96 DPI. Keep its tall
+       composition area when space permits, and fit the current work area. */
+    CRect bounds(90,70,624,1023);
     if (!frame->Create(nullptr, "Netscape - [Message Composition]", WS_OVERLAPPEDWINDOW,
-                        CRect(90,70,850,690), nullptr, MAKEINTRESOURCE(IDR_COMPOSER_MENU))) return nullptr;
+                        bounds, nullptr, MAKEINTRESOURCE(IDR_COMPOSER_MENU))) return nullptr;
+    MONITORINFO monitor = {}; monitor.cbSize = sizeof(monitor);
+    CRect work;
+    if (GetMonitorInfo(MonitorFromWindow(frame->GetSafeHwnd(), MONITOR_DEFAULTTONEAREST), &monitor))
+        work = monitor.rcWork;
+    else SystemParametersInfo(SPI_GETWORKAREA, 0, &work, 0);
+    int width = (std::min)(ClassicUI::Scale(frame, 534), work.Width());
+    int height = (std::min)(ClassicUI::Scale(frame, 953), work.Height());
+    int left = (std::max)(work.left, (std::min)(bounds.left, work.right - width));
+    int top = (std::max)(work.top, (std::min)(bounds.top, work.bottom - height));
+    frame->SetWindowPos(nullptr, left, top, width, height, SWP_NOZORDER | SWP_NOACTIVATE);
     frame->LoadAccelTable(MAKEINTRESOURCE(IDR_COMPOSER_ACCEL));
     return &frame->context;
 }
@@ -686,6 +863,7 @@ extern "C" void FE_MsgShowHeaders(MWContext *context, MSG_HEADER_SET mask)
     if (frame) {
         if (!frame->headers_initialized) {
             frame->compact_news = (mask & MSG_NEWSGROUPS_HEADER_MASK) != 0;
+            if (frame->compact_news) frame->displayed_headers |= MSG_NEWSGROUPS_HEADER_MASK;
             frame->headers_initialized = true;
         }
         frame->visible = mask;
@@ -882,7 +1060,9 @@ extern "C" int WFE_ComposerSmoke(MWContext *source, const char *report, int is_n
     ULONGLONG before = file_size(outbox);
     bool queued = false;
     if (frame && saved && encoded) {
-        frame->Deliver(MSG_SendMessageLater);
+        /* Deferred Delivery must change the real Send command's transport. */
+        frame->SendMessage(WM_COMMAND, ID_COMPOSE_DEFERRED);
+        frame->SendMessage(WM_COMMAND, IDC_COMPOSE_SEND);
         DWORD started = GetTickCount();
         while (composer_for(context) && GetTickCount() - started < 15000) smoke_pump();
         queued = file_size(outbox) > before;
@@ -970,12 +1150,76 @@ extern "C" int WFE_ComposerUISmoke(MWContext *source, const char *report, const 
         nullptr, nullptr, nullptr, FALSE, FALSE);
     ComposerFrame *frame = composer_for(context);
     if (!frame) return 1;
+    CRect initial_bounds; frame->GetWindowRect(&initial_bounds);
+    MONITORINFO initial_monitor = {}; initial_monitor.cbSize = sizeof(initial_monitor);
+    bool original_size = GetMonitorInfo(MonitorFromWindow(frame->GetSafeHwnd(), MONITOR_DEFAULTTONEAREST), &initial_monitor) != FALSE;
+    if (original_size) {
+        CRect work(initial_monitor.rcWork);
+        original_size = initial_bounds.Width() == (std::min)(ClassicUI::Scale(frame, 534), work.Width()) &&
+            initial_bounds.Height() == (std::min)(ClassicUI::Scale(frame, 953), work.Height()) &&
+            initial_bounds.left >= work.left && initial_bounds.top >= work.top &&
+            initial_bounds.right <= work.right && initial_bounds.bottom <= work.bottom;
+    }
     frame->body.SetWindowText("Hello,\r\n\r\nThis is a message composed in Netscape.\r\n\r\nRegards,\r\nPat\r\n");
     frame->SetHeader(1, "reply@example.test");
     frame->SetHeader(5, "Sent");
-    frame->SetWindowPos(nullptr, 0, 0, ClassicUI::Scale(frame, 760), ClassicUI::Scale(frame, 620), SWP_NOMOVE | SWP_NOZORDER);
     frame->ShowWindow(SW_SHOWNORMAL); frame->UpdateWindow();
     for (int i = 0; i < 5; ++i) smoke_pump();
+    /* Exercise the original 3.02 commands through normal frame routing. */
+    CMenu *file_menu = frame->GetMenu() ? frame->GetMenu()->GetSubMenu(0) : nullptr;
+    CString save_caption;
+    if (file_menu) file_menu->GetMenuString(ID_COMPOSE_SAVE_AS, save_caption, MF_BYCOMMAND);
+    bool original_save_as = save_caption == "Save &As...\tCtrl+S";
+    frame->SendMessage(WM_COMMAND, ID_COMPOSE_ATTACHMENTS);
+    bool attachment_toggle = !frame->attachment_text.IsWindowVisible();
+    frame->SendMessage(WM_COMMAND, ID_COMPOSE_ATTACHMENTS);
+    attachment_toggle = attachment_toggle && frame->attachment_text.IsWindowVisible();
+    CString original_body; frame->body.GetWindowText(original_body);
+    bool paste_quotation = false;
+    if (::OpenClipboard(frame->GetSafeHwnd())) {
+        const char text[] = "First line\r\nSecond line\r\n";
+        HGLOBAL data = GlobalAlloc(GMEM_MOVEABLE, sizeof(text));
+        if (data) {
+            void *bytes = GlobalLock(data);
+            if (bytes) {
+                memcpy(bytes, text, sizeof(text)); GlobalUnlock(data);
+                EmptyClipboard();
+                if (!SetClipboardData(CF_TEXT, data)) GlobalFree(data);
+            } else GlobalFree(data);
+        }
+        CloseClipboard();
+        frame->body.SetWindowText(""); frame->body.SetFocus();
+        frame->SendMessage(WM_COMMAND, ID_COMPOSE_PASTE_QUOTATION);
+        CString quoted; frame->body.GetWindowText(quoted);
+        paste_quotation = quoted == "> First line\r\n> Second line\r\n";
+        frame->body.SetWindowText(original_body);
+    }
+    frame->body.SetSel(7, 12);
+    frame->SendMessage(WM_COMMAND, ID_COMPOSE_WRAP);
+    bool unwrapped = (frame->body.GetStyle() & ES_AUTOHSCROLL) != 0;
+    frame->SendMessage(WM_COMMAND, ID_COMPOSE_WRAP);
+    int selection_start = 0, selection_end = 0;
+    frame->body.GetSel(selection_start, selection_end);
+    CString wrapped_body; frame->body.GetWindowText(wrapped_body);
+    bool wrap_toggle = unwrapped && !(frame->body.GetStyle() & ES_AUTOHSCROLL) &&
+        selection_start == 7 && selection_end == 12 && wrapped_body == original_body;
+    frame->SendMessage(WM_COMMAND, ID_COMPOSE_DEFERRED);
+    CString send_text; frame->send.GetWindowText(send_text);
+    bool deferred_delivery = frame->deferred && send_text == "Send Later";
+    frame->SendMessage(WM_COMMAND, ID_COMPOSE_IMMEDIATE);
+    frame->send.GetWindowText(send_text);
+    bool immediate_delivery = !frame->deferred && send_text == "Send";
+    std::string body_path = snapshot && *snapshot ? std::string(snapshot) + ".txt" : "";
+    bool body_saved = !body_path.empty() && frame->SaveBody(body_path.c_str());
+    if (body_saved) {
+        FILE *saved = fopen(body_path.c_str(), "rb");
+        std::vector<char> bytes(original_body.GetLength() + 1);
+        size_t length = saved ? fread(bytes.data(), 1, bytes.size(), saved) : 0;
+        if (saved) fclose(saved);
+        body_saved = length == (size_t)original_body.GetLength() &&
+            !memcmp(bytes.data(), (const char *)original_body, length) && frame->dirty;
+        DeleteFile(body_path.c_str());
+    }
     std::string menu_labels, toolbar_labels;
     CMenu *menu = frame->GetMenu();
     if (menu) for (int i = 0; i < menu->GetMenuItemCount(); ++i) {
@@ -1054,12 +1298,17 @@ extern "C" int WFE_ComposerUISmoke(MWContext *source, const char *report, const 
     bool address_disabled = address && !address->IsWindowEnabled();
     bool quote_backend = quote && (quote->IsWindowEnabled() != FALSE) == command_enabled(context, MSG_QuoteMessage);
     bool stop_idle = stop && !stop->IsWindowEnabled();
-    bool passed = titled && compact_labels && address_disabled && quote_backend && stop_idle && menu_labels == "File|Edit|View|Options|Window" &&
+    bool passed = original_size && original_save_as && attachment_toggle && paste_quotation && wrap_toggle &&
+        deferred_delivery && immediate_delivery && body_saved &&
+        titled && compact_labels && address_disabled && quote_backend && stop_idle && menu_labels == "File|Edit|View|Options|Window" &&
         toolbar_labels == "Send|Quote|Attach|Address|Stop" && toolbar_count == 5 &&
         compact && advanced && bcc_toggle && cc_toggle && retained && narrow_ok && parts >= 2 && captured && window_captured &&
         menu_commands[0] && menu_commands[1] && menu_commands[2];
     FILE *output = report ? fopen(report, "a") : nullptr;
     if (output) {
+        fprintf(output, "original_size=%d\ninitial_outer=%d,%d\n", original_size, initial_bounds.Width(), initial_bounds.Height());
+        fprintf(output, "original_save_as=%d\nattachment_toggle=%d\npaste_quotation=%d\nwrap_toggle=%d\n", original_save_as, attachment_toggle, paste_quotation, wrap_toggle);
+        fprintf(output, "deferred_delivery=%d\nimmediate_delivery=%d\nbody_saved=%d\n", deferred_delivery, immediate_delivery, body_saved);
         fprintf(output, "menu_labels=%s\ntoolbar_labels=%s\ntoolbar_count=%d\n", menu_labels.c_str(), toolbar_labels.c_str(), toolbar_count);
         fprintf(output, "compact_headers=%d\nadvanced_headers=%d\nhidden_headers_retained=%d\n", compact, advanced, retained);
         fprintf(output, "compact_labels=%d\n", compact_labels);

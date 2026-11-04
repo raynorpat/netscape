@@ -27,7 +27,9 @@ private:
 /* Geometry, native list images and dividers only; MSG owns the list contents. */
 class MailPaneUI {
 public:
-    enum { FolderDividerID = 124, ReaderDividerID = 125, FlagImage = 2 };
+    enum { FolderDividerID = 124, ReaderDividerID = 125, FlagImage = 2,
+           SenderColumn = 0, PriorityColumn = 1, FlagColumn = 2,
+           SubjectColumn = 3, DateColumn = 4 };
     ~MailPaneUI();
     bool Attach(CWnd *owner, CListCtrl *folders, CListCtrl *messages,
                 CWnd *reader, bool news);
@@ -48,10 +50,10 @@ private:
     void DragDivider(bool vertical, CPoint screen, int offset);
     CWnd *owner = nullptr, *reader = nullptr;
     CListCtrl *folders = nullptr, *messages = nullptr;
-    CImageList folder_images, message_images;
+    CImageList folder_images, message_images, header_images;
     MailPaneDivider folder_divider, reader_divider;
     CRect folder_bounds, message_bounds, reader_bounds;
-    int folder_width = 170, top_height = -1, top = 0, footer = 0;
+    int folder_width = -1, top_height = -1, top = 0, footer = 0;
     bool arranged = false, news_mode = false;
     CFont unread_font;
 };

@@ -91,6 +91,8 @@ def run(executable, output):
             required = ["root_passed", "store", "persisted", "text_toolbar", "pictures_toolbar",
                         "both_toolbar", "font_effect", "page_loaded", "image_effect", "startup_effect", "restored"]
             if not reopen:
+                if actual.get("width") != "502" or actual.get("height") != "442":
+                    raise RuntimeError("Preferences sizing differs from original 3.02: " + repr(actual))
                 store = fields(Path(str(report) + ".store"))
                 if store.get("language_header_boundary") != "1":
                     raise RuntimeError("Preferences omitted the legacy HTTP language boundary check")

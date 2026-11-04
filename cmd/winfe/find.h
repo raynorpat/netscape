@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 void WFE_FindShow(MWContext *context);
+int WFE_FindAgain(MWContext *context);
 /* Search the supplied document, select and reveal a match. Returns 1 on success.
  * Repeating a query advances from the current selection; changing the query or
  * document starts over. A failed search leaves the previous selection intact.

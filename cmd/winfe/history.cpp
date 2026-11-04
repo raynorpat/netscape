@@ -47,6 +47,16 @@ extern "C" int WFE_HistoryCanMove(MWContext *context, int direction)
     if (!context || context->type != MWContextBrowser) return 0;
     return direction < 0 ? SHIST_CanGoBack(context) : SHIST_CanGoForward(context);
 }
+extern "C" int WFE_HistoryGo(MWContext *context,int32 id)
+{
+    context=top_context(context);if(!context || context->type!=MWContextBrowser) return 0;
+    XP_List *entries=SHIST_GetList(context);
+    for(int i=1;i<=XP_ListCount(entries);++i) {
+        History_entry *entry=(History_entry *)XP_ListGetObjectNum(entries,i);
+        if(entry && entry->unique_id==id) return load_entry(context,entry,false);
+    }
+    return 0;
+}
 
 /* Row identities survive nested dialog message pumping; backend pointers do not. */
 class HistoryDialog : public CDialog {

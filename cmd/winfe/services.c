@@ -201,9 +201,16 @@ int FE_PromptForFileName(MWContext *context, const char *prompt,
 int FE_PromptForNewsHost(MWContext *context, const char *prompt,
                          ReadFileNameCallbackFunction fn, void *closure)
 {
-    (void)prompt; (void)fn; (void)closure;
-    WFE_Unsupported(context, "News host selection dialog");
-    return -1;
+    char *host=WFE_NativePrompt(context,prompt?prompt:"News host (host:port)","",FALSE);
+    if(!fn) {free(host);return -1;}
+    if(host && *host) {
+        char *url;
+        if(strpbrk(host,"\r\n\t /\\") || strchr(host,'@')) {free(host);fn(context,NULL,closure);return 0;}
+        url=(char *)malloc(strlen(host)+9);
+        if(!url) {free(host);return -1;}
+        sprintf(url,"news://%s/",host);free(host);fn(context,url,closure);
+    } else {free(host);fn(context,NULL,closure);}
+    return 0;
 }
 
 void FE_RememberPopPassword(MWContext *context, const char *password)

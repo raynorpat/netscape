@@ -1,0 +1,3533 @@
+{
+  "schema_version": 1,
+  "source": {
+    "product": "Netscape Navigator 3.02, English, Windows (standard edition)",
+    "installer_url": "https://netscape.retropc.se/3/n32e302.exe",
+    "installer_sha256": "51f3444e400a40b4ad8459a0744db76c927d00414387f25cbc4eb87425b9428f",
+    "executable_sha256": "26e86c5b7acebc3af39a66441955720301af4c58c33b9e853f44e44ca3ae0794",
+    "menu_language": 1033,
+    "transcription": "Decoded standard MENU resources 2, 221, 225 and 224; original labels, ordering, separators and identifiers retained. Flags include popup/end-of-menu bits, not disabled-state claims.",
+    "runtime_window": "The resource placeholder is expanded to the original runtime Mail, News, Address Book, Bookmarks and History entries. The frontend replaces the final anchor with open windows.",
+    "policy": "Only metadata is committed. No original vendor executable or resource binary is included."
+  },
+  "menus": {
+    "browser": {
+      "original_resource_id": 2,
+      "resource": "IDR_MAIN",
+      "file": "cmd/winfe/res/browser-menu.rc",
+      "items": [
+        {
+          "label": "&File",
+          "original_flags": 16,
+          "items": [
+            {
+              "label": "New &Web Browser\tCtrl+N",
+              "original_flags": 0,
+              "original_id": 32770,
+              "command": "ID_BROWSER_NEW",
+              "disabled": false
+            },
+            {
+              "label": "New &Mail Message\tCtrl+M",
+              "original_flags": 0,
+              "original_id": 32879,
+              "command": "ID_CLIENT_COMPOSE",
+              "disabled": false
+            },
+            {
+              "label": "Ma&il Document...",
+              "original_flags": 0,
+              "original_id": 32810,
+              "command": "ID_MENU_MAIL_DOCUMENT",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Open &Location...\tCtrl+L",
+              "original_flags": 0,
+              "original_id": 32769,
+              "command": "ID_FOCUS_LOCATION",
+              "disabled": false
+            },
+            {
+              "label": "Open &File...\tCtrl+O",
+              "original_flags": 0,
+              "original_id": 57601,
+              "command": "ID_BROWSER_OPEN",
+              "disabled": false
+            },
+            {
+              "label": "&Save As...\tCtrl+S",
+              "original_flags": 0,
+              "original_id": 32771,
+              "command": "ID_BROWSER_SAVE",
+              "disabled": false
+            },
+            {
+              "label": "&Upload File...",
+              "original_flags": 0,
+              "original_id": 34366,
+              "command": "ID_MENU_UPLOAD_FILE",
+              "disabled": true
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Pa&ge Setup...",
+              "original_flags": 0,
+              "original_id": 57605,
+              "command": "ID_MENU_PAGE_SETUP",
+              "disabled": true
+            },
+            {
+              "label": "&Print...",
+              "original_flags": 0,
+              "original_id": 57607,
+              "command": "ID_BROWSER_PRINT",
+              "disabled": true
+            },
+            {
+              "label": "Print Pre&view",
+              "original_flags": 0,
+              "original_id": 57609,
+              "command": "ID_MENU_PRINT_PREVIEW",
+              "disabled": true
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&Close\tCtrl+W",
+              "original_flags": 0,
+              "original_id": 57602,
+              "command": "0xE141",
+              "disabled": false
+            },
+            {
+              "label": "E&xit",
+              "original_flags": 128,
+              "original_id": 57665,
+              "command": "ID_MENU_EXIT",
+              "disabled": false
+            }
+          ]
+        },
+        {
+          "label": "&Edit",
+          "original_flags": 16,
+          "items": [
+            {
+              "label": "&Undo\tCtrl+Z",
+              "original_flags": 0,
+              "original_id": 57643,
+              "command": "0xE12B",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Cu&t\tCtrl+X",
+              "original_flags": 0,
+              "original_id": 57635,
+              "command": "0xE123",
+              "disabled": false
+            },
+            {
+              "label": "&Copy\tCtrl+C",
+              "original_flags": 0,
+              "original_id": 57634,
+              "command": "0xE122",
+              "disabled": false
+            },
+            {
+              "label": "&Paste\tCtrl+V",
+              "original_flags": 0,
+              "original_id": 57637,
+              "command": "0xE125",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&Select All\tCtrl+A",
+              "original_flags": 0,
+              "original_id": 57642,
+              "command": "0xE12A",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&Find...\tCtrl+F",
+              "original_flags": 0,
+              "original_id": 32819,
+              "command": "ID_BROWSER_FIND",
+              "disabled": false
+            },
+            {
+              "label": "Find A&gain\tF3",
+              "original_flags": 128,
+              "original_id": 32880,
+              "command": "ID_MENU_FIND_AGAIN",
+              "disabled": false
+            }
+          ]
+        },
+        {
+          "label": "&View",
+          "original_flags": 16,
+          "items": [
+            {
+              "label": "&Reload\tCtrl+R",
+              "original_flags": 0,
+              "original_id": 32782,
+              "command": "ID_NAV_RELOAD",
+              "disabled": false
+            },
+            {
+              "label": "Reload &Frame",
+              "original_flags": 0,
+              "original_id": 32881,
+              "command": "ID_MENU_RELOAD_FRAME",
+              "disabled": false
+            },
+            {
+              "label": "Load &Images\tCtrl+I",
+              "original_flags": 0,
+              "original_id": 32804,
+              "command": "ID_BROWSER_IMAGES",
+              "disabled": false
+            },
+            {
+              "label": "Re&fresh",
+              "original_flags": 0,
+              "original_id": 32783,
+              "command": "ID_MENU_REFRESH",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Document &Source",
+              "original_flags": 0,
+              "original_id": 32789,
+              "command": "ID_MENU_DOCUMENT_SOURCE",
+              "disabled": false
+            },
+            {
+              "label": "Document I&nfo",
+              "original_flags": 0,
+              "original_id": 32846,
+              "command": "ID_MENU_DOCUMENT_INFO",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Frame Source",
+              "original_flags": 0,
+              "original_id": 34404,
+              "command": "ID_MENU_FRAME_SOURCE",
+              "disabled": false
+            },
+            {
+              "label": "Frame Info",
+              "original_flags": 128,
+              "original_id": 34405,
+              "command": "ID_MENU_FRAME_INFO",
+              "disabled": false
+            }
+          ]
+        },
+        {
+          "label": "&Go",
+          "original_flags": 16,
+          "items": [
+            {
+              "label": "&Back\tAlt+<-",
+              "original_flags": 0,
+              "original_id": 32780,
+              "command": "ID_NAV_BACK",
+              "disabled": false
+            },
+            {
+              "label": "&Forward\tAlt+->",
+              "original_flags": 0,
+              "original_id": 32781,
+              "command": "ID_NAV_FORWARD",
+              "disabled": false
+            },
+            {
+              "label": "&Home",
+              "original_flags": 0,
+              "original_id": 32807,
+              "command": "ID_NAV_HOME",
+              "disabled": false
+            },
+            {
+              "label": "&Stop Loading\t<Esc>",
+              "original_flags": 0,
+              "original_id": 32795,
+              "command": "ID_NAV_STOP",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 128,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            }
+          ]
+        },
+        {
+          "label": "&Bookmarks",
+          "original_flags": 16,
+          "items": [
+            {
+              "label": "&Add Bookmark\tCtrl+D",
+              "original_flags": 0,
+              "original_id": 32811,
+              "command": "ID_BOOKMARKS_ADD",
+              "disabled": false
+            },
+            {
+              "label": "&Go to Bookmarks...\tCtrl+B",
+              "original_flags": 0,
+              "original_id": 32812,
+              "command": "ID_BOOKMARKS_SHOW",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 128,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            }
+          ]
+        },
+        {
+          "label": "&Options",
+          "original_flags": 16,
+          "items": [
+            {
+              "label": "&General Preferences...",
+              "original_flags": 0,
+              "original_id": 32791,
+              "command": "ID_BROWSER_PREFERENCES",
+              "disabled": false
+            },
+            {
+              "label": "&Mail and News Preferences...",
+              "original_flags": 0,
+              "original_id": 32882,
+              "command": "ID_MAIL_SETTINGS",
+              "disabled": false
+            },
+            {
+              "label": "&Network Preferences...",
+              "original_flags": 0,
+              "original_id": 32884,
+              "command": "ID_MENU_NETWORK_PREFERENCES",
+              "disabled": true
+            },
+            {
+              "label": "&Security Preferences...",
+              "original_flags": 0,
+              "original_id": 32883,
+              "command": "ID_MENU_SECURITY_PREFERENCES",
+              "disabled": true
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Show &Toolbar",
+              "original_flags": 0,
+              "original_id": 59392,
+              "command": "ID_VIEW_TOOLBAR",
+              "disabled": false
+            },
+            {
+              "label": "Show &Location",
+              "original_flags": 0,
+              "original_id": 32788,
+              "command": "ID_VIEW_LOCATION",
+              "disabled": false
+            },
+            {
+              "label": "Show &Directory Buttons",
+              "original_flags": 0,
+              "original_id": 32840,
+              "command": "ID_VIEW_DIRECTORY",
+              "disabled": false
+            },
+            {
+              "label": "Show &Java Console",
+              "original_flags": 0,
+              "original_id": 32878,
+              "command": "ID_MENU_JAVA_CONSOLE",
+              "disabled": true
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&Auto Load Images",
+              "original_flags": 0,
+              "original_id": 32817,
+              "command": "ID_MENU_AUTO_IMAGES",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Document &Encoding",
+              "original_flags": 144,
+              "items": [
+                {
+                  "label": "Western(Latin1)",
+                  "original_flags": 0,
+                  "original_id": 33115,
+                  "command": "ID_MENU_ENCODING_LATIN1",
+                  "disabled": false
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Central European(Win1250)",
+                  "original_flags": 0,
+                  "original_id": 34369,
+                  "command": "ID_MENU_ENCODING_WIN1250",
+                  "disabled": true
+                },
+                {
+                  "label": "Central European(ISO8859-2)",
+                  "original_flags": 0,
+                  "original_id": 33116,
+                  "command": "ID_MENU_ENCODING_LATIN2",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Japanese(Auto-detect)",
+                  "original_flags": 0,
+                  "original_id": 33117,
+                  "command": "ID_MENU_ENCODING_JAPANESE_AUTO",
+                  "disabled": true
+                },
+                {
+                  "label": "Japanese(ShiftJIS)",
+                  "original_flags": 0,
+                  "original_id": 33118,
+                  "command": "ID_MENU_ENCODING_SHIFTJIS",
+                  "disabled": true
+                },
+                {
+                  "label": "Japanese(EUC)",
+                  "original_flags": 0,
+                  "original_id": 33119,
+                  "command": "ID_MENU_ENCODING_JAPANESE_EUC",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Traditional Chinese(Big5)",
+                  "original_flags": 0,
+                  "original_id": 33120,
+                  "command": "ID_MENU_ENCODING_BIG5",
+                  "disabled": true
+                },
+                {
+                  "label": "Traditional Chinese(EUC)",
+                  "original_flags": 0,
+                  "original_id": 33121,
+                  "command": "ID_MENU_ENCODING_CHINESE_EUC",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Simplified Chinese",
+                  "original_flags": 0,
+                  "original_id": 33122,
+                  "command": "ID_MENU_ENCODING_CHINESE_GB",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Korean",
+                  "original_flags": 0,
+                  "original_id": 33123,
+                  "command": "ID_MENU_ENCODING_KOREAN",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Cyrillic(Win1251)",
+                  "original_flags": 0,
+                  "original_id": 34370,
+                  "command": "ID_MENU_ENCODING_WIN1251",
+                  "disabled": true
+                },
+                {
+                  "label": "Cyrillic(ISO8859-5)",
+                  "original_flags": 0,
+                  "original_id": 34371,
+                  "command": "ID_MENU_ENCODING_CYRILLIC_ISO",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Cyrillic(KOI8-R)",
+                  "original_flags": 0,
+                  "original_id": 34372,
+                  "command": "ID_MENU_ENCODING_KOI8R",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Greek",
+                  "original_flags": 0,
+                  "original_id": 34374,
+                  "command": "ID_MENU_ENCODING_GREEK",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Turkish",
+                  "original_flags": 0,
+                  "original_id": 34376,
+                  "command": "ID_MENU_ENCODING_TURKISH",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Unicode(UTF8)",
+                  "original_flags": 0,
+                  "original_id": 34377,
+                  "command": "ID_MENU_ENCODING_UTF8",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "User Defined",
+                  "original_flags": 0,
+                  "original_id": 33124,
+                  "command": "ID_MENU_ENCODING_USER",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "&Set Default",
+                  "original_flags": 128,
+                  "original_id": 32839,
+                  "command": "ID_MENU_ENCODING_DEFAULT",
+                  "disabled": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "&Directory",
+          "original_flags": 16,
+          "items": [
+            {
+              "label": "N&etscape's Home",
+              "original_flags": 0,
+              "original_id": 65000,
+              "command": "ID_MENU_DIRECTORY_HOME",
+              "disabled": false
+            },
+            {
+              "label": "What's &New?",
+              "original_flags": 0,
+              "original_id": 65001,
+              "command": "ID_DIRECTORY_FIRST",
+              "disabled": false
+            },
+            {
+              "label": "What's &Cool?",
+              "original_flags": 0,
+              "original_id": 65002,
+              "command": "ID_DIRECTORY_FIRST + 1",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Customer Sho&wcase",
+              "original_flags": 0,
+              "original_id": 65004,
+              "command": "ID_MENU_DIRECTORY_SHOWCASE",
+              "disabled": false
+            },
+            {
+              "label": "Netscape &Destinations",
+              "original_flags": 0,
+              "original_id": 65005,
+              "command": "ID_DIRECTORY_FIRST + 2",
+              "disabled": false
+            },
+            {
+              "label": "Internet &Search",
+              "original_flags": 0,
+              "original_id": 65006,
+              "command": "ID_DIRECTORY_FIRST + 3",
+              "disabled": false
+            },
+            {
+              "label": "&People",
+              "original_flags": 0,
+              "original_id": 65007,
+              "command": "ID_DIRECTORY_FIRST + 4",
+              "disabled": false
+            },
+            {
+              "label": "&About the Internet",
+              "original_flags": 128,
+              "original_id": 65008,
+              "command": "ID_MENU_DIRECTORY_INTERNET",
+              "disabled": false
+            }
+          ]
+        },
+        {
+          "label": "&Window",
+          "original_flags": 16,
+          "items": [
+            {
+              "label": "New Window",
+              "original_flags": 128,
+              "original_id": 34003,
+              "command": "ID_MENU_WINDOW_ANCHOR",
+              "disabled": true
+            }
+          ]
+        },
+        {
+          "label": "&Help",
+          "original_flags": 144,
+          "items": [
+            {
+              "label": "&About Netscape...",
+              "original_flags": 0,
+              "original_id": 65199,
+              "command": "ID_BROWSER_ABOUT",
+              "disabled": false
+            },
+            {
+              "label": "About &Plug-ins",
+              "original_flags": 0,
+              "original_id": 65018,
+              "command": "ID_MENU_HELP_PLUGINS",
+              "disabled": false
+            },
+            {
+              "label": "Registration &Information",
+              "original_flags": 0,
+              "original_id": 65010,
+              "command": "ID_MENU_HELP_REGISTRATION",
+              "disabled": false
+            },
+            {
+              "label": "Sof&tware",
+              "original_flags": 0,
+              "original_id": 65019,
+              "command": "ID_MENU_HELP_SOFTWARE",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&Handbook",
+              "original_flags": 0,
+              "original_id": 65011,
+              "command": "ID_MENU_HELP_HANDBOOK",
+              "disabled": false
+            },
+            {
+              "label": "&Release Notes",
+              "original_flags": 0,
+              "original_id": 65012,
+              "command": "ID_MENU_HELP_RELEASE_NOTES",
+              "disabled": false
+            },
+            {
+              "label": "&Frequently Asked Questions",
+              "original_flags": 0,
+              "original_id": 65013,
+              "command": "ID_MENU_HELP_FAQ",
+              "disabled": false
+            },
+            {
+              "label": "&On Security",
+              "original_flags": 0,
+              "original_id": 65014,
+              "command": "ID_MENU_HELP_SECURITY",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "How to &Give Feedback",
+              "original_flags": 0,
+              "original_id": 65015,
+              "command": "ID_MENU_HELP_FEEDBACK",
+              "disabled": false
+            },
+            {
+              "label": "How to Get &Support",
+              "original_flags": 0,
+              "original_id": 65016,
+              "command": "ID_MENU_HELP_SUPPORT",
+              "disabled": false
+            },
+            {
+              "label": "How to &Create Web Services",
+              "original_flags": 128,
+              "original_id": 65017,
+              "command": "ID_MENU_HELP_WEB_SERVICES",
+              "disabled": false
+            }
+          ]
+        }
+      ]
+    },
+    "mail": {
+      "original_resource_id": 221,
+      "resource": "IDR_MAIL",
+      "file": "cmd/winfe/res/mail.rc",
+      "items": [
+        {
+          "label": "&File",
+          "original_flags": 16,
+          "items": [
+            {
+              "label": "New Web &Browser\tCtrl+N",
+              "original_flags": 0,
+              "original_id": 32770,
+              "command": "ID_BROWSER_NEW",
+              "disabled": false
+            },
+            {
+              "label": "New &Mail Message\tCtrl+M",
+              "original_flags": 0,
+              "original_id": 34107,
+              "command": "ID_CLIENT_COMPOSE",
+              "disabled": false
+            },
+            {
+              "label": "New &Folder...",
+              "original_flags": 0,
+              "original_id": 34008,
+              "command": "ID_MENU_NEW_FOLDER",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Add F&older...",
+              "original_flags": 0,
+              "original_id": 34001,
+              "command": "ID_MENU_ADD_FOLDER",
+              "disabled": false
+            },
+            {
+              "label": "Save &As...\tCtrl+S",
+              "original_flags": 0,
+              "original_id": 34113,
+              "command": "ID_MENU_SAVE_MESSAGE",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&Get New Mail\tCtrl+T",
+              "original_flags": 0,
+              "original_id": 34100,
+              "command": "ID_MESSAGE_GET",
+              "disabled": false
+            },
+            {
+              "label": "Sen&d Messages in Outbox\tCtrl+H",
+              "original_flags": 0,
+              "original_id": 34007,
+              "command": "ID_MESSAGE_SEND_QUEUED",
+              "disabled": false
+            },
+            {
+              "label": "&Empty Trash Folder",
+              "original_flags": 0,
+              "original_id": 34011,
+              "command": "ID_MENU_EMPTY_TRASH",
+              "disabled": false
+            },
+            {
+              "label": "Compre&ss Folder\tCtrl+K",
+              "original_flags": 0,
+              "original_id": 34009,
+              "command": "ID_MENU_COMPRESS_FOLDER",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Page Se&tup",
+              "original_flags": 0,
+              "original_id": 57605,
+              "command": "ID_MENU_PAGE_SETUP",
+              "disabled": true
+            },
+            {
+              "label": "&Print...\tCtrl+P",
+              "original_flags": 0,
+              "original_id": 34013,
+              "command": "ID_BROWSER_PRINT",
+              "disabled": true
+            },
+            {
+              "label": "P&rint Preview",
+              "original_flags": 0,
+              "original_id": 57609,
+              "command": "ID_MENU_PRINT_PREVIEW",
+              "disabled": true
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&Close\tCtrl+W",
+              "original_flags": 0,
+              "original_id": 57602,
+              "command": "0xE141",
+              "disabled": false
+            },
+            {
+              "label": "E&xit",
+              "original_flags": 128,
+              "original_id": 57665,
+              "command": "ID_MENU_EXIT",
+              "disabled": false
+            }
+          ]
+        },
+        {
+          "label": "&Edit",
+          "original_flags": 16,
+          "items": [
+            {
+              "label": "&Undo\tCtrl+Z",
+              "original_flags": 0,
+              "original_id": 57643,
+              "command": "0xE12B",
+              "disabled": false
+            },
+            {
+              "label": "&Redo\tCtrl+E",
+              "original_flags": 0,
+              "original_id": 57644,
+              "command": "0xE12C",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Cu&t\tCtrl+X",
+              "original_flags": 0,
+              "original_id": 57635,
+              "command": "0xE123",
+              "disabled": false
+            },
+            {
+              "label": "&Copy\tCtrl+C",
+              "original_flags": 0,
+              "original_id": 57634,
+              "command": "0xE122",
+              "disabled": false
+            },
+            {
+              "label": "&Paste\tCtrl+V",
+              "original_flags": 0,
+              "original_id": 57637,
+              "command": "0xE125",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&Delete Message\t<Del>",
+              "original_flags": 0,
+              "original_id": 34112,
+              "command": "ID_MESSAGE_DELETE",
+              "disabled": false
+            },
+            {
+              "label": "Delete F&older",
+              "original_flags": 0,
+              "original_id": 34354,
+              "command": "ID_MENU_DELETE_FOLDER",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&Select Thread\tCtrl+Shift+A",
+              "original_flags": 0,
+              "original_id": 34024,
+              "command": "ID_MENU_SELECT_THREAD",
+              "disabled": false
+            },
+            {
+              "label": "Select Flagged &Messages",
+              "original_flags": 0,
+              "original_id": 34025,
+              "command": "ID_MENU_SELECT_FLAGGED",
+              "disabled": false
+            },
+            {
+              "label": "Select &All Messages\tCtrl+A",
+              "original_flags": 0,
+              "original_id": 34026,
+              "command": "0xE12A",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&Find...\tCtrl+F",
+              "original_flags": 0,
+              "original_id": 34352,
+              "command": "ID_BROWSER_FIND",
+              "disabled": false
+            },
+            {
+              "label": "Find A&gain\tF3",
+              "original_flags": 128,
+              "original_id": 34353,
+              "command": "ID_MENU_FIND_AGAIN",
+              "disabled": false
+            }
+          ]
+        },
+        {
+          "label": "&View",
+          "original_flags": 16,
+          "items": [
+            {
+              "label": "&Sort",
+              "original_flags": 16,
+              "items": [
+                {
+                  "label": "A&gain",
+                  "original_flags": 0,
+                  "original_id": 34111,
+                  "command": "ID_MENU_SORT_AGAIN",
+                  "disabled": false
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "&Thread Messages",
+                  "original_flags": 0,
+                  "original_id": 34048,
+                  "command": "ID_MENU_SORT_THREADED",
+                  "disabled": false
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "&Ascending",
+                  "original_flags": 0,
+                  "original_id": 34049,
+                  "command": "ID_MENU_SORT_ASCENDING",
+                  "disabled": false
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "by &Date",
+                  "original_flags": 0,
+                  "original_id": 34050,
+                  "command": "ID_MENU_SORT_DATE",
+                  "disabled": false
+                },
+                {
+                  "label": "by &Subject",
+                  "original_flags": 0,
+                  "original_id": 34051,
+                  "command": "ID_MENU_SORT_SUBJECT",
+                  "disabled": false
+                },
+                {
+                  "label": "by Sen&der",
+                  "original_flags": 0,
+                  "original_id": 34052,
+                  "command": "ID_MENU_SORT_SENDER",
+                  "disabled": false
+                },
+                {
+                  "label": "by &Message Number",
+                  "original_flags": 128,
+                  "original_id": 34364,
+                  "command": "ID_MENU_SORT_NUMBER",
+                  "disabled": false
+                }
+              ]
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&Wrap Long Lines",
+              "original_flags": 0,
+              "original_id": 34378,
+              "command": "ID_MENU_WRAP_LINES",
+              "disabled": false
+            },
+            {
+              "label": "&Unscramble (ROT-13)",
+              "original_flags": 0,
+              "original_id": 34055,
+              "command": "ID_MENU_ROT13",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Rel&oad",
+              "original_flags": 0,
+              "original_id": 32782,
+              "command": "ID_NAV_RELOAD",
+              "disabled": false
+            },
+            {
+              "label": "Load &Images",
+              "original_flags": 0,
+              "original_id": 32804,
+              "command": "ID_BROWSER_IMAGES",
+              "disabled": false
+            },
+            {
+              "label": "&Refresh",
+              "original_flags": 0,
+              "original_id": 32783,
+              "command": "ID_MENU_REFRESH",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&Document Source",
+              "original_flags": 0,
+              "original_id": 32789,
+              "command": "ID_MENU_DOCUMENT_SOURCE",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&Attachments Inline",
+              "original_flags": 0,
+              "original_id": 34355,
+              "command": "ID_MENU_ATTACHMENTS_INLINE",
+              "disabled": false
+            },
+            {
+              "label": "Attachments as &Links",
+              "original_flags": 128,
+              "original_id": 34356,
+              "command": "ID_MENU_ATTACHMENTS_LINKS",
+              "disabled": false
+            }
+          ]
+        },
+        {
+          "label": "&Message",
+          "original_flags": 16,
+          "items": [
+            {
+              "label": "&Reply\tCtrl+R",
+              "original_flags": 0,
+              "original_id": 34108,
+              "command": "ID_MESSAGE_REPLY",
+              "disabled": false
+            },
+            {
+              "label": "Reply to &All\tCtrl+Shift+R",
+              "original_flags": 0,
+              "original_id": 34109,
+              "command": "ID_MESSAGE_REPLY_ALL",
+              "disabled": false
+            },
+            {
+              "label": "&Forward\tCtrl+L",
+              "original_flags": 0,
+              "original_id": 34110,
+              "command": "ID_MESSAGE_FORWARD",
+              "disabled": false
+            },
+            {
+              "label": "Forward &Quoted",
+              "original_flags": 0,
+              "original_id": 34319,
+              "command": "ID_MENU_FORWARD_QUOTED",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Mark as Rea&d",
+              "original_flags": 0,
+              "original_id": 34120,
+              "command": "ID_MESSAGE_READ",
+              "disabled": false
+            },
+            {
+              "label": "Mark as &Unread",
+              "original_flags": 0,
+              "original_id": 34121,
+              "command": "ID_MENU_MARK_UNREAD",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "F&lag Message",
+              "original_flags": 0,
+              "original_id": 34125,
+              "command": "ID_MENU_FLAG",
+              "disabled": false
+            },
+            {
+              "label": "U&nflag Message",
+              "original_flags": 0,
+              "original_id": 34126,
+              "command": "ID_MENU_UNFLAG",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Add to Address &Book",
+              "original_flags": 0,
+              "original_id": 34322,
+              "command": "ID_MENU_ADD_ADDRESS",
+              "disabled": true
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&Move",
+              "original_flags": 16,
+              "items": [
+                {
+                  "label": "To &File...",
+                  "original_flags": 0,
+                  "original_id": 34032,
+                  "command": "ID_MENU_MOVE_FILE",
+                  "disabled": false
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "&Inbox",
+                  "original_flags": 0,
+                  "original_id": 34033,
+                  "command": "ID_MENU_MOVE_INBOX",
+                  "disabled": false
+                },
+                {
+                  "label": "&Sent Mail",
+                  "original_flags": 0,
+                  "original_id": 34127,
+                  "command": "ID_MENU_MOVE_SENT",
+                  "disabled": false
+                },
+                {
+                  "label": "&Trash",
+                  "original_flags": 128,
+                  "original_id": 34034,
+                  "command": "ID_MENU_MOVE_TRASH",
+                  "disabled": false
+                }
+              ]
+            },
+            {
+              "label": "&Copy",
+              "original_flags": 144,
+              "items": [
+                {
+                  "label": "To &File...",
+                  "original_flags": 0,
+                  "original_id": 34032,
+                  "command": "ID_MENU_COPY_FILE",
+                  "disabled": false
+                },
+                {
+                  "label": "&Inbox Folder",
+                  "original_flags": 0,
+                  "original_id": 34033,
+                  "command": "ID_MENU_COPY_INBOX",
+                  "disabled": false
+                },
+                {
+                  "label": "&Trash Folder",
+                  "original_flags": 128,
+                  "original_id": 34034,
+                  "command": "ID_MENU_COPY_TRASH",
+                  "disabled": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "&Go",
+          "original_flags": 16,
+          "items": [
+            {
+              "label": "&Next Message",
+              "original_flags": 0,
+              "original_id": 34104,
+              "command": "ID_MENU_NEXT_MESSAGE",
+              "disabled": false
+            },
+            {
+              "label": "&Previous Message",
+              "original_flags": 0,
+              "original_id": 34102,
+              "command": "ID_MENU_PREVIOUS_MESSAGE",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&First Unread",
+              "original_flags": 0,
+              "original_id": 34043,
+              "command": "ID_MENU_FIRST_UNREAD",
+              "disabled": false
+            },
+            {
+              "label": "Ne&xt Unread",
+              "original_flags": 0,
+              "original_id": 34103,
+              "command": "ID_MENU_NEXT_UNREAD",
+              "disabled": false
+            },
+            {
+              "label": "Pre&vious Unread",
+              "original_flags": 0,
+              "original_id": 34101,
+              "command": "ID_MENU_PREVIOUS_UNREAD",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "First F&lagged",
+              "original_flags": 0,
+              "original_id": 34323,
+              "command": "ID_MENU_FIRST_FLAGGED",
+              "disabled": false
+            },
+            {
+              "label": "Nex&t Flagged",
+              "original_flags": 0,
+              "original_id": 34324,
+              "command": "ID_MENU_NEXT_FLAGGED",
+              "disabled": false
+            },
+            {
+              "label": "Previo&us Flagged",
+              "original_flags": 0,
+              "original_id": 34325,
+              "command": "ID_MENU_PREVIOUS_FLAGGED",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&Stop Loading\t<Esc>",
+              "original_flags": 128,
+              "original_id": 34115,
+              "command": "ID_NAV_STOP",
+              "disabled": false
+            }
+          ]
+        },
+        {
+          "label": "&Options",
+          "original_flags": 16,
+          "items": [
+            {
+              "label": "&General Preferences...",
+              "original_flags": 0,
+              "original_id": 32791,
+              "command": "ID_BROWSER_PREFERENCES",
+              "disabled": false
+            },
+            {
+              "label": "&Mail and News Preferences...",
+              "original_flags": 0,
+              "original_id": 32882,
+              "command": "ID_MAIL_SETTINGS",
+              "disabled": false
+            },
+            {
+              "label": "&Network Preferences...",
+              "original_flags": 0,
+              "original_id": 32884,
+              "command": "ID_MENU_NETWORK_PREFERENCES",
+              "disabled": true
+            },
+            {
+              "label": "&Security Preferences...",
+              "original_flags": 0,
+              "original_id": 32883,
+              "command": "ID_MENU_SECURITY_PREFERENCES",
+              "disabled": true
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Show &All Messages",
+              "original_flags": 0,
+              "original_id": 34119,
+              "command": "ID_MESSAGE_SHOW_ALL",
+              "disabled": false
+            },
+            {
+              "label": "Show Only &Unread Messages",
+              "original_flags": 0,
+              "original_id": 34335,
+              "command": "ID_MESSAGE_SHOW_UNREAD",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Show &Headers",
+              "original_flags": 16,
+              "items": [
+                {
+                  "label": "&All",
+                  "original_flags": 0,
+                  "original_id": 34054,
+                  "command": "ID_MAIL_HEADERS_ALL",
+                  "disabled": false
+                },
+                {
+                  "label": "&Normal",
+                  "original_flags": 0,
+                  "original_id": 34367,
+                  "command": "ID_MAIL_HEADERS_SOME",
+                  "disabled": false
+                },
+                {
+                  "label": "&Brief",
+                  "original_flags": 128,
+                  "original_id": 34368,
+                  "command": "ID_MENU_HEADERS_BRIEF",
+                  "disabled": false
+                }
+              ]
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Document &Encoding",
+              "original_flags": 144,
+              "items": [
+                {
+                  "label": "Western(Latin1)",
+                  "original_flags": 0,
+                  "original_id": 33115,
+                  "command": "ID_MENU_ENCODING_LATIN1",
+                  "disabled": false
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Central European(Win1250)",
+                  "original_flags": 0,
+                  "original_id": 34369,
+                  "command": "ID_MENU_ENCODING_WIN1250",
+                  "disabled": true
+                },
+                {
+                  "label": "Central European(ISO8859-2)",
+                  "original_flags": 0,
+                  "original_id": 33116,
+                  "command": "ID_MENU_ENCODING_LATIN2",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Japanese(Auto-detect)",
+                  "original_flags": 0,
+                  "original_id": 33117,
+                  "command": "ID_MENU_ENCODING_JAPANESE_AUTO",
+                  "disabled": true
+                },
+                {
+                  "label": "Japanese(ShiftJIS)",
+                  "original_flags": 0,
+                  "original_id": 33118,
+                  "command": "ID_MENU_ENCODING_SHIFTJIS",
+                  "disabled": true
+                },
+                {
+                  "label": "Japanese(EUC)",
+                  "original_flags": 0,
+                  "original_id": 33119,
+                  "command": "ID_MENU_ENCODING_JAPANESE_EUC",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Traditional Chinese(Big5)",
+                  "original_flags": 0,
+                  "original_id": 33120,
+                  "command": "ID_MENU_ENCODING_BIG5",
+                  "disabled": true
+                },
+                {
+                  "label": "Traditional Chinese(EUC)",
+                  "original_flags": 0,
+                  "original_id": 33121,
+                  "command": "ID_MENU_ENCODING_CHINESE_EUC",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Simplified Chinese",
+                  "original_flags": 0,
+                  "original_id": 33122,
+                  "command": "ID_MENU_ENCODING_CHINESE_GB",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Korean",
+                  "original_flags": 0,
+                  "original_id": 33123,
+                  "command": "ID_MENU_ENCODING_KOREAN",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Cyrillic(Win1251)",
+                  "original_flags": 0,
+                  "original_id": 34370,
+                  "command": "ID_MENU_ENCODING_WIN1251",
+                  "disabled": true
+                },
+                {
+                  "label": "Cyrillic(ISO8859-5)",
+                  "original_flags": 0,
+                  "original_id": 34371,
+                  "command": "ID_MENU_ENCODING_CYRILLIC_ISO",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Cyrillic(KOI8-R)",
+                  "original_flags": 0,
+                  "original_id": 34372,
+                  "command": "ID_MENU_ENCODING_KOI8R",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Greek",
+                  "original_flags": 0,
+                  "original_id": 34374,
+                  "command": "ID_MENU_ENCODING_GREEK",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Turkish",
+                  "original_flags": 0,
+                  "original_id": 34376,
+                  "command": "ID_MENU_ENCODING_TURKISH",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Unicode (UTF8)",
+                  "original_flags": 0,
+                  "original_id": 34377,
+                  "command": "ID_MENU_ENCODING_UTF8",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "User Defined",
+                  "original_flags": 0,
+                  "original_id": 33124,
+                  "command": "ID_MENU_ENCODING_USER",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "&Set Default",
+                  "original_flags": 128,
+                  "original_id": 32839,
+                  "command": "ID_MENU_ENCODING_DEFAULT",
+                  "disabled": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "&Window",
+          "original_flags": 16,
+          "items": [
+            {
+              "label": "New Window",
+              "original_flags": 128,
+              "original_id": 34003,
+              "command": "ID_MENU_WINDOW_ANCHOR",
+              "disabled": true
+            }
+          ]
+        },
+        {
+          "label": "&Help",
+          "original_flags": 144,
+          "items": [
+            {
+              "label": "&About Netscape...",
+              "original_flags": 0,
+              "original_id": 65199,
+              "command": "ID_BROWSER_ABOUT",
+              "disabled": false
+            },
+            {
+              "label": "About &Plug-ins",
+              "original_flags": 0,
+              "original_id": 65018,
+              "command": "ID_MENU_HELP_PLUGINS",
+              "disabled": false
+            },
+            {
+              "label": "Registration &Information",
+              "original_flags": 0,
+              "original_id": 65010,
+              "command": "ID_MENU_HELP_REGISTRATION",
+              "disabled": false
+            },
+            {
+              "label": "Sof&tware",
+              "original_flags": 0,
+              "original_id": 65019,
+              "command": "ID_MENU_HELP_SOFTWARE",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&Handbook",
+              "original_flags": 0,
+              "original_id": 65011,
+              "command": "ID_MENU_HELP_HANDBOOK",
+              "disabled": false
+            },
+            {
+              "label": "&Release Notes",
+              "original_flags": 0,
+              "original_id": 65012,
+              "command": "ID_MENU_HELP_RELEASE_NOTES",
+              "disabled": false
+            },
+            {
+              "label": "&Frequently Asked Questions",
+              "original_flags": 0,
+              "original_id": 65013,
+              "command": "ID_MENU_HELP_FAQ",
+              "disabled": false
+            },
+            {
+              "label": "&On Security",
+              "original_flags": 0,
+              "original_id": 65014,
+              "command": "ID_MENU_HELP_SECURITY",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "How to &Give Feedback",
+              "original_flags": 0,
+              "original_id": 65015,
+              "command": "ID_MENU_HELP_FEEDBACK",
+              "disabled": false
+            },
+            {
+              "label": "How to Get &Support",
+              "original_flags": 0,
+              "original_id": 65016,
+              "command": "ID_MENU_HELP_SUPPORT",
+              "disabled": false
+            },
+            {
+              "label": "How to &Create Web Services",
+              "original_flags": 128,
+              "original_id": 65017,
+              "command": "ID_MENU_HELP_WEB_SERVICES",
+              "disabled": false
+            }
+          ]
+        }
+      ]
+    },
+    "news": {
+      "original_resource_id": 225,
+      "resource": "IDR_NEWS",
+      "file": "cmd/winfe/res/news.rc",
+      "items": [
+        {
+          "label": "&File",
+          "original_flags": 16,
+          "items": [
+            {
+              "label": "New Web &Browser\tCtrl+N",
+              "original_flags": 0,
+              "original_id": 32770,
+              "command": "ID_BROWSER_NEW",
+              "disabled": false
+            },
+            {
+              "label": "New &Mail Message\tCtrl+M",
+              "original_flags": 0,
+              "original_id": 34107,
+              "command": "ID_CLIENT_COMPOSE",
+              "disabled": false
+            },
+            {
+              "label": "New &News Message",
+              "original_flags": 0,
+              "original_id": 34116,
+              "command": "ID_CLIENT_POST",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Save Message(s) &As...\tCtrl+S",
+              "original_flags": 0,
+              "original_id": 34113,
+              "command": "ID_MENU_SAVE_MESSAGE",
+              "disabled": false
+            },
+            {
+              "label": "&Open News Host...",
+              "original_flags": 0,
+              "original_id": 34087,
+              "command": "ID_MENU_OPEN_NEWS_HOST",
+              "disabled": false
+            },
+            {
+              "label": "&Remove News Host",
+              "original_flags": 0,
+              "original_id": 34088,
+              "command": "ID_MENU_REMOVE_NEWS_HOST",
+              "disabled": false
+            },
+            {
+              "label": "A&dd Newsgroup...",
+              "original_flags": 0,
+              "original_id": 34312,
+              "command": "ID_MENU_ADD_NEWSGROUP",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&Get More Messages",
+              "original_flags": 0,
+              "original_id": 34313,
+              "command": "ID_MESSAGE_GET",
+              "disabled": false
+            },
+            {
+              "label": "Sen&d Messages in Outbox\tCtrl+H",
+              "original_flags": 0,
+              "original_id": 34007,
+              "command": "ID_MESSAGE_SEND_QUEUED",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Page &Setup",
+              "original_flags": 0,
+              "original_id": 57605,
+              "command": "ID_MENU_PAGE_SETUP",
+              "disabled": true
+            },
+            {
+              "label": "&Print Message(s)\tCtrl+P",
+              "original_flags": 0,
+              "original_id": 34013,
+              "command": "ID_BROWSER_PRINT",
+              "disabled": true
+            },
+            {
+              "label": "Pr&int Preview",
+              "original_flags": 0,
+              "original_id": 57609,
+              "command": "ID_MENU_PRINT_PREVIEW",
+              "disabled": true
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&Close\tCtrl+W",
+              "original_flags": 0,
+              "original_id": 57602,
+              "command": "0xE141",
+              "disabled": false
+            },
+            {
+              "label": "E&xit",
+              "original_flags": 128,
+              "original_id": 57665,
+              "command": "ID_MENU_EXIT",
+              "disabled": false
+            }
+          ]
+        },
+        {
+          "label": "&Edit",
+          "original_flags": 16,
+          "items": [
+            {
+              "label": "&Undo\tCtrl+Z",
+              "original_flags": 0,
+              "original_id": 57643,
+              "command": "0xE12B",
+              "disabled": false
+            },
+            {
+              "label": "&Redo\tCtrl+E",
+              "original_flags": 0,
+              "original_id": 57644,
+              "command": "0xE12C",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Cu&t\tCtrl+X",
+              "original_flags": 0,
+              "original_id": 57635,
+              "command": "0xE123",
+              "disabled": false
+            },
+            {
+              "label": "&Copy\tCtrl+C",
+              "original_flags": 0,
+              "original_id": 57634,
+              "command": "0xE122",
+              "disabled": false
+            },
+            {
+              "label": "&Paste\tCtrl+V",
+              "original_flags": 0,
+              "original_id": 57637,
+              "command": "0xE125",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&Select Thread\tCtrl+Shift+A",
+              "original_flags": 0,
+              "original_id": 34024,
+              "command": "ID_MENU_SELECT_THREAD",
+              "disabled": false
+            },
+            {
+              "label": "Select Flagged &Messages",
+              "original_flags": 0,
+              "original_id": 34025,
+              "command": "ID_MENU_SELECT_FLAGGED",
+              "disabled": false
+            },
+            {
+              "label": "Select &All Messages\tCtrl+A",
+              "original_flags": 0,
+              "original_id": 34026,
+              "command": "0xE12A",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&Find...\tCtrl+F",
+              "original_flags": 0,
+              "original_id": 34352,
+              "command": "ID_BROWSER_FIND",
+              "disabled": false
+            },
+            {
+              "label": "Find A&gain\tF3",
+              "original_flags": 0,
+              "original_id": 34353,
+              "command": "ID_MENU_FIND_AGAIN",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Ca&ncel Message",
+              "original_flags": 128,
+              "original_id": 34315,
+              "command": "ID_MENU_CANCEL_MESSAGE",
+              "disabled": false
+            }
+          ]
+        },
+        {
+          "label": "&View",
+          "original_flags": 16,
+          "items": [
+            {
+              "label": "&Sort",
+              "original_flags": 16,
+              "items": [
+                {
+                  "label": "&Resort",
+                  "original_flags": 0,
+                  "original_id": 34111,
+                  "command": "ID_MENU_SORT_AGAIN",
+                  "disabled": false
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "&Thread Messages",
+                  "original_flags": 0,
+                  "original_id": 34048,
+                  "command": "ID_MENU_SORT_THREADED",
+                  "disabled": false
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "&Ascending",
+                  "original_flags": 0,
+                  "original_id": 34049,
+                  "command": "ID_MENU_SORT_ASCENDING",
+                  "disabled": false
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "by &Date",
+                  "original_flags": 0,
+                  "original_id": 34050,
+                  "command": "ID_MENU_SORT_DATE",
+                  "disabled": false
+                },
+                {
+                  "label": "by &Subject",
+                  "original_flags": 0,
+                  "original_id": 34051,
+                  "command": "ID_MENU_SORT_SUBJECT",
+                  "disabled": false
+                },
+                {
+                  "label": "by Sen&der",
+                  "original_flags": 0,
+                  "original_id": 34052,
+                  "command": "ID_MENU_SORT_SENDER",
+                  "disabled": false
+                },
+                {
+                  "label": "by &Message Number",
+                  "original_flags": 128,
+                  "original_id": 34364,
+                  "command": "ID_MENU_SORT_NUMBER",
+                  "disabled": false
+                }
+              ]
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&Wrap Long Lines",
+              "original_flags": 0,
+              "original_id": 34378,
+              "command": "ID_MENU_WRAP_LINES",
+              "disabled": false
+            },
+            {
+              "label": "&Unscramble (ROT-13)",
+              "original_flags": 0,
+              "original_id": 34055,
+              "command": "ID_MENU_ROT13",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Rel&oad",
+              "original_flags": 0,
+              "original_id": 32782,
+              "command": "ID_NAV_RELOAD",
+              "disabled": false
+            },
+            {
+              "label": "Load &Images",
+              "original_flags": 0,
+              "original_id": 32804,
+              "command": "ID_BROWSER_IMAGES",
+              "disabled": false
+            },
+            {
+              "label": "&Refresh",
+              "original_flags": 0,
+              "original_id": 32783,
+              "command": "ID_MENU_REFRESH",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&Document Source",
+              "original_flags": 0,
+              "original_id": 32789,
+              "command": "ID_MENU_DOCUMENT_SOURCE",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&Attachments Inline",
+              "original_flags": 0,
+              "original_id": 34355,
+              "command": "ID_MENU_ATTACHMENTS_INLINE",
+              "disabled": false
+            },
+            {
+              "label": "Attachments as &Links",
+              "original_flags": 128,
+              "original_id": 34356,
+              "command": "ID_MENU_ATTACHMENTS_LINKS",
+              "disabled": false
+            }
+          ]
+        },
+        {
+          "label": "&Message",
+          "original_flags": 16,
+          "items": [
+            {
+              "label": "&Post Reply",
+              "original_flags": 0,
+              "original_id": 34117,
+              "command": "ID_NEWS_REPLY_POST",
+              "disabled": false
+            },
+            {
+              "label": "P&ost and Mail Reply",
+              "original_flags": 0,
+              "original_id": 34118,
+              "command": "ID_NEWS_REPLY_BOTH",
+              "disabled": false
+            },
+            {
+              "label": "Mail &Reply\tCtrl+R",
+              "original_flags": 0,
+              "original_id": 34108,
+              "command": "ID_MESSAGE_REPLY",
+              "disabled": false
+            },
+            {
+              "label": "&Forward\tCtrl+L",
+              "original_flags": 0,
+              "original_id": 34110,
+              "command": "ID_MESSAGE_FORWARD",
+              "disabled": false
+            },
+            {
+              "label": "Forward &Quoted",
+              "original_flags": 0,
+              "original_id": 34319,
+              "command": "ID_MENU_FORWARD_QUOTED",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Mark as Rea&d",
+              "original_flags": 0,
+              "original_id": 34120,
+              "command": "ID_MESSAGE_READ",
+              "disabled": false
+            },
+            {
+              "label": "Mark as &Unread",
+              "original_flags": 0,
+              "original_id": 34121,
+              "command": "ID_MENU_MARK_UNREAD",
+              "disabled": false
+            },
+            {
+              "label": "M&ark Thread Read",
+              "original_flags": 0,
+              "original_id": 34105,
+              "command": "ID_NEWS_MARK_THREAD",
+              "disabled": false
+            },
+            {
+              "label": "Mar&k Newsgroup Read",
+              "original_flags": 0,
+              "original_id": 34106,
+              "command": "ID_NEWS_MARK_GROUP",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "F&lag Message",
+              "original_flags": 0,
+              "original_id": 34125,
+              "command": "ID_MENU_FLAG",
+              "disabled": false
+            },
+            {
+              "label": "Unflag M&essage",
+              "original_flags": 0,
+              "original_id": 34126,
+              "command": "ID_MENU_UNFLAG",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Add to Address &Book",
+              "original_flags": 128,
+              "original_id": 34322,
+              "command": "ID_MENU_ADD_ADDRESS",
+              "disabled": true
+            }
+          ]
+        },
+        {
+          "label": "&Go",
+          "original_flags": 16,
+          "items": [
+            {
+              "label": "&Next Message",
+              "original_flags": 0,
+              "original_id": 34104,
+              "command": "ID_MENU_NEXT_MESSAGE",
+              "disabled": false
+            },
+            {
+              "label": "&Previous Message",
+              "original_flags": 0,
+              "original_id": 34102,
+              "command": "ID_MENU_PREVIOUS_MESSAGE",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&First Unread",
+              "original_flags": 0,
+              "original_id": 34043,
+              "command": "ID_MENU_FIRST_UNREAD",
+              "disabled": false
+            },
+            {
+              "label": "Ne&xt Unread",
+              "original_flags": 0,
+              "original_id": 34103,
+              "command": "ID_MENU_NEXT_UNREAD",
+              "disabled": false
+            },
+            {
+              "label": "Pre&vious Unread",
+              "original_flags": 0,
+              "original_id": 34101,
+              "command": "ID_MENU_PREVIOUS_UNREAD",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "First F&lagged",
+              "original_flags": 0,
+              "original_id": 34323,
+              "command": "ID_MENU_FIRST_FLAGGED",
+              "disabled": false
+            },
+            {
+              "label": "Nex&t Flagged",
+              "original_flags": 0,
+              "original_id": 34324,
+              "command": "ID_MENU_NEXT_FLAGGED",
+              "disabled": false
+            },
+            {
+              "label": "Previo&us Flagged",
+              "original_flags": 0,
+              "original_id": 34325,
+              "command": "ID_MENU_PREVIOUS_FLAGGED",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&Stop Loading\t<Esc>",
+              "original_flags": 128,
+              "original_id": 34115,
+              "command": "ID_NAV_STOP",
+              "disabled": false
+            }
+          ]
+        },
+        {
+          "label": "&Options",
+          "original_flags": 16,
+          "items": [
+            {
+              "label": "&General Preferences...",
+              "original_flags": 0,
+              "original_id": 32791,
+              "command": "ID_BROWSER_PREFERENCES",
+              "disabled": false
+            },
+            {
+              "label": "&Mail and News Preferences...",
+              "original_flags": 0,
+              "original_id": 32882,
+              "command": "ID_MAIL_SETTINGS",
+              "disabled": false
+            },
+            {
+              "label": "&Network Preferences...",
+              "original_flags": 0,
+              "original_id": 32884,
+              "command": "ID_MENU_NETWORK_PREFERENCES",
+              "disabled": true
+            },
+            {
+              "label": "&Security Preferences...",
+              "original_flags": 0,
+              "original_id": 32883,
+              "command": "ID_MENU_SECURITY_PREFERENCES",
+              "disabled": true
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Show Su&bscribed Newsgroups",
+              "original_flags": 0,
+              "original_id": 34098,
+              "command": "ID_NEWS_SUBSCRIBED",
+              "disabled": false
+            },
+            {
+              "label": "Show A&ctive Newsgroups",
+              "original_flags": 0,
+              "original_id": 34091,
+              "command": "ID_MENU_ACTIVE_NEWSGROUPS",
+              "disabled": false
+            },
+            {
+              "label": "Show &All Newsgroups",
+              "original_flags": 0,
+              "original_id": 34092,
+              "command": "ID_NEWS_ALL_GROUPS",
+              "disabled": false
+            },
+            {
+              "label": "Show New Newsgrou&ps",
+              "original_flags": 0,
+              "original_id": 34093,
+              "command": "ID_MENU_NEW_NEWSGROUPS",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Show All M&essages",
+              "original_flags": 0,
+              "original_id": 34119,
+              "command": "ID_MESSAGE_SHOW_ALL",
+              "disabled": false
+            },
+            {
+              "label": "Show Only &Unread Messages",
+              "original_flags": 0,
+              "original_id": 34335,
+              "command": "ID_MESSAGE_SHOW_UNREAD",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Show &Headers",
+              "original_flags": 16,
+              "items": [
+                {
+                  "label": "&All",
+                  "original_flags": 0,
+                  "original_id": 34054,
+                  "command": "ID_MAIL_HEADERS_ALL",
+                  "disabled": false
+                },
+                {
+                  "label": "&Normal",
+                  "original_flags": 0,
+                  "original_id": 34367,
+                  "command": "ID_MAIL_HEADERS_SOME",
+                  "disabled": false
+                },
+                {
+                  "label": "&Brief",
+                  "original_flags": 128,
+                  "original_id": 34368,
+                  "command": "ID_MENU_HEADERS_BRIEF",
+                  "disabled": false
+                }
+              ]
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Add &from Newest Messages",
+              "original_flags": 0,
+              "original_id": 34349,
+              "command": "ID_MENU_ADD_NEWEST",
+              "disabled": false
+            },
+            {
+              "label": "Add f&rom Oldest Messages",
+              "original_flags": 0,
+              "original_id": 34350,
+              "command": "ID_MENU_ADD_OLDEST",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Document &Encoding",
+              "original_flags": 144,
+              "items": [
+                {
+                  "label": "Western(Latin1)",
+                  "original_flags": 0,
+                  "original_id": 33115,
+                  "command": "ID_MENU_ENCODING_LATIN1",
+                  "disabled": false
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Central European(Win1250)",
+                  "original_flags": 0,
+                  "original_id": 34369,
+                  "command": "ID_MENU_ENCODING_WIN1250",
+                  "disabled": true
+                },
+                {
+                  "label": "Central European(ISO8859-2)",
+                  "original_flags": 0,
+                  "original_id": 33116,
+                  "command": "ID_MENU_ENCODING_LATIN2",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Japanese(Auto-detect)",
+                  "original_flags": 0,
+                  "original_id": 33117,
+                  "command": "ID_MENU_ENCODING_JAPANESE_AUTO",
+                  "disabled": true
+                },
+                {
+                  "label": "Japanese(ShiftJIS)",
+                  "original_flags": 0,
+                  "original_id": 33118,
+                  "command": "ID_MENU_ENCODING_SHIFTJIS",
+                  "disabled": true
+                },
+                {
+                  "label": "Japanese(EUC)",
+                  "original_flags": 0,
+                  "original_id": 33119,
+                  "command": "ID_MENU_ENCODING_JAPANESE_EUC",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Traditional Chinese(Big5)",
+                  "original_flags": 0,
+                  "original_id": 33120,
+                  "command": "ID_MENU_ENCODING_BIG5",
+                  "disabled": true
+                },
+                {
+                  "label": "Traditional Chinese(EUC)",
+                  "original_flags": 0,
+                  "original_id": 33121,
+                  "command": "ID_MENU_ENCODING_CHINESE_EUC",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Simplified Chinese",
+                  "original_flags": 0,
+                  "original_id": 33122,
+                  "command": "ID_MENU_ENCODING_CHINESE_GB",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Korean",
+                  "original_flags": 0,
+                  "original_id": 33123,
+                  "command": "ID_MENU_ENCODING_KOREAN",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Cyrillic(Win1251)",
+                  "original_flags": 0,
+                  "original_id": 34370,
+                  "command": "ID_MENU_ENCODING_WIN1251",
+                  "disabled": true
+                },
+                {
+                  "label": "Cyrillic(ISO8859-5)",
+                  "original_flags": 0,
+                  "original_id": 34371,
+                  "command": "ID_MENU_ENCODING_CYRILLIC_ISO",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Cyrillic(KOI8-R)",
+                  "original_flags": 0,
+                  "original_id": 34372,
+                  "command": "ID_MENU_ENCODING_KOI8R",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Greek",
+                  "original_flags": 0,
+                  "original_id": 34374,
+                  "command": "ID_MENU_ENCODING_GREEK",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Turkish",
+                  "original_flags": 0,
+                  "original_id": 34376,
+                  "command": "ID_MENU_ENCODING_TURKISH",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "Unicode (UTF8)",
+                  "original_flags": 0,
+                  "original_id": 34377,
+                  "command": "ID_MENU_ENCODING_UTF8",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "User Defined",
+                  "original_flags": 0,
+                  "original_id": 33124,
+                  "command": "ID_MENU_ENCODING_USER",
+                  "disabled": true
+                },
+                {
+                  "label": "",
+                  "original_flags": 0,
+                  "original_id": 0,
+                  "command": null,
+                  "disabled": false
+                },
+                {
+                  "label": "&Set Default",
+                  "original_flags": 128,
+                  "original_id": 32839,
+                  "command": "ID_MENU_ENCODING_DEFAULT",
+                  "disabled": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "&Window",
+          "original_flags": 16,
+          "items": [
+            {
+              "label": "New Window",
+              "original_flags": 128,
+              "original_id": 34003,
+              "command": "ID_MENU_WINDOW_ANCHOR",
+              "disabled": true
+            }
+          ]
+        },
+        {
+          "label": "&Help",
+          "original_flags": 144,
+          "items": [
+            {
+              "label": "&About Netscape...",
+              "original_flags": 0,
+              "original_id": 65199,
+              "command": "ID_BROWSER_ABOUT",
+              "disabled": false
+            },
+            {
+              "label": "About &Plug-ins",
+              "original_flags": 0,
+              "original_id": 65018,
+              "command": "ID_MENU_HELP_PLUGINS",
+              "disabled": false
+            },
+            {
+              "label": "Registration &Information",
+              "original_flags": 0,
+              "original_id": 65010,
+              "command": "ID_MENU_HELP_REGISTRATION",
+              "disabled": false
+            },
+            {
+              "label": "Sof&tware",
+              "original_flags": 0,
+              "original_id": 65019,
+              "command": "ID_MENU_HELP_SOFTWARE",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&Handbook",
+              "original_flags": 0,
+              "original_id": 65011,
+              "command": "ID_MENU_HELP_HANDBOOK",
+              "disabled": false
+            },
+            {
+              "label": "&Release Notes",
+              "original_flags": 0,
+              "original_id": 65012,
+              "command": "ID_MENU_HELP_RELEASE_NOTES",
+              "disabled": false
+            },
+            {
+              "label": "&Frequently Asked Questions",
+              "original_flags": 0,
+              "original_id": 65013,
+              "command": "ID_MENU_HELP_FAQ",
+              "disabled": false
+            },
+            {
+              "label": "On &News",
+              "original_flags": 0,
+              "original_id": 65022,
+              "command": "ID_MENU_HELP_NEWS",
+              "disabled": false
+            },
+            {
+              "label": "&On Security",
+              "original_flags": 0,
+              "original_id": 65014,
+              "command": "ID_MENU_HELP_SECURITY",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "How to &Give Feedback",
+              "original_flags": 0,
+              "original_id": 65015,
+              "command": "ID_MENU_HELP_FEEDBACK",
+              "disabled": false
+            },
+            {
+              "label": "How to Get &Support",
+              "original_flags": 0,
+              "original_id": 65016,
+              "command": "ID_MENU_HELP_SUPPORT",
+              "disabled": false
+            },
+            {
+              "label": "How to &Create Web Services",
+              "original_flags": 128,
+              "original_id": 65017,
+              "command": "ID_MENU_HELP_WEB_SERVICES",
+              "disabled": false
+            }
+          ]
+        }
+      ]
+    },
+    "composer": {
+      "original_resource_id": 224,
+      "resource": "IDR_COMPOSER_MENU",
+      "file": "cmd/winfe/res/composer.rc",
+      "items": [
+        {
+          "label": "&File",
+          "original_flags": 16,
+          "items": [
+            {
+              "label": "&Send Now\tCtrl+Enter",
+              "original_flags": 0,
+              "original_id": 34084,
+              "command": "IDC_COMPOSE_SEND",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Attach &File...",
+              "original_flags": 0,
+              "original_id": 34085,
+              "command": "IDC_COMPOSE_ATTACH",
+              "disabled": false
+            },
+            {
+              "label": "&Include Original Text",
+              "original_flags": 0,
+              "original_id": 34086,
+              "command": "IDC_COMPOSE_QUOTE",
+              "disabled": false
+            },
+            {
+              "label": "Save &As...\tCtrl+S",
+              "original_flags": 0,
+              "original_id": 32874,
+              "command": "ID_COMPOSE_SAVE_AS",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&Close\tCtrl+W",
+              "original_flags": 128,
+              "original_id": 57602,
+              "command": "IDC_COMPOSE_CANCEL",
+              "disabled": false
+            }
+          ]
+        },
+        {
+          "label": "&Edit",
+          "original_flags": 16,
+          "items": [
+            {
+              "label": "&Undo\tCtrl+Z",
+              "original_flags": 0,
+              "original_id": 57643,
+              "command": "IDC_COMPOSE_UNDO",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Cu&t\tCtrl+X",
+              "original_flags": 0,
+              "original_id": 57635,
+              "command": "IDC_COMPOSE_CUT",
+              "disabled": false
+            },
+            {
+              "label": "&Copy\tCtrl+C",
+              "original_flags": 0,
+              "original_id": 57634,
+              "command": "IDC_COMPOSE_COPY",
+              "disabled": false
+            },
+            {
+              "label": "&Paste\tCtrl+V",
+              "original_flags": 0,
+              "original_id": 57637,
+              "command": "IDC_COMPOSE_PASTE",
+              "disabled": false
+            },
+            {
+              "label": "Paste as &Quotation",
+              "original_flags": 0,
+              "original_id": 34139,
+              "command": "ID_COMPOSE_PASTE_QUOTATION",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Select &All\tCtrl+A",
+              "original_flags": 128,
+              "original_id": 34026,
+              "command": "IDC_COMPOSE_SELECT_ALL",
+              "disabled": false
+            }
+          ]
+        },
+        {
+          "label": "&View",
+          "original_flags": 16,
+          "items": [
+            {
+              "label": "Show &All",
+              "original_flags": 0,
+              "original_id": 34300,
+              "command": "IDC_COMPOSE_HEADERS",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "Fr&om",
+              "original_flags": 0,
+              "original_id": 34365,
+              "command": "4150",
+              "disabled": false
+            },
+            {
+              "label": "&Reply To ",
+              "original_flags": 0,
+              "original_id": 34301,
+              "command": "4151",
+              "disabled": false
+            },
+            {
+              "label": "Mail &To",
+              "original_flags": 0,
+              "original_id": 34302,
+              "command": "4152",
+              "disabled": false
+            },
+            {
+              "label": "Mail &Cc",
+              "original_flags": 0,
+              "original_id": 34303,
+              "command": "4153",
+              "disabled": false
+            },
+            {
+              "label": "Mail &Bcc",
+              "original_flags": 0,
+              "original_id": 34304,
+              "command": "4154",
+              "disabled": false
+            },
+            {
+              "label": "&Newsgroups",
+              "original_flags": 0,
+              "original_id": 34305,
+              "command": "4156",
+              "disabled": false
+            },
+            {
+              "label": "&Followups To",
+              "original_flags": 0,
+              "original_id": 34306,
+              "command": "4157",
+              "disabled": false
+            },
+            {
+              "label": "&Subject",
+              "original_flags": 0,
+              "original_id": 34307,
+              "command": "4158",
+              "disabled": false
+            },
+            {
+              "label": "Attac&hment",
+              "original_flags": 0,
+              "original_id": 34308,
+              "command": "ID_COMPOSE_ATTACHMENTS",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&Wrap Long Lines",
+              "original_flags": 128,
+              "original_id": 34378,
+              "command": "ID_COMPOSE_WRAP",
+              "disabled": false
+            }
+          ]
+        },
+        {
+          "label": "&Options",
+          "original_flags": 16,
+          "items": [
+            {
+              "label": "&Mail and News Preferences...",
+              "original_flags": 0,
+              "original_id": 32882,
+              "command": "ID_MAIL_SETTINGS",
+              "disabled": false
+            },
+            {
+              "label": "",
+              "original_flags": 0,
+              "original_id": 0,
+              "command": null,
+              "disabled": false
+            },
+            {
+              "label": "&Immediate Delivery",
+              "original_flags": 0,
+              "original_id": 34358,
+              "command": "ID_COMPOSE_IMMEDIATE",
+              "disabled": false
+            },
+            {
+              "label": "&Deferred Delivery",
+              "original_flags": 128,
+              "original_id": 34359,
+              "command": "ID_COMPOSE_DEFERRED",
+              "disabled": false
+            }
+          ]
+        },
+        {
+          "label": "&Window",
+          "original_flags": 144,
+          "items": [
+            {
+              "label": "New Window",
+              "original_flags": 128,
+              "original_id": 34003,
+              "command": "ID_MENU_WINDOW_ANCHOR",
+              "disabled": true
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "runtime_window_items": [
+    {
+      "label": "Netscape &Mail",
+      "command": "ID_CLIENT_MAIL",
+      "disabled": false
+    },
+    {
+      "label": "Netscape &News",
+      "command": "ID_CLIENT_NEWS",
+      "disabled": false
+    },
+    {
+      "label": "&Address Book",
+      "command": "ID_MENU_ADDRESS_BOOK",
+      "disabled": true
+    },
+    {
+      "label": "&Bookmarks\tCtrl+B",
+      "command": "ID_BOOKMARKS_SHOW",
+      "disabled": false
+    },
+    {
+      "label": "&History\tCtrl+H",
+      "command": "ID_BROWSER_HISTORY",
+      "disabled": false
+    },
+    {
+      "label": "",
+      "command": null,
+      "disabled": false
+    },
+    {
+      "label": "New Window",
+      "command": "ID_MENU_WINDOW_ANCHOR",
+      "disabled": true
+    }
+  ],
+  "native_extensions": [
+    {
+      "menu": "composer",
+      "parent_path": [
+        "&File"
+      ],
+      "after_command": "ID_COMPOSE_SAVE_AS",
+      "reason": "Preserve existing native frontend draft saving and attachment removal. These entries are port extensions and are absent from the original 3.02 MENU 224 transcription.",
+      "items": [
+        {
+          "label": "Save &Draft",
+          "command": "IDC_COMPOSE_DRAFT",
+          "disabled": false
+        },
+        {
+          "label": "Remove All Attachments",
+          "command": "IDC_COMPOSE_REMOVE",
+          "disabled": false
+        }
+      ]
+    }
+  ],
+  "link_metadata": {
+    "source": "Original executable RT_STRING resources, exported as indexed UTF-16LE .rsrc/string.txt by 7-Zip. Parsed resource identifiers and values, without scanning PE strings. Route string identifiers are the corresponding menu command identifiers plus 200. These are historical destinations, with no claim that the remote sites remain available.",
+    "export_sha256": "a26415591e6a52bcfad582733099853a1c774e0230f90639665c72156915ce59",
+    "entries": [
+      {
+        "original_command_id": 65000,
+        "command": "ID_MENU_DIRECTORY_HOME",
+        "description_string_id": 65000,
+        "description": "Netscape Communications Corporation Home Page",
+        "url_string_id": 65200,
+        "url": "http://home.netscape.com/"
+      },
+      {
+        "original_command_id": 65001,
+        "command": "ID_DIRECTORY_FIRST",
+        "description_string_id": 65001,
+        "description": "What's New on the net",
+        "url_string_id": 65201,
+        "url": "http://home.netscape.com/home/whats-new.html"
+      },
+      {
+        "original_command_id": 65002,
+        "command": "ID_DIRECTORY_FIRST + 1",
+        "description_string_id": 65002,
+        "description": "Cool sites on the net",
+        "url_string_id": 65202,
+        "url": "http://home.netscape.com/home/whats-cool.html"
+      },
+      {
+        "original_command_id": 65003,
+        "command": null,
+        "description_string_id": 65003,
+        "description": "Read Newsgroups",
+        "url_string_id": 65203,
+        "url": "newsrc:"
+      },
+      {
+        "original_command_id": 65004,
+        "command": "ID_MENU_DIRECTORY_SHOWCASE",
+        "description_string_id": 65004,
+        "description": "Netscape Galleria",
+        "url_string_id": 65204,
+        "url": "http://home.netscape.com/home/netscape-galleria.html"
+      },
+      {
+        "original_command_id": 65005,
+        "command": "ID_DIRECTORY_FIRST + 2",
+        "description_string_id": 65005,
+        "description": "Exploring the Net",
+        "url_string_id": 65205,
+        "url": "http://home.netscape.com/escapes/index.html"
+      },
+      {
+        "original_command_id": 65006,
+        "command": "ID_DIRECTORY_FIRST + 3",
+        "description_string_id": 65006,
+        "description": "Internet Search",
+        "url_string_id": 65206,
+        "url": "http://home.netscape.com/home/internet-search.html"
+      },
+      {
+        "original_command_id": 65007,
+        "command": "ID_DIRECTORY_FIRST + 4",
+        "description_string_id": 65007,
+        "description": "People and Places",
+        "url_string_id": 65207,
+        "url": "http://home.netscape.com/home/internet-white-pages.html"
+      },
+      {
+        "original_command_id": 65008,
+        "command": "ID_MENU_DIRECTORY_INTERNET",
+        "description_string_id": 65008,
+        "description": "About the Internet",
+        "url_string_id": 65208,
+        "url": "http://home.netscape.com/home/about-the-internet.html"
+      },
+      {
+        "original_command_id": 65010,
+        "command": "ID_MENU_HELP_REGISTRATION",
+        "description_string_id": 65010,
+        "description": "Product registration and support information",
+        "url_string_id": 65210,
+        "url": "http://cgi.netscape.com/cgi-bin/reginfo.cgi"
+      },
+      {
+        "original_command_id": 65011,
+        "command": "ID_MENU_HELP_HANDBOOK",
+        "description_string_id": 65011,
+        "description": "Online Version of the manual",
+        "url_string_id": 65211,
+        "url": "http://home.netscape.com/eng/mozilla/3.0/handbook"
+      },
+      {
+        "original_command_id": 65012,
+        "command": "ID_MENU_HELP_RELEASE_NOTES",
+        "description_string_id": 65012,
+        "description": "Information about the version of Netscape you are running",
+        "url_string_id": 65212,
+        "url": "http://home.netscape.com/eng/mozilla/3.0/relnotes/windows-3.02.html"
+      },
+      {
+        "original_command_id": 65013,
+        "command": "ID_MENU_HELP_FAQ",
+        "description_string_id": 65013,
+        "description": "Answers to common questions",
+        "url_string_id": 65213,
+        "url": "http://help.netscape.com/faqs.html"
+      },
+      {
+        "original_command_id": 65014,
+        "command": "ID_MENU_HELP_SECURITY",
+        "description_string_id": 65014,
+        "description": "Information about Netscape's security",
+        "url_string_id": 65214,
+        "url": "http://home.netscape.com/info/security-doc.html"
+      },
+      {
+        "original_command_id": 65015,
+        "command": "ID_MENU_HELP_FEEDBACK",
+        "description_string_id": 65015,
+        "description": "Instructions on how to give feedback about Netscape",
+        "url_string_id": 65215,
+        "url": "http://cgi.netscape.com/cgi-bin/auto_bug.cgi"
+      },
+      {
+        "original_command_id": 65016,
+        "command": "ID_MENU_HELP_SUPPORT",
+        "description_string_id": 65016,
+        "description": "Instructions on getting support for Netscape",
+        "url_string_id": 65216,
+        "url": "http://help.netscape.com"
+      },
+      {
+        "original_command_id": 65017,
+        "command": "ID_MENU_HELP_WEB_SERVICES",
+        "description_string_id": 65017,
+        "description": "How to create Web services",
+        "url_string_id": 65217,
+        "url": "http://home.netscape.com/home/how-to-create-web-services.html"
+      },
+      {
+        "original_command_id": 65018,
+        "command": "ID_MENU_HELP_PLUGINS",
+        "description_string_id": 65018,
+        "description": "Information about plugins",
+        "url_string_id": 65218,
+        "url": "about:plugins"
+      },
+      {
+        "original_command_id": 65019,
+        "command": "ID_MENU_HELP_SOFTWARE",
+        "description_string_id": 65019,
+        "description": "Information about Netscape software and upgrades",
+        "url_string_id": 65219,
+        "url": "http://home.netscape.com/comprod/upgrades/index.html"
+      },
+      {
+        "original_command_id": 65022,
+        "command": "ID_MENU_HELP_NEWS",
+        "description_string_id": 65022,
+        "description": "Display information about Usenet News",
+        "url_string_id": 65222,
+        "url": "http://home.netscape.com/eng/mozilla/3.0/news/news.html"
+      }
+    ]
+  }
+}

@@ -94,7 +94,7 @@ extern "C" void FE_GetImageInfo(MWContext *context, LO_ImageStruct *image,
     }
     /* Leave unknown dimensions at zero: IL uses them to preserve aspect ratio. */
     IL_GetImage(reinterpret_cast<const char *>(image->image_url), context,
-                image, reload);
+                image, WFE_LoadImagesAutomatically(context) ? reload : NET_CACHE_ONLY_RELOAD);
 }
 
 extern "C" int FE_ImageSize(MWContext *context, IL_ImageStatus status,

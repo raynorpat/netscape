@@ -198,6 +198,45 @@ an optional development step using Python/Pillow:
 `python cmake/tools/generate_windows_toolbar.py`; normal builds use checked-in
 bitmaps. Source provenance is in `cmd/winfe/res/classic/README.md`.
 
+## Original 3.02 menus and geometry
+
+The standard browser now has nine toolbar buttons. Mail/News use the observed
+303px folder width and 203px upper lists at 96 DPI; both message lists have
+Sender, separate priority/flag cells, Subject and Date. Subscription boxes and
+header markers use the original Windows resources, with provenance beside the
+assets. Reference-sized browser and Mail/News windows are 1105 x 765 and
+805 x 605; these comparison windows were manually resized during inspection,
+so these are chosen reference sizes, not independently established factory
+window-placement defaults. Message Composition uses its observed 534 x 953
+outer size. All are constrained to the current monitor's work area.
+
+The four menu inventories, command routing, exact historical Help/Directory
+URLs and remaining unavailable facilities are recorded in
+[windows-reference.md](windows-reference.md). Menu generation is optional for
+normal builds because generated RC files are checked in. Run
+`python cmake/tools/generate_windows_menus.py --check` to verify them.
+
+Options contains the original bar toggles and Auto Load Images. Document/Frame
+Source uses the original source converter; Frame Reload targets the focused
+frame. Window History opens visited history, while Go lists current session
+history. Bookmark dropdown folders preserve backend order. Window menus list
+and activate live browser/composition windows, with singleton Mail/News entries.
+
+Message menus now expose the original backend selection, sorting, read/unread,
+flagging, attachment/header modes, finding, navigation, folder and filing
+commands. Native multi-selection is reconciled before commands; clearing it
+also clears the displayed message and disables Reply. Save As in composition
+exports body text; Save Draft retains the full message. Immediate/Deferred
+Delivery controls the Send command. Wrap preserves content and selection but
+resets the native EDIT undo buffer.
+
+The complete seventeen-test suite passed in Win32 Release and Debug after this
+parity pass. Tests compare all four compiled menu trees and exercise actual
+Source conversion, Find Again, image request deferral, dynamic Go/Window menus,
+bookmark hierarchy and cached URLs, message selection/flags/sorting/filing,
+header/attachment modes and composer delivery selection. Captures were reviewed
+at 96 DPI; broader high-DPI and every interactive picker remain unverified.
+
 ## General Preferences
 
 Options > General Preferences opens the classic seven-tab dialog in browser,
@@ -280,8 +319,8 @@ The new layout fixture and existing mail/news delivery tests passed in Win32
 Release and Debug on 2026-11-04.
 
 News also follows its separate supplied reference. Its twelve-button toolbar
-contains To:News, To:Mail, Re:News, Re:Mail, Re:All, Forward, Previous, Next,
-Thread, Group, Print and Stop. Re:All posts and mails the reply; Thread and
+contains To:News, To:Mail, Re:Mail, Re:News, Re:Both, Forward, Previous, Next,
+Thread, Group, Print and Stop. Re:Both posts and mails the reply; Thread and
 Group mark the selected thread or group read. Previous/Next use unread-article
 navigation. Get More remains available from File/F5. Its own menus and keyboard
 shortcuts distinguish posting from mail composition.
@@ -295,8 +334,8 @@ host with no subscriptions initially exposes its full hierarchy. Completed
 requests preserve an explicitly chosen view and its article selection.
 
 News starts with a taller upper band and wider server list, plus a full-width
-gray reader when no article is selected. Loaded articles retain normal MIME
-rendering. The article list has Sender, status and Subject columns. Both pane
+white reader when no article is selected. Loaded articles retain normal MIME
+rendering. The article list has Sender, separate priority/flag cells, Subject and Date columns. Both pane
 dividers remain draggable. Directory rows do not report message counts, and
 double-clicking a leaf group cannot invoke directory expansion.
 
@@ -305,7 +344,7 @@ names. It checks the real server tree, mouse/keyboard subscription and expansion
 gestures, empty/selected command states, post/mail/reply headers, mark-thread
 and mark-group commands, view retention after article loading, narrow resizing
 and divider clamps. It also captures empty and populated native windows and
-checks the gray empty-reader pixels. No articles are posted by this fixture.
+checks the white empty-reader pixels and actual yellow subscription checkmarks. No articles are posted by this fixture.
 The final sixteen-test suite passed in Win32 Release and Debug with MSVC 19.51
 on 2026-11-04. Actual empty and populated News captures were inspected at 96 DPI,
 including original toolbar artwork and the Netscape logo.

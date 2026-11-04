@@ -5,6 +5,7 @@ and bitmap inspection use the Python standard library; no public site is used.
 """
 
 import argparse
+import base64
 from contextlib import contextmanager
 import http.server
 import json
@@ -17,7 +18,7 @@ import threading
 from urllib.parse import urlsplit
 
 
-TOOLBAR_LABELS = "Back|Forward|Home|Edit|Reload|Images|Open|Print|Find|Stop"
+TOOLBAR_LABELS = "Back|Forward|Home|Reload|Images|Open|Print|Find|Stop"
 MENU_LABELS = "File|Edit|View|Go|Bookmarks|Options|Directory|Window|Help"
 PAGES = {
     "/": (
@@ -26,6 +27,8 @@ PAGES = {
         "<P><A HREF='/chrome-next'>Next classic page</A></P>"
         "<P>Classic toolbar needle appears again.</P></BODY></HTML>"
     ).encode("ascii"),
+    "/auto-first": b'<html><body>Automatic first<img src="/automatic-a.gif"></body></html>',
+    "/auto-second": b'<html><body>Automatic second<img src="/automatic-b.gif"></body></html>',
     "/chrome-next": (
         "<HTML><HEAD><TITLE>Classic chrome B</TITLE></HEAD><BODY>"
         "<H1>Classic chrome B</H1><P>Classic toolbar needle</P>"
@@ -46,11 +49,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
         path = urlsplit(self.path).path
         self.server.requests.append(path)
         body = PAGES.get(path)
+        if path in ("/automatic-a.gif", "/automatic-b.gif"):
+            body = base64.b64decode("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7")
         if body is None:
             self.send_error(404)
             return
         self.send_response(200)
-        self.send_header("Content-Type", "text/html; charset=us-ascii")
+        self.send_header("Content-Type", "image/gif" if path.endswith(".gif") else "text/html; charset=us-ascii")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Connection", "close")
         self.end_headers()
@@ -127,11 +132,12 @@ def check_report(report):
     text = report.read_text(encoding="utf-8", errors="replace")
     fields = dict(line.split("=", 1) for line in text.splitlines() if "=" in line)
     for name in ("passed", "completed", "toolbar_state", "location_enter", "history_state",
+                 "menu_auto_images", "menu_document_source", "menu_browser_find_again", "menu_window_list", "menu_window_activate", "menu_go_history",
                  "find_text", "view_toggles", "narrow_layout", "location_dropdown", "about_page"):
         if fields.get(name) != "1":
             raise RuntimeError("Chrome report has unexpected {}:\n{}".format(name, text))
     for name, expected in (("toolbar_labels", TOOLBAR_LABELS), ("menu_labels", MENU_LABELS),
-                           ("toolbar_count", "10"), ("directory_count", "6")):
+                           ("toolbar_count", "9"), ("directory_count", "6")):
         if fields.get(name) != expected:
             raise RuntimeError("Chrome report has unexpected {}:\n{}".format(name, text))
     if int(fields.get("status_panes", "0")) < 3:
@@ -178,6 +184,10 @@ def run_smoke(executable, output, server):
     missing = [path for path in PAGES if path not in server.requests]
     if missing:
         raise RuntimeError("Chrome navigation omitted actual HTTP requests: " + ", ".join(missing))
+    subprocess.run([sys.executable, str(Path(__file__).resolve().parents[1] / "tools" / "generate_windows_menus.py"), "--compare", str(report) + ".menus.tsv"], check=True)
+    for image in ("/automatic-a.gif", "/automatic-b.gif"):
+        if server.requests.count(image) != 1:
+            raise RuntimeError("Image menu did not defer/fetch exactly once: " + repr(server.requests))
     fields = check_report(report)
     width, height = check_bitmap(snapshot, int(fields.get("ui_dpi", "96")))
     (output / "chrome-capture.json").write_text(

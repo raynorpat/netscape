@@ -2,18 +2,20 @@
 #include "classic.h"
 #include "frontend.h"
 #include "msgcom.h"
+#include "resource.h"
 
 static int mail_clamp(int value, int low, int high)
 {
     return value < low ? low : value > high ? high : value;
 }
 
-static bool mail_image(CImageList &images, CWnd *owner, UINT resource)
+static bool mail_image(CImageList &images, CWnd *owner, UINT resource, bool header = false)
 {
     CBitmap source, scaled;
     if (!source.LoadBitmap(resource)) return false;
     BITMAP bitmap; source.GetBitmap(&bitmap);
-    int size = ClassicUI::Scale(owner, 16);
+    int inset = header ? 1 : 0;
+    int size = ClassicUI::Scale(owner, header ? 14 : 16);
     CClientDC screen(owner);
     CDC input, output;
     input.CreateCompatibleDC(&screen); output.CreateCompatibleDC(&screen);
@@ -21,8 +23,8 @@ static bool mail_image(CImageList &images, CWnd *owner, UINT resource)
     CBitmap *old_input = input.SelectObject(&source);
     CBitmap *old_output = output.SelectObject(&scaled);
     output.SetStretchBltMode(COLORONCOLOR);
-    output.StretchBlt(0, 0, size, size, &input, 0, 0,
-                      bitmap.bmWidth, bitmap.bmHeight, SRCCOPY);
+    output.StretchBlt(0, 0, size, size, &input, inset, inset,
+                      bitmap.bmWidth - inset * 2, bitmap.bmHeight - inset * 2, SRCCOPY);
     input.SelectObject(old_input); output.SelectObject(old_output);
     return images.Add(&scaled, ClassicUI::Face) >= 0;
 }
@@ -97,8 +99,14 @@ MailPaneUI::~MailPaneUI()
 {
     if (folder_divider.GetSafeHwnd()) folder_divider.DestroyWindow();
     if (reader_divider.GetSafeHwnd()) reader_divider.DestroyWindow();
-    if (folders && folders->GetSafeHwnd()) folders->SetImageList(nullptr, LVSIL_SMALL);
-    if (messages && messages->GetSafeHwnd()) messages->SetImageList(nullptr, LVSIL_SMALL);
+    if (folders && folders->GetSafeHwnd()) {
+        folders->GetHeaderCtrl()->SetImageList(nullptr);
+        folders->SetImageList(nullptr, LVSIL_SMALL);
+    }
+    if (messages && messages->GetSafeHwnd()) {
+        messages->GetHeaderCtrl()->SetImageList(nullptr);
+        messages->SetImageList(nullptr, LVSIL_SMALL);
+    }
 }
 
 bool MailPaneUI::Attach(CWnd *frame, CListCtrl *folder_list, CListCtrl *message_list,
@@ -108,7 +116,7 @@ bool MailPaneUI::Attach(CWnd *frame, CListCtrl *folder_list, CListCtrl *message_
         || !folder_list->GetSafeHwnd() || !message_list || !message_list->GetSafeHwnd()
         || !view || !view->GetSafeHwnd()) return false;
     owner = frame; folders = folder_list; messages = message_list; reader = view; news_mode = news;
-    folder_width = news ? -1 : ClassicUI::Scale(owner, 170);
+    folder_width = ClassicUI::Scale(owner, 303);
     int size = ClassicUI::Scale(owner, 16);
     if (!folder_images.Create(size, size, ILC_COLOR24 | ILC_MASK, 2, 1)
         || !message_images.Create(size, size, ILC_COLOR24 | ILC_MASK, 3, 1)
@@ -133,11 +141,26 @@ bool MailPaneUI::Attach(CWnd *frame, CListCtrl *folder_list, CListCtrl *message_
     folders->InsertColumn(0, news ? "News Server" : "Mail Folder");
     folders->InsertColumn(1, news ? "" : "Unread", news ? LVCFMT_CENTER : LVCFMT_RIGHT);
     folders->InsertColumn(2, news ? "Unread" : "Total", LVCFMT_RIGHT);
-    messages->InsertColumn(0, "Sender");
-    messages->InsertColumn(1, "", LVCFMT_CENTER);
-    messages->InsertColumn(2, "Subject");
-    if(!news) messages->InsertColumn(3, "Date");
+    messages->InsertColumn(SenderColumn, "Sender");
+    messages->InsertColumn(PriorityColumn, "", LVCFMT_CENTER);
+    messages->InsertColumn(FlagColumn, "", LVCFMT_CENTER);
+    messages->InsertColumn(SubjectColumn, "Subject");
+    messages->InsertColumn(DateColumn, "Date");
     ClassicUI::Apply(folders); ClassicUI::Apply(messages);
+    int header_size = ClassicUI::Scale(owner, 14);
+    if (!header_images.Create(header_size, header_size, ILC_COLOR24 | ILC_MASK, 3, 1)
+        || !mail_image(header_images, owner, IDB_NEWS_SUBSCRIBED, true)
+        || !mail_image(header_images, owner, IDB_MAIL_PRIORITY_HEADER, true)
+        || !mail_image(header_images, owner, IDB_MAIL_FLAG, true)) return false;
+    messages->GetHeaderCtrl()->SetImageList(&header_images);
+    HDITEM heading = {}; heading.mask = HDI_FORMAT | HDI_IMAGE;
+    heading.fmt = HDF_IMAGE | HDF_CENTER; heading.iImage = 1;
+    messages->GetHeaderCtrl()->SetItem(PriorityColumn, &heading);
+    heading.iImage = 2; messages->GetHeaderCtrl()->SetItem(FlagColumn, &heading);
+    if (news) {
+        folders->GetHeaderCtrl()->SetImageList(&header_images);
+        heading.iImage = 0; folders->GetHeaderCtrl()->SetItem(1, &heading);
+    }
     LOGFONT font;ClassicUI::Font(owner)->GetLogFont(&font);font.lfWeight=FW_BOLD;unread_font.CreateFontIndirect(&font);
     return true;
 }
@@ -161,10 +184,11 @@ void MailPaneUI::Arrange(int toolbar_bottom, int status_height)
     }
     int pane_min = ClassicUI::Scale(owner, 70);
     if (body_space < pane_min * 2) pane_min = body_space / 2;
-    if(folder_width==-1 && width>0) folder_width=width/2;
+    /* Fresh Navigator 3.02 Mail and News use the same 303 by 203 upper panes
+       at 96 DPI. Keep those dimensions on larger windows, and clamp below. */
+    if(folder_width==-1 && width>0) folder_width=ClassicUI::Scale(owner,303);
     if (top_height == -1 && height > 0)
-        top_height = news_mode ? MulDiv(body_space,75,100) : mail_clamp(MulDiv(height, 22, 100),
-                               ClassicUI::Scale(owner, 70), ClassicUI::Scale(owner, 140));
+        top_height = ClassicUI::Scale(owner,203);
     int folder_size = mail_clamp(folder_width, folder_min, list_space - message_min);
     int list_height = mail_clamp(top_height, pane_min, body_space - pane_min);
     folder_bounds.SetRect(0, top, folder_size, top + list_height);
@@ -183,25 +207,26 @@ void MailPaneUI::FitColumns()
     if (!folders || !folders->GetSafeHwnd() || !messages || !messages->GetSafeHwnd()) return;
     CRect area; folders->GetClientRect(area);
     int width = area.Width();
-    int unread = ClassicUI::Scale(owner, news_mode ? 22 : 46), total = ClassicUI::Scale(owner, news_mode ? 54 : 38);
+    int unread = ClassicUI::Scale(owner, news_mode ? 16 : 42), total = ClassicUI::Scale(owner, news_mode ? 42 : 16);
     int label_min = ClassicUI::Scale(owner, 60);
     if (width < label_min + unread + total) {
         int numeric = width > label_min ? width - label_min : 0;
-        unread = MulDiv(numeric, news_mode ? 22 : 46, news_mode ? 76 : 84); total = numeric - unread;
+        unread = MulDiv(numeric, news_mode ? 16 : 42, 58); total = numeric - unread;
     }
     folders->SetColumnWidth(0, width - unread - total);
     folders->SetColumnWidth(1, unread); folders->SetColumnWidth(2, total);
     messages->GetClientRect(area); width = area.Width();
-    int sender = ClassicUI::Scale(owner, 100), status = ClassicUI::Scale(owner, 20);
-    int date = news_mode ? 0 : ClassicUI::Scale(owner, 70), subject_min = ClassicUI::Scale(owner, 70);
-    int nominal = sender + status + date + subject_min;
+    int sender = ClassicUI::Scale(owner, 150), status = ClassicUI::Scale(owner, 16);
+    int date = ClassicUI::Scale(owner, 160), subject_min = ClassicUI::Scale(owner, 70);
+    int nominal = sender + status * 2 + date + subject_min;
     if (width < nominal) {
-        sender = MulDiv(width, 100, news_mode ? 190 : 260); status = MulDiv(width, 20, news_mode ? 190 : 260);
-        date = news_mode ? 0 : MulDiv(width, 70, 260);
+        sender = MulDiv(width, 150, 412); status = MulDiv(width, 16, 412);
+        date = MulDiv(width, 160, 412);
     }
-    messages->SetColumnWidth(0, sender); messages->SetColumnWidth(1, status);
-    messages->SetColumnWidth(2, width - sender - status - date);
-    if(!news_mode) messages->SetColumnWidth(3, date);
+    messages->SetColumnWidth(SenderColumn, sender);
+    messages->SetColumnWidth(PriorityColumn, status); messages->SetColumnWidth(FlagColumn, status);
+    messages->SetColumnWidth(SubjectColumn, width - sender - status * 2 - date);
+    messages->SetColumnWidth(DateColumn, date);
 }
 
 int MailPaneUI::FolderImage(unsigned long flags) const

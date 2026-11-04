@@ -4,6 +4,7 @@
 #include <string>
 #include "find.h"
 #include "classic.h"
+#include "msgcom.h"
 
 enum { IDC_FIND_TEXT = 4600, IDC_FIND_CASE, IDC_FIND_BACKWARDS,
        IDC_FIND_WRAP, IDC_FIND_RESULT };
@@ -43,13 +44,18 @@ extern "C" int WFE_FindText(MWContext *context, const char *term,
     HWND window = WFE_DocumentWindow(context);
     if (!IsWindow(window)) return 0;
     FindState &previous = find_states[context];
-    bool continuing = previous.document == XP_DOCID(context) &&
+    bool message_search=context->type==MWContextMail || context->type==MWContextNews;
+    bool continuing = (message_search || previous.document == XP_DOCID(context)) &&
                       previous.term == term && previous.match_case == !!match_case;
     previous.document = XP_DOCID(context);
     previous.term = term;
     previous.match_case = !!match_case;
     previous.backwards = !!backwards;
     previous.wrap = !!wrap;
+    if(message_search) {
+        if(continuing) {MSG_Command(context,MSG_FindAgain);return 1;}
+        return MSG_DoFind(context,term,match_case!=0)>=0;
+    }
 
     /* Selection belongs to the current layout. Never retain LO_Element pointers
      * across modal message pumping, navigation, or a resize that relays out text. */
@@ -88,6 +94,20 @@ extern "C" int WFE_FindText(MWContext *context, const char *term,
     SetScrollPos(window, SB_HORZ, x, TRUE);
     SetScrollPos(window, SB_VERT, y, TRUE);
     return 1;
+}
+
+extern "C" int WFE_FindAgain(MWContext *context)
+{
+    remove_closed_contexts();
+    auto saved=find_states.find(context);
+    if(saved==find_states.end() || saved->second.term.empty()) { WFE_FindShow(context);return 0; }
+    FindState query=saved->second;
+    if(context->type==MWContextMail || context->type==MWContextNews) {
+        XP_Bool enabled=FALSE;
+        if(MSG_CommandStatus(context,MSG_FindAgain,&enabled,nullptr,nullptr,nullptr)<0 || !enabled) return 0;
+        MSG_Command(context,MSG_FindAgain);return 1;
+    }
+    return WFE_FindText(context,query.term.c_str(),query.match_case,query.backwards,query.wrap);
 }
 
 class FindDialog : public CDialog {
@@ -138,6 +158,9 @@ protected:
             backwards.SetCheck(saved->second.backwards);
             wrap.SetCheck(saved->second.wrap);
         } else wrap.SetCheck(BST_CHECKED);
+        if(context->type==MWContextMail || context->type==MWContextNews) {
+            SetWindowText("Find in Messages");backwards.EnableWindow(FALSE);wrap.EnableWindow(FALSE);
+        }
         text.SetWindowText(initial.c_str());
         next.EnableWindow(!initial.empty());
         CenterWindow();

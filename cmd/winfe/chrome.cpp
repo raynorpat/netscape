@@ -8,7 +8,6 @@ static const ChromeCommand browser_tools[] = {
     {ID_NAV_BACK,"Back",IDB_CLASSIC_BACK,"Back one page"},
     {ID_NAV_FORWARD,"Forward",IDB_CLASSIC_FORWARD,"Forward one page"},
     {ID_NAV_HOME,"Home",IDB_CLASSIC_HOME,"Open the home page"},
-    {ID_BROWSER_EDIT,"Edit",IDB_CLASSIC_EDIT,"Page editor is not available in this port"},
     {ID_NAV_RELOAD,"Reload",IDB_CLASSIC_RELOAD,"Reload the current page"},
     {ID_BROWSER_IMAGES,"Images",IDB_CLASSIC_IMAGES,"Images are loaded automatically"},
     {ID_BROWSER_OPEN,"Open",IDB_CLASSIC_OPEN,"Open a local document"},
@@ -31,9 +30,9 @@ static const ChromeCommand mail_tools[] = {
 static const ChromeCommand news_tools[] = {
     {ID_CLIENT_POST,"To:News",IDB_CLASSIC_POST,"Post a new article"},
     {ID_NEWS_MAIL_NEW,"To:Mail",IDB_CLASSIC_COMPOSE,"Compose a mail message"},
-    {ID_NEWS_REPLY_POST,"Re:News",IDB_CLASSIC_POST_REPLY,"Reply to the newsgroup"},
     {ID_MESSAGE_REPLY,"Re:Mail",IDB_CLASSIC_REPLY,"Reply to the sender by mail"},
-    {ID_NEWS_REPLY_BOTH,"Re:All",IDB_CLASSIC_POST_BOTH,"Reply by news and mail"},
+    {ID_NEWS_REPLY_POST,"Re:News",IDB_CLASSIC_POST_REPLY,"Reply to the newsgroup"},
+    {ID_NEWS_REPLY_BOTH,"Re:Both",IDB_CLASSIC_POST_BOTH,"Reply by news and mail"},
     {ID_MESSAGE_FORWARD,"Forward",IDB_CLASSIC_FORWARDMSG,"Forward this article by mail"},
     {ID_MESSAGE_PREVIOUS,"Previous",IDB_CLASSIC_PREVIOUS,"Previous unread article"},
     {ID_MESSAGE_NEXT,"Next",IDB_CLASSIC_NEXT,"Next unread article"},
@@ -93,14 +92,20 @@ bool ClassicChrome::Create(CWnd *owner, CGenericEdit *address, ClassicButton *go
 
 int ClassicChrome::Arrange(int width)
 {
+    if(!toolbar_visible && !location_visible && !directory_visible) {ShowWindow(SW_HIDE);return 0;}
+    ShowWindow(SW_SHOW);
     auto s = [this](int n){ return ClassicUI::Scale(this,n); };
-    int y=s(3), button_width=s(presentation==0 ? 30 : mode==2 ? 50 : 44), button_height=s(presentation==0 ? 26 : presentation==1 ? 24 : mode ? 42 : 38);
-    int columns=(std::max)(1,(width-s(mode ? 48 : 8))/button_width);
+    int y=s(3), button_width=s(presentation==0 ? 30 : mode ? 42 : 48), button_height=s(presentation==0 ? 26 : presentation==1 ? 24 : 42);
+    int x=s(4), row=0, limit=(std::max)(button_width+s(4),width-s(mode?40:4));
     for (size_t i=0;i<buttons.size();++i) {
+        bool group=mode==2?(i==2||i==6||i==8||i==10):mode==1?(i==1||i==3||i==6||i==8):(i==3||i==8);
+        if(group && presentation==2) x+=s(mode==2?4:mode==1?8:12);
+        if(x+button_width>limit) {x=s(4);++row;}
         buttons[i]->ShowWindow(toolbar_visible ? SW_SHOW : SW_HIDE);
-        buttons[i]->MoveWindow(s(4)+(int(i)%columns)*button_width,y+(int(i)/columns)*button_height,button_width-s(2),button_height-s(2));
+        buttons[i]->MoveWindow(x,y+row*button_height,button_width-s(2),button_height-s(2));
+        x+=button_width;
     }
-    if (toolbar_visible) y += ((int(buttons.size())+columns-1)/columns)*button_height+s(3);
+    if (toolbar_visible) y += (row+1)*button_height+s(3);
     int logo_top=mode ? s(3) : y, logo_size=s(mode ? 32 : 44), right=(std::max)(s(100),width-logo_size-s(5));
     label.ShowWindow(location_visible ? SW_SHOW : SW_HIDE);
     location.ShowWindow(location_visible ? SW_SHOW : SW_HIDE);

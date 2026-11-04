@@ -20,6 +20,9 @@ void WFE_ResizeGridWindow(MWContext *, int32, int32, int32, int32);
 void WFE_LoadGridHistory(MWContext *, void *, NET_ReloadMethod);
 void WFE_DestroyContext(MWContext *context);
 void WFE_Load(MWContext *context, const char *address);
+void WFE_ViewSource(MWContext *context,const char *address);
+void WFE_DocumentAddress(MWContext *context,const char *address);
+void WFE_ConfigureChrome(MWContext *context,const Chrome *chrome);
 MWContext *WFE_NewWindow(const char *address);
 void WFE_BeginLoad(MWContext *context, const char *address);
 HWND WFE_DocumentWindow(MWContext *context);
@@ -48,6 +51,8 @@ int WFE_RunSmokeTest(const char *report, const char *url);
 void WFE_RegisterNativeWindow(MWContext *context, HWND window);
 void WFE_UnregisterNativeWindow(MWContext *context);
 void WFE_MailChanged(MWContext *context, unsigned int changes);
+void WFE_ShowMailSettings(MWContext *context);
+int WFE_LoadImagesAutomatically(MWContext *context);
 MWContext *WFE_NewMailWindow(int is_news, const char *server);
 char *WFE_NativePrompt(MWContext *context, const char *message, const char *initial, int password);
 #ifdef __cplusplus

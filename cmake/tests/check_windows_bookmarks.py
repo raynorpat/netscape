@@ -123,6 +123,10 @@ def run_phase(executable, output, profile, phase):
     for key in required:
         if fields.get("bookmarks_" + key) != "1":
             raise RuntimeError("Bookmark {} report has unexpected {}:\n{}".format(phase, key, text))
+    if phase == "seed":
+        for name in ("menu_populated", "menu_cached", "menu_rebuilt", "menu_open_requested"):
+            if fields.get("bookmarks_" + name) != "1":
+                raise RuntimeError("Bookmark native menu check failed: " + name + "\n" + text)
     if phase in ("verify", "verify-retry", "verify-legacy") and fields.get("bookmarks_count") != "2":
         raise RuntimeError("Fresh browser did not load two saved bookmarks:\n" + text)
     if phase == "verify-legacy" and fields.get("bookmarks_legacy_description") != "1":

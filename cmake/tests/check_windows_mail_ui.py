@@ -194,9 +194,9 @@ def check_mail_geometry(fields, prefix=""):
             or messages[2] - messages[0] < 100 * scale
             or reader[3] - reader[1] < 80 * scale):
         raise RuntimeError(prefix + "Mail panes are too small to use")
-    if not prefix and (folders[3] - folders[1] > 160 * scale
-                       or reader[1] > client[3] * 0.60):
-        raise RuntimeError("Mail upper band is too tall for the reference layout")
+    if not prefix and (abs(folders[2] - folders[0] - 303 * scale) > tolerance
+                       or abs(folders[3] - folders[1] - 203 * scale) > tolerance):
+        raise RuntimeError("Mail default panes differ from original 3.02")
     if prefix and client[2] > 400 * scale:
         raise RuntimeError("Mail narrow-layout check did not resize the window")
     return client, folders, messages, reader
@@ -207,9 +207,13 @@ def check_mail_report(text, fields):
         "passed": "1", "completed": "1", "toolbar_count": "10",
         "toolbar_labels": MAIL_TOOLBAR, "menu_labels": MAIL_MENUS,
         "location_visible": "0", "directory_visible": "0",
-        "columns": "Sender|Status|Subject|Date", "selected_subject": SUBJECTS[0],
+        "columns": "Sender|Status|Status|Subject|Date", "selected_subject": SUBJECTS[0],
         "reader_header": "1", "reader_body": "1", "previous_next": "1",
         "reader_scroll": "1",
+        "menu_flag_unflag": "1", "menu_select_all": "1", "menu_native_deselect": "1",
+        "menu_native_clear": "1", "menu_sort_subject": "1", "menu_sort_date": "1",
+        "menu_sort_ascending": "1", "menu_attachments": "1", "menu_headers": "1",
+        "menu_mail_images_preserve_headers": "1", "menu_find_again": "1", "menu_copy_trash": "1", "menu_restore": "1",
         "splitter_clamps": "1", "narrow_layout": "1",
     }, text)
     if int(fields.get("folder_icons", "0")) < 1:
@@ -239,6 +243,9 @@ def check_compose_report(text, fields):
         "hidden_headers_retained": "1", "draft_command": "1",
         "attachment_command": "1", "cancel_command": "1",
         "composition_title": "1", "address_disabled": "1",
+        "original_save_as": "1", "attachment_toggle": "1", "paste_quotation": "1",
+        "wrap_toggle": "1", "deferred_delivery": "1", "immediate_delivery": "1",
+        "body_saved": "1", "original_size": "1",
         "quote_backend": "1", "stop_idle": "1",
         "quote_dirty": "1", "quote_stop_active": "1",
         "quote_stop_survived": "1", "quote_retry": "1",
@@ -278,7 +285,7 @@ class Bitmap:
         self.pixel_bytes = bits // 8
         self.stride = ((self.width * bits + 31) // 32) * 4
         if (size != len(self.data) or header < 40 or self.offset < 14 + header
-                or not 600 <= self.width <= 4096 or not 350 <= self.height <= 4096
+                or not 300 <= self.width <= 4096 or not 350 <= self.height <= 4096
                 or planes != 1 or bits not in (24, 32) or compression != 0
                 or self.offset + self.stride * self.height > len(self.data)):
             raise RuntimeError("UI capture has invalid dimensions, pixel format or scanlines")

@@ -73,7 +73,7 @@ install(FILES "${PROJECT_SOURCE_DIR}/cmake/sun-java.md" DESTINATION "${NETSCAPE_
 install(FILES "${PROJECT_SOURCE_DIR}/jpeg/README" DESTINATION "${NETSCAPE_DOC_DIR}/licenses" RENAME IJG-README COMPONENT Runtime)
 install(DIRECTORY "${PROJECT_SOURCE_DIR}/l10n/us/xp/" DESTINATION "${NETSCAPE_DOC_DIR}/licenses" COMPONENT Runtime FILES_MATCHING PATTERN "LICENSE-*")
 set(development_default OFF)
-if(NOT TARGET netscape-export AND NOT TARGET netscape_java_vm)
+if(NOT TARGET netscape-export AND NOT TARGET netscape_java_vm AND NOT TARGET netscape-win32)
  set(development_default ON)
 endif()
 option(NETSCAPE_INSTALL_DEVELOPMENT "Install built static archives and legacy headers" ${development_default})

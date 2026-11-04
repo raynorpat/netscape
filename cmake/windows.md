@@ -1,0 +1,175 @@
+# Native Windows build
+
+This port builds the native Win32 core libraries and an optional MFC browser
+frontend adapted to the 3.02 backend interfaces. The initial frontend supports
+HTML text layout, local files, HTTP navigation, scrolling and links. Native
+mail/news windows and the remaining browser UI are still being ported.
+
+## Windows browser frontend
+
+Install the Visual Studio MFC component matching your selected C++ toolset, in
+addition to the desktop C++ workload. Include the x86 MFC libraries.
+
+```powershell
+cmake -S . -B out/windows-frontend -G "Visual Studio 18 2026" -A Win32 -DNETSCAPE_BUILD_WINDOWS_FRONTEND=ON
+cmake --build out/windows-frontend --config Release --parallel
+ctest --test-dir out/windows-frontend -C Release --output-on-failure
+.\out\windows-frontend\Release\netscape.exe
+```
+
+The CMake target is `netscape-win32`; its output is `netscape.exe`. A local
+filename or URL can be supplied on the command line. The executable links the
+3.02 core archives, rather than replacing the renderer with a system browser.
+It uses MFC's shared runtime and the matching Visual C++ runtime.
+
+`cmd/winfe/main.cpp` supplies the native window, location field, menu, navigation
+and GDI drawing. `frontend.c` binds the 3.02 context callback table; `platform.c`
+supplies profile/file APIs, nonblocking socket polling and asynchronous DNS;
+`services.c` implements or explicitly declines the optional UI services.
+Menus, accelerators, version information, icon and the original cross-platform
+string table are compiled by the Windows resource compiler.
+
+The frontend reuses the recovered 1998 `CCmdParse` and `CGenericEdit` components
+and Communicator icon. The original Netscape Public License is retained in
+`cmd/winfe/legacy/LICENSE`; provenance is recorded beside those sources. The
+new application and backend adapter target the 3.02 API. The full 1998 MFC
+application has not been substituted for this tree's frontend.
+
+The default profile is `%LOCALAPPDATA%\NetscapeLegacy`. Set
+`NETSCAPE_PROFILE_DIR` to use a separate directory. This initial native port uses
+ANSI paths and the legacy IPv4/Winsock interfaces. It remains x86 only.
+
+The frontend tests load an HTML fixture through the original parser and layout
+engine, check title/text and draw it into a native GDI surface. They also check
+placeholder image teardown and that closing the first window leaves a second
+window alive. The HTTP test
+serves the fixture locally and exercises the frontend's DNS/socket dispatch.
+Python 3 is required when frontend tests are enabled. Set `BUILD_TESTING=OFF` to
+build without the test runner dependency.
+
+Images and forms currently have placeholder geometry; frames, plugins, native
+mail/news windows, mail composition, bookmark dialogs, password prompts, Java,
+Mocha and SSL/security integration are incomplete. Optional operations return
+an unavailable/cancel result rather than claiming success. Linking the mail/news
+backend archives does not provide working native mail/news windows yet.
+
+## Build and test
+
+Install CMake 3.20 or newer and Visual Studio with the C++ desktop workload and
+a Windows SDK. Configure for **Win32/x86**, not x64. For Visual Studio 2026:
+
+```powershell
+cmake -S . -B out/windows -G "Visual Studio 18 2026" -A Win32
+cmake --build out/windows --config Release --parallel
+ctest --test-dir out/windows -C Release --output-on-failure
+```
+
+For Visual Studio 2022, use `-G "Visual Studio 17 2022"`. That toolchain has not
+been tested here. The current platform module accepts MSVC and clang-cl;
+clang-cl has not been tested either. MinGW and cross compilation are not supported.
+
+On Windows, `NETSCAPE_BUILD_WINDOWS_CORE` defaults to `ON`; the Linux browser and
+legacy-library options default to `OFF`. Java, Mocha and security must stay off
+for this initial port. `BUILD_TESTING=OFF` omits the native smoke executables.
+
+The `netscape_windows_core` aggregate builds these independently selectable targets:
+
+| Targets | Sources / role |
+| --- | --- |
+| `netscape_nspr` | Original Win32 native threads, monitors, I/O, memory, events and runtime support. |
+| `netscape_jpeg`, `netscape_dbm`, `netscape_hash` | JPEG decoder, persistent hash database and security hash routines. |
+| `netscape_parse`, `netscape_lay`, `netscape_img`, `netscape_i18n` | Parser, layout, image and text conversion backends. |
+| `netscape_net`, `netscape_msg`, `netscape_mime` | Network protocols, mail/news backend and MIME. |
+| `netscape_misc`, `netscape_plugin`, `netscape_xlate`, `netscape_xp` | Shared browser services, plugin backend, translation and platform helpers. |
+
+Archive definitions are in `cmake/targets/windows/`, with shared configuration
+in `cmake/modules/NetscapeWindows.cmake`. Existing per-library source manifests
+are reused with explicit Windows source selections. Unix external-process
+converters and DNS, fallback plugin loaders and Unix builtin string tables are
+excluded; these services belong to the Windows frontend. No placeholder frontend
+implementations have been added to make a browser link.
+
+The NSPR CPU configuration header is generated by a native executable. Header
+namespaces are staged in the build directory. The parser and MIME tables use the
+checked-in generated files for now; native resource regeneration and Windows
+string/resource DLLs remain frontend work. The Linux resource pipeline is unchanged.
+
+The initial NSPR target is static (`NSPR_STATIC`), rather than the original DLL.
+It uses `HW_THREADS`, the source list from `nspr/src/makefile.win` for
+`OS_RELEASE=32`, and SDK Winsock. Modern CRT `stat` and `snprintf` implementations
+replace conflicting legacy wrappers. Non-SSL socket macros call Winsock rather
+than CRT file descriptor functions.
+
+The x64 guard is intentional: this Win32 NSPR backend accesses x86 `CONTEXT`
+registers and assumes 32-bit `long`/pointer relationships. The Linux x64 fixes do
+not make those Windows assumptions safe.
+
+## Verification
+
+All 15 archives built with Visual Studio 2026 MSVC 19.51 and Windows SDK
+10.0.26100 for Win32 Release and Debug. Both configurations passed the runtime
+tests, which exercise:
+
+- NSPR initialization, thread identity, thread creation, monitor wait/notify,
+  hash insertion/removal and formatted output.
+- DBM binary data written, synced, closed and retrieved after reopening.
+- Browser non-SSL socket macros using a local TCP listener, data transfer and
+  nonblocking error handling.
+
+These tests do not establish that all backend functions work. Building static
+archives alone does not resolve their frontend dependencies. The optional MFC
+frontend resolves those interfaces for its supported browser paths; there is
+no native Java, SSL/S-MIME or Mocha runtime verification.
+Legacy compiler warnings remain, including code paths requiring a later runtime
+audit.
+
+## Recovered 1998 Windows frontend
+
+The official [Mozilla source archive index](https://releases.mozilla.org/pub/mozilla/source/)
+contains the [April 8, 1998 source release](https://releases.mozilla.org/pub/mozilla/source/mozilla-19980408.tar.gz).
+It includes `ns/cmd/winfe` and `ns/cmd/wincom`. The March 31 Unix archive was also
+inspected and contains no `cmd/winfe` tree.
+
+Archive SHA-256, computed locally:
+
+```text
+2cfcc52d87834663d4aa0b4959c51f66451df965283b28fbfbad62d46741e013
+```
+
+Retrieve and verify the reference with Python 3.9 or newer:
+
+```powershell
+python cmake/tools/fetch_windows_reference.py
+```
+
+The script downloads the archive into ignored `out/research/`, checks that hash,
+and extracts the unmodified WinFE/WinCom trees, original `LICENSE`/`LEGAL`, and
+the 1998 `fe_proto.h`/`xp_core.h` headers. It excludes CVS metadata, skips links,
+checks extraction paths and records an inventory. The reference stays separate
+from the 3.02 sources. Copyright and Netscape Public License notices are retained.
+
+This is later Mozilla/Communicator-era code, **not the original Navigator 3.02
+Windows frontend**. Concrete differences already found:
+
+- `cmd/winfe/stdafx.h` uses MFC (including private `afxpriv.h`), OLE and common
+  controls, and includes `layers.h`, which this 3.02 tree lacks.
+- `cfe.cpp` supplies context callbacks such as `CFE_CreateNewDocWindow` and
+  `CFE_GetTextInfo`. Some callback signatures resemble 3.02, but context layouts
+  and tables must be matched explicitly.
+- The 1998 `fe_proto.h` adds NSPR `PRFileDesc *` polling interfaces and conditional
+  layer callbacks; 3.02 uses integer socket/select interfaces and exposes
+  `FE_DisplayImage`/`FE_DisplaySubImage` callbacks absent from that later header.
+- The Windows makefile traverses preferences, optional editor/mail resource DLLs
+  and `xpstrdll`, using the 1998 configuration rules. Those rules and backend
+  dependencies cannot simply be linked to the 3.02 archives.
+
+The native frontend above provides the first MFC application shell, text
+rendering, event dispatch, asynchronous sockets/DNS, file services and resource
+targets. Image/form rendering, richer preferences and native mail/news windows
+remain integration work. The recovered source remains the implementation guide
+while the 3.02 backend interfaces stay authoritative.
+
+Because usable Windows frontend source was recovered, binary reconstruction is
+not needed at this stage. A verified 3.02 Windows executable can later serve as
+a behavior oracle for differences the source cannot explain; no Windows binary
+has been decompiled or its behavior claimed to match in this port.

@@ -10,8 +10,7 @@
 /* hacked out of <dirent.h> on an SGI */
 #if defined(XP_WIN32) || defined(_WIN32)
 /* 32-bit stuff here */
-#include "windef.h" 
-#include "winbase.h"
+#include <windows.h>
 #include <stdlib.h>
 #include <sys\types.h>
 #include <sys\stat.h>

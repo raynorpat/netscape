@@ -1145,16 +1145,18 @@ net_send_port(ActiveEntry * ce)
 	
 #ifdef XP_WIN
 	{
-      struct linger {
-       	  int l_onoff;
-       	  int l_linger;
-      } lingerstruct;
+      struct linger lingerstruct;
 
       FE_SetupAsyncSelect(cd->listen_sock, ce->window_id);
       lingerstruct.l_onoff = 1;
       lingerstruct.l_linger = 0;
+#ifdef NO_SSL
+      setsockopt(cd->listen_sock, SOL_SOCKET, SO_LINGER,
+                 (const char *)&lingerstruct, sizeof(lingerstruct));
+#else
       SSL_SetSockOpt(cd->listen_sock, SOL_SOCKET, SO_LINGER,
                      &lingerstruct, sizeof(lingerstruct));
+#endif
 	}
 #else
 	{
@@ -1756,10 +1758,7 @@ net_begin_put_response(ActiveEntry * ce)
 
 #ifdef XP_WIN
 	{
-		struct linger {
-			int l_onoff;
-			int l_linger;
-		} lingerstruct;
+		struct linger lingerstruct;
 
         /* turn the linger off so that we don't
          * wait but we don't abort either
@@ -1767,8 +1766,13 @@ net_begin_put_response(ActiveEntry * ce)
          */
         lingerstruct.l_onoff = 0;
         lingerstruct.l_linger = 0;
+#ifdef NO_SSL
+        setsockopt(ce->socket, SOL_SOCKET, SO_LINGER,
+                   (const char *)&lingerstruct, sizeof(lingerstruct));
+#else
         SSL_SetSockOpt(ce->socket, SOL_SOCKET, SO_LINGER,
                        &lingerstruct, sizeof(lingerstruct));
+#endif
 	}
 #endif /* XP_WIN */
 

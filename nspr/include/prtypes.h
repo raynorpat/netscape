@@ -10,7 +10,14 @@
 
 #if defined(XP_PC)
 
-#if defined(_WIN32)
+#if defined(NSPR_STATIC)
+
+#define PR_PUBLIC_API(__x)      __x
+#define PR_CALLBACK
+#define PR_CALLBACK_DECL
+#define PR_STATIC_CALLBACK(__x) static __x
+
+#elif defined(_WIN32)
 
 #define PR_PUBLIC_API(__x)      _declspec(dllexport) __x
 #define PR_CALLBACK

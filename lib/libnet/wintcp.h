@@ -94,6 +94,6 @@
 /*
  * INCLUDE FILES FOR TCP
  */
-#include "winsock.h"
+#include <winsock.h>
 
 #endif /* TCP_H */

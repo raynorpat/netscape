@@ -58,7 +58,7 @@
 #endif /* XP_MAC */
 
 #ifdef XP_WIN
-#include "winsock.h"
+#include <winsock.h>
 #define SOCKET_BUFFER_SIZE 4096
 
 #ifndef EPIPE
@@ -72,7 +72,11 @@
 #ifdef DONT_USE_SSL_CALLS
 /* Network porting interface used by libnet */
 # define NETSELECT       select
-# define NETCLOSE        close  /* no such thing as closesocket - jwz */
+# ifdef XP_WIN
+#  define NETCLOSE       closesocket
+# else
+#  define NETCLOSE       close
+# endif
 # define NETBIND         bind
 # define NETLISTEN       listen
 # define NETSOCKET       socket
@@ -83,14 +87,22 @@
 # else
 #  define NETSOCK         int
 # endif /* XP_WIN */
-# define NETREAD         read
-# define NETWRITE        write
+# ifdef XP_WIN
+#  define NETREAD(s,b,l)  recv(s,b,l,0)
+#  define NETWRITE(s,b,l) send(s,b,l,0)
+#  define SOCKET_IOCTL   ioctlsocket
+# else
+#  define NETREAD        read
+#  define NETWRITE       write
+#  define SOCKET_IOCTL   ioctl
+# endif
 # define NETGETSOCKNAME  getsockname
-# define SOCKET_IOCTL    ioctl
 
 # ifdef XP_WIN
 #  define XP_SOCK_READ(s,b,l) recv(s,b,l,0)
 #  define XP_SOCK_WRITE(s,b,l) send(s,b,l,0)
+#  define SOCKET_READ(s,b,l) recv(s,b,l,0)
+#  define SOCKET_WRITE(s,b,l) send(s,b,l,0)
 # else
 #  ifdef XP_MAC
 #   define SOCKET_READ 	macsock_read

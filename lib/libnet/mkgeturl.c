@@ -1127,7 +1127,7 @@ NET_ShutdownNetLib(void)
 {
     ActiveEntry *tmpEntry;
 
-#ifdef XP_WIN32
+#if defined(XP_WIN32) && defined(JAVA)
 	if (libnet_asyncIO) LIBNET_LOCK();
 #else
     LIBNET_LOCK();
@@ -1245,7 +1245,7 @@ NET_ShutdownNetLib(void)
 	NET_CleanupFileFormat();
 #endif
 
-#ifdef XP_WIN32
+#if defined(XP_WIN32) && defined(JAVA)
     if (libnet_asyncIO) LIBNET_UNLOCK();
 #else
     LIBNET_UNLOCK();

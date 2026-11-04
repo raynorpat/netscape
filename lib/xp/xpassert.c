@@ -1,3 +1,4 @@
+#include "xp_core.h"
 #include "xpassert.h"
 #include "xp_trace.h"
 

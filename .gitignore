@@ -1,2 +1,4 @@
 # CMake build directory used in the documentation.
 /out/
+__pycache__/
+*.pyc

@@ -2,6 +2,9 @@
 
 The root `CMakeLists.txt` loads archive and executable definitions from `cmake/targets/`. Shared platform configuration, dependency discovery, Sun Java source targets and optional archive imports, and generation helpers live in `cmake/modules/`.
 
+The [native Windows build](windows.md) uses Win32 NSPR and builds backend archives
+with MSVC. `NETSCAPE_BUILD_WINDOWS_FRONTEND=ON` adds the MFC browser executable.
+
 ## Linux browser
 
 The default configuration builds `netscape-export`, the legacy core and hash archives, the JPEG decoder, DBM, and the icon/header generators. SSL/S-MIME defaults to disabled, matching the original `config/myconfig.mk`; the additional security archives remain available as explicit targets. Linux x86, x86_64, and AArch64 are recognized. Source compatibility and runtime behavior still depend on the toolchain; recognizing an architecture does not certify a working browser on it.
@@ -19,7 +22,9 @@ Set `CMAKE_PREFIX_PATH` to a dependency prefix when libraries are outside the sy
 
 | Option | Default | Purpose |
 | --- | --- | --- |
-| `NETSCAPE_BUILD_BROWSER` | `ON` | Build the Linux XFE browser and GUI helper archives. |
+| `NETSCAPE_BUILD_WINDOWS_CORE` | `ON` on Windows | Build native Win32 core archives and NSPR. |
+| `NETSCAPE_BUILD_WINDOWS_FRONTEND` | `OFF` | Build the initial native MFC browser; requires Windows core and MFC. |
+| `NETSCAPE_BUILD_BROWSER` | `ON` except Windows | Build the Linux XFE browser and GUI helper archives. |
 | `NETSCAPE_BUILD_LEGACY` | Browser option | Build core, networking, layout, mail, security, and NSPR archives; requires X11/Motif headers. |
 | `NETSCAPE_BUILD_MOCHA_SHELL` | `OFF` | Build the file-input shell; requires Mocha and enables its `MOCHAFILE` interface. |
 | `NETSCAPE_ENABLE_SECURITY` | `OFF` | Enable legacy SSL/S-MIME and link the additional security archives. |

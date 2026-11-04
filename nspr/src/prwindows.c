@@ -95,6 +95,8 @@ int open(const char *name, int flags, ...)
     return fd;
 }
 
+/* Modern MSVC supplies an inline stat wrapper in <sys/stat.h>. */
+#if !defined(_MSC_VER) || _MSC_VER < 1900
 int stat( const char *path, struct stat * buf )
 {
     int fd;
@@ -110,6 +112,8 @@ int stat( const char *path, struct stat * buf )
     }
     return fd;
 }
+
+#endif /* legacy CRT stat wrapper */
 
 int access( const char *path, int mode )
 {

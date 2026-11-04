@@ -10,6 +10,8 @@
 #include "msgcom.h"
 #include "mailsettings.h"
 #include "composer.h"
+#include "images.h"
+#include "forms.h"
 #include "np.h"
 #include <nspr/prglobal.h>
 #include <stdio.h>
@@ -119,6 +121,7 @@ int WFE_Init(void)
     WFE_ApplyMailPreferences();
     NET_SetDiskCacheSize(0);
     NET_SetMemoryCacheSize(4 * 1024 * 1024);
+    NET_RegisterMIMEDecoders();
     NET_RegisterContentTypeConverter(TEXT_HTML, FO_PRESENT, NULL, INTL_ConvCharCode);
     NET_RegisterContentTypeConverter(INTERNAL_PARSER, FO_PRESENT, &parser_data, PA_BeginParseMDL);
     NET_RegisterContentTypeConverter(TEXT_PLAIN, FO_PRESENT, NULL, NET_PlainTextConverter);
@@ -134,6 +137,7 @@ int WFE_Init(void)
 void WFE_Shutdown(void)
 {
     unsigned int index;
+    IL_Shutdown();
     NET_ShutdownNetLib();
     WFE_PlatformShutdown();
     for (index = 0; index < 65536; ++index) {
@@ -157,6 +161,7 @@ void WFE_InitContext(MWContext *context, void *window)
     SHIST_InitSession(context);
     XP_AddContextToList(context);
     IL_InitContext(context);
+    WFE_ImageInitContext(context);
 }
 
 void WFE_DestroyContext(MWContext *context)
@@ -167,6 +172,7 @@ void WFE_DestroyContext(MWContext *context)
     else if (context->msgframe && context->type == MWContextNews) MSG_CleanupNewsContext(context);
     if (context->msg_cframe) MSG_CleanupMessageCompositionContext(context);
     LO_DiscardDocument(context);
+    WFE_FormForgetContext(context);
     IL_DeleteImages(context);
     IL_ScourContext(context);
     SHIST_EndSession(context);
@@ -186,7 +192,7 @@ void WFE_Load(MWContext *context, const char *address)
 }
 
 void WFE_Pump(void) { WFE_PollNetworking(); }
-int FE_GetURL(MWContext *context, URL_Struct *url) { return NET_GetURL(url, FO_PRESENT, context, url_complete); }
+int FE_GetURL(MWContext *context, URL_Struct *url) { WFE_BeginLoad(context, url->address); return NET_GetURL(url, FO_PRESENT, context, url_complete); }
 MWContext *FE_CreateNewDocWindow(MWContext *context, URL_Struct *url) { return WFE_NewWindow(url ? url->address : NULL); }
 MWContext *FE_MakeNewWindow(MWContext *context, URL_Struct *url, char *name, Chrome *chrome) { return FE_CreateNewDocWindow(context, url); }
 MWContext *FE_MakeBlankWindow(MWContext *context, URL_Struct *url, char *name) { return FE_CreateNewDocWindow(context, url); }
@@ -212,7 +218,7 @@ int FE_GetTextInfo(MWContext *context, LO_TextStruct *text, LO_TextInfo *info) {
 void FE_DisplayText(MWContext *context, int location, LO_TextStruct *text, XP_Bool background) { WFE_Text(context, text, 0, text->text_len, background); }
 void FE_DisplaySubtext(MWContext *context, int location, LO_TextStruct *text, int32 start, int32 end, XP_Bool background) { WFE_Text(context, text, start, end + 1, background); }
 void FE_ClearView(MWContext *context, int which) { WFE_Invalidate(context); }
-void FE_SetBackgroundColor(MWContext *context, uint8 red, uint8 green, uint8 blue) { WFE_Background(context, RGB(red, green, blue)); }
+void FE_SetBackgroundColor(MWContext *context, uint8 red, uint8 green, uint8 blue) { WFE_Background(context, RGB(red, green, blue)); WFE_ImageBackground(context, red, green, blue); }
 void FE_SetDocDimension(MWContext *context, int location, int32 width, int32 height) { WFE_DocumentSize(context, width, height); }
 void FE_SetDocPosition(MWContext *context, int location, int32 x, int32 y) { WFE_Scroll(context, x, y); }
 void FE_ScrollDocTo(MWContext *context, int location, int32 x, int32 y) { WFE_Scroll(context, x, y); }
@@ -241,18 +247,7 @@ int FE_DisableBackButton(MWContext *context) { return 0; }
 int FE_EnableForwardButton(MWContext *context) { return 0; }
 int FE_DisableForwardButton(MWContext *context) { return 0; }
 
-/* Layout gets explicit placeholder geometry for unsupported object types. */
-void FE_GetImageInfo(MWContext *context, LO_ImageStruct *image, NET_ReloadMethod reload) { if (image->width <= 0) image->width = 48; if (image->height <= 0) image->height = 32; }
-void FE_FreeImageElement(MWContext *context, LO_ImageStruct *image) { }
-void FE_ImageDelete(IL_Image *image) { }
-void FE_ShiftImage(MWContext *context, LO_ImageStruct *image) { WFE_Invalidate(context); }
-int FE_ImageSize(MWContext *context, IL_ImageStatus status, IL_Image *image, void *data) { return 0; }
-void FE_ImageData(MWContext *context, IL_ImageStatus status, IL_Image *image, void *data, int start, int count, XP_Bool update) { WFE_Invalidate(context); }
-void FE_ImageIcon(MWContext *context, int number, void *data) { }
-XP_Bool FE_ImageOnScreen(MWContext *context, LO_ImageStruct *image) { return TRUE; }
-int FE_SetColormap(MWContext *context, IL_IRGB *map, int requested) { return 0; }
-void FE_DisplayImage(MWContext *context, int location, LO_ImageStruct *image) { WFE_Rect(context, image->x + image->x_offset, image->y + image->y_offset, image->width, image->height, RGB(128,128,128), 0); }
-void FE_DisplaySubImage(MWContext *context, int location, LO_ImageStruct *image, int32 x, int32 y, uint32 width, uint32 height) { FE_DisplayImage(context, location, image); }
+/* Optional object types still use explicit placeholder geometry. */
 void FE_GetEmbedSize(MWContext *context, LO_EmbedStruct *embed, NET_ReloadMethod reload) { embed->width = embed->height = 32; }
 void FE_GetJavaAppSize(MWContext *context, LO_JavaAppStruct *applet, NET_ReloadMethod reload) { }
 void FE_FreeEmbedElement(MWContext *context, LO_EmbedStruct *embed) { }
@@ -268,14 +263,13 @@ void FE_DisplaySubDoc(MWContext *context, int location, LO_SubDocStruct *doc) { 
 void FE_DisplayLineFeed(MWContext *context, int location, LO_LinefeedStruct *line, XP_Bool background) { }
 void FE_DisplayHR(MWContext *context, int location, LO_HorizRuleStruct *rule) { WFE_Rect(context, rule->x, rule->y, rule->width, rule->height, RGB(128,128,128), 1); }
 void FE_DisplayBullet(MWContext *context, int location, LO_BullettStruct *bullet) { WFE_Rect(context, bullet->x, bullet->y, bullet->width, bullet->height, RGB(0,0,0), 1); }
-void FE_GetFormElementInfo(MWContext *context, LO_FormElementStruct *element) { element->width = 120; element->height = 24; element->baseline = 18; }
-void FE_GetFormElementValue(MWContext *context, LO_FormElementStruct *element, XP_Bool hide) { }
-void FE_ResetFormElement(MWContext *context, LO_FormElementStruct *element) { }
-void FE_SetFormElementToggle(MWContext *context, LO_FormElementStruct *element, XP_Bool toggle) { }
-void FE_FreeFormElement(MWContext *context, LO_FormElementData *element) { }
-void FE_FormTextIsSubmit(MWContext *context, LO_FormElementStruct *element) { }
-void FE_DisplayFormElement(MWContext *context, int location, LO_FormElementStruct *element) { WFE_Rect(context, element->x, element->y, element->width, element->height, RGB(128,128,128), 0); }
-
+void FE_GetFormElementInfo(MWContext *context, LO_FormElementStruct *element) { WFE_FormGetInfo(context, element); }
+void FE_GetFormElementValue(MWContext *context, LO_FormElementStruct *element, XP_Bool hide) { WFE_FormGetValue(context, element, hide); }
+void FE_ResetFormElement(MWContext *context, LO_FormElementStruct *element) { WFE_FormReset(context, element); }
+void FE_SetFormElementToggle(MWContext *context, LO_FormElementStruct *element, XP_Bool toggle) { WFE_FormSetToggle(context, element, toggle); }
+void FE_FreeFormElement(MWContext *context, LO_FormElementData *element) { WFE_FormFree(context, element); }
+void FE_FormTextIsSubmit(MWContext *context, LO_FormElementStruct *element) { WFE_FormTextIsSubmit(context, element); }
+void FE_DisplayFormElement(MWContext *context, int location, LO_FormElementStruct *element) { WFE_FormDisplay(context, location, element); }
 MWContext *FE_MakeGridWindow(MWContext *context, void *history, int32 x, int32 y, int32 width, int32 height, char *url, char *name, int8 scrolling, NET_ReloadMethod reload, Bool no_edge) { WFE_Unsupported(context, "Frames"); return NULL; }
 void *FE_FreeGridWindow(MWContext *context, XP_Bool save) { return NULL; }
 void FE_RestructureGridWindow(MWContext *context, int32 x, int32 y, int32 width, int32 height) { }
@@ -289,7 +283,7 @@ void FE_DeleteUrlData(URL_Struct *url) { }
 XP_Bool FE_UseExternalProtocolModule(MWContext *context, FO_Present_Types format, URL_Struct *url, Net_GetUrlExitFunc *exit_func) { return FALSE; }
 void *FE_AboutData(const char *which, char **data, int32 *length, char **content_type)
 {
-    static char about[] = "<html><title>Netscape 3.02 Windows</title><h1>Netscape 3.02</h1><p>Native Windows frontend port.</p><p>Browser text layout and navigation use the original 3.02 core. Native mail/news lists, reader and composer are available from Messages. Images, forms, frames, plugins, Java and security UI are still being ported.</p></html>";
+    static char about[] = "<html><title>Netscape 3.02 Windows</title><h1>Netscape 3.02</h1><p>Native Windows frontend port.</p><p>Browser text layout and navigation use the original 3.02 core. Native mail/news lists, reader and composer are available from Messages. Native images and HTML forms use the original core. Frames, plugins, Java and security UI are still being ported.</p></html>";
     *data = about; *length = sizeof(about) - 1; *content_type = "text/html"; return about;
 }
 void FE_FreeAboutData(void *data, const char *which) { }

@@ -133,12 +133,14 @@ int il_xbm_write(il_container *ic, const unsigned char *buf, int32 len)
 					{
 						xs->xpos=0;
 						xs->ypos++;
+                        if (xs->ypos < im->height) {
 #ifdef _USD
 						xs->p = (unsigned char *)im->bits +
-                            (im->height-xs->ypos)*(im->widthBytes);
+                            (im->height-xs->ypos-1)*(im->widthBytes);
 #else
 						xs->p = (unsigned char *) im->bits + xs->ypos*(im->widthBytes);
 #endif
+                        }
 					}
 
 					if(xs->ypos==im->height)

@@ -2,8 +2,8 @@
 
 This port builds the native Win32 core libraries and an optional MFC browser
 frontend adapted to the 3.02 backend interfaces. The initial frontend supports
-HTML text layout, local files, HTTP navigation, scrolling and links, plus native
-mail/news folder lists, message lists, a reader, and composer windows. Remaining
+HTML layout, GIF/JPEG/XBM images, native HTML forms, local files, HTTP navigation,
+scrolling and links, plus native mail/news folder lists, message lists, a reader, and composer windows. Remaining
 browser features are tracked in [windows-roadmap.md](windows-roadmap.md).
 
 ## Windows browser frontend
@@ -42,15 +42,49 @@ ANSI paths and the legacy IPv4/Winsock interfaces. It remains x86 only.
 
 The frontend tests load an HTML fixture through the original parser and layout
 engine, check title/text and draw it into a native GDI surface. They also check
-placeholder image teardown and that closing the first window leaves a second
+missing-image teardown and that closing the first window leaves a second
 window alive. The HTTP test
 serves the fixture locally and exercises the frontend's DNS/socket dispatch.
 Python 3 is required when frontend tests are enabled. Set `BUILD_TESTING=OFF` to
 build without the test runner dependency.
 
-Images and forms currently have placeholder geometry; frames, plugins, bookmark
-and history dialogs, downloads, printing, Java, Mocha and SSL/security integration
-remain incomplete. Text and password prompts use native dialogs.
+Images use the original GIF, JPEG and XBM decoders with native GDI surfaces,
+transparency, intrinsic/explicit sizing, clipped painting and tiled backgrounds.
+Shared decoded images survive individual client-window closure. Missing images
+and backgrounds unblock layout and retain a visible missing-image indicator.
+
+Forms use native text/password/textarea, checkbox/radio, select, submit and reset
+controls. The original layout engine collects successful control values and
+encodes GET/POST requests. Enter in a text field submits its form; controls
+follow document scrolling. File controls use a read-only path and native Browse
+picker, and ignore page-provided default paths. Image links, image-map routing
+and image submit controls are connected to the layout APIs.
+
+The image tests check actual GDI pixels, transparency, scaling, shared clients,
+reload, failed backgrounds, and deferred callback cancellation over local files
+and HTTP. Form tests check reset, scrolling, cleanup after navigation, Enter,
+GET, POST and image click coordinates against captured loopback requests.
+File upload/multipart behavior, progressive/animated image timing, and full
+keyboard traversal through offscreen controls remain unverified.
+
+Frames, plugins, bookmark and history dialogs, downloads, printing, Java, Mocha
+and SSL/security integration remain incomplete. Back/Forward currently reloads
+the URL rather than restoring a complete session-history entry. Text and
+password prompts use native dialogs.
+
+To install or package the Release build:
+
+```powershell
+cmake --install out/windows-frontend --config Release --prefix out/windows-install
+cpack --config out/windows-frontend/CPackConfig.cmake -G ZIP -C Release -B out/packages
+```
+
+The Windows archive is named `netscape-legacy-3.02-Windows-x86.zip` and contains
+`bin/netscape.exe` and the documentation/licenses. It still requires the matching
+shared Visual C++ and MFC runtime. Installation and ZIP generation were verified;
+the installed executable passed the image/form fixtures. All eight native CTests
+passed in both Release and Debug. The shared layout/XBM fixes also passed a Linux
+browser rebuild.
 
 ## Mail and news
 
@@ -200,7 +234,7 @@ Windows frontend**. Concrete differences already found:
 
 The native frontend above provides the first MFC application shell, text
 rendering, event dispatch, asynchronous sockets/DNS, file services and resource
-targets. Image/form rendering and richer preferences remain integration work. The recovered source remains the implementation guide
+targets. Frames, richer preferences and optional engines remain integration work. The recovered source remains the implementation guide
 while the 3.02 backend interfaces stay authoritative.
 
 Because usable Windows frontend source was recovered, binary reconstruction is

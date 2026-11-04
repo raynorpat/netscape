@@ -33,6 +33,8 @@ static void invalid_parameter(const wchar_t *expression, const wchar_t *function
 #include "libi18n.h"
 #include "mailsettings.h"
 #include "composer.h"
+#include "images.h"
+#include "forms.h"
 
 class BrowserFrame;
 static bool smoke_mode = false;
@@ -50,8 +52,11 @@ public:
     int scroll_x = 0, scroll_y = 0, document_width = 0, document_height = 0;
     unsigned drawn_runs = 0;
     std::string drawn_text;
+    LO_ImageStruct *backdrop = nullptr;
+    std::vector<LO_ImageStruct *> drawn_images;
     void Render(CDC &dc, int width, int height);
 protected:
+    BOOL OnCommand(WPARAM command, LPARAM control) override;
     afx_msg void OnPaint();
     afx_msg void OnVScroll(UINT code, UINT position, CScrollBar *bar);
     afx_msg void OnHScroll(UINT code, UINT position, CScrollBar *bar);
@@ -201,7 +206,7 @@ int BrowserFrame::OnCreate(LPCREATESTRUCT create)
                     CRect(710,8,770,32), this, ID_NAV_GO)) return -1;
     view.frame = this;
     if (!view.CreateEx(0, AfxRegisterWndClass(CS_DBLCLKS, LoadCursor(nullptr, IDC_ARROW)),
-                       "Document", WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_HSCROLL,
+                       "Document", WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_VSCROLL | WS_HSCROLL,
                        CRect(0,40,800,600), this, 112)) return -1;
     if (!status.Create(this) || !status.SetIndicators(indicators, 1)) return -1;
     if (mode) {
@@ -239,9 +244,11 @@ void BrowserFrame::OnSize(UINT type, int width, int height)
         messages.MoveWindow(left + 4, 40, (std::max)(width - left - 4, 1), list_height);
         view.MoveWindow(left + 4, list_height + 44, (std::max)(width - left - 4, 1), (std::max)(height - list_height - 66, 1));
     } else view.MoveWindow(0, 40, width, (std::max)(height - 62, 1));
+    if (initialized) WFE_FormPositionAll(&context);
 }
 BOOL BrowserFrame::PreTranslateMessage(MSG *message)
 {
+    if (WFE_FormKey(&context, message->hwnd, message->message, message->wParam, message->lParam)) return TRUE;
     if (message->message == WM_KEYDOWN && message->wParam == VK_RETURN
         && GetFocus() == &address) { OnGo(); return TRUE; }
     return CFrameWnd::PreTranslateMessage(message);
@@ -451,11 +458,18 @@ void BrowserView::Render(CDC &dc, int width, int height)
 {
     dc.FillSolidRect(0, 0, width, height, background);
     drawing = &dc;
+    drawn_images.clear();
     int saved = dc.SaveDC();
     dc.SetViewportOrg(-scroll_x, -scroll_y);
+    if (backdrop) WFE_DrawBackdrop(dc.GetSafeHdc(), &frame->context, backdrop, width, height, scroll_x, scroll_y);
     LO_RefreshArea(&frame->context, scroll_x, scroll_y, width, height);
     dc.RestoreDC(saved);
     drawing = nullptr;
+}
+BOOL BrowserView::OnCommand(WPARAM command, LPARAM control)
+{
+    if (WFE_FormCommand(&frame->context, command, control)) return TRUE;
+    return CWnd::OnCommand(command, control);
 }
 void BrowserView::OnPaint() { CPaintDC dc(this); CRect area; GetClientRect(area); if (frame->initialized) Render(dc, area.Width(), area.Height()); }
 static int scroll_position(int current, UINT code, UINT position, int maximum, int page)
@@ -469,8 +483,8 @@ static int scroll_position(int current, UINT code, UINT position, int maximum, i
     else if (code == SB_THUMBTRACK || code == SB_THUMBPOSITION) current = position;
     return (std::max)(0, (std::min)(current, (std::max)(0, maximum - page)));
 }
-void BrowserView::OnVScroll(UINT code, UINT position, CScrollBar *) { CRect area; GetClientRect(area); scroll_y = scroll_position(scroll_y, code, position, document_height, area.Height()); SetScrollPos(SB_VERT, scroll_y); Invalidate(); }
-void BrowserView::OnHScroll(UINT code, UINT position, CScrollBar *) { CRect area; GetClientRect(area); scroll_x = scroll_position(scroll_x, code, position, document_width, area.Width()); SetScrollPos(SB_HORZ, scroll_x); Invalidate(); }
+void BrowserView::OnVScroll(UINT code, UINT position, CScrollBar *) { CRect area; GetClientRect(area); scroll_y = scroll_position(scroll_y, code, position, document_height, area.Height()); SetScrollPos(SB_VERT, scroll_y); WFE_FormPositionAll(&frame->context); Invalidate(); }
+void BrowserView::OnHScroll(UINT code, UINT position, CScrollBar *) { CRect area; GetClientRect(area); scroll_x = scroll_position(scroll_x, code, position, document_width, area.Width()); SetScrollPos(SB_HORZ, scroll_x); WFE_FormPositionAll(&frame->context); Invalidate(); }
 BOOL BrowserView::OnMouseWheel(UINT, short delta, CPoint) { OnVScroll(delta > 0 ? SB_LINEUP : SB_LINEDOWN, 0, nullptr); return TRUE; }
 void BrowserView::OnLButtonUp(UINT, CPoint point)
 {
@@ -478,6 +492,24 @@ void BrowserView::OnLButtonUp(UINT, CPoint point)
     if (element && element->type == LO_TEXT && element->lo_text.anchor_href) {
         char *address = (char *)element->lo_text.anchor_href->anchor;
         if (address) frame->Navigate(address);
+    } else if (element && element->type == LO_IMAGE) {
+        LO_ImageStruct *image = &element->lo_image;
+        int x = point.x + scroll_x - image->x - image->x_offset - image->border_width;
+        int y = point.y + scroll_y - image->y - image->y_offset - image->border_width;
+        if (image->image_attr && (image->image_attr->attrmask & LO_ATTR_ISFORM)) {
+            WFE_FormImageSubmit(&frame->context, image, x, y);
+            return;
+        }
+        LO_AnchorData *anchor = image->anchor_href;
+        if (image->image_attr && image->image_attr->usemap_name)
+            anchor = LO_MapXYToAreaAnchor(&frame->context, image, x, y);
+        if (anchor && anchor->anchor) {
+            std::string target((const char *)anchor->anchor);
+            if (image->image_attr && (image->image_attr->attrmask & LO_ATTR_ISMAP)) {
+                char position[48]; sprintf(position, "?%d,%d", x, y); target += position;
+            }
+            frame->Navigate(target.c_str());
+        }
     }
 }
 
@@ -492,6 +524,53 @@ static HFONT text_font(LO_TextAttr *attribute)
                       !!(mask & LO_FONT_ITALIC), !!(attributes & LO_ATTR_UNDERLINE),
                       !!(attributes & LO_ATTR_STRIKEOUT), ANSI_CHARSET, OUT_DEFAULT_PRECIS,
                       CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, face);
+}
+
+extern "C" HWND WFE_DocumentWindow(MWContext *context)
+{
+    BrowserFrame *frame = frame_for(context);
+    return frame ? frame->view.GetSafeHwnd() : nullptr;
+}
+extern "C" void FE_RaiseWindow(MWContext *context)
+{
+    auto found = native_windows.find(context);
+    if (!smoke_mode && found != native_windows.end()) {
+        ShowWindow(found->second, SW_RESTORE);
+        SetForegroundWindow(found->second);
+    }
+}
+extern "C" void WFE_BeginLoad(MWContext *context, const char *url)
+{
+    BrowserFrame *frame = frame_for(context);
+    if (!frame || frame->mode || !url) return;
+    frame->current_url = url;
+    frame->address.SetWindowText(url);
+    if (!frame->history.empty()) frame->history.resize(frame->history_position + 1);
+    frame->history.push_back(url);
+    frame->history_position = frame->history.size() - 1;
+    frame->completed = false;
+    frame->view.drawn_runs = 0; frame->view.drawn_text.clear();
+}
+extern "C" HDC WFE_DrawingContext(MWContext *context)
+{
+    BrowserFrame *frame = frame_for(context);
+    return frame && frame->view.drawing ? frame->view.drawing->GetSafeHdc() : nullptr;
+}
+extern "C" void WFE_SetBackdrop(MWContext *context, LO_ImageStruct *image)
+{
+    BrowserFrame *frame = frame_for(context);
+    if (frame) frame->view.backdrop = image;
+}
+extern "C" void WFE_ClearBackdrop(MWContext *context, LO_ImageStruct *image)
+{
+    BrowserFrame *frame = frame_for(context);
+    if (frame && frame->view.backdrop == image) frame->view.backdrop = nullptr;
+}
+extern "C" void WFE_RecordImage(MWContext *context, LO_ImageStruct *image)
+{
+    BrowserFrame *frame = frame_for(context);
+    if (frame && std::find(frame->view.drawn_images.begin(), frame->view.drawn_images.end(), image) == frame->view.drawn_images.end())
+        frame->view.drawn_images.push_back(image);
 }
 
 extern "C" void WFE_TextMetrics(MWContext *context, LO_TextStruct *text, LO_TextInfo *info)
@@ -553,7 +632,7 @@ extern "C" void WFE_Title(MWContext *context, const char *title) { BrowserFrame 
 extern "C" void WFE_Invalidate(MWContext *context) { BrowserFrame *frame = frame_for(context); if (frame && frame->view.GetSafeHwnd()) frame->view.Invalidate(); }
 extern "C" void WFE_WindowSize(MWContext *context, int32 *width, int32 *height) { BrowserFrame *frame = frame_for(context); CRect area(0,0,800,600); if (frame) frame->view.GetClientRect(area); *width = area.Width(); *height = area.Height(); }
 extern "C" void WFE_DocumentSize(MWContext *context, int32 width, int32 height) { BrowserFrame *frame = frame_for(context); if (frame) { frame->view.document_width = width; frame->view.document_height = height; frame->view.SetScrollRange(SB_VERT, 0, height); frame->view.SetScrollRange(SB_HORZ, 0, width); } }
-extern "C" void WFE_Scroll(MWContext *context, int32 x, int32 y) { BrowserFrame *frame = frame_for(context); if (frame) { frame->view.scroll_x = x; frame->view.scroll_y = y; WFE_Invalidate(context); } }
+extern "C" void WFE_Scroll(MWContext *context, int32 x, int32 y) { BrowserFrame *frame = frame_for(context); if (frame) { frame->view.scroll_x = x; frame->view.scroll_y = y; WFE_FormPositionAll(context); WFE_Invalidate(context); } }
 extern "C" void WFE_Position(MWContext *context, int32 *x, int32 *y) { BrowserFrame *frame = frame_for(context); *x = frame ? frame->view.scroll_x : 0; *y = frame ? frame->view.scroll_y : 0; }
 extern "C" void WFE_Background(MWContext *context, unsigned long color) { BrowserFrame *frame = frame_for(context); if (frame) frame->view.background = color; }
 extern "C" void WFE_Unsupported(MWContext *context, const char *feature) { std::string message = std::string(feature) + " is not available in this Windows port yet."; OutputDebugStringA(message.c_str()); WFE_Status(context, message.c_str()); }
@@ -670,6 +749,179 @@ static void mail_smoke_pump()
     WFE_Pump();
     MsgWaitForMultipleObjects(0, nullptr, FALSE, 10, QS_ALLINPUT);
 }
+
+static void browser_smoke_wait(BrowserFrame *frame)
+{
+    ULONGLONG deadline = GetTickCount64() + 12000, quiet = 0;
+    while (GetTickCount64() < deadline) {
+        mail_smoke_pump();
+        if (frame->completed && !NET_AreThereActiveConnectionsForWindow(&frame->context)) {
+            if (!quiet) quiet = GetTickCount64();
+            if (GetTickCount64() - quiet >= 200) break;
+        } else quiet = 0;
+    }
+}
+static bool image_pixel(CDC &dc, LO_ImageStruct *image, int column, int row, COLORREF expected, int tolerance)
+{
+    int x = image->x + image->x_offset + image->border_width + ((column ? 3 : 1) * image->width) / 4;
+    int y = image->y + image->y_offset + image->border_width + ((row ? 3 : 1) * image->height) / 4;
+    COLORREF actual = dc.GetPixel(x, y);
+    return abs((int)GetRValue(actual) - GetRValue(expected)) <= tolerance
+        && abs((int)GetGValue(actual) - GetGValue(expected)) <= tolerance
+        && abs((int)GetBValue(actual) - GetBValue(expected)) <= tolerance;
+}
+static int WFE_RunImageSmoke(const char *report, const char *url)
+{
+    BrowserFrame *frame = frame_for(WFE_NewWindow(nullptr));
+    if (!frame) return 2;
+    frame->Navigate(url);
+    browser_smoke_wait(frame);
+    CClientDC screen(&frame->view); CDC memory; memory.CreateCompatibleDC(&screen);
+    CBitmap bitmap; bitmap.CreateCompatibleBitmap(&screen, 1600, 1000);
+    CBitmap *previous = memory.SelectObject(&bitmap);
+    frame->view.Render(memory, 1600, 1000);
+    CString caption; frame->GetWindowText(caption); caption.Replace(" - Netscape 3.02", "");
+    bool pixels = true, dimensions = false;
+    int kinds = 0;
+    const COLORREF quadrants[] = {RGB(255,0,0), RGB(0,255,0), RGB(0,0,255), RGB(255,255,0)};
+    const COLORREF transparent[] = {RGB(0,255,255), RGB(255,0,0), RGB(0,0,255), RGB(0,255,255)};
+    const COLORREF checker[] = {RGB(0,255,255), RGB(0,0,0), RGB(0,0,0), RGB(0,255,255)};
+    for (LO_ImageStruct *image : frame->view.drawn_images) {
+        const char *name = (const char *)image->image_url;
+        const COLORREF *expected = nullptr;
+        int tolerance = 0;
+        if (name && strstr(name, "/quadrants.gif")) { expected = quadrants; kinds |= 1; if (image->width == 32 && image->height == 32) dimensions = true; }
+        else if (name && strstr(name, "/quadrants.jpg")) { expected = quadrants; kinds |= 2; tolerance = 12; }
+        else if (name && strstr(name, "/checker.xbm")) { expected = checker; kinds |= 4; }
+        else if (name && strstr(name, "/transparent.gif")) { expected = transparent; kinds |= 8; }
+        if (expected) for (int i = 0; i < 4; ++i) {
+            bool match = image_pixel(memory, image, i & 1, i >> 1, expected[i], tolerance);
+            if (!match) fprintf(stderr, "Image pixel mismatch: %s %ldx%ld quadrant %d\n", name, image->width, image->height, i);
+            pixels = match && pixels;
+        }
+    }
+    pixels = pixels && kinds == 15 && dimensions;
+    int count = (int)frame->view.drawn_images.size();
+    bool finished = frame->completed && frame->load_status >= 0 && frame->view.drawn_text.find("Images finished") != std::string::npos;
+    memory.SelectObject(previous);
+    /* Exercise shared cache reuse and closing a client while another survives. */
+    frame->Navigate(url, false); browser_smoke_wait(frame);
+    BrowserFrame *shared = frame_for(WFE_NewWindow(url));
+    bool shared_survived = shared != nullptr;
+    if (shared) { browser_smoke_wait(shared); shared->SendMessage(WM_CLOSE); }
+    memory.SelectObject(&bitmap);
+    frame->view.Render(memory, 1600, 1000);
+    shared_survived = shared_survived && frame->view.drawn_images.size() >= 5;
+    for (LO_ImageStruct *image : frame->view.drawn_images)
+        if (image->image_url && strstr((const char *)image->image_url, "/quadrants.gif"))
+            shared_survived = image_pixel(memory, image, 0, 0, RGB(255,0,0), 0) && shared_survived;
+    memory.SelectObject(previous);
+    /* A deferred relayout must be canceled before its window/context is freed. */
+    BrowserFrame *closing = frame_for(WFE_NewWindow(nullptr));
+    size_t timer_count = timers.size();
+    LO_SetImageInfo(&closing->context, 0, 2, 2);
+    bool pending_cancelled = timers.size() == timer_count + 1;
+    closing->SendMessage(WM_CLOSE);
+    pending_cancelled = pending_cancelled && timers.size() == timer_count;
+    mail_smoke_pump();
+    frame->Navigate("about:", false); browser_smoke_wait(frame);
+    frame->SendMessage(WM_CLOSE);
+    FILE *output = fopen(report, "wb");
+    if (!output) return 3;
+    fprintf(output, "title=%s\nimage_count=%d\nimage_pixels_ok=%d\nnoerrors=%d\nshared_survived=%d\npending_cancelled=%d\n", (const char *)caption, count, pixels, finished, shared_survived, pending_cancelled);
+    fclose(output);
+    return pixels && finished && shared_survived && pending_cancelled ? 0 : 4;
+}
+static std::string control_text(HWND control)
+{
+    if (!control) return "";
+    std::vector<char> text(GetWindowTextLengthA(control) + 1);
+    GetWindowTextA(control, text.data(), (int)text.size());
+    return text.data();
+}
+static bool fill_form(MWContext *context)
+{
+    HWND query = WFE_FormFindControl(context, "query", 0);
+    HWND secret = WFE_FormFindControl(context, "secret", 0);
+    HWND note = WFE_FormFindControl(context, "note", 0);
+    HWND enabled = WFE_FormFindControl(context, "enabled", 0);
+    HWND choice = WFE_FormFindControl(context, "choice", 1);
+    HWND pick = WFE_FormFindControl(context, "pick", 0);
+    HWND multi = WFE_FormFindControl(context, "multi", 0);
+    if (!query || !secret || !note || !enabled || !choice || !pick || !multi) return false;
+    SetWindowTextA(query, "native & value"); SetWindowTextA(secret, "password");
+    SetWindowTextA(note, "line one\r\nline two");
+    if (SendMessage(enabled, BM_GETCHECK, 0, 0) == BST_CHECKED) SendMessage(enabled, BM_CLICK, 0, 0);
+    SendMessage(choice, BM_CLICK, 0, 0);
+    SendMessage(pick, CB_SETCURSEL, 1, 0);
+    SendMessage(multi, LB_SETSEL, FALSE, -1);
+    SendMessage(multi, LB_SETSEL, TRUE, 0); SendMessage(multi, LB_SETSEL, TRUE, 2);
+    return true;
+}
+static int WFE_RunFormsSmoke(const char *report, const char *url)
+{
+    BrowserFrame *frame = frame_for(WFE_NewWindow(nullptr));
+    if (!frame) return 2;
+    frame->Navigate(url); browser_smoke_wait(frame);
+    /* Layout display creates the live native child controls even in hidden tests. */
+    CClientDC screen(&frame->view); CDC memory; memory.CreateCompatibleDC(&screen);
+    CBitmap bitmap; bitmap.CreateCompatibleBitmap(&screen, 1600, 1000);
+    CBitmap *previous = memory.SelectObject(&bitmap);
+    frame->view.Render(memory, 1600, 1000);
+    MWContext *context = &frame->context;
+    bool filled = fill_form(context);
+    const int control_count = WFE_FormCount(context);
+    HWND query = WFE_FormFindControl(context, "query", 0);
+    RECT original = {}, scrolled = {};
+    if (query) GetWindowRect(query, &original);
+    WFE_Scroll(context, 0, 16);
+    if (query) GetWindowRect(query, &scrolled);
+    bool scrolling = query && scrolled.top == original.top - 16;
+    WFE_Scroll(context, 0, 0);
+    HWND reset = WFE_FormFindControl(context, "", 0);
+    if (filled && reset) SendMessage(reset, BM_CLICK, 0, 0);
+    bool reset_ok = filled && reset
+        && control_text(WFE_FormFindControl(context, "query", 0)) == "default query"
+        && control_text(WFE_FormFindControl(context, "secret", 0)) == "default secret"
+        && control_text(WFE_FormFindControl(context, "note", 0)) == "default note"
+        && SendMessage(WFE_FormFindControl(context, "enabled", 0), BM_GETCHECK, 0, 0) == BST_CHECKED
+        && SendMessage(WFE_FormFindControl(context, "choice", 0), BM_GETCHECK, 0, 0) == BST_CHECKED
+        && SendMessage(WFE_FormFindControl(context, "choice", 1), BM_GETCHECK, 0, 0) == BST_UNCHECKED
+        && SendMessage(WFE_FormFindControl(context, "pick", 0), CB_GETCURSEL, 0, 0) == 0
+        && SendMessage(WFE_FormFindControl(context, "multi", 0), LB_GETSEL, 1, 0) > 0
+        && SendMessage(WFE_FormFindControl(context, "multi", 0), LB_GETSELCOUNT, 0, 0) == 1;
+    bool refilled = fill_form(context);
+    HWND submit = WFE_FormFindControl(context, "go", 0);
+    frame->completed = false;
+    bool activated = false;
+    if (refilled && strstr(url, "/forms-image")) {
+        for (LO_ImageStruct *image : frame->view.drawn_images) {
+            if (image->image_attr && (image->image_attr->attrmask & LO_ATTR_ISFORM)) {
+                int x = image->x + image->x_offset + image->border_width + 1;
+                int y = image->y + image->y_offset + image->border_width + 1;
+                frame->view.SendMessage(WM_LBUTTONUP, 0, MAKELPARAM(x, y));
+                activated = true; break;
+            }
+        }
+    } else if (refilled && submit) {
+        if (strstr(url, "/forms-get")) {
+            MSG enter = {}; enter.hwnd = query; enter.message = WM_KEYDOWN; enter.wParam = VK_RETURN;
+            activated = frame->PreTranslateMessage(&enter) != FALSE;
+        } else { SendMessage(submit, BM_CLICK, 0, 0); activated = true; }
+    }
+    if (activated) browser_smoke_wait(frame);
+    frame->view.drawn_text.clear(); frame->view.Render(memory, 1600, 1000);
+    bool submitted = activated && frame->completed && frame->load_status >= 0
+        && frame->view.drawn_text.find("Native form received") != std::string::npos;
+    bool cleaned = WFE_FormCount(context) == 0;
+    memory.SelectObject(previous);
+    frame->SendMessage(WM_CLOSE);
+    FILE *output = fopen(report, "wb");
+    if (!output) return 3;
+    fprintf(output, "reset_ok=%d\nsubmitted=%d\ncontrol_count=%d\nscrolling=%d\ncleaned=%d\nerror=%s\n", reset_ok, submitted, control_count, scrolling, cleaned, smoke_error.c_str());
+    fclose(output);
+    return reset_ok && submitted && scrolling && cleaned && control_count >= 9 ? 0 : 4;
+}
 static int find_folder(MWContext *context, const char *name)
 {
     MSG_FolderLine line;
@@ -764,7 +1016,8 @@ public:
         if (!parser.ProcessCmdLine()) return FALSE;
         POSITION position = arguments.GetHeadPosition();
         CString first = position ? arguments.GetNext(position) : "about:";
-        smoke_mode = first == "--smoke-test" || first == "--mailnews-smoke" || first == "--composer-delivery-smoke";
+        smoke_mode = first == "--smoke-test" || first == "--mailnews-smoke" || first == "--composer-delivery-smoke"
+            || first == "--images-smoke" || first == "--forms-smoke";
         if (smoke_mode) {
             SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
 #ifdef _DEBUG
@@ -780,7 +1033,9 @@ public:
             if (first == "--mailnews-smoke" || first == "--composer-delivery-smoke") {
                 CString server = position ? arguments.GetNext(position) : "";
                 m_nExitCode = first == "--mailnews-smoke" ? WFE_RunMailNewsSmoke(report, url == "news", server) : WFE_RunComposerDeliverySmoke(report, url == "news", server);
-            } else m_nExitCode = WFE_RunSmokeTest(report, url.IsEmpty() ? nullptr : (const char *)url);
+            } else if (first == "--images-smoke") m_nExitCode = WFE_RunImageSmoke(report, url);
+            else if (first == "--forms-smoke") m_nExitCode = WFE_RunFormsSmoke(report, url);
+            else m_nExitCode = WFE_RunSmokeTest(report, url.IsEmpty() ? nullptr : (const char *)url);
             WFE_Shutdown();
             backend_initialized = false;
             return FALSE;

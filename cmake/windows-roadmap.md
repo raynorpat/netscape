@@ -1,39 +1,27 @@
 # Windows port backlog
 
-This is a source audit of the native Win32 frontend and CMake targets on
-2026-11-04. No configure, build, or runtime tests were run for this audit.
-Existing verification recorded in [windows.md](windows.md) is historical
-evidence, not a fresh result for the working tree. Native mail/news and composer verification is recorded in `windows.md`.
+This tracks the native Win32 frontend and CMake target gaps as of 2026-11-04.
+Verified builds and runtime checks are recorded in [windows.md](windows.md).
+Remaining items below come from source inspection and are not implied to work
+merely because their backend archive builds.
 
-## Recommended next slice
+## Completed browser slice and next work
 
-Implement inline images through the original image library, then native HTML
-form controls. These address visible browser gaps without first porting optional
-engines. The Windows executable already links the parser, layout, image library,
-and JPEG decoder; the missing image work is concentrated in the frontend.
+Native inline GIF/JPEG/XBM images and HTML form controls now use the original
+3.02 engines. Image fixtures verify actual GDI pixels, transparency, scaling,
+shared clients, failed loads/backgrounds, local paths and HTTP. Form fixtures
+verify native reset/scrolling/cleanup, Enter, exact GET/POST values and image
+submit coordinates. See [windows.md](windows.md) for verification and limits.
 
-For images, connect `FE_GetImageInfo` to `IL_GetImage`, choose a supported color
-format, own the decoded pixels/DIBs, propagate intrinsic dimensions and relayout,
-draw partial updates and transparency, and release shared image references at
-navigation and window destruction. The [image API](../include/il.h) and original
-[XFE image adapter](../cmd/xfe/images.c) provide lifecycle evidence; the X11
-pixmap implementation itself is not reusable as native GDI code. Start with GIF,
-JPEG, and XBM formats already listed in [img.cmake](targets/img.cmake).
-
-Acceptance should include local and loopback HTTP image requests, intrinsic and
-explicit dimensions, a transparent GIF, repeated/shared images, failed loads,
-scrolling, reload, and closing during decoding. Check rendered pixels as well
-as request counts; the current browser smoke only proves text drawing and
-placeholder teardown. Next, exercise form editing, radio/checkbox state, select
-controls, reset, keyboard focus, scrolling, and exact GET/POST values against a
-local server, using the original layout submission APIs.
+The next priorities are frame contexts, native saving/downloads, and completing
+history/bookmark/navigation UI. Optional engines remain separate porting tasks.
 
 ## Native frontend work
 
 | Priority | Area | Observed implementation and remaining work |
 | --- | --- | --- |
-| 1 | Images | `FE_GetImageInfo` supplies 48-by-32 fallback geometry; size/data callbacks do not allocate image storage; display draws an outline. Request, decode, draw, relayout, and teardown need integration. |
-| 2 | Forms | Form callbacks provide fixed geometry and outlines. Value extraction, reset, toggle state, widget lifetime, and submission interaction are absent. Layout already includes `layform.c`; [XFE forms](../cmd/xfe/forms.c) demonstrates the backend contracts. |
+| Implemented | Images | Native IL/GDI adapter decodes, paints, scales, tiles backgrounds and releases shared images. Progressive/animated timing and broader format/error cases need further coverage. |
+| Implemented | Forms | Native controls collect/reset values and submit through LO. File picker exists; multipart uploads, offscreen keyboard traversal and full history restoration need runtime coverage. |
 | 3 | Frames | `FE_MakeGridWindow` declines frames; restructuring/history callbacks are empty. Add child contexts, native view ownership, focus, target routing, sizing, navigation, and cleanup. `laygrid.c` is already in the layout archive. |
 | 3 | Saving/downloads | General file selection declines the operation; progress callbacks are empty. Add native save selection, an explicit save converter/stream, cancel/error handling, binary preservation, and completion UI. A configured download directory alone is not a download implementation. |
 | 3 | Bookmarks/history | Bookmark clipboard transfers exist, while bookmark list/properties/find callbacks decline work. Browser Back/Forward uses a private URL vector and reloads URLs; SHIST contexts are initialized, and netlib owns global-history initialization/update/save calls. Integrate native UI with those backends rather than replacing their databases. |
@@ -73,6 +61,5 @@ rejects x64. Keep x64 as a separate port with pointer/ABI tests.
 
 Use independent configure/build probes for each newly enabled archive, followed
 by runtime tests for its actual behavior. The checked-in Windows CTest setup
-covers core, socket, local frontend, HTTP frontend, and mail/news fixtures. No optional
-engine, native image/form, plugin, frame, or download test result is established
-by this audit.
+covers core, socket, local frontend, HTTP frontend, and mail/news fixtures. No optional engine, plugin, frame, or download runtime result is established
+by this audit. Native image/form checks are now part of the frontend suite.

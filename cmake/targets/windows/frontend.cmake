@@ -8,6 +8,8 @@ add_executable(netscape-win32 WIN32
  "${PROJECT_SOURCE_DIR}/cmd/winfe/services.c"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/composer.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/mailsettings.c"
+ "${PROJECT_SOURCE_DIR}/cmd/winfe/images.cpp"
+ "${PROJECT_SOURCE_DIR}/cmd/winfe/forms.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/netscape.rc"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/cmdparse.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/genedit.cpp")
@@ -17,7 +19,7 @@ set_target_properties(netscape-win32 PROPERTIES OUTPUT_NAME netscape CXX_STANDAR
 target_link_libraries(netscape-win32 PRIVATE netscape_platform
  netscape_xlate netscape_net netscape_lay netscape_i18n netscape_img netscape_jpeg
  netscape_misc netscape_parse netscape_msg netscape_mime netscape_plugin
- netscape_dbm netscape_hash netscape_xp netscape_nspr comctl32 shell32 shlwapi)
+ netscape_dbm netscape_hash netscape_xp netscape_nspr comctl32 shell32 shlwapi msimg32)
 install(TARGETS netscape-win32 RUNTIME DESTINATION bin COMPONENT Runtime)
 install(FILES "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/LICENSE"
  DESTINATION share/doc/netscape/licenses RENAME WinFE-NPL-1.0 COMPONENT Runtime)
@@ -45,4 +47,11 @@ if(BUILD_TESTING)
   --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/news-empty-test"
   --mode empty-news)
  set_tests_properties(windows_news_empty PROPERTIES TIMEOUT 40)
+ add_test(NAME windows_browser_images COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_browser_features.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/browser-images-test" --mode images)
+ add_test(NAME windows_browser_forms COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_browser_features.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/browser-forms-test" --mode forms)
+ set_tests_properties(windows_browser_images windows_browser_forms PROPERTIES TIMEOUT 100)
 endif()

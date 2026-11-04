@@ -58,6 +58,7 @@ static char *Master_backdrop_url = NULL;
 static Bool UserOverride = FALSE;
 
 static void lo_process_deferred_image_info(void *closure);
+static void lo_discard_deferred_image_info(MWContext *context);
 void lo_DisplayLine(MWContext *context, lo_DocState *state, int32 line_num,
 	int32 x, int32 y, uint32 w, uint32 h, Bool can_clip);
 lo_SavedEmbedListData *	lo_NewDocumentEmbedListData(void);
@@ -3002,6 +3003,7 @@ lo_GetRecycleList(MWContext* context, int32 doc_id, pa_DocData* doc_data,
 			LO_FreeDocumentGridData(context, (void *)top_state->savedData.Grid);
 			top_state->savedData.Grid = NULL;
 		}
+        lo_discard_deferred_image_info(context);
 		*recycle_list =
 			lo_InternalDiscardDocument(context, old_state, doc_data, TRUE);
 	}
@@ -4328,6 +4330,7 @@ typedef struct setImageInfoClosure_struct
 {
     MWContext      *context;
     int32           ele_id;
+    int32           doc_id;
     int32           width;
     int32           height;
     struct setImageInfoClosure_struct
@@ -4347,13 +4350,18 @@ lo_process_deferred_image_info(void *closure)
 /* DEBUG_jwz -- does this help?  no. */
     setImageInfoClosure *c = 0, *next_c = 0;
 
-    for (c = image_info_deferred_list; c; c = next_c) {
+    c = image_info_deferred_list;
+    image_info_deferred_list = NULL;
+    if (deferred_image_info_timeout)
+        FE_ClearTimeout(deferred_image_info_timeout);
+    deferred_image_info_timeout = NULL;
+    for (; c; c = next_c) {
         next_c = c->next;
-        lo_set_image_info(c->context, c->ele_id, c->width, c->height);
+        if (XP_IsContextInList(c->context) &&
+            XP_DOCID(c->context) == c->doc_id)
+            lo_set_image_info(c->context, c->ele_id, c->width, c->height);
         XP_FREE(c);
     }
-    image_info_deferred_list = NULL;
-    deferred_image_info_timeout = NULL;
 }
 
 /* Tell layout the dimensions of an image.  Actually, to avoid subtle
@@ -4369,6 +4377,7 @@ LO_SetImageInfo(MWContext *context, int32 ele_id, int32 width, int32 height)
         return;
     c->context  = context;
     c->ele_id   = ele_id;
+    c->doc_id   = XP_DOCID(context);
     c->width    = width;
     c->height   = height;
     c->next     = image_info_deferred_list;
@@ -4377,6 +4386,26 @@ LO_SetImageInfo(MWContext *context, int32 ele_id, int32 width, int32 height)
     if (! deferred_image_info_timeout) {
         deferred_image_info_timeout = 
             FE_SetTimeout(lo_process_deferred_image_info, NULL, 0);
+    }
+}
+
+/* A pending size notification belongs to the document being discarded. */
+static void
+lo_discard_deferred_image_info(MWContext *context)
+{
+    setImageInfoClosure **link = &image_info_deferred_list;
+    while (*link) {
+        setImageInfoClosure *entry = *link;
+        if (entry->context == context) {
+            *link = entry->next;
+            XP_FREE(entry);
+        } else {
+            link = &entry->next;
+        }
+    }
+    if (!image_info_deferred_list && deferred_image_info_timeout) {
+        FE_ClearTimeout(deferred_image_info_timeout);
+        deferred_image_info_timeout = NULL;
     }
 }
 
@@ -4949,6 +4978,7 @@ LO_DiscardDocument(MWContext *context)
 	lo_arena *old_arena;
 #endif /* MEMORY_ARENAS */
 
+    lo_discard_deferred_image_info(context);
 	/*
 	 * Get the unique document ID, and retreive this
 	 * documents layout state.

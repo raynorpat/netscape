@@ -12,6 +12,8 @@ void WFE_Shutdown(void);
 void WFE_InitContext(MWContext *context, void *window);
 void WFE_DestroyContext(MWContext *context);
 void WFE_Load(MWContext *context, const char *address);
+void WFE_BeginLoad(MWContext *context, const char *address);
+HWND WFE_DocumentWindow(MWContext *context);
 void WFE_Pump(void);
 void WFE_Status(MWContext *context, const char *message);
 void WFE_Title(MWContext *context, const char *title);

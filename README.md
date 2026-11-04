@@ -30,7 +30,8 @@ cmake --build out/cmake --parallel
 
 The browser requires Linux, Python 3, Perl, gperf, POSIX text utilities, and zlib/X11/Motif development libraries. Java and Mocha default to disabled. See the CMake guide for library-only builds, dependency prefixes, Sun Java source targets and imported-runtime mode, and verification limits.
 
-Native Win32 core libraries, NSPR and an initial MFC browser frontend are available.
+Native Win32 core libraries, NSPR and MFC browser/mail/news windows are available,
+including image rendering, HTML forms, message reading and composition.
 See [cmake/windows.md](cmake/windows.md) for MSVC build commands, runtime tests,
 the recovered 1998 Windows frontend source, and remaining integration work.
 

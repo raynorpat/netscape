@@ -46,6 +46,17 @@ Error!  byte order must be defined
     ((char *)(_a))[3] = ((char *)(_b))[0];
 #endif
 
+/* Dates on disk are four-byte little-endian values, independent of time_t. */
+PRIVATE Bool
+gh_read_date(const DBT *data, time_t *date)
+{
+    uint32 stored;
+    if (!data || !data->data || data->size != sizeof(stored)) return FALSE;
+    COPY_INT32(&stored, data->data);
+    *date = (time_t)stored;
+    return TRUE;
+}
+
 /* set the maximum time for an object in the Global history in
  * number of seconds
  */
@@ -206,13 +217,15 @@ GH_CheckGlobalHistory(char * url)
 	/* object was found.
 	 * check the time to make sure it hasn't expired
 	 */
-	COPY_INT32(&entry_date, data.data);
-    if(global_history_timeout_interval > 0
-		&& entry_date+global_history_timeout_interval < gh_cur_date)
+    gh_cur_date = time(NULL);
+    if (!gh_read_date(&data, &entry_date) ||
+        (global_history_timeout_interval > 0 &&
+         difftime(gh_cur_date, entry_date) > global_history_timeout_interval))
 	  {
 		/* remove the object
 	 	 */
 	    (*gh_database->del)(gh_database, &key, 0);
+        global_history_has_changed = TRUE;
 		
 		/* return not found
 		 */
@@ -253,7 +266,7 @@ GH_UpdateGlobalHistory(URL_Struct * URL_s)
 	DBT key, data;
 	int status;
 	static int32 count=0;
-	uint32 date;
+	uint32 date, native_date;
 
 	/* check for NULL's
 	 * and also don't allow ones with post-data in here
@@ -293,7 +306,8 @@ GH_UpdateGlobalHistory(URL_Struct * URL_s)
 	key.data = (void *) URL_s->address;
 	key.size = (XP_STRLEN(URL_s->address)+1) * sizeof(char);
 
-	COPY_INT32(&date, &gh_cur_date);
+	native_date = (uint32)gh_cur_date;
+	COPY_INT32(&date, &native_date);
 	data.data = (void *) &date;
 	data.size = sizeof(int32);
 
@@ -375,9 +389,8 @@ GH_CollectGarbage(void)
 
 	do
 	  {
-    	COPY_INT32(&entry_date, data.data);
-    	if(global_history_timeout_interval > 0
-           && entry_date+global_history_timeout_interval < gh_cur_date)
+        if (!gh_read_date(&data, &entry_date) ||
+            difftime(gh_cur_date, entry_date) > global_history_timeout_interval)
       	  {
         	/* put the object on the delete list since it is expired
          	 */
@@ -488,6 +501,7 @@ NET_DisplayGlobalHistoryInfoAsHTML(MWContext *context,
 	DBT key, data;
 	Bool long_form = FALSE;
 	time_t entry_date;
+    char *date_text;
 	int status = MK_NO_DATA;
 	int32 count=0;
 
@@ -555,9 +569,8 @@ PUT_PART(buffer);
 
     do
       {
+        if (!gh_read_date(&data, &entry_date)) continue;
 		count++;
-
-		COPY_INT32(&entry_date, data.data);
 
 		/* print url */
 		XP_STRCPY(buffer, "<TT>&nbsp;URL:</TT> ");
@@ -569,14 +582,16 @@ PUT_PART(buffer);
 		if(status < 0)
   			goto END;
 
-		XP_SPRINTF(buffer, XP_GetString(XP_GLHIST_HTML_DATE), ctime(&entry_date));
+        date_text = ctime(&entry_date);
+		XP_SPRINTF(buffer, XP_GetString(XP_GLHIST_HTML_DATE),
+                   date_text ? date_text : XP_GetString(XP_GLHIST_UNKNOWN));
 		PUT_PART(buffer);
 
       }
     while(0 == (*gh_database->seq)(gh_database, &key, &data, R_NEXT));
 
 	
-	XP_SPRINTF(buffer, XP_GetString(XP_GLHIST_HTML_TOTAL_ENTRIES), count);
+	XP_SPRINTF(buffer, XP_GetString(XP_GLHIST_HTML_TOTAL_ENTRIES), (long)count);
 	PUT_PART(buffer);
 
 END:

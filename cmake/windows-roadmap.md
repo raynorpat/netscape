@@ -16,7 +16,9 @@ submit coordinates. See [windows.md](windows.md) for verification and limits.
 Native frame contexts now support nested cells, named and special targets,
 child forms/images, independent scrolling, cache/history-based resize and cleanup.
 Native saving/downloads now use independent transfer windows and checked binary
-streams. The next priority is completing history/bookmark/navigation UI. Optional engines remain separate porting tasks.
+streams. Native history traversal and its dialog now use SHIST, including frame history,
+forms/scroll state and persisted visited-page dates. The next priority is the
+bookmark manager, followed by remaining browser UI and optional engines. Optional engines remain separate porting tasks.
 
 ## Native frontend work
 
@@ -26,7 +28,8 @@ streams. The next priority is completing history/bookmark/navigation UI. Optiona
 | Implemented | Forms | Native controls collect/reset values and submit through LO. File picker exists; multipart uploads, offscreen keyboard traversal and full history restoration need runtime coverage. |
 | Implemented | Frames | Native child contexts use the original grid/history engine. Fixtures cover nested views, named/parent/top targets, streamed server-directed target changes, child forms/images, resize and cleanup. Draggable divider UI and broader interrupted-load cases need further coverage. |
 | Implemented | Saving/downloads | Save Page and link/image context actions use native pickers and independent progress/cancel windows. Fixtures cover exact bytes, final-response headers, truncation, cancellation, concurrent transfers, browser closure and filesystem failures. Known renderable attachment enforcement, transformed/chunked responses and large-file limits need further work. |
-| 3 | Bookmarks/history | Bookmark clipboard transfers exist, while bookmark list/properties/find callbacks decline work. Browser Back/Forward uses a private URL vector and reloads URLs; SHIST contexts are initialized, and netlib owns global-history initialization/update/save calls. Integrate native UI with those backends rather than replacing their databases. |
+| Implemented | History | Back/Forward and Reload use SHIST; a native history list and visited-pages view expose the core data. Fixtures cover form/scroll restoration, frame traversal, forward truncation, POST cancellation, persisted dates and malformed/expired records. |
+| 3 | Bookmarks | Clipboard transfers exist; the manager and editing/persistence UI remain the next integration item. Use the original bookmark tree and writer. |
 | 3 | Charset/text | The frontend defaults to Latin-1 and draws/measures through ANSI GDI. A subset of single-byte conversion tables uses Windows code pages; this does not establish correct multilingual rendering. Verify document charset changes, MIME headers, fonts, conversion failure, selection, and copy. |
 | 4 | Plugins | The plugin archive and `NPL_Init` are present, but discovery registers no descriptors, loading returns NULL, and embed streaming fails. Native module loading, NPAPI callbacks, embedded-window lifetime, and a controlled test plugin are separate work. |
 | 4 | Other browser UI | Add selection/copy, find, printing, preferences, cache controls, navigation command state, and link context actions. Printing/translation archives being linked does not supply native print UI. Disk cache is explicitly disabled at initialization. |

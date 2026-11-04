@@ -14,6 +14,7 @@
 #include "forms.h"
 #include "merrors.h"
 #include "downloads.h"
+#include "history.h"
 #include "np.h"
 #include <nspr/prglobal.h>
 #include <stdio.h>
@@ -200,7 +201,7 @@ void WFE_DestroyContext(MWContext *context)
 void WFE_Load(MWContext *context, const char *address)
 {
     URL_Struct *url;
-    NET_InterruptWindow(context);
+    XP_InterruptContext(context);
     url = NET_CreateURLStruct(address, NET_DONT_RELOAD);
     if (!url) { WFE_Status(context, "Could not allocate a URL"); return; }
     WFE_Status(context, address);
@@ -208,7 +209,7 @@ void WFE_Load(MWContext *context, const char *address)
 }
 
 void WFE_Pump(void) { WFE_PollNetworking(); }
-int FE_GetURL(MWContext *context, URL_Struct *url) { context = WFE_URLTarget(context, url); if (!context) { NET_FreeURLStruct(url); return -1; } WFE_BeginLoad(context, url->address); return NET_GetURL(url, context->type == MWContextBrowser ? FO_CACHE_AND_PRESENT : FO_PRESENT, context, url_complete); }
+int FE_GetURL(MWContext *context, URL_Struct *url) { context = WFE_URLTarget(context, url); if (!context) { NET_FreeURLStruct(url); return -1; } if (context->type == MWContextBrowser) { WFE_HistorySavePosition(context); XP_InterruptContext(context); } WFE_BeginLoad(context, url->address); return NET_GetURL(url, context->type == MWContextBrowser ? FO_CACHE_AND_PRESENT : FO_PRESENT, context, url_complete); }
 MWContext *FE_CreateNewDocWindow(MWContext *context, URL_Struct *url) { return WFE_NewWindow(url ? url->address : NULL); }
 MWContext *FE_MakeNewWindow(MWContext *context, URL_Struct *url, char *name, Chrome *chrome) { MWContext *created = WFE_NewWindow(NULL); if (created && name && name[0] != '_') created->name = _strdup(name); if (created && url) { free(url->window_target); url->window_target = _strdup(""); FE_GetURL(created, url); } return created; }
 MWContext *FE_MakeBlankWindow(MWContext *context, URL_Struct *url, char *name) { return FE_CreateNewDocWindow(context, url); }

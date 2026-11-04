@@ -11,6 +11,7 @@ add_executable(netscape-win32 WIN32
  "${PROJECT_SOURCE_DIR}/cmd/winfe/images.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/forms.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/downloads.cpp"
+ "${PROJECT_SOURCE_DIR}/cmd/winfe/history.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/netscape.rc"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/cmdparse.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/genedit.cpp")
@@ -63,4 +64,8 @@ if(BUILD_TESTING)
   "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_downloads.py"
   --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/downloads-test")
  set_tests_properties(windows_downloads PROPERTIES TIMEOUT 60)
+ add_test(NAME windows_browser_history COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_history.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/history-test")
+ set_tests_properties(windows_browser_history PROPERTIES TIMEOUT 60)
 endif()

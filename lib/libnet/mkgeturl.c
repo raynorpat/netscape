@@ -2014,7 +2014,6 @@ NET_GetURL (URL_Struct *URL_s,
 	 * history and it isn't coming from the cache
 	 */
 	if(URL_s->method == URL_POST_METHOD
-		&& !URL_s->expires
 		 && !cache_method
 		  && URL_s->history_num)
 	  {

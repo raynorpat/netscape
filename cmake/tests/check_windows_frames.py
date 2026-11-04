@@ -189,7 +189,7 @@ def run_smoke(executable, output, server, baseline):
     if missing:
         raise RuntimeError("Native frames omitted child requests: " + ", ".join(missing))
     fields = dict(line.split("=", 1) for line in text.splitlines() if "=" in line)
-    for name in ("initial_render", "form", "header_target", "targeted", "resized", "nested",
+    for name in ("initial_render", "form", "header_target", "targeted", "grid_history", "resized", "nested",
                  "parent_target", "top_target", "cleanup"):
         if fields.get(name) != "1":
             raise RuntimeError("Frames report has unexpected {}:\n{}".format(name, text))

@@ -18,6 +18,7 @@ BEGIN
   MENUITEM "&Forward\tAlt+Right", ID_NAV_FORWARD
   MENUITEM "&Reload\tF5", ID_NAV_RELOAD
   MENUITEM "&Stop\tEsc", ID_NAV_STOP
+  MENUITEM "&History...", ID_BROWSER_HISTORY
  END
  POPUP "&Messages"
  BEGIN

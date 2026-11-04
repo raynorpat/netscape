@@ -37,6 +37,17 @@ static void invalid_parameter(const wchar_t *expression, const wchar_t *function
 #include "forms.h"
 #include "shist.h"
 #include "downloads.h"
+#include "history.h"
+#include "glhist.h"
+#include "merrors.h"
+extern "C" {
+/* OLE DB and the legacy database header both typedef DBTYPE. */
+#define DBTYPE NetscapeDBType
+#include "mcom_db.h"
+#undef DBTYPE
+#include "xp_file.h"
+void GH_CollectGarbage(void);
+}
 
 class BrowserFrame;
 static bool smoke_mode = false;
@@ -90,8 +101,6 @@ public:
     bool initialized = false, completed = false;
     int load_status = 0;
     std::string current_url;
-    std::vector<std::string> history;
-    size_t history_position = 0;
     void Navigate(const char *url, bool remember = true);
     void RefreshMailLists();
     void InitializeMessaging(const char *server);
@@ -103,6 +112,9 @@ protected:
     afx_msg void OnTimer(UINT_PTR timer);
     afx_msg void OnOpen();
     afx_msg void OnSavePage();
+    afx_msg void OnHistory();
+    afx_msg void OnUpdateBack(CCmdUI *command);
+    afx_msg void OnUpdateForward(CCmdUI *command);
     afx_msg void OnGo();
     afx_msg void OnStop();
     afx_msg void OnReload();
@@ -141,6 +153,9 @@ BEGIN_MESSAGE_MAP(BrowserFrame, CFrameWnd)
  ON_WM_DESTROY()
  ON_COMMAND(ID_BROWSER_OPEN, OnOpen)
  ON_COMMAND(ID_BROWSER_SAVE, OnSavePage)
+ ON_COMMAND(ID_BROWSER_HISTORY, OnHistory)
+ ON_UPDATE_COMMAND_UI(ID_NAV_BACK, OnUpdateBack)
+ ON_UPDATE_COMMAND_UI(ID_NAV_FORWARD, OnUpdateForward)
  ON_COMMAND(ID_NAV_GO, OnGo)
  ON_COMMAND(ID_NAV_STOP, OnStop)
  ON_COMMAND(ID_NAV_RELOAD, OnReload)
@@ -285,13 +300,10 @@ BOOL BrowserFrame::PreTranslateMessage(MSG *message)
 }
 void BrowserFrame::Navigate(const char *input, bool remember)
 {
+    (void)remember;
+    WFE_HistorySavePosition(&context);
     current_url = as_url(input);
     if (address.GetSafeHwnd()) address.SetWindowText(current_url.c_str());
-    if (remember) {
-        if (!history.empty()) history.resize(history_position + 1);
-        history.push_back(current_url);
-        history_position = history.size() - 1;
-    }
     completed = false;
     view.drawn_runs = 0;
     view.drawn_text.clear();
@@ -306,6 +318,7 @@ void BrowserFrame::OnTimer(UINT_PTR timer)
         if (resizing || XP_IsContextBusy(&context)) { SetTimer(2, 120, nullptr); return; }
         History_entry *entry = SHIST_GetCurrent(&context.hist);
         if (!entry || entry->method != URL_GET_METHOD) return;
+        WFE_HistorySavePosition(&context);
         URL_Struct *url = SHIST_CreateURLStructFromHistoryEntry(&context, entry);
         if (!url) return;
         resizing = true; completed = false;
@@ -316,10 +329,13 @@ void BrowserFrame::OnTimer(UINT_PTR timer)
 void BrowserFrame::OnGo() { CString text; address.GetWindowText(text); if (mode == 1) { MSG_MailDirectoryChanged(&context); RefreshMailLists(); } else if (mode == 2) { if (!text.IsEmpty() && WFE_SetMailPreference("news", text)) { WFE_ApplyMailPreferences(); MSG_NewsHostChanged(&context, text); RefreshMailLists(); } } else if (!text.IsEmpty()) Navigate(text); }
 void BrowserFrame::OnOpen() { CFileDialog dialog(TRUE, "html", nullptr, OFN_FILEMUSTEXIST, "Documents|*.html;*.htm;*.txt|All files|*.*||", this); if (dialog.DoModal() == IDOK) Navigate(dialog.GetPathName()); }
 void BrowserFrame::OnSavePage() { WFE_SavePage(&context, nullptr); }
+void BrowserFrame::OnHistory() { WFE_HistoryShow(&context); }
 void BrowserFrame::OnStop() { XP_InterruptContext(&context); }
-void BrowserFrame::OnReload() { if (!current_url.empty()) Navigate(current_url.c_str(), false); }
-void BrowserFrame::OnBack() { if (history_position > 0) { --history_position; Navigate(history[history_position].c_str(), false); } }
-void BrowserFrame::OnForward() { if (history_position + 1 < history.size()) { ++history_position; Navigate(history[history_position].c_str(), false); } }
+void BrowserFrame::OnReload() { WFE_HistoryMove(&context, 0); }
+void BrowserFrame::OnBack() { WFE_HistoryMove(&context, -1); }
+void BrowserFrame::OnForward() { WFE_HistoryMove(&context, 1); }
+void BrowserFrame::OnUpdateBack(CCmdUI *command) { command->Enable(WFE_HistoryCanMove(&context, -1)); }
+void BrowserFrame::OnUpdateForward(CCmdUI *command) { command->Enable(WFE_HistoryCanMove(&context, 1)); }
 void BrowserFrame::OnAbout() { Navigate("about:"); }
 void BrowserFrame::InitializeMessaging(const char *server)
 {
@@ -613,12 +629,10 @@ extern "C" void WFE_BeginLoad(MWContext *context, const char *url)
 {
     BrowserFrame *frame = frame_for(context);
     if (!frame || frame->mode || !url) return;
+    WFE_HistorySavePosition(context);
     frame->current_url = url;
     if (frame->address.GetSafeHwnd()) frame->address.SetWindowText(url);
     if (frame->resizing) return;
-    if (!frame->history.empty()) frame->history.resize(frame->history_position + 1);
-    frame->history.push_back(url);
-    frame->history_position = frame->history.size() - 1;
     frame->completed = false;
     frame->view.drawn_runs = 0; frame->view.drawn_text.clear();
 }
@@ -942,7 +956,7 @@ static bool click_frame_link(BrowserFrame *frame, const char *label)
     frame_text(frame);
     if (!frame) return false;
     for (const auto &link : frame->view.links) if (link.first.find(label) != std::string::npos) {
-        CPoint point = link.second;
+        CPoint point = link.second - CPoint(frame->view.scroll_x, frame->view.scroll_y);
         frame->view.SendMessage(WM_LBUTTONUP, 0, MAKELPARAM(point.x, point.y));
         return true;
     }
@@ -959,7 +973,7 @@ static int WFE_RunFramesSmoke(const char *report, const char *url)
     bool initial = count == 2 && frame_text(navigation).find("Navigation frame") != std::string::npos
         && frame_text(content).find("Initial content frame") != std::string::npos
         && content->view.drawn_images.size() == 1;
-    bool form = false, header_target = false, targeted = false, resized = false, nested = false, parent_target = false, top_target = false;
+    bool form = false, header_target = false, targeted = false, grid_history = false, resized = false, nested = false, parent_target = false, top_target = false;
     if (initial) {
         HWND query = WFE_FormFindControl(&content->context, "query", 0);
         HWND submit = WFE_FormFindControl(&content->context, "go", 0);
@@ -978,6 +992,12 @@ static int WFE_RunFramesSmoke(const char *report, const char *url)
             && frame_text(navigation).find("Navigation frame") != std::string::npos;
     }
     if (targeted) {
+        root->SendMessage(WM_COMMAND, ID_NAV_BACK); browser_smoke_wait(root);
+        content = named_frame(&root->context, "content");
+        bool back = frame_text(content).find("Header transfer finished") != std::string::npos;
+        root->SendMessage(WM_COMMAND, ID_NAV_FORWARD); browser_smoke_wait(root);
+        content = named_frame(&root->context, "content");
+        grid_history = back && frame_text(content).find("Targeted content frame") != std::string::npos;
         CRect before; navigation->GetWindowRect(before);
         root->completed = false; root->MoveWindow(60,60,950,690);
         browser_smoke_wait(root);
@@ -1011,9 +1031,117 @@ static int WFE_RunFramesSmoke(const char *report, const char *url)
     cleanup = cleanup && browser_contexts.empty();
     FILE *output = fopen(report, "wb");
     if (!output) return 3;
-    fprintf(output, "child_count=%d\ninitial_render=%d\nform=%d\nheader_target=%d\ntargeted=%d\nresized=%d\nnested=%d\nparent_target=%d\ntop_target=%d\ncleanup=%d\nerror=%s\n", count, initial, form, header_target, targeted, resized, nested, parent_target, top_target, cleanup, smoke_error.c_str());
+    fprintf(output, "child_count=%d\ninitial_render=%d\nform=%d\nheader_target=%d\ntargeted=%d\ngrid_history=%d\nresized=%d\nnested=%d\nparent_target=%d\ntop_target=%d\ncleanup=%d\nerror=%s\n", count, initial, form, header_target, targeted, grid_history, resized, nested, parent_target, top_target, cleanup, smoke_error.c_str());
     fclose(output);
-    return initial && form && header_target && targeted && resized && nested && parent_target && top_target && cleanup ? 0 : 4;
+    return initial && form && header_target && targeted && grid_history && resized && nested && parent_target && top_target && cleanup ? 0 : 4;
+}
+static std::string control_text(HWND control);
+static int WFE_RunHistorySmoke(const char *report, const char *url)
+{
+    BrowserFrame *frame = frame_for(WFE_NewWindow(nullptr));
+    if (!frame) return 2;
+    MWContext *context = &frame->context;
+    frame->Navigate(url); browser_smoke_wait(frame);
+    frame_text(frame);
+    GH_SetGlobalHistoryTimeout(3600);
+    bool global_recent = GH_CheckGlobalHistory((char *)url) == 1;
+    History_entry *first = SHIST_GetCurrent(&context->hist);
+    int32 first_id = first ? first->unique_id : 0;
+    bool initial_state = !WFE_HistoryCanMove(context, -1) && !WFE_HistoryCanMove(context, 1);
+    HWND query = WFE_FormFindControl(context, "query", 0);
+    HWND pick = WFE_FormFindControl(context, "pick", 0);
+    if (query) SetWindowTextA(query, "history & value");
+    if (pick) SendMessage(pick, CB_SETCURSEL, 1, 0);
+    WFE_Scroll(context, 0, 80);
+    bool clicked = click_frame_link(frame, "Next page"); browser_smoke_wait(frame);
+    bool page_b = frame_text(frame).find("History B") != std::string::npos;
+    frame->SendMessage(WM_COMMAND, ID_NAV_BACK); browser_smoke_wait(frame);
+    bool back_a = frame_text(frame).find("History A") != std::string::npos;
+    bool restored = control_text(WFE_FormFindControl(context, "query", 0)) == "history & value"
+        && SendMessage(WFE_FormFindControl(context, "pick", 0), CB_GETCURSEL, 0, 0) == 1;
+    bool scroll_restored = frame->view.scroll_y > 0;
+    bool back_state = !WFE_HistoryCanMove(context, -1) && WFE_HistoryCanMove(context, 1);
+    frame->SendMessage(WM_COMMAND, ID_NAV_FORWARD); browser_smoke_wait(frame);
+    bool forward_b = frame_text(frame).find("History B") != std::string::npos;
+    frame->SendMessage(WM_COMMAND, ID_NAV_BACK); browser_smoke_wait(frame);
+    bool third = click_frame_link(frame, "Third page"); browser_smoke_wait(frame);
+    bool page_c = frame_text(frame).find("History C") != std::string::npos;
+    bool truncated = third && page_c && !WFE_HistoryCanMove(context, 1) && context->hist.num_entries == 2;
+    int count = context->hist.num_entries;
+    frame->SendMessage(WM_COMMAND, ID_NAV_RELOAD); browser_smoke_wait(frame);
+    bool reloaded = frame_text(frame).find("History C") != std::string::npos && context->hist.num_entries == count;
+    bool dialog = first_id && WFE_HistoryDialogSmoke(context, first_id);
+    if (dialog) { browser_smoke_wait(frame); dialog = frame_text(frame).find("History A") != std::string::npos; }
+    std::string post_page(url); post_page.resize(post_page.find_last_of('/') + 1); post_page += "history-c.html";
+    frame->Navigate(post_page.c_str()); browser_smoke_wait(frame); frame_text(frame);
+    HWND post = WFE_FormFindControl(context, "go", 0);
+    if (post) { SendMessage(post, BM_CLICK, 0, 0); browser_smoke_wait(frame); }
+    bool post_loaded = frame_text(frame).find("History POST") != std::string::npos;
+    frame->SendMessage(WM_COMMAND, ID_NAV_RELOAD); browser_smoke_wait(frame);
+    bool post_cancelled = post_loaded && frame->load_status == MK_INTERRUPTED;
+    bool global_view = WFE_HistoryDialogSmoke(context, -1) != 0;
+    if (global_view) {
+        browser_smoke_wait(frame);
+        std::string text;
+        for (int y = 0; y <= frame->view.document_height && y < 100000; y += 400) {
+            WFE_Scroll(context, 0, y); text += frame_text(frame);
+            if (text.find(url) != std::string::npos) break;
+        }
+        WFE_Scroll(context, 0, 0);
+        SYSTEMTIME now; GetLocalTime(&now); char year[8]; sprintf(year, "%u", now.wYear);
+        global_view = text.find(url) != std::string::npos && text.find(year) != std::string::npos;
+        if (!global_view) fprintf(stderr, "Global history rendering did not expose its saved URL/date.\n");
+    }
+    frame->SendMessage(WM_CLOSE);
+    FILE *output = fopen(report, "wb");
+    if (!output) return 3;
+    bool traversal = clicked && page_b && back_a && forward_b;
+    bool state = initial_state && back_state;
+    fprintf(output, "traversal=%d\nform_restored=%d\nscroll_restored=%d\nforward_truncated=%d\nreload=%d\ncommand_state=%d\nhistory_dialog=%d\nglobal_recent=%d\nglobal_view=%d\npost_cancelled=%d\nerror=%s\n", traversal, restored, scroll_restored, truncated, reloaded, state, dialog, global_recent, global_view, post_cancelled, smoke_error.c_str());
+    fclose(output);
+    return traversal && restored && scroll_restored && truncated && reloaded && state && dialog && global_recent && global_view && post_cancelled ? 0 : 4;
+}
+static int WFE_RunHistoryReopenSmoke(const char *report, const char *url)
+{
+    GH_SetGlobalHistoryTimeout(3600);
+    bool persisted = GH_CheckGlobalHistory((char *)url) == 1;
+    GH_FreeGlobalHistory();
+    char *filename = WH_FileName("", xpGlobalHistory);
+    DB *database = filename ? dbopen(filename, O_RDWR, 0600, DB_HASH, nullptr) : nullptr;
+    free(filename);
+    const std::string expired = std::string(url) + "?expired", malformed = std::string(url) + "?malformed";
+    const std::string collected = std::string(url) + "?collected";
+    bool dates = database != nullptr;
+    uint32 old = (uint32)(time(nullptr) - 7200);
+    unsigned char invalid[2] = {1,2};
+    if (database) {
+        for (const std::string &name : {expired, collected}) {
+            DBT key = {(void *)name.c_str(), name.size()+1}, value = {&old, sizeof(old)};
+            dates = database->put(database, &key, &value, 0) == 0 && dates;
+        }
+        DBT key = {(void *)malformed.c_str(), malformed.size()+1}, value = {invalid, sizeof(invalid)};
+        dates = database->put(database, &key, &value, 0) == 0 && dates;
+        database->close(database);
+    }
+    GH_InitGlobalHistory();
+    dates = GH_CheckGlobalHistory((char *)url) == 1 && GH_CheckGlobalHistory((char *)expired.c_str()) == -1
+        && GH_CheckGlobalHistory((char *)malformed.c_str()) == -1 && dates;
+    GH_CollectGarbage(); GH_SaveGlobalHistory(); GH_FreeGlobalHistory();
+    filename = WH_FileName("", xpGlobalHistory);
+    database = filename ? dbopen(filename, O_RDONLY, 0600, DB_HASH, nullptr) : nullptr;
+    free(filename);
+    if (database) {
+        DBT key = {(void *)collected.c_str(), collected.size()+1}, value = {};
+        dates = database->get(database, &key, &value, 0) != 0 && dates;
+        key.data = (void *)url; key.size = strlen(url)+1;
+        dates = database->get(database, &key, &value, 0) == 0 && value.size == sizeof(uint32) && dates;
+        database->close(database);
+    } else dates = false;
+    GH_InitGlobalHistory();
+    FILE *output = fopen(report, "wb");
+    if (!output) return 3;
+    fprintf(output, "persisted=%d\ndates=%d\n", persisted, dates); fclose(output);
+    return persisted && dates ? 0 : 4;
 }
 static bool image_pixel(CDC &dc, LO_ImageStruct *image, int column, int row, COLORREF expected, int tolerance)
 {
@@ -1271,7 +1399,7 @@ public:
         POSITION position = arguments.GetHeadPosition();
         CString first = position ? arguments.GetNext(position) : "about:";
         smoke_mode = first == "--smoke-test" || first == "--mailnews-smoke" || first == "--composer-delivery-smoke"
-            || first == "--images-smoke" || first == "--forms-smoke" || first == "--frames-smoke" || first == "--downloads-smoke";
+            || first == "--images-smoke" || first == "--forms-smoke" || first == "--frames-smoke" || first == "--downloads-smoke" || first == "--history-smoke" || first == "--history-reopen-smoke";
         if (smoke_mode) {
             SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
 #ifdef _DEBUG
@@ -1290,6 +1418,8 @@ public:
             } else if (first == "--images-smoke") m_nExitCode = WFE_RunImageSmoke(report, url);
             else if (first == "--forms-smoke") m_nExitCode = WFE_RunFormsSmoke(report, url);
             else if (first == "--frames-smoke") m_nExitCode = WFE_RunFramesSmoke(report, url);
+            else if (first == "--history-smoke") m_nExitCode = WFE_RunHistorySmoke(report, url);
+            else if (first == "--history-reopen-smoke") m_nExitCode = WFE_RunHistoryReopenSmoke(report, url);
             else if (first == "--downloads-smoke") {
                 CString directory = position ? arguments.GetNext(position) : "";
                 MWContext *source = WFE_NewWindow(nullptr);

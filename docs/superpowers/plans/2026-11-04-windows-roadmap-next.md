@@ -36,11 +36,18 @@ Files: focused `cmd/winfe/downloads.cpp`/`.h`, native menu/callback glue, indepe
 - [x] Implement native destination selection, explicit binary stream ownership, progress, cancellation and error handling.
 - [x] Verify successful bytes, failure/partial cleanup and cancellation; review and commit.
 
-## 3. History and bookmark UI
+## 3. History navigation and UI
 
-- [ ] Inspect SHIST/global-history/bookmark APIs and add behavior fixtures before implementation.
-- [ ] Connect traversal and command state, then native bookmark/history browsing and persistence.
-- [ ] Verify traversal, named frame behavior, stored values and persistence; review and commit separately where the behavior forms independent roadmap items.
+- [x] Replace private URL traversal with SHIST, preserving form/scroll/grid data.
+- [x] Add command state, native history selection and visited-page display.
+- [x] Reproduce and fix fixed-width date reads and expired POST confirmation.
+- [x] Complete Release/Debug regression checks, review and commit.
+
+## 4. Bookmark manager
+
+- [ ] Integrate the original bookmark tree with native add/folder/edit/open/delete controls.
+- [ ] Verify safe backend lifetime, persistence and special-character round trips.
+- [ ] Review, run regressions and commit independently.
 
 ## Execution record
 
@@ -49,3 +56,5 @@ Starting commit: `b8e0a42`. Existing eight native CTests passed in Release and D
 Frame contexts: complete. Nine CTests passed in both Win32 Release and Debug, including split-response target transfer after the original child is destroyed. The Linux browser rebuilt with the descriptor-query API. Review findings on URL ownership, per-request watches, resize scheduling and retained select state were addressed.
 
 Saving/downloads: complete. Ten CTests passed in Release and Debug; Linux rebuilt after current-response header metadata and identity encoding handling. Actual identity truncation and redirect failures were reproduced before fixes. Destination creation/final rename errors, cancellation, browser closure and exact output bytes passed independent fixture checks. Mid-write disk exhaustion remains an inspected limit.
+
+History: complete. Eleven CTests passed in Release and Debug; focused browser checks passed after the final position-saving changes. The Linux browser rebuilt with fixed-width global-history dates and the expired-POST guard. Independent review found no remaining P1/P2 findings.

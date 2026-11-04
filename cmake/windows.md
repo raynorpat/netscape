@@ -67,10 +67,8 @@ GET, POST and image click coordinates against captured loopback requests.
 File upload/multipart behavior, progressive/animated image timing, and full
 keyboard traversal through offscreen controls remain unverified.
 
-Plugins, bookmark and history dialogs, printing, Java, Mocha
-and SSL/security integration remain incomplete. Back/Forward currently reloads
-the URL rather than restoring a complete session-history entry. Text and
-password prompts use native dialogs.
+Plugins, bookmark dialogs, printing, Java, Mocha and SSL/security integration
+remain incomplete. Text and password prompts use native dialogs.
 
 Framesets use native child document windows with independent contexts, scrolling,
 images and forms. Named links and form targets, nested frames, `_parent` and
@@ -99,6 +97,19 @@ transformed/chunked response support and large-file guarantees remain limited.
 All ten native tests passed in Release and Debug; the Linux browser rebuilt after
 the shared response-header and identity-encoding changes.
 
+Back/Forward and Reload use the original session history, preserving form values,
+select choices, scroll position, methods and frame history. Navigate > History
+opens a native list; Open/double click loads the selected history entry. Visited
+pages opens the original global-history display. Command availability follows
+the core history state. History POST reloads require confirmation on cache miss,
+including expired responses, rather than silently sending the form again.
+
+History fixtures verify traversal, saved forms/scroll, forward truncation, reload,
+frame-aware Back/Forward, native selection, cancelled POST reload, and visited
+history across process restart. Stored dates retain the original four-byte disk
+format and are explicitly converted to native time values. Expired and malformed
+records and the rendered date view are checked.
+
 To install or package the Release build:
 
 ```powershell
@@ -109,7 +120,7 @@ cpack --config out/windows-frontend/CPackConfig.cmake -G ZIP -C Release -B out/p
 The Windows archive is named `netscape-legacy-3.02-Windows-x86.zip` and contains
 `bin/netscape.exe` and the documentation/licenses. It still requires the matching
 shared Visual C++ and MFC runtime. Installation and ZIP generation were verified;
-the installed executable passed the image/form fixtures. The ten-test native suite includes frame and download fixtures; verification is recorded
+the installed executable passed the image/form fixtures. The eleven-test native suite includes frame, download and history fixtures; verification is recorded
 with the existing browser/mail checks. The shared layout/XBM fixes also passed a Linux
 browser rebuild.
 

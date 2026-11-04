@@ -1,0 +1,36 @@
+set(NETSCAPE_XFE_SOURCES
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/pref_helpers.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/colors.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/commands.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/convert.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/dialogs.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/dragdrop.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/e_kit.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/fonts.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/forms.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/history.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/hot.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/icons.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/images.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/lay.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/locale.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/mailnews.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/menu.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/movemail.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/mozilla.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/new_manage.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/outline.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/passwd.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/plugin.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/prefdialogs.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/prefs.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/remote-s.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/scroll.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/scroller.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/strids.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/strings.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/thermo.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/visual.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/xfe.c
+  ${PROJECT_SOURCE_DIR}/cmd/xfe/xfe-dns.c
+)

@@ -1,0 +1,40 @@
+# Sources from sun-java/runtime/Makefile.
+sun_java_archive(netscape_java_javart runtime javart NONE
+  jrijdk.c
+  agent.c
+  check_class.c
+  check_code.c
+  class.c
+  classloader.c
+  classruntime.c
+  compiler.c
+  gifdecoder.c
+  date.c
+  debug.c
+  exception.c
+  exceptions.c
+  filesystem.c
+  globals.c
+  interpreter.c
+  io.c
+  jpegdecoder.c
+  math.c
+  object.c
+  opnames.c
+  profiler.c
+  runtime.c
+  security.c
+  string.c
+  stubs.c
+  system.c
+  thread.c
+  threads.c
+  utf.c
+  util.c
+  zip.c
+  rt_nodl.c
+  classinitialize.c
+  classresolver.c
+  common_exceptions.c
+  threadruntime.c
+)

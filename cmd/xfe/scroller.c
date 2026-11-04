@@ -60,7 +60,7 @@ ScrollerClassRec scrollerClassRec =
 /* Constraint class Init */
     NULL,
     0,
-    0,
+    sizeof(XmScrolledWindowConstraintRec),
     NULL,
     NULL,
     NULL,

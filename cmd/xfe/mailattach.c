@@ -79,11 +79,11 @@ fe_add_attachment(struct fe_mail_attach_data *mad, char *name)
   xmstr = XmStringCreate(name, XmSTRING_DEFAULT_CHARSET);
   XmListAddItem(mad->list, xmstr, 0);
 
-  XtVaGetValues (mad->text_p, XmNset, &b, 0);
+  XtVaGetValues (mad->text_p, XmNset, &b, (XtPointer) 0);
   if (b)
     m.desired_type = TEXT_PLAIN;
   else {
-    XtVaGetValues (mad->postscript_p, XmNset, &b, 0);
+    XtVaGetValues (mad->postscript_p, XmNset, &b, (XtPointer) 0);
     if (b)
       m.desired_type = APPLICATION_POSTSCRIPT;
   }
@@ -115,7 +115,7 @@ static void
 fe_locationClear_cb (Widget widget, XtPointer closure, XtPointer call_data)
 {
   struct fe_mail_attach_data *mad = (struct fe_mail_attach_data  *) closure;
-  XtVaSetValues (mad->location_text, XmNvalue, "", 0);
+  XtVaSetValues (mad->location_text, XmNvalue, "", (XtPointer) 0);
   /* Focus on the text widget after this, since otherwise you have to
      click again. */
   XmProcessTraversal (mad->location_text, XmTRAVERSE_CURRENT);
@@ -155,7 +155,7 @@ fe_attach_make_location(struct fe_mail_attach_data *mad)
   parent = CONTEXT_WIDGET(mad->context);
 
   XtVaGetValues (parent, XtNvisual, &v, XtNcolormap, &cmap,
-		 XtNdepth, &depth, 0);
+		 XtNdepth, &depth, (XtPointer) 0);
 
   ac = 0;
   XtSetArg (av[ac], XmNvisual, v); ac++;
@@ -193,14 +193,14 @@ fe_attach_make_location(struct fe_mail_attach_data *mad)
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (location_label,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, label,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (location_text,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, label,
@@ -208,7 +208,7 @@ fe_attach_make_location(struct fe_mail_attach_data *mad)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, location_label,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
 
   location_label->core.height = location_text->core.height;
 
@@ -318,9 +318,9 @@ fe_attach_make_file(struct fe_mail_attach_data *mad)
   parent = CONTEXT_WIDGET (mad->context);
 
   XtVaGetValues (parent, XtNvisual, &v, XtNcolormap, &cmap,
-		 XtNdepth, &depth, 0);
+		 XtNdepth, &depth, (XtPointer) 0);
 /***
-  XtVaGetValues (text_field, XmNvalue, &text, 0);
+  XtVaGetValues (text_field, XmNvalue, &text, (XtPointer) 0);
   text = fe_StringTrim (text);
 ***/
 
@@ -368,10 +368,10 @@ fe_attach_make_file(struct fe_mail_attach_data *mad)
 #endif
 
   if (xmpat) {
-    XtVaSetValues (fileb, XmNdirMask, xmpat, 0);
-    XtVaSetValues (fileb, XmNpattern, xmpat, 0);
+    XtVaSetValues (fileb, XmNdirMask, xmpat, (XtPointer) 0);
+    XtVaSetValues (fileb, XmNpattern, xmpat, (XtPointer) 0);
     XmFileSelectionDoSearch (fileb, xmpat);
-    XtVaSetValues (fileb, XmNdirSpec, xmfile, 0);
+    XtVaSetValues (fileb, XmNdirSpec, xmfile, (XtPointer) 0);
     XmStringFree (xmpat);
     XmStringFree (xmfile);
   }
@@ -403,22 +403,22 @@ fe_attach_doc_type_cb (Widget widget, XtPointer closure, XtPointer call_data)
   /*
    * my how intuitive, if the file is attach as siurce, desired type = NULL.
    */
-  XtVaSetValues (widget, XmNset, True, 0);
+  XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
   if (widget == mad->text_p) {
-    XtVaSetValues (mad->source_p, XmNset, False, 0);
-    XtVaSetValues (mad->postscript_p, XmNset, False, 0);
+    XtVaSetValues (mad->source_p, XmNset, False, (XtPointer) 0);
+    XtVaSetValues (mad->postscript_p, XmNset, False, (XtPointer) 0);
     if (attach_pos >= 0)
       mad->attachments[attach_pos].desired_type = TEXT_PLAIN;
   }
   else if (widget == mad->source_p) {
-    XtVaSetValues (mad->text_p, XmNset, False, 0);
-    XtVaSetValues (mad->postscript_p, XmNset, False, 0);
+    XtVaSetValues (mad->text_p, XmNset, False, (XtPointer) 0);
+    XtVaSetValues (mad->postscript_p, XmNset, False, (XtPointer) 0);
     if (attach_pos >= 0)
       mad->attachments[attach_pos].desired_type = NULL;
   }
   else if (widget == mad->postscript_p) {
-    XtVaSetValues (mad->source_p, XmNset, False, 0);
-    XtVaSetValues (mad->text_p, XmNset, False, 0);
+    XtVaSetValues (mad->source_p, XmNset, False, (XtPointer) 0);
+    XtVaSetValues (mad->text_p, XmNset, False, (XtPointer) 0);
     if (attach_pos >= 0)
       mad->attachments[attach_pos].desired_type = APPLICATION_POSTSCRIPT;
   }
@@ -543,7 +543,7 @@ fe_attach_delete_cb (Widget widget, XtPointer closure, XtPointer call_data)
    * the delete button.
    */
   if (!XmListGetSelectedPos(mad->list, &poslist, &npos)) {
-    XtVaSetValues(mad->delete, XmNsensitive, False, 0);
+    XtVaSetValues(mad->delete, XmNsensitive, False, (XtPointer) 0);
   }
   else XP_FREE(poslist);
 }
@@ -572,7 +572,7 @@ fe_attach_select_cb (Widget widget, XtPointer closure, XtPointer call_data)
   else XP_ASSERT (which_w != 0);
   fe_attach_doc_type_cb(which_w, mad, NULL);
 
-  XtVaSetValues(mad->delete, XmNsensitive, True, 0);
+  XtVaSetValues(mad->delete, XmNsensitive, True, (XtPointer) 0);
 }
 
 void
@@ -665,13 +665,13 @@ fe_make_managed_attach_form(MWContext* context, Widget parent)
 		 XmNbottomAttachment, XmATTACH_FORM,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (label,
                  XmNtopAttachment, XmATTACH_NONE,
                  XmNbottomAttachment, XmATTACH_FORM,
                  XmNleftAttachment, XmATTACH_FORM,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (source_p,
                  XmNtopAttachment, XmATTACH_NONE,
                  XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -679,7 +679,7 @@ fe_make_managed_attach_form(MWContext* context, Widget parent)
                  XmNleftAttachment, XmATTACH_WIDGET,
                  XmNleftWidget, label,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (text_p,
                  XmNtopAttachment, XmATTACH_NONE,
                  XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -687,7 +687,7 @@ fe_make_managed_attach_form(MWContext* context, Widget parent)
                  XmNleftAttachment, XmATTACH_WIDGET,
                  XmNleftWidget, source_p,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (postscript_p,
                  XmNtopAttachment, XmATTACH_NONE,
                  XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -695,7 +695,7 @@ fe_make_managed_attach_form(MWContext* context, Widget parent)
                  XmNleftAttachment, XmATTACH_WIDGET,
                  XmNleftWidget, text_p,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
 
 
 #ifdef dora_DEBUG
@@ -749,7 +749,7 @@ fe_make_managed_attach_form(MWContext* context, Widget parent)
                  strcmp(fe_last_attach_type,
                         APPLICATION_POSTSCRIPT) == 0 ? postscript_p :
                  source_p),
-                XmNset, True, 0);
+                XmNset, True, (XtPointer) 0);
 
   return form;
 }
@@ -825,7 +825,7 @@ fe_attach_dropfunc(Widget dropw, void* closure, fe_dnd_Event type,
     return;
 
   XtVaGetValues(CONTEXT_DATA(compose_context)->mcAttachments,
-		XmNsensitive, &sensitive_p, 0);
+		XmNsensitive, &sensitive_p, (XtPointer) 0);
   if (!sensitive_p)
     {
       /* If the Attachments field is not sensitive, then that means that

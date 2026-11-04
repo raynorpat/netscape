@@ -325,7 +325,7 @@ fe_UpdateGraph (MWContext *context, Boolean text_too_p)
     return;
 
 #if 0
-  XtVaGetValues (thermo, XtNwidth, &w, XtNheight, &h, 0);
+  XtVaGetValues (thermo, XtNwidth, &w, XtNheight, &h, (XtPointer) 0);
 #else
   w = thermo->core.width;
   h = thermo->core.height;
@@ -500,10 +500,10 @@ fe_UpdateSecurityBar (MWContext *context)
 	    state = SSL_SECURITY_STATUS_ON_LOW;	/* or HIGH? or what? */
 	}
 
-      XtVaGetValues (w, XmNlabelPixmap, &p1, 0);
+      XtVaGetValues (w, XmNlabelPixmap, &p1, (XtPointer) 0);
       p2 = fe_SecurityPixmap (context, 0, 0, state);
       if (p1 != p2)
-	XtVaSetValues (w, XmNlabelPixmap, p2, 0);
+	XtVaSetValues (w, XmNlabelPixmap, p2, (XtPointer) 0);
     }
 }
 #endif /* !HAVE_SECURITY */

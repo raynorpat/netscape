@@ -1,0 +1,40 @@
+# Source manifest translated from lib/libnet/Makefile.
+netscape_archive(netscape_net lib/libnet net
+  cvactive.c
+  cvcolor.c
+  cvdisk.c
+  cvextcon.c
+  cvmime.c
+  cvproxy.c
+  cvview.c
+  extcache.c
+  mkaccess.c
+  mkautocf.c
+  mkcache.c
+  mkconect.c
+  mkextcac.c
+  mkfile.c
+  mkfsort.c
+  mkftp.c
+  mkgeturl.c
+  mkgopher.c
+  mkhelp.c
+  mkhttp.c
+  mkinit.c
+  mkmailbx.c
+  mkmemcac.c
+  mkmessag.c
+  mkmocha.c
+  mknews.c
+  mknewsgr.c
+  mkparse.c
+  mkpop3.c
+  mkremote.c
+  mksmtp.c
+  mksockrw.c
+  mksort.c
+  mkstream.c
+  mkutils.c
+  txview.c
+  unix-dns.c
+)

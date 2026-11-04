@@ -1,0 +1,33 @@
+# Source manifest translated from lib/libmime/Makefile.
+netscape_archive(netscape_mime lib/libmime mime
+  mimei.c
+  mimecont.c
+  mimeenc.c
+  mimeeobj.c
+  mimeebod.c
+  mimehdrs.c
+  mimeiimg.c
+  mimeleaf.c
+  mimemalt.c
+  mimemapl.c
+  mimemdig.c
+  mimemmix.c
+  mimemoz.c
+  mimempar.c
+  mimemrel.c
+  mimemsg.c
+  mimemult.c
+  mimeobj.c
+  mimepbuf.c
+  mimesun.c
+  mimetenr.c
+  mimetext.c
+  mimethtm.c
+  mimetpla.c
+  mimetric.c
+  mimeunty.c
+  mimempkc.c
+  mimepkcs.c
+  mimecryp.c
+  mimemsig.c
+)

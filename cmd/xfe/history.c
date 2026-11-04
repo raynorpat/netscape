@@ -15,10 +15,10 @@ FE_EnableBackButton (MWContext *context)
 {
   Widget w = CONTEXT_DATA (context)->back_button;
   if (CONTEXT_DATA (context)->show_toolbar_p && w)
-    XtVaSetValues (w, XmNsensitive, True, 0);
+    XtVaSetValues (w, XmNsensitive, True, (XtPointer) 0);
   w = CONTEXT_DATA (context)->back_menuitem;
   if (w)
-    XtVaSetValues (w, XmNsensitive, True, 0);
+    XtVaSetValues (w, XmNsensitive, True, (XtPointer) 0);
   return 0;
 }
 
@@ -29,10 +29,10 @@ FE_DisableBackButton (MWContext *context)
 {
   Widget w = CONTEXT_DATA (context)->back_button;
   if (CONTEXT_DATA (context)->show_toolbar_p && w)
-    XtVaSetValues (w, XmNsensitive, False, 0);
+    XtVaSetValues (w, XmNsensitive, False, (XtPointer) 0);
   w = CONTEXT_DATA (context)->back_menuitem;
   if (w)
-    XtVaSetValues (w, XmNsensitive, False, 0);
+    XtVaSetValues (w, XmNsensitive, False, (XtPointer) 0);
   return 0;
 }
 
@@ -43,10 +43,10 @@ FE_EnableForwardButton (MWContext *context)
 {
   Widget w = CONTEXT_DATA (context)->forward_button;
   if (CONTEXT_DATA (context)->show_toolbar_p && w)
-    XtVaSetValues (w, XmNsensitive, True, 0);
+    XtVaSetValues (w, XmNsensitive, True, (XtPointer) 0);
   w = CONTEXT_DATA (context)->forward_menuitem;
   if (w)
-    XtVaSetValues (w, XmNsensitive, True, 0);
+    XtVaSetValues (w, XmNsensitive, True, (XtPointer) 0);
   return 0;
 }
 
@@ -57,10 +57,10 @@ FE_DisableForwardButton (MWContext *context)
 {
   Widget w = CONTEXT_DATA (context)->forward_button;
   if (CONTEXT_DATA (context)->show_toolbar_p && w)
-    XtVaSetValues (w, XmNsensitive, False, 0);
+    XtVaSetValues (w, XmNsensitive, False, (XtPointer) 0);
   w = CONTEXT_DATA (context)->forward_menuitem;
   if (w)
-    XtVaSetValues (w, XmNsensitive, False, 0);
+    XtVaSetValues (w, XmNsensitive, False, (XtPointer) 0);
   return 0;
 }
 
@@ -100,7 +100,7 @@ fe_history_menu_cb (Widget widget, XtPointer closure, XtPointer call_data)
   int index = -1;
   History_entry *h;
   URL_Struct *url;
-  XtVaGetValues (widget, XmNuserData, &index, 0);
+  XtVaGetValues (widget, XmNuserData, &index, (XtPointer) 0);
   if (index < 0) return;
   h = SHIST_GetObjectNum (&context->hist, index);
   if (! h) return;
@@ -147,7 +147,7 @@ fe_fill_history_selector (MWContext *context)
   /* Kill off the old history stuff in the menu: skip past the first
      two items if they exist, otherwise create them.
    */
-  XtVaGetValues (menu, XmNchildren, &kids, XmNnumChildren, &nkids, 0);
+  XtVaGetValues (menu, XmNchildren, &kids, XmNnumChildren, &nkids, (XtPointer) 0);
   XtUnrealizeWidget (menu);
 /*  if (nkids > fast_and_loose)
     XtUnmanageChildren (kids + fast_and_loose, nkids - fast_and_loose);*/
@@ -172,7 +172,7 @@ fe_fill_history_selector (MWContext *context)
   if (menu_length)
     while (nkids > 0)
       /* Force fucking Motif to recompute the width of the menu!! */
-      XtVaSetValues (kids[--nkids], XmNwidth, 10, 0);
+      XtVaSetValues (kids[--nkids], XmNwidth, 10, (XtPointer) 0);
 
   if (menu_length)
     kids = malloc (sizeof (Widget) * menu_length);
@@ -255,13 +255,13 @@ fe_fill_history_selector (MWContext *context)
   if (CONTEXT_DATA (context)->history_dialog)
     {
       XtVaGetValues (CONTEXT_DATA (context)->history_dialog,
-		     XmNwidth, &width, XmNheight, &height, 0);
+		     XmNwidth, &width, XmNheight, &height, (XtPointer) 0);
       XtVaSetValues (CONTEXT_DATA (context)->history_dialog,
 		     XmNlistItemCount, length,
 		     XmNlistItems, items,
 		     XmNwidth, width,
 		     XmNheight, height,
-		     0);
+		     (XtPointer) 0);
 
       /* Update the current item. */
       if (cpos)
@@ -273,7 +273,7 @@ fe_fill_history_selector (MWContext *context)
 	  /* Scroll the list if necessary. */
 	  XtVaGetValues (list,
 			 XmNtopItemPosition, &top_pos,
-			 XmNvisibleItemCount, &vis, 0);
+			 XmNvisibleItemCount, &vis, (XtPointer) 0);
 	  if (cpos >= top_pos + vis)
 	    XmListSetBottomPos (list, cpos);
 	}
@@ -333,7 +333,7 @@ fe_HistoryItemAction (Widget widget, XEvent *event, String *av, Cardinal *ac)
 
 
       PR_snprintf (buf, sizeof (buf), "historyItem%d", n);
-      XtVaGetValues (menu, XmNchildren, &kids, XmNnumChildren, &nkids, 0);
+      XtVaGetValues (menu, XmNchildren, &kids, XmNnumChildren, &nkids, (XtPointer) 0);
       for (i = 0; i < nkids; i++)
 	if (!strcmp (buf, XtName (kids [i])))
 	  {
@@ -372,7 +372,7 @@ fe_history_confirm_cb (Widget widget, XtPointer closure, XtPointer call_data)
   int lower_p = 0;
   int hot_p = 0;
   XtVaGetValues (CONTEXT_DATA (context)->history_dialog,
-		 XmNlistItemCount, &count, 0);
+		 XmNlistItemCount, &count, (XtPointer) 0);
   switch (cb->reason)
     {
     case XmCR_APPLY:
@@ -392,7 +392,7 @@ fe_history_confirm_cb (Widget widget, XtPointer closure, XtPointer call_data)
 
 	if (! list) abort ();
 
-	XtVaGetValues (list, XmNitemCount, &count, 0);
+	XtVaGetValues (list, XmNitemCount, &count, (XtPointer) 0);
 	if (count <= 0)
   	  break;
 	free_p = XmListGetSelectedPos (list, &positions, &npositions);
@@ -450,7 +450,7 @@ fe_make_history_dialog (MWContext *context)
   Cardinal depth = 0;
 
   XtVaGetValues (mainw, XtNvisual, &v, XtNcolormap, &cmap,
-		 XtNdepth, &depth, 0);
+		 XtNdepth, &depth, (XtPointer) 0);
 
   ac = 0;
   XtSetArg (av[ac], XmNvisual, v); ac++;
@@ -462,7 +462,7 @@ fe_make_history_dialog (MWContext *context)
   XtSetArg (av[ac], XmNautoUnmanage, False); ac++;
   shell = XmCreateSelectionDialog (mainw, "history", av, ac);
 
-  XtVaSetValues (XtParent (shell), XmNallowShellResize, False, 0);
+  XtVaSetValues (XtParent (shell), XmNallowShellResize, False, (XtPointer) 0);
 
   CONTEXT_DATA (context)->history_dialog = shell;
 

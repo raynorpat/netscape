@@ -262,7 +262,7 @@ fe_scroll_cb (Widget widget, XtPointer closure, XtPointer call_data)
 
   fe_SetDocPosition (context, new_x, new_y);
 
-/*  XtVaGetValues (da, XmNwidth, &w, XmNheight, &h, 0); */
+/*  XtVaGetValues (da, XmNwidth, &w, XmNheight, &h, (XtPointer) 0); */
   w = da->core.width;
   h = da->core.height;
 
@@ -526,10 +526,10 @@ fe_ScrollTo (MWContext *context, unsigned long x, unsigned long y)
 	int max = 0;
 	int size = 0;
 	XtVaGetValues (CONTEXT_DATA (context)->hscroll,
-		       XmNmaximum, &max, XmNsliderSize, &size, 0);
+		       XmNmaximum, &max, XmNsliderSize, &size, (XtPointer) 0);
 	if (nx > max - size) nx = max - size;
 	if (nx < 0) nx = 0;
-	XtVaSetValues (CONTEXT_DATA (context)->hscroll, XmNvalue, nx, 0);
+	XtVaSetValues (CONTEXT_DATA (context)->hscroll, XmNvalue, nx, (XtPointer) 0);
 	x = nx;
       }
       memset (&cb, 0, sizeof (cb));
@@ -544,10 +544,10 @@ fe_ScrollTo (MWContext *context, unsigned long x, unsigned long y)
 	int max = 0;
 	int size = 0;
 	XtVaGetValues (CONTEXT_DATA (context)->vscroll,
-		       XmNmaximum, &max, XmNsliderSize, &size, 0);
+		       XmNmaximum, &max, XmNsliderSize, &size, (XtPointer) 0);
 	if (ny > max - size) ny = max - size;
 	if (ny < 0) ny = 0;
-	XtVaSetValues (CONTEXT_DATA (context)->vscroll, XmNvalue, ny, 0);
+	XtVaSetValues (CONTEXT_DATA (context)->vscroll, XmNvalue, ny, (XtPointer) 0);
 	y = ny;
       }
       memset (&cb, 0, sizeof (cb));
@@ -911,7 +911,7 @@ fe_hack_scrollbar (Widget sb, int max, int inc, int page_inc,
 		 XmNpageIncrement, page_inc,
 		 XmNsliderSize, slider_size,
 		 XmNvalue, value,
-		 0);
+		 (XtPointer) 0);
 }
 
 
@@ -937,7 +937,7 @@ fe_SetDocPosition (MWContext *context, unsigned long x, unsigned long y)
   if (!CONTEXT_DATA (context)->drawing_area) return;
 
   XtVaGetValues (CONTEXT_DATA (context)->drawing_area,
-		 XmNwidth, &ww, XmNheight, &wh, 0);
+		 XmNwidth, &ww, XmNheight, &wh, (XtPointer) 0);
 
   if (h <= wh)
     {
@@ -1077,7 +1077,7 @@ fe_scroller_resize (Widget widget, XtPointer closure)
   Dimension w = 0, h = 0;
   Boolean relayout_p = False;
 
-  XtVaGetValues (widget, XmNwidth, &w, XmNheight, &h, 0);
+  XtVaGetValues (widget, XmNwidth, &w, XmNheight, &h, (XtPointer) 0);
 
   relayout_p = ((Dimension) fep->scrolled_width) != w;
 
@@ -1210,7 +1210,7 @@ fe_TestGravity (Widget widget)
   }
 
   XtVaGetValues (widget, XtNvisual, &v, XtNcolormap, &cmap,
-    XtNdepth, &depth, 0);
+    XtNdepth, &depth, (XtPointer) 0);
 
   shift = 10;
 

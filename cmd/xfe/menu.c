@@ -32,7 +32,7 @@ fe_CreateIntlSubmenu(Widget parent, struct fe_button *buttons, MWContext *contex
 	cmap = 0;
 	depth = 0;
 	XtVaGetValues(CONTEXT_DATA(context)->widget, XtNvisual, &v,
-		XtNcolormap, &cmap, XtNdepth, &depth, 0);
+		XtNcolormap, &cmap, XtNdepth, &depth, (XtPointer) 0);
 
 	ac = 0;
 	XtSetArg(av[ac], XmNvisual, v); ac++;
@@ -164,7 +164,7 @@ fe_CreateSubmenu(Widget menu, struct fe_button *buttons, MWContext *context,
 		    if (buttons[w+1].name) {
 			/* Create submenu only if there are items */
 			XtVaGetValues(CONTEXT_DATA(context)->widget, XtNvisual,
-				&v, XtNcolormap, &cmap, XtNdepth, &depth, 0);
+				&v, XtNcolormap, &cmap, XtNdepth, &depth, (XtPointer) 0);
 
 			ac1 = 0;
 			XtSetArg(av1[ac1], XmNvisual, v); ac1++;
@@ -218,7 +218,7 @@ fe_PopulateMenubar(Widget parent, struct fe_button* buttons,
     char *menu_name;
 
     XtVaGetValues(XtParent(parent), XtNvisual, &v, XtNcolormap, &cmap,
-		  XtNdepth, &depth, 0);
+		  XtNdepth, &depth, (XtPointer) 0);
     
     ac = 0;
     XtSetArg(av[ac], XmNskipAdjust, True); ac++;
@@ -275,12 +275,12 @@ fe_PopulateMenubar(Widget parent, struct fe_button* buttons,
 			  XmNbackground, &bg,
 			  XmNtopShadowColor, &tsc,
 			  XmNbottomShadowColor, &bsc,
-			  0);
+			  (XtPointer) 0);
 	    XtVaSetValues(menubar,
 			  XmNbackground, bg,
 			  XmNtopShadowColor, tsc,
 			  XmNbottomShadowColor, bsc,
-			  0);
+			  (XtPointer) 0);
 	}
 #endif
 
@@ -310,7 +310,7 @@ fe_PopulateMenubar(Widget parent, struct fe_button* buttons,
 	w++;
 	step = fe_CreateSubmenu(menu, &buttons[w], context, closure, data);
 	if (!strcmp("help", menu_name)) {
-	    XtVaSetValues(menubar, XmNmenuHelpWidget, menubar_button, 0);
+	    XtVaSetValues(menubar, XmNmenuHelpWidget, menubar_button, (XtPointer) 0);
 	}
 	w+=step;
 	i++;

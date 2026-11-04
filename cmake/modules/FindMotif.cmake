@@ -1,0 +1,6 @@
+find_path(MOTIF_INCLUDE_DIR NAMES Xm/Xm.h)
+find_library(MOTIF_LIBRARY NAMES Xm)
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(Motif REQUIRED_VARS MOTIF_INCLUDE_DIR MOTIF_LIBRARY)
+set(MOTIF_LIBRARIES ${MOTIF_LIBRARY})
+mark_as_advanced(MOTIF_INCLUDE_DIR MOTIF_LIBRARY)

@@ -1498,7 +1498,7 @@ XFE_DisplayEdge (MWContext *context, int loc, LO_EdgeStruct *edge)
   XtSetArg (av[ac], XmNcallback, (XtArgVal) sashCallback); ac++;
   sash = XtCreateWidget("sash", xmSashWidgetClass, drawing_area, av, ac);
   if (!edge->movable)
-    XtVaSetValues (sash, XmNsensitive, False, 0);
+    XtVaSetValues (sash, XmNsensitive, False, (XtPointer) 0);
 
   XtAddCallback (sash, XtNdestroyCallback, fe_sash_destroy_cb,
 		 (XtPointer) sashinfo);
@@ -1538,7 +1538,7 @@ XFE_SetBackgroundColor (MWContext *context, uint8 red, uint8 green,
    */
 #ifdef OLD_WAY
   XtVaSetValues (CONTEXT_DATA (context)->drawing_area,
-		 XmNbackground, bg, 0);
+		 XmNbackground, bg, (XtPointer) 0);
 #endif /* OLD_WAY */
   XSetWindowBackground (XtDisplay(CONTEXT_DATA (context)->drawing_area),
 			XtWindow(CONTEXT_DATA (context)->drawing_area), bg);
@@ -1552,17 +1552,17 @@ XFE_SetBackgroundColor (MWContext *context, uint8 red, uint8 green,
   /* No, don't do this - the scrolled window's background should be the
      widget background color, not the document.  See comments in scroll.c. */
   XtVaSetValues (CONTEXT_DATA (context)->scrolled,
-		 XmNbackground, bg, 0);
+		 XmNbackground, bg, (XtPointer) 0);
 #endif
 #ifdef LEDGES
   XtVaSetValues (CONTEXT_DATA (context)->top_ledge,
-		 XmNbackground, bg, 0);
+		 XmNbackground, bg, (XtPointer) 0);
   XtVaSetValues (CONTEXT_DATA (context)->bottom_ledge,
-		 XmNbackground, bg, 0);
+		 XmNbackground, bg, (XtPointer) 0);
   XtVaSetValues (XtParent (CONTEXT_DATA (context)->top_ledge),
-		 XmNbackground, bg, 0);
+		 XmNbackground, bg, (XtPointer) 0);
   XtVaSetValues (XtParent (CONTEXT_DATA (context)->bottom_ledge),
-		 XmNbackground, bg, 0);
+		 XmNbackground, bg, (XtPointer) 0);
 #endif
 }
 
@@ -1589,11 +1589,11 @@ FE_GetFullWindowSize(MWContext *context, int32 *width, int32 *height)
     {
       Position sx, sy;
       XtVaGetValues (CONTEXT_DATA (context)->scrolled,
-	XmNwidth, &w, XmNheight, &h, 0);
+	XmNwidth, &w, XmNheight, &h, (XtPointer) 0);
 
       XtVaGetValues (CONTEXT_DATA (context)->vscroll,
 	XmNx, &sx,
-	XmNwidth, &extra, 0);
+	XmNwidth, &extra, (XtPointer) 0);
       if ((long) sx < (long) w)
 	{
           *width = (int32)w;
@@ -1604,7 +1604,7 @@ FE_GetFullWindowSize(MWContext *context, int32 *width, int32 *height)
 	}
       XtVaGetValues (CONTEXT_DATA (context)->hscroll,
 	XmNy, &sy,
-	XmNheight, &extra, 0);
+	XmNheight, &extra, (XtPointer) 0);
       if ((long) sy < (long) h)
 	{
           *height = (int32)h;
@@ -1615,16 +1615,16 @@ FE_GetFullWindowSize(MWContext *context, int32 *width, int32 *height)
 	}
 
       XtVaSetValues (CONTEXT_DATA (context)->scrolled,
-	XmNwidth, (Dimension)*width, XmNheight, (Dimension)*height, 0);
+	XmNwidth, (Dimension)*width, XmNheight, (Dimension)*height, (XtPointer) 0);
     }
   else
     {
-      XtVaGetValues (widget, XmNwidth, &w, XmNheight, &h, 0);
+      XtVaGetValues (widget, XmNwidth, &w, XmNheight, &h, (XtPointer) 0);
       *width = (int32)w;
       *height = (int32)h;
 
       XtVaSetValues (CONTEXT_DATA (context)->drawing_area,
-	XmNwidth, (Dimension)*width, XmNheight, (Dimension)*height, 0);
+	XmNwidth, (Dimension)*width, XmNheight, (Dimension)*height, (XtPointer) 0);
     }
 }
 #else
@@ -1634,7 +1634,7 @@ FE_GetFullWindowSize(MWContext *context, int32 *width, int32 *height)
   Dimension w = 0, h = 0;
 
   XtVaGetValues (CONTEXT_DATA (context)->drawing_area,
-	XmNwidth, &w, XmNheight, &h, 0);
+	XmNwidth, &w, XmNheight, &h, (XtPointer) 0);
   *width = (int32)w;
   *height = (int32)h;
 }
@@ -1695,12 +1695,12 @@ XFE_LayoutNewDocument (MWContext *context, URL_Struct *url,
     if (!CONTEXT_DATA (context)->drawing_area) return;
 
     XtVaGetValues (CONTEXT_DATA (context)->drawing_area,
-               XmNwidth, &w, XmNheight, &h, 0);
+               XmNwidth, &w, XmNheight, &h, (XtPointer) 0);
   } else {
     if (!CONTEXT_DATA (context)->scrolled) return;
 
     XtVaGetValues (CONTEXT_DATA (context)->scrolled,
-		 XmNwidth, &w, XmNheight, &h, 0);
+		 XmNwidth, &w, XmNheight, &h, (XtPointer) 0);
   }
   if (!w || !h) abort ();
 
@@ -1785,10 +1785,10 @@ XFE_LayoutNewDocument (MWContext *context, URL_Struct *url,
 #if 0
   if (CONTEXT_DATA (context)->print_menuitem)
     XtVaSetValues (CONTEXT_DATA (context)->print_menuitem,
-		   XmNsensitive, !url->is_binary, 0);
+		   XmNsensitive, !url->is_binary, (XtPointer) 0);
   if (CONTEXT_DATA (context)->print_button)
     XtVaSetValues (CONTEXT_DATA (context)->print_button,
-		   XmNsensitive, !url->is_binary, 0);
+		   XmNsensitive, !url->is_binary, (XtPointer) 0);
 #endif
 
 #ifdef LEDGES
@@ -1907,8 +1907,8 @@ XFE_SetDocTitle (MWContext *context, char *title)
   /* We get X errors if we try to set the window title to a string with
      high-bit characters in it by doing this:
 
-     XtVaSetValues (shell, XtNtitle, buf2, 0);
-     XtVaSetValues (shell, XtNiconName, buf2, 0);
+     XtVaSetValues (shell, XtNtitle, buf2, (XtPointer) 0);
+     XtVaSetValues (shell, XtNiconName, buf2, (XtPointer) 0);
 
      So do it this way:
   */
@@ -2192,7 +2192,7 @@ XFE_DisplayEmbed (MWContext *context,
 	 * we force the plugin to (0,0) position.
 	 */
 	XtVaSetValues((Widget)eApp->fe_data, XmNx, (Position)0,
-		      XmNy, (Position)0, 0);
+		      XmNy, (Position)0, (XtPointer) 0);
 #endif /* 0 */
 
 	if (nWin->width != xs || nWin->height != ys) {
@@ -2212,7 +2212,7 @@ XFE_DisplayEmbed (MWContext *context,
 	ys = embed_struct->y + embed_struct->y_offset -
 	  CONTEXT_DATA (context)->document_y;
 	XtVaSetValues((Widget)eApp->fe_data, XmNx, (Position)xs,
-		      XmNy, (Position)ys, 0);
+		      XmNy, (Position)ys, (XtPointer) 0);
     }
 
     /* Manage the embed window. XFE_GetEmbedSize() only creates the it. */
@@ -2293,7 +2293,7 @@ XFE_GetEmbedSize (MWContext *context, LO_EmbedStruct *embed_struct,
 	    xp = yp = 0;
 	}
 
-	XtVaGetValues (parent, XmNbackground, &bg, 0);
+	XtVaGetValues (parent, XmNbackground, &bg, (XtPointer) 0);
 	ac = 0;
 	/* 	XtSetArg (av [ac], XmNborderWidth, 1); ac++; */
 	XtSetArg (av [ac], XmNx, (Position)xp); ac++;
@@ -2348,7 +2348,7 @@ XFE_GetEmbedSize (MWContext *context, LO_EmbedStruct *embed_struct,
 		    Cardinal depth = 0;
 
 		    XtVaGetValues(CONTEXT_WIDGET(context), XtNvisual, &v,
-			XtNcolormap, &cmap, XtNdepth, &depth, 0);
+			XtNcolormap, &cmap, XtNdepth, &depth, (XtPointer) 0);
 
 	            fe_data->type = NP_SETWINDOW;
 	            fe_data->display = (void *) XtDisplay(embed);
@@ -2518,7 +2518,7 @@ XFE_DisplayJavaApp(MWContext *context,
 	/*
 	** First time in for this applet; create motif widget for it
 	*/
-	XtVaGetValues(parent, XmNbackground, &bg, 0);
+	XtVaGetValues(parent, XmNbackground, &bg, (XtPointer) 0);
 	ac = 0;
 	XtSetArg(av [ac], XmNborderWidth, 0); ac++;
 	XtSetArg(av [ac], XmNx, (Position)xp); ac++;

@@ -427,7 +427,7 @@ NPP_Write(NPP instance, NPStream *stream, int32 offset, int32 len, void *buffer)
 		if (!cbuf) return 0;
 		memcpy(cbuf, ((char *)buffer)+offset, len);
 		cbuf[len] = '\0';
-		XtVaGetValues(This->text, XmNcursorPosition, &pos, 0);
+		XtVaGetValues(This->text, XmNcursorPosition, &pos, (XtPointer) 0);
 		XmTextInsert(This->text, pos, cbuf);
 		NPN_MemFree(cbuf);
 #endif /* TEXT_PLUGIN */

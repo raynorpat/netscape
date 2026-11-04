@@ -326,8 +326,6 @@ GiveSystemInfo(void)
 #if defined(__linux)
 #include <linux/kernel.h>
 
-int putenv(const char *);
-
 static size_t
 GetHighResClock(void *buf, size_t maxbytes)
 {

@@ -266,7 +266,7 @@ fe_CreateTabForm(Widget parent, char* name, Arg* args, Cardinal n)
 	char*    string;
 	XmString xm_string;
 
-	XtVaGetValues(parent, XmNbackground, &bg, 0);
+	XtVaGetValues(parent, XmNbackground, &bg, (XtPointer) 0);
 	form = XtVaCreateWidget(name,
 							xmFormWidgetClass, parent,
 							XmNbackground, bg,
@@ -285,7 +285,7 @@ fe_CreateTabForm(Widget parent, char* name, Arg* args, Cardinal n)
 void
 fe_WidgetSetSensitive(Widget widget, Boolean sensitive)
 {
-    XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+    XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 #define SWATCH_SIZE 60
@@ -299,7 +299,7 @@ fe_CreateSwatch(Widget parent, char* name, Arg* p_args, Cardinal p_n)
 void
 fe_SwatchSetSensitive(Widget widget, Boolean sensitive)
 {
-    XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+    XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 static LO_Color swatch_black;
@@ -318,7 +318,7 @@ fe_SwatchSetColor(Widget widget, LO_Color* color)
 						color->green,
 						color->blue);
 
-	XtVaSetValues(widget, XmNbackground, pixel, 0);
+	XtVaSetValues(widget, XmNbackground, pixel, (XtPointer) 0);
 }
 
 Widget
@@ -329,7 +329,7 @@ fe_CreatePasswordField(Widget parent, char* name, Arg* args, Cardinal n)
 
 	widget = fe_CreateTextField(parent, name, args, n);
 
-	XtVaGetValues(widget, XmNmaxLength, &max_length, 0);
+	XtVaGetValues(widget, XmNmaxLength, &max_length, (XtPointer) 0);
 
 	fe_SetupPasswdText(widget, max_length);
 
@@ -343,7 +343,7 @@ fe_TextFieldSetString(Widget widget, char* value, Boolean notify)
 	XtCallbackList callbacks;
 	int i;
 	if (notify == FALSE) {
-		XtVaGetValues(widget, XmNvalueChangedCallback, &callbacks, 0);
+		XtVaGetValues(widget, XmNvalueChangedCallback, &callbacks, (XtPointer) 0);
 		for (i = 0; callbacks[i].callback != NULL; i++) {
 			buf[i] = callbacks[i];
 		}
@@ -538,7 +538,7 @@ fe_CreatePulldownMenu(Widget parent, char* name, Arg* p_argv, Cardinal p_argc)
       ;
 
   XtVaGetValues(widget, XtNvisual, &v, XtNcolormap, &cmap,
-	XtNdepth, &depth, 0);
+	XtNdepth, &depth, (XtPointer) 0);
 
   argc = 0;
   XtSetArg (argv[argc], XmNvisual, v); argc++;
@@ -685,7 +685,7 @@ db_do_work(
 	    max_widget = 0;
 	    for (i = 0; i < (unsigned)value; i++) {
 		widget = (Widget)POP();
-		XtVaGetValues(widget, XtNwidth, &width, 0);
+		XtVaGetValues(widget, XtNwidth, &width, (XtPointer) 0);
 		if (width > max_width) {
 		    max_width = width;
 		    max_widget = widget;
@@ -697,7 +697,7 @@ db_do_work(
 	    max_widget = 0;
 	    for (i = 0; i < (unsigned)value; i++) {
 		widget = (Widget)POP();
-		XtVaGetValues(widget, XtNheight, &height, 0);
+		XtVaGetValues(widget, XtNheight, &height, (XtPointer) 0);
 		if (height > max_height) {
 		    max_height = height;
 		    max_widget = widget;
@@ -918,7 +918,7 @@ fe_CreatePromptDialog(
   int ac;
 
   XtVaGetValues (mainw, XtNvisual, &v, XtNcolormap, &cmap,
-                 XtNdepth, &depth, 0);
+                 XtNdepth, &depth, (XtPointer) 0);
   ac = 0;
   XtSetArg (av[ac], XmNvisual, v); ac++;
   XtSetArg (av[ac], XmNdepth, depth); ac++;
@@ -986,7 +986,7 @@ fe_editor_hrule_properties_common(MWContext* context,
     data->size = fe_get_numeric_text_field(w_data->height);
 
     /* width */
-    XtVaGetValues(w_data->width_menu, XmNmenuHistory, &widget, 0);
+    XtVaGetValues(w_data->width_menu, XmNmenuHistory, &widget, (XtPointer) 0);
 
     if (widget == w_data->width_pixels)
 		data->bWidthPercent = FALSE;
@@ -1095,7 +1095,7 @@ fe_HorizontalRulePropertiesDialogDataGet(
 	is_nested = EDT_IsInsertPointInTable(context);
 	fe_table_percent_label_set(w_data->width_percent, is_nested);
 
-	XtVaSetValues(w_data->width_units, XmNmenuHistory, widget, 0);
+	XtVaSetValues(w_data->width_units, XmNmenuHistory, widget, (XtPointer) 0);
 
     /* align */
     if (e_data.align == ED_ALIGN_RIGHT) {
@@ -1422,7 +1422,7 @@ fe_color_picker_fake_cb(Widget widget, XtPointer closure, XtPointer foo_data)
 	fe_color_picker_fake_cb_lo_color.green = (color_word >> 8) & 0xff;
 	fe_color_picker_fake_cb_lo_color.blue = color_word & 0xff;
 
-	XtVaGetValues(widget, XmNbackground, &bg, 0);
+	XtVaGetValues(widget, XmNbackground, &bg, (XtPointer) 0);
 
 	my_data.reason = db_data->reason;
 	my_data.event = db_data->event;
@@ -1944,7 +1944,7 @@ fe_list_style_menu_update_cb(Widget widget, XtPointer closure,
 		fe_OptionMenuSetHistory(widget, index);
 	}
 
-	XtVaSetValues(XmOptionButtonGadget(widget), XmNsensitive, enabled, 0);
+	XtVaSetValues(XmOptionButtonGadget(widget), XmNsensitive, enabled, (XtPointer) 0);
 }
 
 static void
@@ -1987,12 +1987,12 @@ fe_bullet_style_menu_update_cb(Widget widget, XtPointer closure,
 		}
 
 		if (enabled) {
-			XtVaSetValues(cascade, XmNsubMenuId, pulldown, 0);
+			XtVaSetValues(cascade, XmNsubMenuId, pulldown, (XtPointer) 0);
 			fe_OptionMenuSetHistory(widget, index);
 		}
 	}
 
-	XtVaSetValues(cascade, XmNsensitive, enabled, 0);
+	XtVaSetValues(cascade, XmNsensitive, enabled, (XtPointer) 0);
 }
 
 static void
@@ -2641,7 +2641,7 @@ fe_link_text_update_cb(Widget widget, XtPointer closure, XtPointer call_data)
 	 */
 	label_string = XP_GetString(id);
 	xm_string = XmStringCreateLocalized(label_string);
-	XtVaSetValues(w_data->displayed_label, XmNlabelString, xm_string, 0);
+	XtVaSetValues(w_data->displayed_label, XmNlabelString, xm_string, (XtPointer) 0);
 	XmStringFree(xm_string);
 
 	if (free_text)
@@ -3055,7 +3055,7 @@ fe_link_properties_list_update(fe_EditorLinkPropertiesWidgets* w_data,
 
 	fuck = XP_GetString(id);
 	xm_string = XmStringCreateLocalized(fuck);
-	XtVaSetValues(w_data->target_label, XmNlabelString, xm_string, 0);
+	XtVaSetValues(w_data->target_label, XmNlabelString, xm_string, (XtPointer) 0);
 	XmStringFree(xm_string);
 	
 	w_data->target_list_data = list_data;
@@ -3214,7 +3214,7 @@ fe_make_link_page(
 
   int i;
 
-  XtVaGetValues(parent, XmNbackground, &parent_bg, 0);
+  XtVaGetValues(parent, XmNbackground, &parent_bg, (XtPointer) 0);
 
 #if 0
   ac = 0;
@@ -4082,8 +4082,8 @@ fe_make_character_page(
 	 *    Set the swatch to be same height as label, and width as
 	 *    choose button.
 	 */
-	XtVaGetValues(color_label, XmNheight, &height, 0);
-	XtVaGetValues(color_choose, XmNwidth, &width, 0);
+	XtVaGetValues(color_label, XmNheight, &height, (XtPointer) 0);
+	XtVaGetValues(color_choose, XmNwidth, &width, (XtPointer) 0);
 	n = 0;
 	XtSetArg(args[n], XmNwidth, width); n++;
 	XtSetArg(args[n], XmNheight, height); n++;
@@ -4556,7 +4556,7 @@ fe_image_original_size_update_cb(Widget widget,
 		(fe_EditorImagePropertiesWidgets*)closure;
 	Boolean enabled =  (w_data->existing_image) && !(w_data->new_image);
 		
-	XtVaSetValues(widget, XmNsensitive, enabled, 0);
+	XtVaSetValues(widget, XmNsensitive, enabled, (XtPointer) 0);
 }
 
 static void
@@ -4667,7 +4667,7 @@ fe_image_edit_image_update_cb(Widget widget,
 		(fe_EditorImagePropertiesWidgets*)closure;
 	Boolean sensitive = XmTextFieldGetLastPosition(w_data->main_image) != 0;
 
-	XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+	XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 static void
@@ -5496,7 +5496,7 @@ fe_EditorPropertiesDialogDo(MWContext* context,
 	 *    very busy.
 	 */
 	apply_button = XmSelectionBoxGetChild(dialog, XmDIALOG_APPLY_BUTTON);
-	XtVaSetValues(apply_button, XmNsensitive, FALSE, 0);
+	XtVaSetValues(apply_button, XmNsensitive, FALSE, (XtPointer) 0);
 	apply_sensitized = FALSE;
 	properties.changed = 0;
 
@@ -5532,12 +5532,12 @@ fe_EditorPropertiesDialogDo(MWContext* context,
 		
 		if (new_image_override) {
 			if (apply_sensitized == TRUE) {
-				XtVaSetValues(apply_button, XmNsensitive, FALSE, 0);
+				XtVaSetValues(apply_button, XmNsensitive, FALSE, (XtPointer) 0);
 				apply_sensitized = TRUE;
 			}
 		} else {
 			if (apply_sensitized == FALSE && properties.changed != 0) {
-				XtVaSetValues(apply_button, XmNsensitive, TRUE, 0);
+				XtVaSetValues(apply_button, XmNsensitive, TRUE, (XtPointer) 0);
 				apply_sensitized = TRUE;
 			}
 		}
@@ -5565,7 +5565,7 @@ fe_EditorPropertiesDialogDo(MWContext* context,
 
 			if (done == XmDIALOG_APPLY_BUTTON) {
 				properties.changed = 0;
-				XtVaSetValues(apply_button, XmNsensitive, FALSE, 0);
+				XtVaSetValues(apply_button, XmNsensitive, FALSE, (XtPointer) 0);
 				apply_sensitized = FALSE;
 				done = XmDIALOG_NONE; /* keep looping */
 			}
@@ -5611,9 +5611,9 @@ fe_GetBiggestWidget(Boolean horizontal, Widget* widgets, Cardinal n)
 		widget = widgets[i];
 
 		if (horizontal) {
-			XtVaGetValues(widget, XmNwidth, &width, 0);
+			XtVaGetValues(widget, XmNwidth, &width, (XtPointer) 0);
 		} else {
-			XtVaGetValues(widget, XmNheight, &width, 0);
+			XtVaGetValues(widget, XmNheight, &width, (XtPointer) 0);
 		}
 		if (width > max_width) {
 			max_width = width;
@@ -5764,7 +5764,7 @@ fe_PreviewPanelSetColors(Widget widget,
 	XtVaGetValues(widget,
 				  XmNchildren, &children,
 				  XmNnumChildren, &num_children,
-				  0);
+				  (XtPointer) 0);
 
 	if ((mask & DOCUMENT_USE_CUSTOM_MASK) != 0)
 	    mask = ~0; /* do everything */
@@ -5777,7 +5777,7 @@ fe_PreviewPanelSetColors(Widget widget,
 							color->green,
 							color->blue);
 
-		XtVaSetValues(widget, XmNbackground, bg_pixel, 0);
+		XtVaSetValues(widget, XmNbackground, bg_pixel, (XtPointer) 0);
 		set_bg = TRUE;
 	}
 
@@ -5981,7 +5981,7 @@ fe_PreviewPanelSetColors(Widget widget,
 		if (pixel != stuff->bg_pixel) {
 			stuff->bg_pixel = pixel;
 			/* this will generate an expose event -> cb */
-			XtVaSetValues(widget, XmNbackground, stuff->bg_pixel, 0);
+			XtVaSetValues(widget, XmNbackground, stuff->bg_pixel, (XtPointer) 0);
 			set_bg = TRUE;
 		}
 	}
@@ -6081,7 +6081,7 @@ fe_PreviewPanelCreate(Widget parent, char* name, Arg* p_args, Cardinal p_n)
 				  XmNbackground, &bg,
 				  XmNheight, &stuff->height,
 				  XmNwidth, &stuff->width,
-				  0);
+				  (XtPointer) 0);
 
 	stuff->bg_pixel = bg;
 
@@ -6119,7 +6119,7 @@ fe_PreviewPanelCreate(Widget parent, char* name, Arg* p_args, Cardinal p_n)
 					  stuff->shadow_thickness + stuff->margin_width);
 	if (stuff->width < max_width) {
 		stuff->width = max_width;
-		XtVaSetValues(drawing_area, XmNwidth, stuff->width, 0);
+		XtVaSetValues(drawing_area, XmNwidth, stuff->width, (XtPointer) 0);
 	}
 
 	total_height += (2 * stuff->highlight_thickness) +
@@ -6127,7 +6127,7 @@ fe_PreviewPanelCreate(Widget parent, char* name, Arg* p_args, Cardinal p_n)
 		            (3 * stuff->spacing);
 	if (stuff->height < total_height) {
 		stuff->height = total_height;
-		XtVaSetValues(drawing_area, XmNheight, stuff->height, 0);
+		XtVaSetValues(drawing_area, XmNheight, stuff->height, (XtPointer) 0);
 	}
 
 	XtAddCallback(drawing_area, XmNexposeCallback, fe_preview_panel_expose_cb,
@@ -6266,7 +6266,7 @@ fe_preview_panel_click_cb(Widget widget, XtPointer closure, XtPointer cb)
 
 		unsigned y = cb_data->event->xbutton.y;
 
-		XtVaGetValues(widget, XmNheight, &height, 0);
+		XtVaGetValues(widget, XmNheight, &height, (XtPointer) 0);
 
 		for (; (height % 4) != 0; height++)
 			;
@@ -6349,7 +6349,7 @@ fe_document_appearance_sensitized_update_cb(Widget widget, XtPointer closure,
 	
 	sensitive = w_data->use_custom;
 
-	XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+	XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 static void
@@ -6402,7 +6402,7 @@ fe_document_appearance_use_image_button_update_cb(Widget widget,
 	  = (fe_EditorDocumentAppearancePropertiesStruct*)closure;
 	Boolean sensitive = w_data->use_image;
 
-	XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+	XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 static void
@@ -6537,8 +6537,8 @@ fe_get_offset_from_widest(Widget* children, Cardinal nchildren)
 	Dimension margin_width;
 
 	Widget fat_guy = fe_GetBiggestWidget(TRUE, children, nchildren);
-	XtVaGetValues(fat_guy, XmNwidth, &width, 0);
-	XtVaGetValues(XtParent(fat_guy), XmNmarginWidth, &margin_width, 0);
+	XtVaGetValues(fat_guy, XmNwidth, &width, (XtPointer) 0);
+	XtVaGetValues(XtParent(fat_guy), XmNmarginWidth, &margin_width, (XtPointer) 0);
 
 	return width + margin_width;
 }
@@ -6726,7 +6726,7 @@ fe_document_appearance_create(
 	XtManageChildren(children, nchildren);
 
 	fat_guy = fe_GetBiggestWidget(TRUE, children, nchildren);
-	XtVaGetValues(fat_guy, XmNwidth, &width, 0);
+	XtVaGetValues(fat_guy, XmNwidth, &width, (XtPointer) 0);
 
 	/* swatches */
 	for (nswatch = DOCUMENT_NORMAL_TEXT_COLOR;
@@ -6994,16 +6994,16 @@ fe_document_general_init(MWContext* context,
 	/* set defaults */ /* <unknown> */
 	xm_string = XmStringCreateLocalized(XP_GetString(XFE_UNKNOWN));
 #ifdef EDITOR_SHOW_CREATE_DATE
-	XtVaSetValues(w_data->created, XmNlabelString, xm_string, 0);
-	XtVaSetValues(w_data->updated, XmNlabelString, xm_string, 0);
+	XtVaSetValues(w_data->created, XmNlabelString, xm_string, (XtPointer) 0);
+	XtVaSetValues(w_data->updated, XmNlabelString, xm_string, (XtPointer) 0);
 #endif /*EDITOR_SHOW_CREATE_DATE*/
-	XtVaSetValues(w_data->location, XmNlabelString, xm_string, 0);
+	XtVaSetValues(w_data->location, XmNlabelString, xm_string, (XtPointer) 0);
 	XmStringFree(xm_string);
 
 	/* get the location */
 	fe_EditorMakeName(context, buf, sizeof(buf));
 	xm_string = XmStringCreateLocalized(buf);
-	XtVaSetValues(w_data->location, XmNlabelString, xm_string, 0);
+	XtVaSetValues(w_data->location, XmNlabelString, xm_string, (XtPointer) 0);
 	XmStringFree(xm_string);
 
 	/* get the title */
@@ -7030,14 +7030,14 @@ fe_document_general_init(MWContext* context,
 	/* get the created */
 	if ((value = fe_EditorDocumentGetMetaData(context, "Created"))) {
 		xm_string = XmStringCreateLocalized(value);
-		XtVaSetValues(w_data->created, XmNlabelString, xm_string, 0);
+		XtVaSetValues(w_data->created, XmNlabelString, xm_string, (XtPointer) 0);
 		XmStringFree(xm_string);
 	}
 
 	/* get the updated */
 	if ((value = fe_EditorDocumentGetMetaData(context, "Last-Modified"))) {
 		xm_string = XmStringCreateLocalized(value);
-		XtVaSetValues(w_data->updated, XmNlabelString, xm_string, 0);
+		XtVaSetValues(w_data->updated, XmNlabelString, xm_string, (XtPointer) 0);
 		XmStringFree(xm_string);
 	}
 #endif /*EDITOR_SHOW_CREATE_DATE*/
@@ -7497,7 +7497,7 @@ fe_document_advanced_list_update_cb(Widget widget, XtPointer closure,
 	Pixel    parent_bg;
 	Pixel    select_bg;
 
-	XtVaGetValues(XtParent(widget), XmNbackground, &parent_bg, 0);
+	XtVaGetValues(XtParent(widget), XmNbackground, &parent_bg, (XtPointer) 0);
 
 	XmGetColors(XtScreen(widget), fe_cmap(w_data->context),
 				parent_bg, NULL, NULL, NULL, &select_bg);
@@ -7520,9 +7520,9 @@ fe_document_advanced_list_update_cb(Widget widget, XtPointer closure,
 	}
 
 	if (w_data->active_list == my_list)
-		XtVaSetValues(widget, XmNbackground, select_bg, 0);
+		XtVaSetValues(widget, XmNbackground, select_bg, (XtPointer) 0);
 	else
-		XtVaSetValues(widget, XmNbackground, parent_bg, 0);
+		XtVaSetValues(widget, XmNbackground, parent_bg, (XtPointer) 0);
 }
 
 static void
@@ -7558,7 +7558,7 @@ fe_document_advanced_name_update_cb(Widget widget, XtPointer closure,
 	if (w_data->item_is_new) {
 		fe_TextFieldSetString(widget, "", FALSE);
 	    fe_TextFieldSetEditable(w_data->context, widget, TRUE);
-		XtVaSetValues(XtParent(widget), XmNinitialFocus, widget, 0);
+		XtVaSetValues(XtParent(widget), XmNinitialFocus, widget, (XtPointer) 0);
 	} else {
 		fe_NameValueItemList* active_list = w_data->active_list;
   	    if (active_list != NULL &&
@@ -7634,7 +7634,7 @@ fe_document_advanced_new_update_cb(Widget widget, XtPointer closure,
 	  (fe_EditorDocumentAdvancedPropertiesStruct*)closure;
 	Boolean sensitive = (w_data->item_is_new == FALSE);
 	
-	XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+	XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 #endif
 
@@ -7734,7 +7734,7 @@ fe_document_advanced_delete_update_cb(Widget widget, XtPointer closure,
 		(w_data->active_list != NULL) &&
 		(w_data->active_list->selected_item != NOTHING_SELECTED);
 	
-	XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+	XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 static void
@@ -7779,7 +7779,7 @@ fe_document_advanced_set_update_cb(Widget widget, XtPointer closure,
 	  (fe_EditorDocumentAdvancedPropertiesStruct*)closure;
 	Boolean sensitive = (w_data->item_is_dirty);
 	
-	XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+	XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 static void
@@ -7977,9 +7977,9 @@ fe_document_advanced_create(
 	children[nchildren++] = name_set;
 	fat_guy = fe_GetBiggestWidget(TRUE, children, nchildren);
 
-	XtVaGetValues(fat_guy, XmNwidth, &width, 0);
+	XtVaGetValues(fat_guy, XmNwidth, &width, (XtPointer) 0);
 	for (n = 0; n < nchildren; n++) {
-		XtVaSetValues(children[n], XmNwidth, width, 0);
+		XtVaSetValues(children[n], XmNwidth, width, (XtPointer) 0);
 	}
 
 	XtAddCallback(system_list, XmNsingleSelectionCallback,
@@ -8181,7 +8181,7 @@ fe_EditorDocumentPropertiesDialogDo(MWContext* context,
 	 *    very busy.
 	 */
 	apply_button = XmSelectionBoxGetChild(dialog, XmDIALOG_APPLY_BUTTON);
-	XtVaSetValues(apply_button, XmNsensitive, FALSE, 0);
+	XtVaSetValues(apply_button, XmNsensitive, FALSE, (XtPointer) 0);
 	apply_sensitized = FALSE;
 
     /*
@@ -8208,7 +8208,7 @@ fe_EditorDocumentPropertiesDialogDo(MWContext* context,
 (appearance.changed != 0 || general.changed != 0 || advanced.changed != 0)
 
 		if (SOMETHING_CHANGED() && apply_sensitized == FALSE) {
-			XtVaSetValues(apply_button, XmNsensitive, TRUE, 0);
+			XtVaSetValues(apply_button, XmNsensitive, TRUE, (XtPointer) 0);
 			apply_sensitized = TRUE;
 		}
 
@@ -8238,7 +8238,7 @@ fe_EditorDocumentPropertiesDialogDo(MWContext* context,
 			if (done == XmDIALOG_APPLY_BUTTON) {
 				done = XmDIALOG_NONE; /* keep looping */
 
-				XtVaSetValues(apply_button, XmNsensitive, FALSE, 0);
+				XtVaSetValues(apply_button, XmNsensitive, FALSE, (XtPointer) 0);
 				apply_sensitized = FALSE;
 			}
 		}
@@ -8539,11 +8539,11 @@ fe_general_preferences_create(MWContext* context, Widget parent,
 	/*
 	 *    Go back for browse callbacks
 	 */
-	XtVaSetValues(image_browse, XmNuserData, image_text, 0);
+	XtVaSetValues(image_browse, XmNuserData, image_text, (XtPointer) 0);
 	XtAddCallback(image_browse, XmNactivateCallback,
 				  fe_browse_to_text_field_cb, (XtPointer)context);
 
-	XtVaSetValues(html_browse, XmNuserData, html_text, 0);
+	XtVaSetValues(html_browse, XmNuserData, html_text, (XtPointer) 0);
 	XtAddCallback(html_browse, XmNactivateCallback,
 				  fe_browse_to_text_field_cb, (XtPointer)context);
 
@@ -9053,26 +9053,26 @@ fe_publish_preferences_create(MWContext* context, Widget parent,
     w_data->save_password = password_save; 
 #endif
 
-	XtVaSetValues(links_toggle, XmNuserData, EDITOR_PUBLISH_LINKS, 0);
+	XtVaSetValues(links_toggle, XmNuserData, EDITOR_PUBLISH_LINKS, (XtPointer) 0);
 	XtAddCallback(links_toggle, XmNvalueChangedCallback,
 				  fe_publish_page_changed, (XtPointer)w_data);
-	XtVaSetValues(images_toggle, XmNuserData, EDITOR_PUBLISH_IMAGES, 0);
+	XtVaSetValues(images_toggle, XmNuserData, EDITOR_PUBLISH_IMAGES, (XtPointer) 0);
 	XtAddCallback(images_toggle, XmNvalueChangedCallback,
 				  fe_publish_page_changed, (XtPointer)w_data);
-	XtVaSetValues(publish_text, XmNuserData, EDITOR_PUBLISH_PUBLISH, 0);
+	XtVaSetValues(publish_text, XmNuserData, EDITOR_PUBLISH_PUBLISH, (XtPointer) 0);
 	XtAddCallback(publish_text, XmNvalueChangedCallback,
 				  fe_publish_page_changed, (XtPointer)w_data);
-	XtVaSetValues(browse_text, XmNuserData, EDITOR_PUBLISH_BROWSE, 0);
+	XtVaSetValues(browse_text, XmNuserData, EDITOR_PUBLISH_BROWSE, (XtPointer) 0);
 	XtAddCallback(browse_text, XmNvalueChangedCallback,
 				  fe_publish_page_changed, (XtPointer)w_data);
-	XtVaSetValues(username_text, XmNuserData, EDITOR_PUBLISH_USERNAME, 0);
+	XtVaSetValues(username_text, XmNuserData, EDITOR_PUBLISH_USERNAME, (XtPointer) 0);
 	XtAddCallback(username_text, XmNvalueChangedCallback,
 				  fe_publish_page_changed, (XtPointer)w_data);
 
 	XtAddCallback(password_text, XmNvalueChangedCallback,
 				  fe_publish_password_changed, (XtPointer)w_data);
 #ifdef _SECURITY_BTN_ON_PREFS
-	XtVaSetValues(password_save, XmNuserData, EDITOR_PUBLISH_PASSWORD_SAVE, 0);
+	XtVaSetValues(password_save, XmNuserData, EDITOR_PUBLISH_PASSWORD_SAVE, (XtPointer) 0);
 	XtAddCallback(password_save, XmNvalueChangedCallback,
 				  fe_publish_page_changed, (XtPointer)w_data);
 #endif
@@ -9185,7 +9185,7 @@ fe_EditorPreferencesDialogDo(MWContext* context, unsigned tab_type)
 	 *    very busy.
 	 */
 	apply_button = XmSelectionBoxGetChild(dialog, XmDIALOG_APPLY_BUTTON);
-	XtVaSetValues(apply_button, XmNsensitive, FALSE, 0);
+	XtVaSetValues(apply_button, XmNsensitive, FALSE, (XtPointer) 0);
 	apply_sensitized = FALSE;
 
     /*
@@ -9212,7 +9212,7 @@ fe_EditorPreferencesDialogDo(MWContext* context, unsigned tab_type)
 (appearance.changed != 0 || general.changed != 0 || publish.changed != 0)
 
 		if (SOMETHING_CHANGED() && apply_sensitized == FALSE) {
-			XtVaSetValues(apply_button, XmNsensitive, TRUE, 0);
+			XtVaSetValues(apply_button, XmNsensitive, TRUE, (XtPointer) 0);
 			apply_sensitized = TRUE;
 		}
 
@@ -9259,7 +9259,7 @@ fe_EditorPreferencesDialogDo(MWContext* context, unsigned tab_type)
 			if (done == XmDIALOG_APPLY_BUTTON) {
 				done = XmDIALOG_NONE; /* keep looping */
 
-				XtVaSetValues(apply_button, XmNsensitive, FALSE, 0);
+				XtVaSetValues(apply_button, XmNsensitive, FALSE, (XtPointer) 0);
 				apply_sensitized = FALSE;
 			}
 		}
@@ -9804,7 +9804,7 @@ fe_CreateSimpleOptionMenu(Widget parent, char* name, Arg* p_args, Cardinal p_n)
 	fe_UnmanageChild_safe(XmOptionLabelGadget(option_menu));
 
 	if (history_widget)
-		XtVaSetValues(option_menu, XmNmenuHistory, history_widget, 0);
+		XtVaSetValues(option_menu, XmNmenuHistory, history_widget, (XtPointer) 0);
 
 	return option_menu;
 }
@@ -9878,7 +9878,7 @@ fe_SimpleRadioGroupSetWhich(Widget widget, unsigned which)
 
 	XtVaGetValues(widget,
 				  XmNchildren, &children,
-				  XmNnumChildren, &num_children, 0);
+				  XmNnumChildren, &num_children, (XtPointer) 0);
 
 	if (which < num_children) {
 
@@ -9897,10 +9897,10 @@ fe_SimpleRadioGroupSetSensitive(Widget widget, Boolean sensitive)
 
 	XtVaGetValues(widget,
 				  XmNchildren, &children,
-				  XmNnumChildren, &num_children, 0);
+				  XmNnumChildren, &num_children, (XtPointer) 0);
 
 	for (i = 0; i < num_children; i++) {
-		XtVaSetValues(children[i], XmNsensitive, sensitive, 0);
+		XtVaSetValues(children[i], XmNsensitive, sensitive, (XtPointer) 0);
 	}
 }
 
@@ -9913,7 +9913,7 @@ fe_SimpleRadioGroupGetWhich(Widget widget)
 
 	XtVaGetValues(widget,
 				  XmNchildren, &children,
-				  XmNnumChildren, &num_children, 0);
+				  XmNnumChildren, &num_children, (XtPointer) 0);
 
 	for (i = 0; i < num_children; i++) {
 		if (XmToggleButtonGadgetGetState(children[i]) == TRUE)
@@ -9930,7 +9930,7 @@ fe_SimpleRadioGroupGetChild(Widget widget, unsigned n)
 
 	XtVaGetValues(widget,
 				  XmNchildren, &children,
-				  XmNnumChildren, &num_children, 0);
+				  XmNnumChildren, &num_children, (XtPointer) 0);
 
 	if (n < num_children)
 		return children[n];
@@ -10067,7 +10067,7 @@ fe_table_percent_label_set(Widget widget, Boolean nested)
 	
 	xm_string = XmStringCreateLocalized(string);
 
-	XtVaSetValues(widget, XmNlabelString, xm_string, 0);
+	XtVaSetValues(widget, XmNlabelString, xm_string, (XtPointer) 0);
 	
 	XmStringFree(xm_string);
 }
@@ -10243,7 +10243,7 @@ fe_tables_table_properties_create(MWContext* context, Widget parent,
 	height_text = fe_CreateTextField(form, "tableHeightText", args, n);
 	children[nchildren++] = height_text;
 
-	XtVaGetValues(line_width_text, XmNheight, &height, 0);
+	XtVaGetValues(line_width_text, XmNheight, &height, (XtPointer) 0);
 	
 	n = 0;
 	XtSetArg(args[n], XmNheight, height); n++;
@@ -10773,7 +10773,7 @@ fe_cancel_button_set_cancel(Widget widget, Boolean can_cancel)
 	  string = name;
 	xm_string = XmStringCreateLocalized(string);
 
-	XtVaSetValues(widget, XmNlabelString, xm_string, 0);
+	XtVaSetValues(widget, XmNlabelString, xm_string, (XtPointer) 0);
 
 	XmStringFree(xm_string);
 }
@@ -10807,7 +10807,7 @@ fe_EditorTableCreateDialogDo(MWContext* context)
 	XtAddCallback(form, XmNdestroyCallback, fe_hrule_destroy_cb, &done);
 
 	apply_button = XmSelectionBoxGetChild(form, XmDIALOG_APPLY_BUTTON);
-	XtVaSetValues(apply_button, XmNsensitive, FALSE, 0);
+	XtVaSetValues(apply_button, XmNsensitive, FALSE, (XtPointer) 0);
 	cancel_button = XmSelectionBoxGetChild(form, XmDIALOG_CANCEL_BUTTON);
 	fe_cancel_button_set_cancel(cancel_button, TRUE);
 
@@ -10902,7 +10902,7 @@ fe_tables_row_properties_init(MWContext* context,
 								   NULL);
 	}
 	XmToggleButtonGadgetSetState(w_data->color_toggle, has_color, FALSE);
-	XtVaSetValues(w_data->color_toggle, XmNsensitive, enabled, 0);
+	XtVaSetValues(w_data->color_toggle, XmNsensitive, enabled, (XtPointer) 0);
 	
 	fe_SwatchSetColor(w_data->color_swatch, &w_data->color_value);
 	fe_SwatchSetSensitive(w_data->color_swatch, has_color);
@@ -11164,7 +11164,7 @@ fe_cell_toggle_cb(Widget widget, XtPointer closure, XtPointer cb_data)
 
 	XtVaGetValues(XtParent(widget),
 				  XmNchildren, &children,
-				  XmNnumChildren, &num_children, 0);
+				  XmNnumChildren, &num_children, (XtPointer) 0);
 
 	for (i = 0; i < num_children; i++) {
 	    if (children[i] == first) {
@@ -11185,7 +11185,7 @@ fe_cell_toggle_cb(Widget widget, XtPointer closure, XtPointer cb_data)
 	    fe_TextFieldSetEditable(context, group[i+3], enabled);
 		fe_SimpleRadioGroupSetSensitive(group[i+6], enabled);
 	} else if (i == 2) { /* color */
-	    XtVaSetValues(group[i+3], XmNsensitive, enabled, 0);
+	    XtVaSetValues(group[i+3], XmNsensitive, enabled, (XtPointer) 0);
 	}
 }
 
@@ -11346,7 +11346,7 @@ fe_tables_cell_properties_create(MWContext* context, Widget parent,
 	children[nchildren++] = height_text;
 
 	/* make color swatch match heght of text dudes */
-	XtVaGetValues(height_text, XmNheight, &height, 0);
+	XtVaGetValues(height_text, XmNheight, &height, (XtPointer) 0);
 
 	n = 0;
 	XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -11481,16 +11481,16 @@ fe_tables_cell_properties_init(MWContext* context,
 
 	XmToggleButtonGadgetSetState(w_data->header_style, cell_data.bHeader,
 								 FALSE);
-	XtVaSetValues(w_data->header_style, XmNsensitive, enabled, 0);
+	XtVaSetValues(w_data->header_style, XmNsensitive, enabled, (XtPointer) 0);
 	XmToggleButtonGadgetSetState(w_data->wrap_text, cell_data.bNoWrap, FALSE);
-	XtVaSetValues(w_data->wrap_text, XmNsensitive, enabled, 0);
+	XtVaSetValues(w_data->wrap_text, XmNsensitive, enabled, (XtPointer) 0);
 
 	fe_table_tbr_set(context, w_data->width_toggle,
 					 w_data->width_text, w_data->width_units,
 					 cell_data.bWidthDefined,
 					 cell_data.iWidth,
 					 (cell_data.bWidthPercent));
-	XtVaSetValues(w_data->width_toggle, XmNsensitive, enabled, 0);
+	XtVaSetValues(w_data->width_toggle, XmNsensitive, enabled, (XtPointer) 0);
 
 	widget = fe_SimpleRadioGroupGetChild(w_data->width_units, 1);
 	fe_table_percent_label_set(widget, is_nested);
@@ -11500,7 +11500,7 @@ fe_tables_cell_properties_init(MWContext* context,
 					 cell_data.bHeightDefined,
 					 cell_data.iHeight,
 					 (cell_data.bHeightPercent));
-	XtVaSetValues(w_data->height_toggle, XmNsensitive, enabled, 0);
+	XtVaSetValues(w_data->height_toggle, XmNsensitive, enabled, (XtPointer) 0);
 
 	widget = fe_SimpleRadioGroupGetChild(w_data->height_units, 1);
 	fe_table_percent_label_set(widget, is_nested);
@@ -11518,7 +11518,7 @@ fe_tables_cell_properties_init(MWContext* context,
 								   NULL);
 	}
 	XmToggleButtonGadgetSetState(w_data->color_toggle, has_color, FALSE);
-	XtVaSetValues(w_data->color_toggle, XmNsensitive, enabled, 0);
+	XtVaSetValues(w_data->color_toggle, XmNsensitive, enabled, (XtPointer) 0);
 	
 	fe_SwatchSetColor(w_data->color_swatch, &w_data->color_value);
 	fe_SwatchSetSensitive(w_data->color_swatch, has_color);
@@ -11825,8 +11825,8 @@ fe_publish_set_include_all_files(fe_PublishDialogStruct* w_data)
 
 	XmToggleButtonGadgetSetState(w_data->local_include_images, FALSE, FALSE);
 	XmToggleButtonGadgetSetState(w_data->local_include_files, TRUE, FALSE);
-	XtVaSetValues(w_data->local_select_all, XmNsensitive, TRUE, 0);
-	XtVaSetValues(w_data->local_select_none, XmNsensitive, TRUE, 0);
+	XtVaSetValues(w_data->local_select_all, XmNsensitive, TRUE, (XtPointer) 0);
+	XtVaSetValues(w_data->local_select_none, XmNsensitive, TRUE, (XtPointer) 0);
 }
 
 static void
@@ -11874,12 +11874,12 @@ fe_publish_set_include_image_files(fe_PublishDialogStruct* w_data)
 	/*
 	 *    Gray out if there are no images in doc.
 	 */
-	XtVaSetValues(w_data->local_include_images, XmNsensitive, (n > 0), 0);
+	XtVaSetValues(w_data->local_include_images, XmNsensitive, (n > 0), (XtPointer) 0);
 
 	XmToggleButtonGadgetSetState(w_data->local_include_images, TRUE, FALSE);
 	XmToggleButtonGadgetSetState(w_data->local_include_files, FALSE, FALSE);
-	XtVaSetValues(w_data->local_select_all, XmNsensitive, TRUE, 0);
-	XtVaSetValues(w_data->local_select_none, XmNsensitive, TRUE, 0);
+	XtVaSetValues(w_data->local_select_all, XmNsensitive, TRUE, (XtPointer) 0);
+	XtVaSetValues(w_data->local_select_none, XmNsensitive, TRUE, (XtPointer) 0);
 }
 
 static void
@@ -11888,7 +11888,7 @@ fe_publish_include_select_all(fe_PublishDialogStruct* w_data)
 	unsigned n;
 	unsigned nitems;
 
-	XtVaGetValues(w_data->local_list, XmNitemCount, &nitems, 0);
+	XtVaGetValues(w_data->local_list, XmNitemCount, &nitems, (XtPointer) 0);
 
 	for (n = 0; n < nitems; n++)
 	    XmListSelectPos(w_data->local_list, n+1, FALSE);
@@ -11959,10 +11959,10 @@ fe_publish_use_default_cb(Widget widget, XtPointer closure,
 								  FALSE);
 			memset(password, 0, strlen(password));
 			XP_FREE(password);
-			XtVaSetValues(w_data->publish_save_password, XmNset, TRUE, 0);
+			XtVaSetValues(w_data->publish_save_password, XmNset, TRUE, (XtPointer) 0);
 		} else {
 		    fe_TextFieldSetString(w_data->publish_password_text, "", FALSE);
-			XtVaSetValues(w_data->publish_save_password, XmNset, FALSE, 0);
+			XtVaSetValues(w_data->publish_save_password, XmNset, FALSE, (XtPointer) 0);
 		}
 	}
 }
@@ -11996,7 +11996,7 @@ fe_publish_dialog_init(MWContext* context, fe_PublishDialogStruct* w_data)
 			xm_string = XmStringCreateLtoR
 					(buf,XmFONTLIST_DEFAULT_TAG);
 			XtVaSetValues(w_data->local_publish_info,
-						  XmNlabelString, xm_string, 0);
+						  XmNlabelString, xm_string, (XtPointer) 0);
 			XmStringFree(xm_string);
 
 			p = strrchr(local_filename, '/'); /* find last slash */
@@ -12060,8 +12060,8 @@ fe_publish_dialog_init(MWContext* context, fe_PublishDialogStruct* w_data)
 		XP_FREE(password);
 	}
 	
-	XtVaSetValues(w_data->publish_use_default, XmNsensitive, has_default, 0);
-	XtVaSetValues(w_data->publish_save_password, XmNset, save_password, 0);
+	XtVaSetValues(w_data->publish_use_default, XmNsensitive, has_default, (XtPointer) 0);
+	XtVaSetValues(w_data->publish_save_password, XmNset, save_password, (XtPointer) 0);
 	
 	/*FIXME*/
 	/*
@@ -12179,7 +12179,7 @@ fe_publish_dialog_set(MWContext* context, fe_PublishDialogStruct* w_data)
 	/*
 	 *    Save the location for next time.
 	 */
-	XtVaGetValues(w_data->publish_save_password, XmNset, &save_password, 0);
+	XtVaGetValues(w_data->publish_save_password, XmNset, &save_password, (XtPointer) 0);
 
 	fe_EditorDefaultSetLastPublishLocation(context,
 										   target_directory,
@@ -12286,7 +12286,7 @@ fe_publish_dialog_create(MWContext* context, Widget parent,
 	left_offset = fe_get_offset_from_widest(children, nchildren);
 
 	fat_guy = fe_GetBiggestWidget(TRUE, &children[nchildren-2], 2);
-	XtVaGetValues(fat_guy, XmNwidth, &width, 0);
+	XtVaGetValues(fat_guy, XmNwidth, &width, (XtPointer) 0);
 
 	n = 0;
 	XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
@@ -12657,7 +12657,7 @@ fe_YesNoCancelDialog(MWContext* context, char* name, char* message)
 	XmString xm_message;
 
 	XtVaGetValues(mainw, XtNvisual, &v, XtNcolormap, &cmap,
-				  XtNdepth, &depth, 0);
+				  XtNdepth, &depth, (XtPointer) 0);
 
 	xm_message = XmStringCreateLtoR(message,XmFONTLIST_DEFAULT_TAG);
 	n = 0;
@@ -12711,7 +12711,7 @@ static void
 fe_clear_text_cb (Widget widget, XtPointer closure, XtPointer call_data)
 {
   Widget text = (Widget) closure;
-  XtVaSetValues (text, XmNvalue, "", 0);
+  XtVaSetValues (text, XmNvalue, "", (XtPointer) 0);
   /* Focus on the text widget after this, since otherwise you have to
      click again. */
   XmProcessTraversal (text, XmTRAVERSE_CURRENT);
@@ -12833,9 +12833,9 @@ fe_EditorOpenURLDialog(MWContext* context)
 	data->in_browser = in_browser;
 
 	if (context->type == MWContextEditor)
-		XtVaSetValues(dialog, XmNdefaultButton, in_editor, 0);
+		XtVaSetValues(dialog, XmNdefaultButton, in_editor, (XtPointer) 0);
 	else
-		XtVaSetValues(dialog, XmNdefaultButton, in_browser, 0);
+		XtVaSetValues(dialog, XmNdefaultButton, in_browser, (XtPointer) 0);
 
 	XtAddCallback(in_editor, XmNactivateCallback, fe_open_url_cb, data);
 	XtAddCallback(in_browser, XmNactivateCallback, fe_open_url_cb, data);
@@ -12864,7 +12864,7 @@ fe_HintDialog(MWContext* context, char* message)
 	Boolean  return_value;
 
 	XtVaGetValues(mainw, XtNvisual, &v, XtNcolormap, &cmap,
-				  XtNdepth, &depth, 0);
+				  XtNdepth, &depth, (XtPointer) 0);
 
 	xm_message = XmStringCreateLocalized(message);
 

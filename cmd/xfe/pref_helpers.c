@@ -552,9 +552,9 @@ fe_helpers_plugin_selected(struct fe_prefs_helpers_data *fep, char *pluginName)
 						  mimetype, desc?desc:"", ext?ext:"");
 		if (FE_Confirm(fep->context, buf)) {
 		  XtVaSetValues(fep->mime_types_desc_text, XmNcursorPosition, 0,
-						XmNvalue, desc, 0);
+						XmNvalue, desc, (XtPointer) 0);
 		  XtVaSetValues(fep->mime_types_suffix_text, XmNcursorPosition, 0,
-						XmNvalue, ext, 0);
+						XmNvalue, ext, (XtPointer) 0);
 		}
 		if (buf) XP_FREE(buf);
 	  }
@@ -575,7 +575,7 @@ fe_helpers_plugin_sel_cb(Widget widget, XtPointer closure, XtPointer call_data)
 
 	if (!XmToggleButtonGetState(fep->plugin_b)) return;
 
-	XtVaGetValues(widget, XmNuserData, &n, 0);
+	XtVaGetValues(widget, XmNuserData, &n, (XtPointer) 0);
 	pluginName = fep->plugins[n];
 	fe_helpers_plugin_selected(fep, pluginName);
 }
@@ -601,7 +601,7 @@ fe_helpers_build_plugin_list(struct fe_prefs_helpers_data *fep,
 	  int nkids = 0;
 	  Widget *kids;
 	  XtVaGetValues(fep->plugin_pulldown, XmNchildren, &kids,
-					XmNnumChildren, &nkids, 0);
+					XmNnumChildren, &nkids, (XtPointer) 0);
 	  if (nkids > 0) {
 		/* Conditions for not destroy are
 		 *	1. If we didn't have plugins previously and dont have any now
@@ -644,15 +644,15 @@ fe_helpers_build_plugin_list(struct fe_prefs_helpers_data *fep,
 										 av, ac);
 	  fe_SetString(button, XmNlabelString, XP_GetString(XFE_NO_PLUGINS));
 	  XtManageChild(button);
-	  XtVaSetValues(fep->plugin_option, XmNsensitive, False, 0);
-	  XtVaSetValues(fep->plugin_b, XmNsensitive, False, 0);
+	  XtVaSetValues(fep->plugin_option, XmNsensitive, False, (XtPointer) 0);
+	  XtVaSetValues(fep->plugin_b, XmNsensitive, False, (XtPointer) 0);
 	  current = button;
 	}
 	else {
-	  XtVaSetValues(fep->plugin_b, XmNsensitive, True, 0);
+	  XtVaSetValues(fep->plugin_b, XmNsensitive, True, (XtPointer) 0);
 	  if (!current) current = button;
 	}
-	XtVaSetValues(fep->plugin_option, XmNmenuHistory, current, 0);	
+	XtVaSetValues(fep->plugin_option, XmNmenuHistory, current, (XtPointer) 0);
 }
 
 static void
@@ -821,8 +821,8 @@ fe_helpers_build_handle(struct fe_prefs_helpers_data *fep)
 		Widget w;
 		char *value;
 		int n = 0;
-		XtVaGetValues(fep->plugin_option, XmNmenuHistory, &w, 0);
-		XtVaGetValues(w, XmNuserData, &n, 0);
+		XtVaGetValues(fep->plugin_option, XmNmenuHistory, &w, (XtPointer) 0);
+		XtVaGetValues(w, XmNuserData, &n, (XtPointer) 0);
 		value = PR_smprintf("%s%s", NET_COMMAND_PLUGIN,
 							fep->plugins[n]);
 		fe_helpers_update_mailcap_entry(fep->cd->ci.type, old_md, value);
@@ -1600,15 +1600,15 @@ fe_helpers_verify_toggle_cb( Widget widget, XtPointer closure,
  
 	if (!cb->set)
 	  {
-		XtVaSetValues (widget, XmNset, True, 0);
+		XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
 	  }
 	else if (widget == fep->navigator_b)
 	  {
-		XtVaSetValues (fep->plugin_b, XmNset, False, 0);
-		XtVaSetValues (fep->app_b, XmNset, False, 0);
-		XtVaSetValues (fep->save_b, XmNset, False, 0);
-		XtVaSetValues (fep->app_text, XmNsensitive, False, 0);
-		XtVaSetValues (fep->unknown_b, XmNset, False, 0);
+		XtVaSetValues (fep->plugin_b, XmNset, False, (XtPointer) 0);
+		XtVaSetValues (fep->app_b, XmNset, False, (XtPointer) 0);
+		XtVaSetValues (fep->save_b, XmNset, False, (XtPointer) 0);
+		XtVaSetValues (fep->app_text, XmNsensitive, False, (XtPointer) 0);
+		XtVaSetValues (fep->unknown_b, XmNset, False, (XtPointer) 0);
 	  }
 	else if (widget == fep->plugin_b)
 	  {
@@ -1616,40 +1616,40 @@ fe_helpers_verify_toggle_cb( Widget widget, XtPointer closure,
 		int n;
 		char *pluginName;
 
-		XtVaGetValues(fep->plugin_option, XmNmenuHistory, &w, 0);
-		XtVaGetValues(w, XmNuserData, &n, 0);
+		XtVaGetValues(fep->plugin_option, XmNmenuHistory, &w, (XtPointer) 0);
+		XtVaGetValues(w, XmNuserData, &n, (XtPointer) 0);
 		pluginName = fep->plugins[n];
 		fe_helpers_plugin_selected(fep, pluginName);
 
-		XtVaSetValues (fep->navigator_b, XmNset, False, 0);
-		XtVaSetValues (fep->app_b, XmNset, False, 0);
-		XtVaSetValues (fep->save_b, XmNset, False, 0);
-		XtVaSetValues (fep->app_text, XmNsensitive, False, 0);
-		XtVaSetValues (fep->unknown_b, XmNset, False, 0);
+		XtVaSetValues (fep->navigator_b, XmNset, False, (XtPointer) 0);
+		XtVaSetValues (fep->app_b, XmNset, False, (XtPointer) 0);
+		XtVaSetValues (fep->save_b, XmNset, False, (XtPointer) 0);
+		XtVaSetValues (fep->app_text, XmNsensitive, False, (XtPointer) 0);
+		XtVaSetValues (fep->unknown_b, XmNset, False, (XtPointer) 0);
 	  }
 	else if (widget == fep->app_b)
 	  {
-		XtVaSetValues (fep->navigator_b, XmNset, False, 0);
-		XtVaSetValues (fep->plugin_b, XmNset, False, 0);
-		XtVaSetValues (fep->save_b, XmNset, False, 0);
-		XtVaSetValues (fep->app_text, XmNsensitive, True, 0);
-		XtVaSetValues (fep->unknown_b, XmNset, False, 0);
+		XtVaSetValues (fep->navigator_b, XmNset, False, (XtPointer) 0);
+		XtVaSetValues (fep->plugin_b, XmNset, False, (XtPointer) 0);
+		XtVaSetValues (fep->save_b, XmNset, False, (XtPointer) 0);
+		XtVaSetValues (fep->app_text, XmNsensitive, True, (XtPointer) 0);
+		XtVaSetValues (fep->unknown_b, XmNset, False, (XtPointer) 0);
 	  }
 	else if (widget == fep->save_b)
 	  {
-		XtVaSetValues (fep->navigator_b, XmNset, False, 0);
-		XtVaSetValues (fep->plugin_b, XmNset, False, 0);
-		XtVaSetValues (fep->app_b, XmNset, False, 0);
-		XtVaSetValues (fep->app_text, XmNsensitive, False, 0);
-		XtVaSetValues (fep->unknown_b, XmNset, False, 0);
+		XtVaSetValues (fep->navigator_b, XmNset, False, (XtPointer) 0);
+		XtVaSetValues (fep->plugin_b, XmNset, False, (XtPointer) 0);
+		XtVaSetValues (fep->app_b, XmNset, False, (XtPointer) 0);
+		XtVaSetValues (fep->app_text, XmNsensitive, False, (XtPointer) 0);
+		XtVaSetValues (fep->unknown_b, XmNset, False, (XtPointer) 0);
 	  }
 	else if (widget == fep->unknown_b)
 	  {
-		XtVaSetValues (fep->navigator_b, XmNset, False, 0);
-		XtVaSetValues (fep->plugin_b, XmNset, False, 0);
-		XtVaSetValues (fep->app_b, XmNset, False, 0);
-		XtVaSetValues (fep->app_text, XmNsensitive, False, 0);
-		XtVaSetValues (fep->save_b, XmNset, False, 0);
+		XtVaSetValues (fep->navigator_b, XmNset, False, (XtPointer) 0);
+		XtVaSetValues (fep->plugin_b, XmNset, False, (XtPointer) 0);
+		XtVaSetValues (fep->app_b, XmNset, False, (XtPointer) 0);
+		XtVaSetValues (fep->app_text, XmNsensitive, False, (XtPointer) 0);
+		XtVaSetValues (fep->save_b, XmNset, False, (XtPointer) 0);
 	  }
 	else
 		abort ();
@@ -1690,7 +1690,7 @@ fe_helpers_make_edit_dialog(struct fe_prefs_helpers_data *fep)
 
  
 	XtVaGetValues (mainw, XtNvisual, &v, XtNcolormap, &cmap,
-				   XtNdepth, &depth, 0);
+				   XtNdepth, &depth, (XtPointer) 0);
 	ac = 0;
 	XtSetArg (av[ac], XmNvisual, v); ac++;
 	XtSetArg (av[ac], XmNdepth, depth); ac++;
@@ -1766,17 +1766,17 @@ fe_helpers_make_edit_dialog(struct fe_prefs_helpers_data *fep)
 				   XmNbottomAttachment, XmATTACH_NONE,
 				   XmNleftAttachment, XmATTACH_FORM,
 				   XmNrightAttachment, XmATTACH_NONE,
-				   0);
+				   (XtPointer) 0);
 	XtVaSetValues (mime_types_desc_text,
 				   XmNtopAttachment, XmATTACH_FORM,
 				   XmNbottomAttachment, XmATTACH_NONE,
 				   XmNleftAttachment, XmATTACH_WIDGET,
 				   XmNleftWidget,	mime_types_desc_label,
 				   XmNrightAttachment, XmATTACH_FORM,
-				   0);
+				   (XtPointer) 0);
 
 	XtVaSetValues(mime_types_desc_label, XmNheight, 
-				  mime_types_desc_text->core.height,0);
+				  mime_types_desc_text->core.height,(XtPointer) 0);
  
 	XtVaSetValues (mime_types_label,
 				   XmNalignment, XmALIGNMENT_END,
@@ -1786,7 +1786,7 @@ fe_helpers_make_edit_dialog(struct fe_prefs_helpers_data *fep)
 				   XmNleftAttachment, XmATTACH_FORM,
 				   XmNrightAttachment, XmATTACH_OPPOSITE_WIDGET,
 				   XmNrightWidget, mime_types_desc_label,
-				   0);
+				   (XtPointer) 0);
  
 	XtVaSetValues (mime_types_text,
 				   XmNtopAttachment, XmATTACH_WIDGET,
@@ -1795,10 +1795,10 @@ fe_helpers_make_edit_dialog(struct fe_prefs_helpers_data *fep)
 				   XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 				   XmNleftWidget, mime_types_desc_text,
 				   XmNrightAttachment, XmATTACH_FORM,
-				   0);
+				   (XtPointer) 0);
  
 	XtVaSetValues(mime_types_label, XmNheight, 
-				  mime_types_text->core.height, 0);
+				  mime_types_text->core.height, (XtPointer) 0);
 
 	XtVaSetValues (mime_types_suffix_label,
 				   XmNalignment, XmALIGNMENT_END,
@@ -1808,7 +1808,7 @@ fe_helpers_make_edit_dialog(struct fe_prefs_helpers_data *fep)
 				   XmNleftAttachment, XmATTACH_FORM,
 				   XmNrightAttachment, XmATTACH_OPPOSITE_WIDGET,
 				   XmNrightWidget, mime_types_label,
-				   0);
+				   (XtPointer) 0);
  
 	XtVaSetValues (mime_types_suffix_text,
 				   XmNtopAttachment, XmATTACH_WIDGET,
@@ -1817,10 +1817,10 @@ fe_helpers_make_edit_dialog(struct fe_prefs_helpers_data *fep)
 				   XmNleftAttachment, XmATTACH_WIDGET,
 				   XmNleftWidget, mime_types_suffix_label,
 				   XmNrightAttachment, XmATTACH_FORM,
-				   0);
+				   (XtPointer) 0);
 
 	XtVaSetValues(mime_types_suffix_label, XmNheight, 
-				  mime_types_suffix_text->core.height, 0);
+				  mime_types_suffix_text->core.height, (XtPointer) 0);
 
  
 	XtManageChildren(kids,i);
@@ -1895,7 +1895,7 @@ fe_helpers_make_edit_dialog(struct fe_prefs_helpers_data *fep)
 				   XmNleftAttachment, XmATTACH_FORM,
 				   XmNrightAttachment, XmATTACH_NONE,
 				   XmNsensitive, True,
-				   0);
+				   (XtPointer) 0);
 
 	XtVaSetValues (plugin_b,
 				   XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -1905,7 +1905,7 @@ fe_helpers_make_edit_dialog(struct fe_prefs_helpers_data *fep)
 				   XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 				   XmNleftWidget, navigator_b,
 				   XmNrightAttachment, XmATTACH_NONE,
-				   0);
+				   (XtPointer) 0);
  
 	XtVaSetValues (plugin_option,
 				   XmNtopAttachment, XmATTACH_WIDGET,
@@ -1914,7 +1914,7 @@ fe_helpers_make_edit_dialog(struct fe_prefs_helpers_data *fep)
 				   XmNleftAttachment, XmATTACH_FORM,
 				   XmNleftOffset, plugin_b->core.width+20,
 				   XmNrightAttachment, XmATTACH_FORM,
-				   0);
+				   (XtPointer) 0);
  
 	XtVaSetValues (app_b,
 				   XmNtopAttachment, XmATTACH_WIDGET,
@@ -1923,10 +1923,10 @@ fe_helpers_make_edit_dialog(struct fe_prefs_helpers_data *fep)
 				   XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 				   XmNleftWidget, plugin_b,
 				   XmNrightAttachment, XmATTACH_NONE,
-				   0);
+				   (XtPointer) 0);
  
 	XtVaGetValues( app_b, XmNindicatorSize, &size, 
-				   XmNspacing, &space, 0 );
+				   XmNspacing, &space, (XtPointer) 0 );
 
 	XtVaSetValues (app_text,
 				   XmNsensitive, False,
@@ -1938,7 +1938,7 @@ fe_helpers_make_edit_dialog(struct fe_prefs_helpers_data *fep)
 				   XmNleftOffset, size+space,
 				   XmNrightAttachment, XmATTACH_FORM,
 				   XmNrightOffset, app_browse->core.width+10,
-				   0);
+				   (XtPointer) 0);
  
 	XtVaSetValues (app_browse,
 				   XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -1947,7 +1947,7 @@ fe_helpers_make_edit_dialog(struct fe_prefs_helpers_data *fep)
 				   XmNbottomWidget, app_text,
 				   XmNleftAttachment, XmATTACH_NONE,
 				   XmNrightAttachment, XmATTACH_FORM,
-				   0);
+				   (XtPointer) 0);
  
 	XtVaSetValues (save_b,
 				   XmNtopAttachment, XmATTACH_WIDGET,
@@ -1956,7 +1956,7 @@ fe_helpers_make_edit_dialog(struct fe_prefs_helpers_data *fep)
 				   XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 				   XmNleftWidget, app_b,
 				   XmNrightAttachment, XmATTACH_NONE,
-				   0);
+				   (XtPointer) 0);
  
  
 	XtVaSetValues (unknown_b,
@@ -1966,7 +1966,7 @@ fe_helpers_make_edit_dialog(struct fe_prefs_helpers_data *fep)
 				   XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 				   XmNleftWidget, save_b,
 				   XmNrightAttachment, XmATTACH_NONE,
-				   0);
+				   (XtPointer) 0);
  
 	XtAddCallback(navigator_b,  XmNvalueChangedCallback,
 				  fe_helpers_verify_toggle_cb, fep);
@@ -2039,7 +2039,7 @@ fe_helpers_handle_by_plugin(struct fe_prefs_helpers_data *fep, char *type)
 	   toggle button, depending on the mimetype passed in */
 
 	fe_helpers_build_plugin_list(fep, type);
-	XtVaGetValues(fep->plugin_b, XmNsensitive, &b, 0);
+	XtVaGetValues(fep->plugin_b, XmNsensitive, &b, (XtPointer) 0);
 	return(b);
 }
 
@@ -2049,12 +2049,12 @@ fe_helpers_set_handle_by_flag ( struct fe_prefs_helpers_data *fep,
 {
 	NET_mdataStruct *md = NULL;
   
-	XtVaSetValues(fep->navigator_b, XmNsensitive, False, 0);
+	XtVaSetValues(fep->navigator_b, XmNsensitive, False, (XtPointer) 0);
 	/* Netscape Type ?*/
 
 	if (fe_helpers_handle_by_netscape(cd->ci.type) )
 	  {
-		XtVaSetValues(fep->navigator_b, XmNsensitive, True, 0);
+		XtVaSetValues(fep->navigator_b, XmNsensitive, True, (XtPointer) 0);
 	  }
 
 	md = fe_helpers_get_mailcap_from_type(cd->ci.type);
@@ -2063,7 +2063,7 @@ fe_helpers_set_handle_by_flag ( struct fe_prefs_helpers_data *fep,
 	  {
 		XtVaSetValues(fep->app_text,
 					  XmNvalue, md->command,
-					  XmNsensitive, False, 0 );
+					  XmNsensitive, False, (XtPointer) 0 );
 	  }
 	
 	if (md && md->xmode && *md->xmode)
@@ -2071,29 +2071,29 @@ fe_helpers_set_handle_by_flag ( struct fe_prefs_helpers_data *fep,
 		md->xmode = fe_StringTrim(md->xmode);
 
 		if (!strcmp(md->xmode, NET_COMMAND_UNKNOWN))
-			XtVaSetValues(fep->unknown_b, XmNset, True, 0 );
+			XtVaSetValues(fep->unknown_b, XmNset, True, (XtPointer) 0 );
 		else if (fe_IsMailcapEntryPlugin(md))
-			XtVaSetValues(fep->plugin_b, XmNset, True, 0 );
+			XtVaSetValues(fep->plugin_b, XmNset, True, (XtPointer) 0 );
 		else if (!strcmp(md->xmode, NET_COMMAND_SAVE_TO_DISK) ||
 				 (!strcmp(md->xmode, NET_COMMAND_SAVE_BY_NETSCAPE)))
-			XtVaSetValues(fep->save_b, XmNset, True, 0 );
+			XtVaSetValues(fep->save_b, XmNset, True, (XtPointer) 0 );
 		else if (!strcmp(md->xmode,NET_COMMAND_NETSCAPE))
-			XtVaSetValues(fep->navigator_b, XmNset, True, 0 );
+			XtVaSetValues(fep->navigator_b, XmNset, True, (XtPointer) 0 );
 		else if (!strcmp(md->xmode,NET_COMMAND_DELETED))
-			XtVaSetValues(fep->unknown_b, XmNset, True, 0 );
+			XtVaSetValues(fep->unknown_b, XmNset, True, (XtPointer) 0 );
 	  }
 	else if ( md  && md->command && *md->command)
 	  {
-		XtVaSetValues(fep->app_b, XmNset, True, 0 );
+		XtVaSetValues(fep->app_b, XmNset, True, (XtPointer) 0 );
 		XtVaSetValues(fep->app_text,
-					  XmNsensitive, True, 0 );
+					  XmNsensitive, True, (XtPointer) 0 );
 	  }
 	else if (fe_helpers_handle_by_netscape(cd->ci.type) )
-		XtVaSetValues(fep->navigator_b, XmNset, True, 0 );
+		XtVaSetValues(fep->navigator_b, XmNset, True, (XtPointer) 0 );
 	else if (fe_helpers_handle_by_saveToDisk(cd->ci.type) )
-		XtVaSetValues(fep->save_b, XmNset, True, 0 );
+		XtVaSetValues(fep->save_b, XmNset, True, (XtPointer) 0 );
 	else
-		XtVaSetValues(fep->unknown_b, XmNset, True, 0);
+		XtVaSetValues(fep->unknown_b, XmNset, True, (XtPointer) 0);
 }
 
 static void 
@@ -2106,11 +2106,11 @@ fe_helpers_set_handle_by_cb (Widget w, XtPointer closure, XtPointer call_data )
 	text = XmTextFieldGetString(fep->mime_types_text);
 
 	if (text && *text && fe_helpers_handle_by_netscape(text)) {
-	  XtVaSetValues(fep->navigator_b, XmNsensitive, True, 0);
+	  XtVaSetValues(fep->navigator_b, XmNsensitive, True, (XtPointer) 0);
 	  nav_p = True;
 	}
 	else
-		XtVaSetValues(fep->navigator_b, XmNsensitive, False, 0);
+		XtVaSetValues(fep->navigator_b, XmNsensitive, False, (XtPointer) 0);
 
 	if (text && *text && fe_helpers_handle_by_plugin(fep, text))
 		/* fe_helpers_handle_by_plugin() will sensitize the plugin button. */
@@ -2139,14 +2139,14 @@ fe_helpers_fill_edit_with_data(struct fe_prefs_helpers_data *fep,
 	XtVaSetValues(fep->mime_types_text, 
 				  XmNcursorPosition, 0,
 				  XmNvalue, cd->ci.type, 
-				  0);
+				  (XtPointer) 0);
 
 	/* MIME Description */
 	if ( cd->ci.desc && *cd->ci.desc )
 		XtVaSetValues(fep->mime_types_desc_text,
 					  XmNcursorPosition, 0,
 					  XmNvalue, cd->ci.desc,
-					  0 );
+					  (XtPointer) 0 );
 
 	/* MIME Suffix */
 	for ( i = 0; i < cd->num_exts; i++ )
@@ -2167,7 +2167,7 @@ fe_helpers_fill_edit_with_data(struct fe_prefs_helpers_data *fep,
 		XtVaSetValues(fep->mime_types_suffix_text,
 					  XmNvalue, extensions,
 					  XmNcursorPosition, 0,
-					  0 );
+					  (XtPointer) 0 );
 	  }
 
 	/* Handle By...this mail cap */
@@ -2336,7 +2336,7 @@ static void
 fe_helpers_add_list_row(struct fe_prefs_helpers_data *fep, char *data)
 {
 	int total ;
-	XtVaGetValues( fep->helpers_list, XmNrows, &total, 0 );
+	XtVaGetValues( fep->helpers_list, XmNrows, &total, (XtPointer) 0 );
 	XmLGridAddRows(fep->helpers_list, XmCONTENT, -1, 1);
 	if ( total > 0 )
 		XmLGridMoveRows(fep->helpers_list, 1, 0, total);
@@ -2348,7 +2348,7 @@ static void
 fe_helpers_append_list_row(struct fe_prefs_helpers_data *fep, int row, char *data)
 {
 	int total ;
-	XtVaGetValues( fep->helpers_list, XmNrows, &total, 0 );
+	XtVaGetValues( fep->helpers_list, XmNrows, &total, (XtPointer) 0 );
 	if ( row >= total )
 		XmLGridAddRows(fep->helpers_list, XmCONTENT, -1, 1);
 

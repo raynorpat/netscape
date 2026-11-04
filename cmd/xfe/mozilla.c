@@ -1350,7 +1350,7 @@ void FE_TrackJavaConsole(int on, void *notused)
 	MWContext *cx = cl->context;
 	CONTEXT_DATA(cx)->show_java_console_p = on;
 	if ((widget = CONTEXT_DATA(cx)->show_java) != NULL) {
-	    XtVaSetValues(widget, XmNset, on, 0);
+	    XtVaSetValues(widget, XmNset, on, (XtPointer) 0);
 	}
 	cl = cl->next;
     }
@@ -2367,7 +2367,7 @@ set_shell_iconic_p (Widget shell, Boolean iconic_p)
      afterward, when it's too late.
    */
   WMShellWidget wmshell = (WMShellWidget) shell;
-  XtVaSetValues (shell, XtNiconic, iconic_p, 0);
+  XtVaSetValues (shell, XtNiconic, iconic_p, (XtPointer) 0);
   wmshell->wm.wm_hints.flags |= StateHint;
   wmshell->wm.wm_hints.initial_state = (iconic_p ? IconicState : NormalState);
 }
@@ -2604,8 +2604,8 @@ fe_ensure_config_dir_exists (Widget toplevel)
 	  PR_snprintf (buf, sizeof (buf), fmt, XP_AppName, dir, es);
 #else /* !DEBUG_jwz */
 	  PR_snprintf (buf, sizeof (buf), fmt, XP_AppName, dir,
-		   ((errno >= 0 && errno < sys_nerr)
-		    ? sys_errlist [errno] : XP_GetString( XFE_UNKNOWN_ERROR )));
+		   ((errno >= 0 && errno < 1000)
+		    ? strerror (errno) : XP_GetString( XFE_UNKNOWN_ERROR )));
 #endif /* !DEBUG_jwz */
 	  fe_Alert_2 (toplevel, buf);
 	  free (dir);
@@ -3224,7 +3224,7 @@ fe_create_composition_widgets(MWContext* context, Widget pane)
   fe_ContextData* data = CONTEXT_DATA(context);
 
   fontList = fe_GetFont (context, 3, LO_FONT_FIXED);
-  XtVaSetValues(pane, XmNseparatorOn, False, 0);
+  XtVaSetValues(pane, XmNseparatorOn, False, (XtPointer) 0);
 
   for (i=0 ; i<NUM ; i++) {
     int flags = description[i].flags;
@@ -3381,7 +3381,7 @@ fe_create_composition_widgets(MWContext* context, Widget pane)
 			 (XtPointer) j);
 
 	  if (selected_p)
-	    XtVaSetValues (popup_menu, XmNmenuHistory, kids[j], 0);
+	    XtVaSetValues (popup_menu, XmNmenuHistory, kids[j], (XtPointer) 0);
 
 	  XmStringFree (xmstring);
 	}
@@ -3433,7 +3433,7 @@ fe_create_composition_widgets(MWContext* context, Widget pane)
     }
   }
   for (i=0 ; i<NUM ; i++) {
-    XtVaSetValues(widget[i], XmNleftOffset, maxwidth, 0);
+    XtVaSetValues(widget[i], XmNleftOffset, maxwidth, (XtPointer) 0);
     kids[0] = label[i];
     kids[1] = widget[i];
     kids[2] = other[i];
@@ -3448,7 +3448,7 @@ fe_create_composition_widgets(MWContext* context, Widget pane)
     XtVaSetValues(form[i],
 		  XmNpaneMinimum, widget[i]->core.height,
 		  XmNpaneMaximum, widget[i]->core.height,
-		  0);
+		  (XtPointer) 0);
   }
 
   /* #### warning this is cloned in mailnews.c (fe_set_compose_wrap_state) */
@@ -3525,7 +3525,7 @@ fe_from_addr_cb (Widget widget, XtPointer closure, XtPointer call_data)
 
       slash = strrchr(fcc, '/');
 
-      XtVaGetValues(w, XmNvalue, &old_fcc, 0);
+      XtVaGetValues(w, XmNvalue, &old_fcc, (XtPointer) 0);
 
       if (!!strncmp (fcc, old_fcc, slash - fcc))
 	{				/* doesn't have correct prefix */
@@ -3534,7 +3534,7 @@ fe_from_addr_cb (Widget widget, XtPointer closure, XtPointer call_data)
           fe_globalPrefs.mail_fcc = strdup(fcc);
 
           MSG_SetHeaderContents (context, MSG_FCC_HEADER_MASK, fcc);
-          XtVaSetValues(w, XmNvalue, fcc, 0);
+          XtVaSetValues(w, XmNvalue, fcc, (XtPointer) 0);
 # ifdef DEBUG
           fprintf(real_stderr,"setting FCC to %s (was %s)\n", fcc, old_fcc);
 # endif
@@ -3643,11 +3643,11 @@ fe_MakeChromeWidgets(Widget shell, MWContext *context)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_FORM,
   		 XmNbottomAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
 
   /* The actual work area */
   scroller = fe_MakeScrolledWindow (context, pane, "scroller");
-  XtVaSetValues (scroller, XmNborderWidth, 0, 0);
+  XtVaSetValues (scroller, XmNborderWidth, 0, (XtPointer) 0);
 
 
   if (scroller)
@@ -3659,11 +3659,11 @@ fe_MakeChromeWidgets(Widget shell, MWContext *context)
 
   if (scroller) {
     XtVaSetValues (scroller, XmNinitialFocus,
-		   data->drawing_area, 0);
-    XtVaSetValues (pane, XmNinitialFocus, scroller, 0);
+		   data->drawing_area, (XtPointer) 0);
+    XtVaSetValues (pane, XmNinitialFocus, scroller, (XtPointer) 0);
   }
-  XtVaSetValues (mainw, XmNinitialFocus, pane, 0);
-  XtVaSetValues (shell, XmNinitialFocus, mainw, 0);
+  XtVaSetValues (mainw, XmNinitialFocus, pane, (XtPointer) 0);
+  XtVaSetValues (shell, XmNinitialFocus, mainw, (XtPointer) 0);
 
   fe_HackTranslations (context, shell);
 }
@@ -3734,7 +3734,7 @@ fe_MakeSaveToDiskContextWidgets(Widget shell, MWContext *context)
   /* fe_LogoPixmap() Needs this early... */
   data->top_area = top_area;
 
-  XtVaGetValues (top_area, XmNbackground, &pix, 0);
+  XtVaGetValues (top_area, XmNbackground, &pix, (XtPointer) 0);
 
   logo_pixmap = fe_LogoPixmap (context, &logo_width, &logo_height, TRUE);
 
@@ -3750,9 +3750,9 @@ fe_MakeSaveToDiskContextWidgets(Widget shell, MWContext *context)
   /* Can't be a gadget, so we can draw on its window. */
   logo = XmCreatePushButton (top_area, "logo", av, ac);
 
-  XtVaGetValues (logo, XmNshadowThickness, &st, 0);
+  XtVaGetValues (logo, XmNshadowThickness, &st, (XtPointer) 0);
   XtVaSetValues (logo, XmNwidth,  logo_width  + st + st,
-			XmNheight, logo_height + st + st, 0);
+			XmNheight, logo_height + st + st, (XtPointer) 0);
 
   ac = 0;
   pane = XmCreateForm(top_area, "pane", av, ac);
@@ -3836,34 +3836,34 @@ fe_MakeSaveToDiskContextWidgets(Widget shell, MWContext *context)
   XtVaSetValues(url_label,
 		XmNleftAttachment, XmATTACH_FORM,
 		XmNtopAttachment, XmATTACH_FORM,
-		0);
+		(XtPointer) 0);
   XtVaSetValues(url_value,
 		XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		XmNtopWidget, url_label,
 		XmNrightAttachment, XmATTACH_FORM,
 		XmNleftAttachment, XmATTACH_WIDGET,
 		XmNleftWidget, url_label,
-		0);
+		(XtPointer) 0);
   XtVaSetValues(saving_label,
 		XmNleftAttachment, XmATTACH_FORM,
 		XmNtopAttachment, XmATTACH_WIDGET,
 		XmNtopWidget, url_value,
-		0);
+		(XtPointer) 0);
   XtVaSetValues(saving_value,
 		XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		XmNtopWidget, saving_label,
 		XmNleftAttachment, XmATTACH_WIDGET,
 		XmNleftWidget, saving_label,
 		XmNrightAttachment, XmATTACH_FORM,
-		0);
+		(XtPointer) 0);
   XP_ASSERT(url_label->core.width > 0 && saving_label->core.width > 0);
   if (url_label->core.width < saving_label->core.width)
-    XtVaSetValues (url_label, XmNwidth, saving_label->core.width, 0);
+    XtVaSetValues (url_label, XmNwidth, saving_label->core.width, (XtPointer) 0);
   else
-    XtVaSetValues (saving_label, XmNwidth, url_label->core.width, 0);
+    XtVaSetValues (saving_label, XmNwidth, url_label->core.width, (XtPointer) 0);
 
-  XtVaSetValues (url_label, XmNheight, url_value->core.height, 0);
-  XtVaSetValues (saving_label, XmNheight, saving_value->core.height, 0);
+  XtVaSetValues (url_label, XmNheight, url_value->core.height, (XtPointer) 0);
+  XtVaSetValues (saving_label, XmNheight, saving_value->core.height, (XtPointer) 0);
 
   XtVaSetValues (top_area,
 		 XmNtopAttachment,XmATTACH_FORM,
@@ -3871,49 +3871,49 @@ fe_MakeSaveToDiskContextWidgets(Widget shell, MWContext *context)
 		 XmNbottomWidget, line2,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (pane,
 		 XmNtopAttachment, XmATTACH_FORM,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
   		 XmNrightWidget, logo,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues(messb,
 		XmNleftAttachment, XmATTACH_FORM,
 		XmNrightAttachment, XmATTACH_FORM,
 		XmNtopAttachment, XmATTACH_WIDGET,
 		XmNtopWidget, pane,
 		XmNbottomAttachment, XmATTACH_FORM,
-		0);
+		(XtPointer) 0);
   XtVaSetValues (line2,
 		 XmNbottomAttachment, XmATTACH_WIDGET,
 		 XmNbottomWidget, dashboard,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
 
   XtVaSetValues (logo,
 		 XmNtopAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
 
   XtVaSetValues (dashboard,
 		 XmNtopAttachment, XmATTACH_NONE,
 		 XmNbottomAttachment, XmATTACH_FORM,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
 
 #ifdef HAVE_SECURITY
   if (sec_logo) {
-    XtVaGetValues (sec_logo, XmNshadowThickness, &st, 0);
+    XtVaGetValues (sec_logo, XmNshadowThickness, &st, (XtPointer) 0);
     XtVaSetValues (sec_logo,
 		   XmNtopAttachment, XmATTACH_FORM,
 		   XmNbottomAttachment, XmATTACH_FORM,
 		   XmNleftAttachment, XmATTACH_FORM,
 		   XmNrightAttachment, XmATTACH_NONE,
 		   XmNtopOffset, st, XmNbottomOffset, st,
-		   0);
+		   (XtPointer) 0);
   }
 #endif /* HAVE_SECURITY */
 
@@ -3930,13 +3930,13 @@ fe_MakeSaveToDiskContextWidgets(Widget shell, MWContext *context)
 		 XmNrightAttachment, (thermo
 				       ? XmATTACH_WIDGET : XmATTACH_FORM),
 		 XmNrightWidget, thermo,
-		 0);
+		 (XtPointer) 0);
     XtVaSetValues (thermo,
 		   XmNtopAttachment, XmATTACH_FORM,
 		   XmNbottomAttachment, XmATTACH_FORM,
 		   XmNrightAttachment, XmATTACH_FORM,
-		   0);
-    XtVaGetValues (thermo, XmNshadowThickness, &st, 0);
+		   (XtPointer) 0);
+    XtVaGetValues (thermo, XmNshadowThickness, &st, (XtPointer) 0);
     XtVaSetValues (slider,
 		   XmNtopAttachment, XmATTACH_FORM,
 		   XmNbottomAttachment, XmATTACH_FORM,
@@ -3944,7 +3944,7 @@ fe_MakeSaveToDiskContextWidgets(Widget shell, MWContext *context)
 		   XmNrightAttachment, XmATTACH_FORM,
 		   XmNtopOffset, st, XmNbottomOffset, st,
 		   XmNleftOffset, st, XmNrightOffset, st,
-		   0);
+		   (XtPointer) 0);
   /* ========================================================================
      Managing the widgets
      ========================================================================
@@ -3998,8 +3998,8 @@ fe_MakeSaveToDiskContextWidgets(Widget shell, MWContext *context)
 
   fe_FixLogoMargins (context);
 
-  XtVaSetValues (mainw, XmNinitialFocus, pane, 0);
-  XtVaSetValues (shell, XmNinitialFocus, mainw, 0);
+  XtVaSetValues (mainw, XmNinitialFocus, pane, (XtPointer) 0);
+  XtVaSetValues (shell, XmNinitialFocus, mainw, (XtPointer) 0);
 
  fe_HackTranslations (context, shell);
 }
@@ -4103,7 +4103,7 @@ FE_MakeAppletSecurityChrome(Widget parent, char* warning)
 		  XmNbottomAttachment, XmATTACH_NONE,
 		  XmNleftAttachment, XmATTACH_FORM,
 		  XmNrightAttachment, XmATTACH_FORM,
-		  0);
+		  (XtPointer) 0);
 
     XtVaSetValues(sep,
 		  XmNtopAttachment, XmATTACH_WIDGET,
@@ -4111,7 +4111,7 @@ FE_MakeAppletSecurityChrome(Widget parent, char* warning)
 		  XmNbottomAttachment, XmATTACH_NONE,
 		  XmNleftAttachment, XmATTACH_FORM,
 		  XmNrightAttachment, XmATTACH_FORM,
-		  0);
+		  (XtPointer) 0);
 
     XtVaSetValues(form,
 		  XmNtopAttachment, XmATTACH_WIDGET,
@@ -4119,7 +4119,7 @@ FE_MakeAppletSecurityChrome(Widget parent, char* warning)
 		  XmNbottomAttachment, XmATTACH_FORM,
 		  XmNleftAttachment, XmATTACH_FORM,
 		  XmNrightAttachment, XmATTACH_FORM,
-		  0);
+		  (XtPointer) 0);
 
 #ifdef HAVE_SECURITY
     if (sec_logo) {
@@ -4129,7 +4129,7 @@ FE_MakeAppletSecurityChrome(Widget parent, char* warning)
 		      XmNleftAttachment, XmATTACH_FORM,
 		      XmNleftOffset, 4,
 		      XmNrightAttachment, XmATTACH_NONE,
-		      0);
+		      (XtPointer) 0);
     }
 #endif
 
@@ -4143,7 +4143,7 @@ FE_MakeAppletSecurityChrome(Widget parent, char* warning)
 		  XmNleftAttachment, XmATTACH_FORM,
 #endif /* !HAVE_SECURITY */
 		  XmNrightAttachment, XmATTACH_FORM,
-		  0);
+		  (XtPointer) 0);
 
     XtManageChild(label);
     if (sec_logo)
@@ -4166,7 +4166,7 @@ fe_update_biff_icon(Widget widget)
 		  biffstate == MSG_BIFF_NewMail ? biff_yes.pixmap :
 		  biffstate == MSG_BIFF_NoMail ? biff_no.pixmap :
 		  biff_unknown.pixmap,
-		  0);
+		  (XtPointer) 0);
   }
 }
 
@@ -4398,7 +4398,7 @@ fe_MakeWidgets (Widget shell, MWContext *context)
   {
     Widget *kids;
     int nkids = 0;
-    XtVaGetValues (shell, XmNchildren, &kids, XmNnumChildren, &nkids, 0);
+    XtVaGetValues (shell, XmNchildren, &kids, XmNnumChildren, &nkids, (XtPointer) 0);
     if (nkids)
       {
 	/* Aha!  The shell already has kids; that must mean we're being
@@ -4422,7 +4422,7 @@ fe_MakeWidgets (Widget shell, MWContext *context)
 		  }
 		kids++;
 	  }
-	XtVaGetValues (mainw, XmNwidth, &width, XmNheight, &height, 0);
+	XtVaGetValues (mainw, XmNwidth, &width, XmNheight, &height, (XtPointer) 0);
 	if (width <= 0 || height <= 0) abort ();
 	XtSetArg (av[ac], XmNwidth, width); ac++;
 	XtSetArg (av[ac], XmNheight, height); ac++;
@@ -4588,7 +4588,7 @@ fe_MakeWidgets (Widget shell, MWContext *context)
 
       if (count <= 0) abort ();
 
-      XtVaGetValues (top_area, XmNbackground, &bg, 0);
+      XtVaGetValues (top_area, XmNbackground, &bg, (XtPointer) 0);
 
 #if 1
       logo_pixmap =
@@ -4613,11 +4613,11 @@ fe_MakeWidgets (Widget shell, MWContext *context)
 
       /* Gag, now that we've created it, we can increase its height by the
 	 size of its borders... */
-      XtVaGetValues (logo, XmNshadowThickness, &st, 0);
+      XtVaGetValues (logo, XmNshadowThickness, &st, (XtPointer) 0);
       XtVaSetValues (logo,
 		     XmNwidth,  logo_width  + st + st,
 		     XmNheight, logo_height + st + st,
-		     0);
+		     (XtPointer) 0);
       XtAddCallback (logo, XmNactivateCallback,
 		     (
 # if defined(__sgi)
@@ -4642,7 +4642,7 @@ fe_MakeWidgets (Widget shell, MWContext *context)
       XtVaSetValues (url_text,
 		     XmNvalue, (h && h->address ? h->address : ""),
 		     XmNcursorPosition, 0,
-		     0);
+		     (XtPointer) 0);
     }
 
 #ifdef HAVE_SECURITY
@@ -4814,24 +4814,24 @@ fe_MakeWidgets (Widget shell, MWContext *context)
         case FE_PANES_NORMAL:   
 	    if (w <= 0) w = 200;
 	    if (h <= 0) h = 200;
-            XtVaSetValues(data->folderform, XmNwidth, w, XmNheight, h, 0);
-            XtVaSetValues(data->messageform, XmNheight, h, 0);
+            XtVaSetValues(data->folderform, XmNwidth, w, XmNheight, h, (XtPointer) 0);
+            XtVaSetValues(data->messageform, XmNheight, h, (XtPointer) 0);
             break;
         case FE_PANES_HORIZONTAL:       
 	    if (w <= 0) w = 200;
 	    if (h <= 0) h = 100;
-            XtVaSetValues(data->folderform, XmNwidth, w, XmNheight, h, 0);
-            XtVaSetValues(data->messageform, XmNwidth, w, 0);
+            XtVaSetValues(data->folderform, XmNwidth, w, XmNheight, h, (XtPointer) 0);
+            XtVaSetValues(data->messageform, XmNwidth, w, (XtPointer) 0);
             break;
         case FE_PANES_STACKED:  
 	    if (w <= 0) w = 200;
 	    if (h <= 0) h = 100;
-            XtVaSetValues(data->folderform, XmNheight, w, 0);
-            XtVaSetValues(data->messageform, XmNheight, h, 0);
+            XtVaSetValues(data->folderform, XmNheight, w, (XtPointer) 0);
+            XtVaSetValues(data->messageform, XmNheight, h, (XtPointer) 0);
             break;
         case FE_PANES_TALL_FOLDERS:
-	    XtVaSetValues(data->folderform, XmNwidth, w, 0);
-	    XtVaSetValues(data->messageform, XmNheight, h, 0);
+	    XtVaSetValues(data->folderform, XmNwidth, w, (XtPointer) 0);
+	    XtVaSetValues(data->messageform, XmNheight, h, (XtPointer) 0);
 	    break;
         default:
 	  abort();
@@ -4839,8 +4839,8 @@ fe_MakeWidgets (Widget shell, MWContext *context)
     }
 
     /* I dont know why this is there. It doesn't work without this  - dp */
-    XtVaSetValues(data->folderlist, XmNwidth, 1, 0);
-    XtVaSetValues(data->messagelist, XmNwidth, 1, 0);
+    XtVaSetValues(data->folderlist, XmNwidth, 1, (XtPointer) 0);
+    XtVaSetValues(data->messagelist, XmNwidth, 1, (XtPointer) 0);
   }
 
 
@@ -4928,7 +4928,7 @@ PANEPOPULATED:
     /* The biff icon. */
     {
       Pixel bg = data->default_bg_pixel;
-      XtVaGetValues (dashboard, XmNbackground, &bg, 0);
+      XtVaGetValues (dashboard, XmNbackground, &bg, (XtPointer) 0);
 
       fe_MakeIcon(context, bg, &biff_unknown, NULL,
 		BiffU.width, BiffU.height, BiffU.mono_bits, BiffU.color_bits,
@@ -4964,7 +4964,7 @@ PANEPOPULATED:
 		   XmNtopAttachment, XmATTACH_FORM,
 		   XmNleftAttachment, XmATTACH_FORM,
 		   XmNrightAttachment, XmATTACH_FORM,
-		   0);
+		   (XtPointer) 0);
   if (top_area)
     XtVaSetValues (top_area,
 		   XmNtopAttachment, (menubar
@@ -4974,7 +4974,7 @@ PANEPOPULATED:
 		   XmNbottomAttachment, XmATTACH_NONE,
 		   XmNleftAttachment, XmATTACH_FORM,
 		   XmNrightAttachment, XmATTACH_FORM,
-		   0);
+		   (XtPointer) 0);
   if (line1)
     XtVaSetValues (line1,
 		   XmNtopAttachment, ((top_area || menubar)
@@ -4983,7 +4983,7 @@ PANEPOPULATED:
 		   XmNtopWidget, (top_area ? top_area : menubar),
 		   XmNleftAttachment, XmATTACH_FORM,
 		   XmNrightAttachment, XmATTACH_FORM,
-		   0);
+		   (XtPointer) 0);
   XtVaSetValues (
 		 pane,
 		   XmNtopAttachment, ((top_area || menubar || line1)
@@ -4996,7 +4996,7 @@ PANEPOPULATED:
   		 XmNbottomWidget, line2,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   if (line2)
     XtVaSetValues (line2,
 		   XmNbottomAttachment, (dashboard
@@ -5005,7 +5005,7 @@ PANEPOPULATED:
 		   XmNbottomWidget, dashboard,
 		   XmNleftAttachment, XmATTACH_FORM,
 		   XmNrightAttachment, XmATTACH_FORM,
-		   0);
+		   (XtPointer) 0);
 
   /* Children of top_left_area */
   if (toolbar) {
@@ -5014,7 +5014,7 @@ PANEPOPULATED:
 		   XmNbottomAttachment, XmATTACH_NONE,
 		   XmNleftAttachment, XmATTACH_FORM,
 		   XmNrightAttachment, /*XmATTACH_FORM*/ XmATTACH_NONE,
-		   0);
+		   (XtPointer) 0);
     top_guy = toolbar;
   }
   if (url_label) {
@@ -5024,7 +5024,7 @@ PANEPOPULATED:
 		  XmNbottomAttachment, XmATTACH_NONE,
 		  XmNleftAttachment, XmATTACH_FORM,
 		  XmNrightAttachment, XmATTACH_NONE,
-		  0);
+		  (XtPointer) 0);
   }
   if (url_text) {
     XtVaSetValues(url_text,
@@ -5037,7 +5037,7 @@ PANEPOPULATED:
 		  XmNleftAttachment, XmATTACH_WIDGET,
 		  XmNleftWidget, url_label,
 		  XmNrightAttachment, XmATTACH_FORM,
-		  0);
+		  (XtPointer) 0);
     top_guy = url_text;
   }
   if (urlbar)
@@ -5047,7 +5047,7 @@ PANEPOPULATED:
 		  XmNbottomAttachment, XmATTACH_FORM,
 		  XmNleftAttachment, XmATTACH_FORM,
 		  XmNrightAttachment, XmATTACH_FORM /*XmATTACH_NONE*/,
-		  0);
+		  (XtPointer) 0);
   if (top_left_area)
     XtVaSetValues (top_left_area,
 		   XmNtopAttachment, XmATTACH_FORM,
@@ -5057,7 +5057,7 @@ PANEPOPULATED:
 		   XmNleftAttachment, XmATTACH_FORM,
 		   XmNrightAttachment, (logo ? XmATTACH_WIDGET :XmATTACH_FORM),
 		   XmNrightWidget, logo,
-		   0);
+		   (XtPointer) 0);
   if (logo)
     XtVaSetValues (logo,
 		   XmNtopAttachment, XmATTACH_FORM,
@@ -5066,14 +5066,14 @@ PANEPOPULATED:
 		   XmNbottomWidget, mid_left_area,
 		   XmNleftAttachment, XmATTACH_NONE,
 		   XmNrightAttachment, XmATTACH_FORM,
-		   0);
+		   (XtPointer) 0);
    if (mid_left_area)
     XtVaSetValues (mid_left_area,
 		   XmNtopAttachment, XmATTACH_NONE,
 		   XmNbottomAttachment, XmATTACH_FORM,
 		   XmNleftAttachment, XmATTACH_FORM,
 		   XmNrightAttachment, XmATTACH_NONE,
-		   0);
+		   (XtPointer) 0);
 
   if (dashboard)
     XtVaSetValues (dashboard,
@@ -5081,18 +5081,18 @@ PANEPOPULATED:
 		   XmNbottomAttachment, XmATTACH_FORM,
 		   XmNleftAttachment, XmATTACH_FORM,
 		   XmNrightAttachment, XmATTACH_FORM,
-		   0);
+		   (XtPointer) 0);
 
 #ifdef HAVE_SECURITY
   if (sec_logo) {
-    XtVaGetValues (sec_logo, XmNshadowThickness, &st, 0);
+    XtVaGetValues (sec_logo, XmNshadowThickness, &st, (XtPointer) 0);
     XtVaSetValues (sec_logo,
 		   XmNtopAttachment, XmATTACH_FORM,
 		   XmNbottomAttachment, XmATTACH_FORM,
 		   XmNleftAttachment, XmATTACH_FORM,
 		   XmNrightAttachment, XmATTACH_NONE,
 		   XmNtopOffset, st, XmNbottomOffset, st,
-		   0);
+		   (XtPointer) 0);
   }
 #endif /* HAVE_SECURITY */
 
@@ -5110,7 +5110,7 @@ PANEPOPULATED:
 		   XmNrightAttachment, (thermo
 				       ? XmATTACH_WIDGET : XmATTACH_FORM),
 		   XmNrightWidget, thermo,
-		   0);
+		   (XtPointer) 0);
   if (thermo)
     {
       XtVaSetValues (thermo,
@@ -5118,8 +5118,8 @@ PANEPOPULATED:
 		     XmNbottomAttachment, XmATTACH_FORM,
 		     XmNrightAttachment, XmATTACH_WIDGET,
 		     XmNrightWidget, led_base ? led_base : bifficon,
-		     0);
-      XtVaGetValues (thermo, XmNshadowThickness, &st, 0);
+		     (XtPointer) 0);
+      XtVaGetValues (thermo, XmNshadowThickness, &st, (XtPointer) 0);
       XtVaSetValues (slider,
 		     XmNtopAttachment, XmATTACH_FORM,
 		     XmNbottomAttachment, XmATTACH_FORM,
@@ -5127,7 +5127,7 @@ PANEPOPULATED:
 		     XmNrightAttachment, XmATTACH_FORM,
 		     XmNtopOffset, st, XmNbottomOffset, st,
 		     XmNleftOffset, st, XmNrightOffset, st,
-		     0);
+		     (XtPointer) 0);
     }
   if (led_base)
     {
@@ -5136,8 +5136,8 @@ PANEPOPULATED:
 		     XmNbottomAttachment, XmATTACH_FORM,
 		     XmNrightAttachment, XmATTACH_WIDGET,
 		     XmNrightWidget, bifficon,
-		     0);
-      XtVaGetValues (led_base, XmNshadowThickness, &st, 0);
+		     (XtPointer) 0);
+      XtVaGetValues (led_base, XmNshadowThickness, &st, (XtPointer) 0);
       XtVaSetValues (led,
 		     XmNtopAttachment, XmATTACH_FORM,
 		     XmNbottomAttachment, XmATTACH_FORM,
@@ -5145,7 +5145,7 @@ PANEPOPULATED:
 		     XmNrightAttachment, XmATTACH_FORM,
 		     XmNtopOffset, st, XmNbottomOffset, st,
 		     XmNleftOffset, st, XmNrightOffset, st,
-		     0);
+		     (XtPointer) 0);
     }
 
   if (bifficon) {
@@ -5154,14 +5154,14 @@ PANEPOPULATED:
 		  XmNbottomAttachment, XmATTACH_FORM,
 		  XmNrightAttachment, XmATTACH_FORM,
 		  XmNtopOffset, st, XmNbottomOffset, st,
-		  0);
+		  (XtPointer) 0);
   }
 
 #ifdef HAVE_SECURITY
   if (sec_led)
     {
       if (! line1) abort ();
-      XtVaGetValues (line1, XmNshadowThickness, &st, 0);
+      XtVaGetValues (line1, XmNshadowThickness, &st, (XtPointer) 0);
       XtVaSetValues (sec_led,
 		     XmNtopAttachment, XmATTACH_FORM,
 		     XmNbottomAttachment, XmATTACH_FORM,
@@ -5169,13 +5169,13 @@ PANEPOPULATED:
 		     XmNrightAttachment, XmATTACH_FORM,
 		     XmNtopOffset, st, XmNbottomOffset, st,
 		     XmNleftOffset, st, XmNrightOffset, st,
-		     0);
+		     (XtPointer) 0);
       XtManageChild (sec_led);
     }
 #endif /* !HAVE_SECURITY */
 
 #ifdef LEDGES
-  XtVaGetValues (top_pane, XmNshadowThickness, &st, 0);
+  XtVaGetValues (top_pane, XmNshadowThickness, &st, (XtPointer) 0);
   XtVaSetValues (top_ledge,
 		 XmNtopAttachment, XmATTACH_FORM,
 		 XmNbottomAttachment, XmATTACH_FORM,
@@ -5183,8 +5183,8 @@ PANEPOPULATED:
 		 XmNrightAttachment, XmATTACH_FORM,
 		 XmNtopOffset, st, XmNbottomOffset, st,
 		 XmNleftOffset, st, XmNrightOffset, st,
-		 0);
-  XtVaGetValues (bottom_pane, XmNshadowThickness, &st, 0);
+		 (XtPointer) 0);
+  XtVaGetValues (bottom_pane, XmNshadowThickness, &st, (XtPointer) 0);
   XtVaSetValues (bottom_ledge,
 		 XmNtopAttachment, XmATTACH_FORM,
 		 XmNbottomAttachment, XmATTACH_FORM,
@@ -5192,7 +5192,7 @@ PANEPOPULATED:
 		 XmNrightAttachment, XmATTACH_FORM,
 		 XmNtopOffset, st, XmNbottomOffset, st,
 		 XmNleftOffset, st, XmNrightOffset, st,
-		 0);
+		 (XtPointer) 0);
 #endif /* LEDGES */
 
   /* Silly URL label tricks. */
@@ -5293,11 +5293,11 @@ PANEPOPULATED:
      position part of the spec.) */
   {
     char *geom = 0;
-    XtVaGetValues (shell, XmNgeometry, &geom, 0);
+    XtVaGetValues (shell, XmNgeometry, &geom, (XtPointer) 0);
     if (! geom)
       {
-	XtVaGetValues (XtParent (shell), XmNgeometry, &geom, 0);
-	XtVaSetValues (shell, XmNgeometry, geom, 0);
+	XtVaGetValues (XtParent (shell), XmNgeometry, &geom, (XtPointer) 0);
+	XtVaSetValues (shell, XmNgeometry, geom, (XtPointer) 0);
       }
     if (!fe_first_window_p)
       {
@@ -5311,11 +5311,11 @@ PANEPOPULATED:
 		char new_geom [255];
 		PR_snprintf (new_geom, sizeof (new_geom), "=%dx%d", w, h);
 		geom = strdup (new_geom);
-		XtVaSetValues (shell, XmNgeometry, geom, 0);
+		XtVaSetValues (shell, XmNgeometry, geom, (XtPointer) 0);
 	      }
 	    else
 	      {
-		XtVaSetValues (shell, XmNgeometry, 0, 0);
+		XtVaSetValues (shell, XmNgeometry, 0, (XtPointer) 0);
 	      }
 	  }
       }
@@ -5328,7 +5328,7 @@ PANEPOPULATED:
   if (! fe_command_line_done)
     {
       Boolean iconic = False;
-      XtVaGetValues (XtParent (shell), XmNiconic, &iconic, 0);
+      XtVaGetValues (XtParent (shell), XmNiconic, &iconic, (XtPointer) 0);
       set_shell_iconic_p (shell, iconic);
     }
 
@@ -5360,11 +5360,11 @@ PANEPOPULATED:
 
   if (scroller) {
     XtVaSetValues (scroller, XmNinitialFocus,
-		   data->drawing_area, 0);
-    XtVaSetValues (pane, XmNinitialFocus, scroller, 0);
+		   data->drawing_area, (XtPointer) 0);
+    XtVaSetValues (pane, XmNinitialFocus, scroller, (XtPointer) 0);
   }
-  XtVaSetValues (mainw, XmNinitialFocus, pane, 0);
-  XtVaSetValues (shell, XmNinitialFocus, mainw, 0);
+  XtVaSetValues (mainw, XmNinitialFocus, pane, (XtPointer) 0);
+  XtVaSetValues (shell, XmNinitialFocus, mainw, (XtPointer) 0);
 
   if (menubar)
     fe_WidgetTreeWalkChildren(menubar, fe_documentString_mappee, context);
@@ -5388,18 +5388,18 @@ fe_FixLogoMargins (MWContext *context)
 		   (CONTEXT_DATA (context)->show_url_p ? 1 : 0));
       if (context->type == MWContextSaveToDisk) count = 2;
       fe_LogoPixmap (context, &logo_width, &logo_height, (count > 1));
-      XtVaGetValues (logo, XmNwidth, &w, XmNheight, &h, 0);
+      XtVaGetValues (logo, XmNwidth, &w, XmNheight, &h, (XtPointer) 0);
       if (h > logo_height)
 	{
 	  Dimension off = (h - logo_height) / 2;
 	  if (context->type == MWContextSaveToDisk)
-	    XtVaSetValues (logo, XmNheight, logo_height, 0);
+	    XtVaSetValues (logo, XmNheight, logo_height, (XtPointer) 0);
 	  else
 	    XtVaSetValues (logo,
 			   XmNheight, logo_height,
 			   XmNtopOffset,    off,
 			   XmNbottomOffset, off,
-			   0);
+			   (XtPointer) 0);
 	}
     }
 }
@@ -5487,9 +5487,9 @@ fe_frob_label (MWContext *context, Boolean edited_p, Boolean netsite_p)
 		     : CONTEXT_DATA (context)->unedited_label_string));
   if (!label)
     return;
-  XtVaGetValues (label, XmNlabelString, &old, 0);
+  XtVaGetValues (label, XmNlabelString, &old, (XtPointer) 0);
   if (!XmStringCompare (old, new))
-    XtVaSetValues (label, XmNlabelString, new, 0);
+    XtVaSetValues (label, XmNlabelString, new, (XtPointer) 0);
   XmStringFree (old);
 }
 
@@ -5543,10 +5543,10 @@ fe_SetURLString (MWContext *context, URL_Struct *url)
   if (label_being_frobbed) abort ();
   /* Inhibit fe_url_text_modify_cb() for this call. */
   label_being_frobbed = True;
-  XtVaSetValues (text, XmNcursorPosition, 0, 0);
+  XtVaSetValues (text, XmNcursorPosition, 0, (XtPointer) 0);
 
   /* Get and save the modifyVerifyCallbacklist */
-  XtVaGetValues (text, XmNmodifyVerifyCallback, &text_cb, 0);
+  XtVaGetValues (text, XmNmodifyVerifyCallback, &text_cb, (XtPointer) 0);
   for(i=0; text_cb[i].callback != NULL; i++);
   i++;
   cblist = (XtCallbackRec *) malloc(sizeof(XtCallbackRec)*i);
@@ -5555,12 +5555,12 @@ fe_SetURLString (MWContext *context, URL_Struct *url)
   cblist[i] = text_cb[i];
 
   /* NULL the modifyVerifyCallback before doing setvalues */
-  XtVaSetValues (text, XmNmodifyVerifyCallback, NULL, 0);
+  XtVaSetValues (text, XmNmodifyVerifyCallback, NULL, (XtPointer) 0);
 
-  XtVaSetValues (text, XmNvalue, (url && url->address ? url->address : ""), 0);
+  XtVaSetValues (text, XmNvalue, (url && url->address ? url->address : ""), (XtPointer) 0);
 
   /* Setback the modifyVerifyCallback List from our saved List */
-  XtVaSetValues (text, XmNmodifyVerifyCallback, cblist, 0);
+  XtVaSetValues (text, XmNmodifyVerifyCallback, cblist, (XtPointer) 0);
   XP_FREE(cblist);
 
   label_being_frobbed = False;
@@ -5577,7 +5577,7 @@ fe_url_text_cb (Widget widget, XtPointer closure, XtPointer call_data)
   XmAnyCallbackStruct *cb = (XmAnyCallbackStruct *) call_data;
   char *text = 0;
   if (cb->reason != XmCR_ACTIVATE) abort ();
-  XtVaGetValues (widget, XmNvalue, &text, 0);
+  XtVaGetValues (widget, XmNvalue, &text, (XtPointer) 0);
   if (! text) abort ();
   text = fe_StringTrim (text);
   if (*text)
@@ -5742,7 +5742,7 @@ fe_getVisualOfContext(MWContext *context, Visual **v_ptr, Colormap *cmap_ptr,
     XtVaGetValues (mainw,
 			XtNvisual, v_ptr,
 			XtNcolormap, cmap_ptr,
-			XtNdepth, depth_ptr, 0);
+			XtNdepth, depth_ptr, (XtPointer) 0);
 
     return;
 }

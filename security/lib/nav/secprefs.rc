@@ -1085,5 +1085,5 @@ BEGIN
 " </NOFRAMES>\n",
 "</FRAMESET>\n",
 "</HTML>\n",
-"\0"
+"\\0"
 END

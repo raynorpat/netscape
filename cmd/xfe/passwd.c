@@ -55,9 +55,9 @@ passwd_destroy_cb (Widget text_field, XtPointer closure, XtPointer call_data)
 {
   char *plaintext = 0;
   int i;
-  XtVaGetValues (text_field, XmNuserData, &plaintext, 0);
+  XtVaGetValues (text_field, XmNuserData, &plaintext, (XtPointer) 0);
   if (!plaintext) return;
-  XtVaSetValues (text_field, XmNuserData, 0, 0);
+  XtVaSetValues (text_field, XmNuserData, 0, (XtPointer) 0);
   i = strlen (plaintext);
   while (i--) plaintext [i] = 0; /* paranoia about core files */
   free (plaintext);
@@ -68,7 +68,7 @@ fe_SetupPasswdText (Widget text_field, int max_length)
 {
   char *plaintext = 0;
   if (max_length <= 0) abort ();
-  XtVaGetValues (text_field, XmNuserData, &plaintext, 0);
+  XtVaGetValues (text_field, XmNuserData, &plaintext, (XtPointer) 0);
   if (plaintext) return;    /* already initialized? */
   plaintext = (char *) calloc (max_length * 2, 1);
   XtAddCallback (text_field, XmNmodifyVerifyCallback, passwd_modify_cb,
@@ -77,7 +77,7 @@ fe_SetupPasswdText (Widget text_field, int max_length)
   XtVaSetValues (text_field,
 		 XmNuserData, plaintext,
 		 XmNmaxLength, max_length,
-		 0);
+		 (XtPointer) 0);
 
   /*
    * make sure the international input method does not come up for this
@@ -90,7 +90,7 @@ char *
 fe_GetPasswdText (Widget text_field)
 {
   char *plaintext = 0;
-  XtVaGetValues (text_field, XmNuserData, &plaintext, 0);
+  XtVaGetValues (text_field, XmNuserData, &plaintext, (XtPointer) 0);
   /* Return a copy to be analagous with GetValues of XmNvalue.
      The internal copy will be freed when the widget is destroyed. */
   return strdup (plaintext ? plaintext : "");

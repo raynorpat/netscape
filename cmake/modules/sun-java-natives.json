@@ -1,0 +1,315 @@
+[
+  {
+    "directory": "include",
+    "args": [],
+    "classes": [
+      "java.io.File",
+      "java.io.FileDescriptor",
+      "java.io.FileInputStream",
+      "java.io.FileOutputStream",
+      "java.io.RandomAccessFile",
+      "java.lang.Class",
+      "java.lang.ClassLoader",
+      "java.lang.Compiler",
+      "java.lang.Double",
+      "java.lang.Float",
+      "java.lang.Integer",
+      "java.lang.Long",
+      "java.lang.Math",
+      "java.lang.NoClassDefFoundError",
+      "java.lang.Number",
+      "java.lang.Object",
+      "java.lang.OutOfMemoryError",
+      "java.lang.Process",
+      "java.lang.Runtime",
+      "java.lang.SecurityManager",
+      "java.lang.String",
+      "java.lang.System",
+      "java.lang.Thread",
+      "java.lang.ThreadGroup",
+      "java.lang.Throwable",
+      "java.net.DatagramPacket",
+      "java.net.DatagramSocket",
+      "java.net.InetAddress",
+      "java.net.PlainSocketImpl",
+      "java.net.ServerSocket",
+      "java.net.Socket",
+      "java.net.SocketImpl",
+      "java.net.SocketInputStream",
+      "java.net.SocketOutputStream",
+      "java.util.Date",
+      "java.awt.image.IndexColorModel",
+      "java.io.InputStream",
+      "java.io.PrintStream",
+      "sun.awt.image.GifImageDecoder",
+      "sun.awt.image.JPEGImageDecoder",
+      "java.lang.UNIXProcess",
+      "java.lang.ProcessReaper"
+    ],
+    "output": "_gen"
+  },
+  {
+    "directory": "runtime",
+    "args": [
+      "-stubs"
+    ],
+    "classes": [
+      "java.io.File",
+      "java.io.FileDescriptor",
+      "java.io.FileInputStream",
+      "java.io.FileOutputStream",
+      "java.io.RandomAccessFile",
+      "java.lang.Class",
+      "java.lang.ClassLoader",
+      "java.lang.Compiler",
+      "java.lang.Double",
+      "java.lang.Throwable",
+      "java.lang.Float",
+      "java.lang.Integer",
+      "java.lang.Long",
+      "java.lang.Math",
+      "java.lang.Object",
+      "java.lang.Runtime",
+      "java.lang.SecurityManager",
+      "java.lang.String",
+      "java.lang.System",
+      "java.lang.Thread",
+      "java.net.DatagramSocket",
+      "java.net.InetAddress",
+      "java.net.PlainSocketImpl",
+      "java.net.SocketInputStream",
+      "java.net.SocketOutputStream",
+      "java.util.Date",
+      "sun.awt.image.GifImageDecoder",
+      "sun.awt.image.JPEGImageDecoder"
+    ],
+    "output": "_stubs"
+  },
+  {
+    "directory": "md",
+    "args": [],
+    "classes": [
+      "java.lang.ProcessReaper",
+      "java.lang.UNIXProcess"
+    ],
+    "output": "_gen"
+  },
+  {
+    "directory": "awt/x",
+    "args": [],
+    "classes": [
+      "java.awt.Button",
+      "java.awt.Canvas",
+      "java.awt.CheckboxGroup",
+      "java.awt.Checkbox",
+      "java.awt.Color",
+      "java.awt.Component",
+      "java.awt.Dialog",
+      "java.awt.Event",
+      "java.awt.FileDialog",
+      "java.awt.Font",
+      "java.awt.FontMetrics",
+      "java.awt.Frame",
+      "java.awt.Graphics",
+      "java.awt.Image",
+      "java.awt.Insets",
+      "java.awt.Label",
+      "java.awt.List",
+      "java.awt.Menu",
+      "java.awt.MenuBar",
+      "java.awt.MenuItem",
+      "java.awt.Rectangle",
+      "java.awt.Scrollbar",
+      "java.awt.TextField",
+      "java.awt.Window",
+      "java.awt.image.ColorModel",
+      "java.awt.image.ImageConsumer",
+      "java.awt.image.ImageObserver",
+      "java.awt.image.IndexColorModel",
+      "java.awt.image.DirectColorModel",
+      "sun.awt.image.Image",
+      "sun.awt.image.ImageRepresentation",
+      "sun.awt.image.OffScreenImageSource",
+      "sun.awt.motif.InputThread",
+      "sun.awt.motif.MButtonPeer",
+      "sun.awt.motif.MCanvasPeer",
+      "sun.awt.motif.MComponentPeer",
+      "sun.awt.motif.MCheckboxPeer",
+      "sun.awt.motif.MCheckboxMenuItemPeer",
+      "sun.awt.motif.MDialogPeer",
+      "sun.awt.motif.MFileDialogPeer",
+      "sun.awt.motif.MFramePeer",
+      "sun.awt.motif.MLabelPeer",
+      "sun.awt.motif.MListPeer",
+      "sun.awt.motif.MMenuBarPeer",
+      "sun.awt.motif.MMenuItemPeer",
+      "sun.awt.motif.MMenuPeer",
+      "sun.awt.motif.MScrollbarPeer",
+      "sun.awt.motif.MTextAreaPeer",
+      "sun.awt.motif.MTextFieldPeer",
+      "sun.awt.motif.MToolkit",
+      "sun.awt.motif.MWindowPeer",
+      "sun.awt.motif.X11FontMetrics",
+      "sun.awt.motif.X11Graphics",
+      "sun.awt.motif.X11Image",
+      "netscape.applet.MozillaAppletContext",
+      "netscape.applet.EmbeddedAppletFrame"
+    ],
+    "output": "_gen"
+  },
+  {
+    "directory": "awt/x",
+    "args": [
+      "-stubs"
+    ],
+    "classes": [
+      "sun.awt.image.ImageRepresentation",
+      "sun.awt.image.OffScreenImageSource",
+      "sun.awt.motif.InputThread",
+      "sun.awt.motif.MButtonPeer",
+      "sun.awt.motif.MCanvasPeer",
+      "sun.awt.motif.MCheckboxPeer",
+      "sun.awt.motif.MCheckboxMenuItemPeer",
+      "sun.awt.motif.MComponentPeer",
+      "sun.awt.motif.MDialogPeer",
+      "sun.awt.motif.MFileDialogPeer",
+      "sun.awt.motif.MFramePeer",
+      "sun.awt.motif.MLabelPeer",
+      "sun.awt.motif.MListPeer",
+      "sun.awt.motif.MMenuBarPeer",
+      "sun.awt.motif.MMenuItemPeer",
+      "sun.awt.motif.MMenuPeer",
+      "sun.awt.motif.MScrollbarPeer",
+      "sun.awt.motif.MTextAreaPeer",
+      "sun.awt.motif.MTextFieldPeer",
+      "sun.awt.motif.MToolkit",
+      "sun.awt.motif.MWindowPeer",
+      "sun.awt.motif.X11FontMetrics",
+      "sun.awt.motif.X11Graphics"
+    ],
+    "output": "_stubs"
+  },
+  {
+    "directory": "mmedia/stub",
+    "args": [],
+    "classes": [
+      "sun.audio.AudioDevice"
+    ],
+    "output": "_gen"
+  },
+  {
+    "directory": "mmedia/stub",
+    "args": [
+      "-stubs"
+    ],
+    "classes": [
+      "sun.audio.AudioDevice"
+    ],
+    "output": "_stubs"
+  },
+  {
+    "directory": "netscape/applet",
+    "args": [
+      "-jri"
+    ],
+    "classes": [
+      "java.lang.Object",
+      "java.io.InputStream",
+      "java.applet.Applet",
+      "netscape.applet.AppletClassLoader",
+      "netscape.applet.Console",
+      "netscape.applet.EmbeddedAppletFrame",
+      "netscape.applet.MozillaAppletContext",
+      "netscape.plugin.Plugin",
+      "java.lang.String"
+    ],
+    "output": "_gen"
+  },
+  {
+    "directory": "netscape/applet",
+    "args": [
+      "-jri",
+      "-stubs"
+    ],
+    "classes": [
+      "java.applet.Applet",
+      "java.io.InputStream",
+      "netscape.applet.AppletClassLoader",
+      "netscape.applet.Console",
+      "netscape.applet.EmbeddedAppletFrame",
+      "netscape.applet.MozillaAppletContext",
+      "netscape.plugin.Plugin"
+    ],
+    "output": "_stubs"
+  },
+  {
+    "directory": "netscape/javascript",
+    "args": [
+      "-jri"
+    ],
+    "classes": [
+      "netscape.javascript.JSObject",
+      "netscape.javascript.JSException"
+    ],
+    "output": "_gen"
+  },
+  {
+    "directory": "netscape/javascript",
+    "args": [
+      "-jri",
+      "-stubs"
+    ],
+    "classes": [
+      "netscape.javascript.JSObject",
+      "netscape.javascript.JSException"
+    ],
+    "output": "_stubs"
+  },
+  {
+    "directory": "netscape/net",
+    "args": [],
+    "classes": [
+      "netscape.net.URLStreamHandlerFactory",
+      "netscape.net.URLStreamHandler",
+      "netscape.net.URLConnection",
+      "netscape.net.URLInputStream",
+      "netscape.net.URLOutputStream",
+      "netscape.applet.AppletThreadGroup"
+    ],
+    "output": "_gen"
+  },
+  {
+    "directory": "netscape/net",
+    "args": [
+      "-stubs"
+    ],
+    "classes": [
+      "netscape.net.URLStreamHandlerFactory",
+      "netscape.net.URLConnection",
+      "netscape.net.URLInputStream",
+      "netscape.net.URLOutputStream"
+    ],
+    "output": "_stubs"
+  },
+  {
+    "directory": "netscape/net",
+    "args": [
+      "-jri"
+    ],
+    "classes": [
+      "netscape.applet.EmbeddedAppletFrame"
+    ],
+    "output": "_gen"
+  },
+  {
+    "directory": "netscape/net",
+    "args": [
+      "-jri",
+      "-stubs"
+    ],
+    "classes": [
+      "netscape.applet.EmbeddedAppletFrame"
+    ],
+    "output": "_stubs"
+  }
+]

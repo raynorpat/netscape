@@ -390,30 +390,30 @@ fe_set_proxies_cb (Widget widget, XtPointer closure, XtPointer call_data)
   struct fe_prefs_data *fep = (struct fe_prefs_data *) closure;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)call_data;
   if (!cb->set)
-    XtVaSetValues (widget, XmNset, True, 0);
+    XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
   else if (widget == fep->no_proxies_p)
     {
-      XtVaSetValues (fep->manual_p, XmNset, False, 0);
-      XtVaSetValues (fep->auto_proxies_p, XmNset, False, 0);
-      XtVaSetValues (fep->manual_browse, XmNsensitive, False, 0);
-      XtVaSetValues (fep->proxy_text, XmNsensitive, False, 0);
-      XtVaSetValues (fep->proxy_reload, XmNsensitive, False, 0);
+      XtVaSetValues (fep->manual_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->auto_proxies_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->manual_browse, XmNsensitive, False, (XtPointer) 0);
+      XtVaSetValues (fep->proxy_text, XmNsensitive, False, (XtPointer) 0);
+      XtVaSetValues (fep->proxy_reload, XmNsensitive, False, (XtPointer) 0);
     }
   else if (widget == fep->manual_p)
     {
-      XtVaSetValues (fep->no_proxies_p, XmNset, False, 0);
-      XtVaSetValues (fep->auto_proxies_p, XmNset, False, 0);
-      XtVaSetValues (fep->manual_browse, XmNsensitive, True, 0);
-      XtVaSetValues (fep->proxy_text, XmNsensitive, False, 0);
-      XtVaSetValues (fep->proxy_reload, XmNsensitive, False, 0);
+      XtVaSetValues (fep->no_proxies_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->auto_proxies_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->manual_browse, XmNsensitive, True, (XtPointer) 0);
+      XtVaSetValues (fep->proxy_text, XmNsensitive, False, (XtPointer) 0);
+      XtVaSetValues (fep->proxy_reload, XmNsensitive, False, (XtPointer) 0);
     }
   else if (widget == fep->auto_proxies_p)
     {
-      XtVaSetValues (fep->manual_p, XmNset, False, 0);
-      XtVaSetValues (fep->no_proxies_p, XmNset, False, 0);
-      XtVaSetValues (fep->manual_browse, XmNsensitive, False, 0);
-      XtVaSetValues (fep->proxy_text, XmNsensitive, True, 0);
-      XtVaSetValues (fep->proxy_reload, XmNsensitive, True, 0);
+      XtVaSetValues (fep->manual_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->no_proxies_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->manual_browse, XmNsensitive, False, (XtPointer) 0);
+      XtVaSetValues (fep->proxy_text, XmNsensitive, True, (XtPointer) 0);
+      XtVaSetValues (fep->proxy_reload, XmNsensitive, True, (XtPointer) 0);
     }
   else
     abort ();
@@ -425,7 +425,7 @@ fe_proxy_reload_cb (Widget widget, XtPointer closure, XtPointer call_data)
   struct fe_prefs_data *fep = (struct fe_prefs_data *) closure;
   char *s1;
 
-  XtVaGetValues (fep->proxy_text, XmNvalue, &s1, 0);
+  XtVaGetValues (fep->proxy_text, XmNvalue, &s1, (XtPointer) 0);
   if (*s1) {
     NET_SetProxyServer(PROXY_AUTOCONF_URL, s1);
     fe_globalPrefs.proxy_url = XP_STRDUP (s1);
@@ -458,11 +458,11 @@ fe_cert_pulldown_cb (Widget widget, XtPointer closure, XtPointer call_data)
   int cert_type = -1;
   CERTCertNicknames *certnames;
 
-  XtVaGetValues (fep->all_list, XmNitems, &str_list, XmNitemCount, &n, 0);
+  XtVaGetValues (fep->all_list, XmNitems, &str_list, XmNitemCount, &n, (XtPointer) 0);
   XmListDeleteItems (fep->all_list, str_list, n);
   str_list = 0;
 
-  XtVaGetValues (widget, XmNuserData, &data, 0);
+  XtVaGetValues (widget, XmNuserData, &data, (XtPointer) 0);
   cert_type = (int) data;
 
   /* Change the values in the Scrolled List */
@@ -478,7 +478,7 @@ fe_cert_pulldown_cb (Widget widget, XtPointer closure, XtPointer call_data)
   for (n = 0; n < certnames->numnicknames; n++)
     str_list[n] = XmStringCreateLocalized (certnames->nicknames[n]);
 
-  XtVaSetValues (fep->all_list, XmNitems, str_list, XmNitemCount, n, 0);
+  XtVaSetValues (fep->all_list, XmNitems, str_list, XmNitemCount, n, (XtPointer) 0);
 
   if (certnames->numnicknames)
     XmListSelectPos (fep->all_list, 1, False);
@@ -501,7 +501,7 @@ fe_all_edit_cb (Widget widget, XtPointer closure, XtPointer call_data)
   XtVaGetValues (fep->all_list,
 		 XmNselectedItems, &str,
 		 XmNselectedItemCount, &n,
-		 0);
+		 (XtPointer) 0);
   if (n) {
     XmStringGetLtoR (str[0], XmFONTLIST_DEFAULT_TAG, &certname);
     if (certname) {
@@ -536,7 +536,7 @@ fe_all_delete_cb (Widget widget, XtPointer closure, XtPointer call_data)
   XtVaGetValues (fep->all_list,
 		 XmNselectedItems, &str,
 		 XmNselectedItemCount, &n,
-		 0);
+		 (XtPointer) 0);
   if (n) {
     XmStringGetLtoR (str[0], XmFONTLIST_DEFAULT_TAG, &certname);
     fep->deleted_site_cert = XP_STRDUP (certname);
@@ -561,7 +561,7 @@ fe_cert_info_cb (Widget widget, XtPointer closure, XtPointer call_data)
   XtVaGetValues (fep->pers_list,
 		 XmNselectedItems, &str,
 		 XmNselectedItemCount, &n,
-		 0);
+		 (XtPointer) 0);
   if (n) {
     XmStringGetLtoR (str[0], XmFONTLIST_DEFAULT_TAG, &certname);
     if (certname) {
@@ -596,7 +596,7 @@ fe_cert_delete_cb (Widget widget, XtPointer closure, XtPointer call_data)
   XtVaGetValues (fep->pers_list,
 		 XmNselectedItems, &str,
 		 XmNselectedItemCount, &n,
-		 0);
+		 (XtPointer) 0);
   if (n) {
     XmStringGetLtoR (str[0], XmFONTLIST_DEFAULT_TAG, &certname);
     fep->deleted_user_cert = XP_STRDUP (certname);
@@ -629,7 +629,7 @@ fe_ssl_enable_cb (Widget widget, XtPointer closure, XtPointer call_data)
   MWContext *context = fep->context;
   int ssl_version;
 
-  XtVaGetValues (widget, XmNuserData, &ssl_version, 0);
+  XtVaGetValues (widget, XmNuserData, &ssl_version, (XtPointer) 0);
 
   SECNAV_MakeCiphersDialog(context, ssl_version);
 }
@@ -640,7 +640,7 @@ fe_browse_to_text_cb (Widget widget, XtPointer closure, XtPointer call_data)
 {
   struct fe_prefs_data *fep = (struct fe_prefs_data *) closure;
   Widget wtext;
-  XtVaGetValues (widget, XmNuserData, &wtext, 0);
+  XtVaGetValues (widget, XmNuserData, &wtext, (XtPointer) 0);
   if (!wtext) return;
   fe_browse_file_of_text (fep->context, wtext, False);
 }
@@ -682,48 +682,48 @@ fe_org_toggle_cb (Widget widget, XtPointer closure, XtPointer call_data)
   struct fe_prefs_data *fep = (struct fe_prefs_data *) closure;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)call_data;
   if (!cb->set)
-    XtVaSetValues (widget, XmNset, True, 0);
+    XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
   /* mail Sorting */
   else if (widget == fep->mdate_toggle) {
-    XtVaSetValues (fep->mnum_toggle, XmNset, False, 0);
-    XtVaSetValues (fep->msubject_toggle, XmNset, False, 0);
-    XtVaSetValues (fep->msender_toggle, XmNset, False, 0);
+    XtVaSetValues (fep->mnum_toggle, XmNset, False, (XtPointer) 0);
+    XtVaSetValues (fep->msubject_toggle, XmNset, False, (XtPointer) 0);
+    XtVaSetValues (fep->msender_toggle, XmNset, False, (XtPointer) 0);
   }
   else if (widget == fep->mnum_toggle) {
-    XtVaSetValues (fep->mdate_toggle, XmNset, False, 0);
-    XtVaSetValues (fep->msubject_toggle, XmNset, False, 0);
-    XtVaSetValues (fep->msender_toggle, XmNset, False, 0);
+    XtVaSetValues (fep->mdate_toggle, XmNset, False, (XtPointer) 0);
+    XtVaSetValues (fep->msubject_toggle, XmNset, False, (XtPointer) 0);
+    XtVaSetValues (fep->msender_toggle, XmNset, False, (XtPointer) 0);
   }
   else if (widget == fep->msubject_toggle) {
-    XtVaSetValues (fep->mdate_toggle, XmNset, False, 0);
-    XtVaSetValues (fep->mnum_toggle, XmNset, False, 0);
-    XtVaSetValues (fep->msender_toggle, XmNset, False, 0);
+    XtVaSetValues (fep->mdate_toggle, XmNset, False, (XtPointer) 0);
+    XtVaSetValues (fep->mnum_toggle, XmNset, False, (XtPointer) 0);
+    XtVaSetValues (fep->msender_toggle, XmNset, False, (XtPointer) 0);
   }
   else if (widget == fep->msender_toggle) {
-    XtVaSetValues (fep->mdate_toggle, XmNset, False, 0);
-    XtVaSetValues (fep->mnum_toggle, XmNset, False, 0);
-    XtVaSetValues (fep->msubject_toggle, XmNset, False, 0);
+    XtVaSetValues (fep->mdate_toggle, XmNset, False, (XtPointer) 0);
+    XtVaSetValues (fep->mnum_toggle, XmNset, False, (XtPointer) 0);
+    XtVaSetValues (fep->msubject_toggle, XmNset, False, (XtPointer) 0);
   }
   /* news Sorting */
   else if (widget == fep->ndate_toggle) {
-    XtVaSetValues (fep->nnum_toggle, XmNset, False, 0);
-    XtVaSetValues (fep->nsubject_toggle, XmNset, False, 0);
-    XtVaSetValues (fep->nsender_toggle, XmNset, False, 0);
+    XtVaSetValues (fep->nnum_toggle, XmNset, False, (XtPointer) 0);
+    XtVaSetValues (fep->nsubject_toggle, XmNset, False, (XtPointer) 0);
+    XtVaSetValues (fep->nsender_toggle, XmNset, False, (XtPointer) 0);
   }
   else if (widget == fep->nnum_toggle) {
-    XtVaSetValues (fep->ndate_toggle, XmNset, False, 0);
-    XtVaSetValues (fep->nsubject_toggle, XmNset, False, 0);
-    XtVaSetValues (fep->nsender_toggle, XmNset, False, 0);
+    XtVaSetValues (fep->ndate_toggle, XmNset, False, (XtPointer) 0);
+    XtVaSetValues (fep->nsubject_toggle, XmNset, False, (XtPointer) 0);
+    XtVaSetValues (fep->nsender_toggle, XmNset, False, (XtPointer) 0);
   }
   else if (widget == fep->nsubject_toggle) {
-    XtVaSetValues (fep->ndate_toggle, XmNset, False, 0);
-    XtVaSetValues (fep->nnum_toggle, XmNset, False, 0);
-    XtVaSetValues (fep->nsender_toggle, XmNset, False, 0);
+    XtVaSetValues (fep->ndate_toggle, XmNset, False, (XtPointer) 0);
+    XtVaSetValues (fep->nnum_toggle, XmNset, False, (XtPointer) 0);
+    XtVaSetValues (fep->nsender_toggle, XmNset, False, (XtPointer) 0);
   }
   else if (widget == fep->nsender_toggle) {
-    XtVaSetValues (fep->ndate_toggle, XmNset, False, 0);
-    XtVaSetValues (fep->nnum_toggle, XmNset, False, 0);
-    XtVaSetValues (fep->nsubject_toggle, XmNset, False, 0);
+    XtVaSetValues (fep->ndate_toggle, XmNset, False, (XtPointer) 0);
+    XtVaSetValues (fep->nnum_toggle, XmNset, False, (XtPointer) 0);
+    XtVaSetValues (fep->nsubject_toggle, XmNset, False, (XtPointer) 0);
   }
   else
     abort ();
@@ -737,21 +737,21 @@ fe_cache_verify_toggle_cb (Widget widget, XtPointer closure,
   struct fe_prefs_data *fep = (struct fe_prefs_data *) closure;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)call_data;
   if (!cb->set)
-    XtVaSetValues (widget, XmNset, True, 0);
+    XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
   else if (widget == fep->once_p)
     {
-      XtVaSetValues (fep->every_p, XmNset, False, 0);
-      XtVaSetValues (fep->expired_p, XmNset, False, 0);
+      XtVaSetValues (fep->every_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->expired_p, XmNset, False, (XtPointer) 0);
     }
   else if (widget == fep->every_p)
     {
-      XtVaSetValues (fep->once_p, XmNset, False, 0);
-      XtVaSetValues (fep->expired_p, XmNset, False, 0);
+      XtVaSetValues (fep->once_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->expired_p, XmNset, False, (XtPointer) 0);
     }
   else if (widget == fep->expired_p)
     {
-      XtVaSetValues (fep->once_p, XmNset, False, 0);
-      XtVaSetValues (fep->every_p, XmNset, False, 0);
+      XtVaSetValues (fep->once_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->every_p, XmNset, False, (XtPointer) 0);
     }
   else
     abort ();
@@ -765,21 +765,21 @@ fe_cache_dither_toggle_cb (Widget widget, XtPointer closure,
   struct fe_prefs_data *fep = (struct fe_prefs_data *) closure;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)call_data;
   if (!cb->set)
-    XtVaSetValues (widget, XmNset, True, 0);
+    XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
   else if (widget == fep->dither_p)
     {
-      XtVaSetValues (fep->auto_p, XmNset, False, 0);
-      XtVaSetValues (fep->closest_p, XmNset, False, 0);
+      XtVaSetValues (fep->auto_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->closest_p, XmNset, False, (XtPointer) 0);
     }
   else if (widget == fep->closest_p)
     {
-      XtVaSetValues (fep->auto_p, XmNset, False, 0);
-      XtVaSetValues (fep->dither_p, XmNset, False, 0);
+      XtVaSetValues (fep->auto_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->dither_p, XmNset, False, (XtPointer) 0);
     }
   else if (widget == fep->auto_p)
     {
-      XtVaSetValues (fep->closest_p, XmNset, False, 0);
-      XtVaSetValues (fep->dither_p, XmNset, False, 0);
+      XtVaSetValues (fep->closest_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->dither_p, XmNset, False, (XtPointer) 0);
     }
   else
     abort ();
@@ -792,11 +792,11 @@ fe_cache_display_toggle_cb (Widget widget, XtPointer closure,
   struct fe_prefs_data *fep = (struct fe_prefs_data *) closure;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)call_data;
   if (!cb->set)
-    XtVaSetValues (widget, XmNset, True, 0);
+    XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
   else if (widget == fep->while_loading_p)
-    XtVaSetValues (fep->after_loading_p, XmNset, False, 0);
+    XtVaSetValues (fep->after_loading_p, XmNset, False, (XtPointer) 0);
   else if (widget == fep->after_loading_p)
-    XtVaSetValues (fep->while_loading_p, XmNset, False, 0);
+    XtVaSetValues (fep->while_loading_p, XmNset, False, (XtPointer) 0);
   else
     abort ();
 }
@@ -865,34 +865,34 @@ fe_mail_pop_toggle_cb (Widget widget, XtPointer closure,
   struct fe_prefs_data *fep = (struct fe_prefs_data *) closure;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)call_data;
   if (!cb->set)
-    XtVaSetValues (widget, XmNset, True, 0);
+    XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
   else if (widget == fep->pop_toggle)
    {
-      XtVaSetValues (fep->builtin_toggle, XmNset, False, 0);
-      XtVaSetValues (fep->external_toggle, XmNset, False, 0);
-      XtVaSetValues (fep->movemail_text, XmNsensitive, False, 0);
+      XtVaSetValues (fep->builtin_toggle, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->external_toggle, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->movemail_text, XmNsensitive, False, (XtPointer) 0);
       if ( !ekit_PopServer() ) {
-        XtVaSetValues (fep->srvr_text, XmNsensitive, True, 0);
+        XtVaSetValues (fep->srvr_text, XmNsensitive, True, (XtPointer) 0);
       }
       if ( !ekit_PopName() ) {
-          XtVaSetValues (fep->user_text, XmNsensitive, True, 0);
+          XtVaSetValues (fep->user_text, XmNsensitive, True, (XtPointer) 0);
       }
    }
   else if (widget == fep->builtin_toggle)
    {
-      XtVaSetValues (fep->pop_toggle, XmNset, False, 0);
-      XtVaSetValues (fep->srvr_text, XmNsensitive, False, 0);
-      XtVaSetValues (fep->user_text, XmNsensitive, False, 0);
-      XtVaSetValues (fep->movemail_text, XmNsensitive, False, 0);
-      XtVaSetValues (fep->external_toggle, XmNset, False, 0);
+      XtVaSetValues (fep->pop_toggle, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->srvr_text, XmNsensitive, False, (XtPointer) 0);
+      XtVaSetValues (fep->user_text, XmNsensitive, False, (XtPointer) 0);
+      XtVaSetValues (fep->movemail_text, XmNsensitive, False, (XtPointer) 0);
+      XtVaSetValues (fep->external_toggle, XmNset, False, (XtPointer) 0);
    }
   else if (widget == fep->external_toggle)
    {
-      XtVaSetValues (fep->pop_toggle, XmNset, False, 0);
-      XtVaSetValues (fep->srvr_text, XmNsensitive, False, 0);
-      XtVaSetValues (fep->user_text, XmNsensitive, False, 0);
-      XtVaSetValues (fep->builtin_toggle, XmNset, False, 0);
-      XtVaSetValues (fep->movemail_text, XmNsensitive, True, 0);
+      XtVaSetValues (fep->pop_toggle, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->srvr_text, XmNsensitive, False, (XtPointer) 0);
+      XtVaSetValues (fep->user_text, XmNsensitive, False, (XtPointer) 0);
+      XtVaSetValues (fep->builtin_toggle, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->movemail_text, XmNsensitive, True, (XtPointer) 0);
    }
   else
     abort ();
@@ -918,24 +918,24 @@ fe_set_pass_toggle_cb (Widget widget, XtPointer closure,
   struct fe_prefs_data *fep = (struct fe_prefs_data *) closure;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)call_data;
   if (!cb->set)
-    XtVaSetValues (widget, XmNset, True, 0);
+    XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
   else if (widget == fep->once_toggle)
    {
-      XtVaSetValues (fep->every_toggle, XmNset, False, 0);
-      XtVaSetValues (fep->periodic_toggle, XmNset, False, 0);
-      XtVaSetValues (fep->periodic_text, XmNsensitive, False, 0);
+      XtVaSetValues (fep->every_toggle, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->periodic_toggle, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->periodic_text, XmNsensitive, False, (XtPointer) 0);
    }
   else if (widget == fep->every_toggle)
    {
-      XtVaSetValues (fep->once_toggle, XmNset, False, 0);
-      XtVaSetValues (fep->periodic_toggle, XmNset, False, 0);
-      XtVaSetValues (fep->periodic_text, XmNsensitive, False, 0);
+      XtVaSetValues (fep->once_toggle, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->periodic_toggle, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->periodic_text, XmNsensitive, False, (XtPointer) 0);
    }
   else if (widget == fep->periodic_toggle)
    {
-      XtVaSetValues (fep->once_toggle, XmNset, False, 0);
-      XtVaSetValues (fep->every_toggle, XmNset, False, 0);
-      XtVaSetValues (fep->periodic_text, XmNsensitive, True, 0);
+      XtVaSetValues (fep->once_toggle, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->every_toggle, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->periodic_text, XmNsensitive, True, (XtPointer) 0);
    }
   else
     abort ();
@@ -949,17 +949,17 @@ fe_msg_limit_toggle_cb (Widget widget, XtPointer closure,
   struct fe_prefs_data *fep = (struct fe_prefs_data *) closure;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)call_data;
   if (!cb->set)
-    XtVaSetValues (widget, XmNset, True, 0);
+    XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
   else if (widget == fep->no_limit)
     {
-      XtVaSetValues (fep->msg_limit, XmNset, False, 0);
-      XtVaSetValues (fep->limit_text, XmNsensitive, False, 0);
+      XtVaSetValues (fep->msg_limit, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->limit_text, XmNsensitive, False, (XtPointer) 0);
     }
   else if (widget == fep->msg_limit)
     {
-      XtVaSetValues (fep->no_limit, XmNset, False, 0);
+      XtVaSetValues (fep->no_limit, XmNset, False, (XtPointer) 0);
       if ( !ekit_MsgSizeLimit() ) {
-          XtVaSetValues (fep->limit_text, XmNsensitive, True, 0);
+          XtVaSetValues (fep->limit_text, XmNsensitive, True, (XtPointer) 0);
       }
     }
   else
@@ -973,14 +973,14 @@ fe_msg_on_server_toggle_cb (Widget widget, XtPointer closure,
   struct fe_prefs_data *fep = (struct fe_prefs_data *) closure;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)call_data;
   if (!cb->set)
-    XtVaSetValues (widget, XmNset, True, 0);
+    XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
   else if (widget == fep->msg_remove)
     {
-      XtVaSetValues (fep->msg_leave, XmNset, False, 0);
+      XtVaSetValues (fep->msg_leave, XmNset, False, (XtPointer) 0);
     }
   else if (widget == fep->msg_leave)
     {
-      XtVaSetValues (fep->msg_remove, XmNset, False, 0);
+      XtVaSetValues (fep->msg_remove, XmNset, False, (XtPointer) 0);
     }
   else
     abort ();
@@ -993,16 +993,16 @@ fe_msg_check_toggle_cb (Widget widget, XtPointer closure,
   struct fe_prefs_data *fep = (struct fe_prefs_data *) closure;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)call_data;
   if (!cb->set)
-    XtVaSetValues (widget, XmNset, True, 0);
+    XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
   else if (widget == fep->check_every)
     {
-      XtVaSetValues (fep->check_never, XmNset, False, 0);
-      XtVaSetValues (fep->check_text, XmNsensitive, True, 0);
+      XtVaSetValues (fep->check_never, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->check_text, XmNsensitive, True, (XtPointer) 0);
     }
   else if (widget == fep->check_never)
     {
-      XtVaSetValues (fep->check_every, XmNset, False, 0);
-      XtVaSetValues (fep->check_text, XmNsensitive, False, 0);
+      XtVaSetValues (fep->check_every, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->check_text, XmNsensitive, False, (XtPointer) 0);
     }
   else
     abort ();
@@ -1015,18 +1015,18 @@ fe_mail_eightbit_toggle_cb (Widget widget, XtPointer closure,
   struct fe_prefs_data *fep = (struct fe_prefs_data *) closure;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)call_data;
   if (!cb->set)
-    XtVaSetValues (widget, XmNset, True, 0);
+    XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
 #ifdef PREFS_8BIT
   else if (widget == fep->eightbit_toggle)
-    XtVaSetValues (fep->qp_toggle, XmNset, False, 0);
+    XtVaSetValues (fep->qp_toggle, XmNset, False, (XtPointer) 0);
   else if (widget == fep->qp_toggle)
-    XtVaSetValues (fep->eightbit_toggle, XmNset, False, 0);
+    XtVaSetValues (fep->eightbit_toggle, XmNset, False, (XtPointer) 0);
 #endif /* PREFS_8BIT */
 #ifdef PREFS_QUEUED_DELIVERY
   else if (widget == fep->deliverAuto_toggle)
-    XtVaSetValues (fep->deliverQ_toggle, XmNset, False, 0);
+    XtVaSetValues (fep->deliverQ_toggle, XmNset, False, (XtPointer) 0);
   else if (widget == fep->deliverQ_toggle)
-    XtVaSetValues (fep->deliverAuto_toggle, XmNset, False, 0);
+    XtVaSetValues (fep->deliverAuto_toggle, XmNset, False, (XtPointer) 0);
 #endif
   else
     abort ();
@@ -1039,21 +1039,21 @@ fe_styles_toolbar_toggle_cb (Widget widget, XtPointer closure,
   struct fe_prefs_data *fep = (struct fe_prefs_data *) closure;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)call_data;
   if (!cb->set)
-    XtVaSetValues (widget, XmNset, True, 0);
+    XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
   else if (widget == fep->icons_p)
     {
-      XtVaSetValues (fep->text_p, XmNset, False, 0);
-      XtVaSetValues (fep->both_p, XmNset, False, 0);
+      XtVaSetValues (fep->text_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->both_p, XmNset, False, (XtPointer) 0);
     }
   else if (widget == fep->text_p)
     {
-      XtVaSetValues (fep->icons_p, XmNset, False, 0);
-      XtVaSetValues (fep->both_p, XmNset, False, 0);
+      XtVaSetValues (fep->icons_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->both_p, XmNset, False, (XtPointer) 0);
     }
   else if (widget == fep->both_p)
     {
-      XtVaSetValues (fep->text_p, XmNset, False, 0);
-      XtVaSetValues (fep->icons_p, XmNset, False, 0);
+      XtVaSetValues (fep->text_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->icons_p, XmNset, False, (XtPointer) 0);
     }
   else
     {
@@ -1068,16 +1068,16 @@ fe_styles_start_toggle_cb (Widget widget, XtPointer closure,
   struct fe_prefs_data *fep = (struct fe_prefs_data *) closure;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)call_data;
   if (!cb->set)
-    XtVaSetValues (widget, XmNset, True, 0);
+    XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
   else if (widget == fep->blank_p)
     {
-      XtVaSetValues (fep->home_p, XmNset, False, 0);
-      XtVaSetValues (fep->home_text, XmNsensitive, False, 0);
+      XtVaSetValues (fep->home_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->home_text, XmNsensitive, False, (XtPointer) 0);
     }
   else if (widget == fep->home_p)
     {
-      XtVaSetValues (fep->blank_p, XmNset, False, 0);
-      XtVaSetValues (fep->home_text, XmNsensitive, True, 0);
+      XtVaSetValues (fep->blank_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->home_text, XmNsensitive, True, (XtPointer) 0);
     }
   else
     abort ();
@@ -1090,21 +1090,21 @@ fe_styles_startup_page_toggle_cb (Widget widget, XtPointer closure,
   struct fe_prefs_data *fep = (struct fe_prefs_data *) closure;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)call_data;
   if (!cb->set)
-    XtVaSetValues (widget, XmNset, True, 0);
+    XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
   else if (widget == fep->browser_p)
     {
-      XtVaSetValues (fep->mail_p, XmNset, False, 0);
-      XtVaSetValues (fep->news_p, XmNset, False, 0);
+      XtVaSetValues (fep->mail_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->news_p, XmNset, False, (XtPointer) 0);
     }
   else if (widget == fep->mail_p)
     {
-      XtVaSetValues (fep->browser_p, XmNset, False, 0);
-      XtVaSetValues (fep->news_p, XmNset, False, 0);
+      XtVaSetValues (fep->browser_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->news_p, XmNset, False, (XtPointer) 0);
     }
   else if (widget == fep->news_p)
     {
-      XtVaSetValues (fep->browser_p, XmNset, False, 0);
-      XtVaSetValues (fep->mail_p, XmNset, False, 0);
+      XtVaSetValues (fep->browser_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->mail_p, XmNset, False, (XtPointer) 0);
     }
   else
     abort ();
@@ -1181,7 +1181,7 @@ fe_allow_font_scaling_cb(Widget widget, XtPointer closure, XtPointer call_data)
 	fep = (struct fe_prefs_data *) closure;
 	fep->fonts_changed = 1;
 
-	XtVaGetValues(widget, XmNuserData, &data, 0);
+	XtVaGetValues(widget, XmNuserData, &data, (XtPointer) 0);
 	pitch = (fe_FontPitch *) data;
 
 	family = NULL;
@@ -1218,14 +1218,14 @@ fe_allow_font_scaling_cb(Widget widget, XtPointer closure, XtPointer call_data)
 	if (family->pointSizes->size)
 	{
 		allowScaling = 0;
-		XtVaSetValues(widget, XmNset, False, 0);
-		XtVaSetValues(widget, XmNsensitive, False, 0);
+		XtVaSetValues(widget, XmNset, False, (XtPointer) 0);
+		XtVaSetValues(widget, XmNsensitive, False, (XtPointer) 0);
 	}
 	else if (family->numberOfPointSizes == 1)
 	{
 		allowScaling = 1;
-		XtVaSetValues(widget, XmNset, True, 0);
-		XtVaSetValues(widget, XmNsensitive, False, 0);
+		XtVaSetValues(widget, XmNset, True, (XtPointer) 0);
+		XtVaSetValues(widget, XmNsensitive, False, (XtPointer) 0);
 	}
 
 	if (allowScaling != family->allowScaling) {
@@ -1266,7 +1266,7 @@ fe_get_scaled_font_size(struct fe_prefs_data *fep)
 	{
 		field = (i ? fep->fixed_size_field : fep->prop_size_field);
 		pitch = &charset->pitches[i];
-		XtVaGetValues(field, XmNvalue, &buf, 0);
+		XtVaGetValues(field, XmNvalue, &buf, (XtPointer) 0);
 		family = NULL;
 		for (j = 0; j < pitch->numberOfFamilies; j++)
 		{
@@ -1316,7 +1316,7 @@ fe_font_size_cb(Widget widget, XtPointer closure, XtPointer call_data)
 	fep = (struct fe_prefs_data *) closure;
 	fep->fonts_changed = 1;
 
-	XtVaGetValues(widget, XmNuserData, &data, 0);
+	XtVaGetValues(widget, XmNuserData, &data, (XtPointer) 0);
 	pitch = (fe_FontPitch *) data;
 
 	family = NULL;
@@ -1389,7 +1389,7 @@ fe_set_new_font_sizes(struct fe_prefs_data *fep, fe_FontPitch *pitch)
 	}
 
 	XtVaGetValues(pitch->sizeMenu, XmNchildren, &kids,
-		XmNnumChildren, &nkids, 0);
+		XmNnumChildren, &nkids, (XtPointer) 0);
 	for (i = nkids - 1; i >= 0; i--)
 	{
 		XtDestroyWidget(kids[i]);
@@ -1415,26 +1415,26 @@ fe_set_new_font_sizes(struct fe_prefs_data *fep, fe_FontPitch *pitch)
 
 	if (family->allowScaling)
 	{
-		XtVaSetValues(toggle, XmNset, True, 0);
+		XtVaSetValues(toggle, XmNset, True, (XtPointer) 0);
 	}
 	else
 	{
-		XtVaSetValues(toggle, XmNset, False, 0);
+		XtVaSetValues(toggle, XmNset, False, (XtPointer) 0);
 	}
 
 	if (family->pointSizes->size)
 	{
-		XtVaSetValues(toggle, XmNsensitive, False, 0);
+		XtVaSetValues(toggle, XmNsensitive, False, (XtPointer) 0);
 	}
 	else
 	{
 		if (family->numberOfPointSizes == 1)
 		{
-			XtVaSetValues(toggle, XmNsensitive, False, 0);
+			XtVaSetValues(toggle, XmNsensitive, False, (XtPointer) 0);
 		}
 		else
 		{
-			XtVaSetValues(toggle, XmNsensitive, True, 0);
+			XtVaSetValues(toggle, XmNsensitive, True, (XtPointer) 0);
 		}
 	}
 
@@ -1465,7 +1465,7 @@ fe_set_new_font_sizes(struct fe_prefs_data *fep, fe_FontPitch *pitch)
 			fep);
 		if ((i == 0) || (size->selected))
 		{
-			XtVaSetValues(optionMenu, XmNmenuHistory, button, 0);
+			XtVaSetValues(optionMenu, XmNmenuHistory, button, (XtPointer) 0);
 		}
 		XtManageChild(button);
 	}
@@ -1484,7 +1484,7 @@ fe_font_family_cb(Widget widget, XtPointer closure, XtPointer call_data)
 	fep = (struct fe_prefs_data *) closure;
 	fep->fonts_changed = 1;
 
-	XtVaGetValues(widget, XmNuserData, &data, 0);
+	XtVaGetValues(widget, XmNuserData, &data, (XtPointer) 0);
 	pitch = (fe_FontPitch *) data;
 
 	pitch->selectedFamily = NULL;
@@ -1532,7 +1532,7 @@ fe_set_new_font_families(struct fe_prefs_data *fep, fe_FontPitch *pitch,
 	}
 
 	XtVaGetValues(familyMenu, XmNchildren, &kids,
-		XmNnumChildren, &nkids, 0);
+		XmNnumChildren, &nkids, (XtPointer) 0);
 	for (i = nkids - 1; i >= 0; i--)
 	{
 		XtDestroyWidget(kids[i]);
@@ -1548,7 +1548,7 @@ fe_set_new_font_families(struct fe_prefs_data *fep, fe_FontPitch *pitch,
 			fep);
 		if ((i == 0) || (family->selected))
 		{
-			XtVaSetValues(optionMenu, XmNmenuHistory, button, 0);
+			XtVaSetValues(optionMenu, XmNmenuHistory, button, (XtPointer) 0);
 		}
 		XtManageChild(button);
 	}
@@ -1568,7 +1568,7 @@ fe_font_charset_cb(Widget widget, XtPointer closure, XtPointer call_data)
 
 	fep = (struct fe_prefs_data *) closure;
 
-	XtVaGetValues(widget, XmNuserData, &data, 0);
+	XtVaGetValues(widget, XmNuserData, &data, (XtPointer) 0);
 	charsetID = (int) data;
 
 	for (i = 0; i < INTL_CHAR_SET_MAX; i++)
@@ -1593,14 +1593,14 @@ fe_msg_font_toggle_cb (Widget widget, XtPointer closure,
   struct fe_prefs_data *fep = (struct fe_prefs_data *) closure;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)call_data;
   if (!cb->set)
-    XtVaSetValues (widget, XmNset, True, 0);
+    XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
   else if (widget == fep->fixed_message_font_p)
     {
-      XtVaSetValues (fep->var_message_font_p, XmNset, False, 0);
+      XtVaSetValues (fep->var_message_font_p, XmNset, False, (XtPointer) 0);
     }
   else if (widget == fep->var_message_font_p)
     {
-      XtVaSetValues (fep->fixed_message_font_p, XmNset, False, 0);
+      XtVaSetValues (fep->fixed_message_font_p, XmNset, False, (XtPointer) 0);
     }
   else
     abort ();
@@ -1613,30 +1613,30 @@ fe_styles_cite_font_toggle_cb (Widget widget, XtPointer closure,
   struct fe_prefs_data *fep = (struct fe_prefs_data *) closure;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)call_data;
   if (!cb->set)
-    XtVaSetValues (widget, XmNset, True, 0);
+    XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
   else if (widget == fep->cite_plain_p)
     {
-      XtVaSetValues (fep->cite_bold_p, XmNset, False, 0);
-      XtVaSetValues (fep->cite_italic_p, XmNset, False, 0);
-      XtVaSetValues (fep->cite_bold_italic_p, XmNset, False, 0);
+      XtVaSetValues (fep->cite_bold_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->cite_italic_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->cite_bold_italic_p, XmNset, False, (XtPointer) 0);
     }
   else if (widget == fep->cite_bold_p)
     {
-      XtVaSetValues (fep->cite_plain_p, XmNset, False, 0);
-      XtVaSetValues (fep->cite_italic_p, XmNset, False, 0);
-      XtVaSetValues (fep->cite_bold_italic_p, XmNset, False, 0);
+      XtVaSetValues (fep->cite_plain_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->cite_italic_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->cite_bold_italic_p, XmNset, False, (XtPointer) 0);
     }
   else if (widget == fep->cite_italic_p)
     {
-      XtVaSetValues (fep->cite_plain_p, XmNset, False, 0);
-      XtVaSetValues (fep->cite_bold_p, XmNset, False, 0);
-      XtVaSetValues (fep->cite_bold_italic_p, XmNset, False, 0);
+      XtVaSetValues (fep->cite_plain_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->cite_bold_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->cite_bold_italic_p, XmNset, False, (XtPointer) 0);
     }
   else if (widget == fep->cite_bold_italic_p)
     {
-      XtVaSetValues (fep->cite_plain_p, XmNset, False, 0);
-      XtVaSetValues (fep->cite_bold_p, XmNset, False, 0);
-      XtVaSetValues (fep->cite_italic_p, XmNset, False, 0);
+      XtVaSetValues (fep->cite_plain_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->cite_bold_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->cite_italic_p, XmNset, False, (XtPointer) 0);
     }
   else
     abort ();
@@ -1650,21 +1650,21 @@ fe_styles_cite_size_toggle_cb (Widget widget, XtPointer closure,
   struct fe_prefs_data *fep = (struct fe_prefs_data *) closure;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)call_data;
   if (!cb->set)
-    XtVaSetValues (widget, XmNset, True, 0);
+    XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
   else if (widget == fep->cite_normal_p)
     {
-      XtVaSetValues (fep->cite_bigger_p, XmNset, False, 0);
-      XtVaSetValues (fep->cite_smaller_p, XmNset, False, 0);
+      XtVaSetValues (fep->cite_bigger_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->cite_smaller_p, XmNset, False, (XtPointer) 0);
     }
   else if (widget == fep->cite_bigger_p)
     {
-      XtVaSetValues (fep->cite_normal_p, XmNset, False, 0);
-      XtVaSetValues (fep->cite_smaller_p, XmNset, False, 0);
+      XtVaSetValues (fep->cite_normal_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->cite_smaller_p, XmNset, False, (XtPointer) 0);
     }
   else if (widget == fep->cite_smaller_p)
     {
-      XtVaSetValues (fep->cite_normal_p, XmNset, False, 0);
-      XtVaSetValues (fep->cite_bigger_p, XmNset, False, 0);
+      XtVaSetValues (fep->cite_normal_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->cite_bigger_p, XmNset, False, (XtPointer) 0);
     }
   else
     abort ();
@@ -1677,30 +1677,30 @@ fe_mail_pane_layout_toggle_cb (Widget widget, XtPointer closure,
   struct fe_prefs_data *fep = (struct fe_prefs_data *) closure;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)call_data;
   if (!cb->set)
-    XtVaSetValues (widget, XmNset, True, 0);
+    XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
   else if (widget == fep->mail_horiz_p)
     {
-      XtVaSetValues (fep->mail_vert_p, XmNset, False, 0);
-      XtVaSetValues (fep->mail_stack_p, XmNset, False, 0);
-      XtVaSetValues (fep->mail_tall_p, XmNset, False, 0);
+      XtVaSetValues (fep->mail_vert_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->mail_stack_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->mail_tall_p, XmNset, False, (XtPointer) 0);
     }
   else if (widget == fep->mail_vert_p)
     {
-      XtVaSetValues (fep->mail_horiz_p, XmNset, False, 0);
-      XtVaSetValues (fep->mail_stack_p, XmNset, False, 0);
-      XtVaSetValues (fep->mail_tall_p, XmNset, False, 0);
+      XtVaSetValues (fep->mail_horiz_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->mail_stack_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->mail_tall_p, XmNset, False, (XtPointer) 0);
     }
   else if (widget == fep->mail_stack_p)
     {
-      XtVaSetValues (fep->mail_horiz_p, XmNset, False, 0);
-      XtVaSetValues (fep->mail_vert_p, XmNset, False, 0);
-      XtVaSetValues (fep->mail_tall_p, XmNset, False, 0);
+      XtVaSetValues (fep->mail_horiz_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->mail_vert_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->mail_tall_p, XmNset, False, (XtPointer) 0);
     }
   else if (widget == fep->mail_tall_p)
     {
-      XtVaSetValues (fep->mail_horiz_p, XmNset, False, 0);
-      XtVaSetValues (fep->mail_vert_p, XmNset, False, 0);
-      XtVaSetValues (fep->mail_stack_p, XmNset, False, 0);
+      XtVaSetValues (fep->mail_horiz_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->mail_vert_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->mail_stack_p, XmNset, False, (XtPointer) 0);
     }
   else
     abort ();
@@ -1713,30 +1713,30 @@ fe_news_pane_layout_toggle_cb (Widget widget, XtPointer closure,
   struct fe_prefs_data *fep = (struct fe_prefs_data *) closure;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)call_data;
   if (!cb->set)
-    XtVaSetValues (widget, XmNset, True, 0);
+    XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
   else if (widget == fep->news_horiz_p)
     {
-      XtVaSetValues (fep->news_vert_p, XmNset, False, 0);
-      XtVaSetValues (fep->news_stack_p, XmNset, False, 0);
-      XtVaSetValues (fep->news_tall_p, XmNset, False, 0);
+      XtVaSetValues (fep->news_vert_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->news_stack_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->news_tall_p, XmNset, False, (XtPointer) 0);
     }
   else if (widget == fep->news_vert_p)
     {
-      XtVaSetValues (fep->news_horiz_p, XmNset, False, 0);
-      XtVaSetValues (fep->news_stack_p, XmNset, False, 0);
-      XtVaSetValues (fep->news_tall_p, XmNset, False, 0);
+      XtVaSetValues (fep->news_horiz_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->news_stack_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->news_tall_p, XmNset, False, (XtPointer) 0);
     }
   else if (widget == fep->news_stack_p)
     {
-      XtVaSetValues (fep->news_horiz_p, XmNset, False, 0);
-      XtVaSetValues (fep->news_vert_p, XmNset, False, 0);
-      XtVaSetValues (fep->news_tall_p, XmNset, False, 0);
+      XtVaSetValues (fep->news_horiz_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->news_vert_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->news_tall_p, XmNset, False, (XtPointer) 0);
     }
   else if (widget == fep->news_tall_p)
     {
-      XtVaSetValues (fep->news_horiz_p, XmNset, False, 0);
-      XtVaSetValues (fep->news_vert_p, XmNset, False, 0);
-      XtVaSetValues (fep->news_stack_p, XmNset, False, 0);
+      XtVaSetValues (fep->news_horiz_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->news_vert_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->news_stack_p, XmNset, False, (XtPointer) 0);
     }
   else
     abort ();
@@ -1751,25 +1751,25 @@ fe_styles_expire_toggle_cb (Widget widget, XtPointer closure,
   int n;
   struct fe_prefs_data *fep = (struct fe_prefs_data *) closure;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)call_data;
-  XtVaGetValues (fep->expire_days_text, XmNvalue, &text, 0);
+  XtVaGetValues (fep->expire_days_text, XmNvalue, &text, (XtPointer) 0);
   if (1 != sscanf (text, " %d %c", &n, &dummy))
     n = -1;
   if (!cb->set)
-    XtVaSetValues (widget, XmNset, True, 0);
+    XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
   else if (widget == fep->expire_days_p)
     {
-      XtVaSetValues (fep->never_expire_p, XmNset, False, 0);
-      XtVaSetValues (fep->expire_days_text, XmNsensitive, True, 0);
+      XtVaSetValues (fep->never_expire_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->expire_days_text, XmNsensitive, True, (XtPointer) 0);
       if (n < 0)
-	XtVaSetValues (fep->expire_days_text, XmNvalue, "9", 0);
+	XtVaSetValues (fep->expire_days_text, XmNvalue, "9", (XtPointer) 0);
       XmProcessTraversal (fep->expire_days_text, XmTRAVERSE_CURRENT);
     }
   else if (widget == fep->never_expire_p)
     {
-      XtVaSetValues (fep->expire_days_p, XmNset, False, 0);
-      XtVaSetValues (fep->expire_days_text, XmNsensitive, False, 0);
+      XtVaSetValues (fep->expire_days_p, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fep->expire_days_text, XmNsensitive, False, (XtPointer) 0);
       if (n < 0)
-	XtVaSetValues (fep->expire_days_text, XmNvalue, "", 0);
+	XtVaSetValues (fep->expire_days_text, XmNvalue, "", (XtPointer) 0);
     }
   else
     abort ();
@@ -1885,28 +1885,28 @@ fe_make_styles1_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, icons_p,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (icons_p,
 		 XmNtopAttachment, XmATTACH_FORM,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_POSITION,
 		 XmNleftPosition, 30,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (text_p,
 		 XmNtopAttachment, XmATTACH_FORM,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_POSITION,
 		 XmNleftPosition, 54,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (both_p,
 		 XmNtopAttachment, XmATTACH_FORM,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_POSITION,
 		 XmNleftPosition, 74,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (tips_label,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, icons_p,
@@ -1914,7 +1914,7 @@ fe_make_styles1_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, icons_p,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (tips_p,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, icons_p,
@@ -1922,7 +1922,7 @@ fe_make_styles1_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, icons_p,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   XtManageChildren (kids, i);
   XtManageChild (label1);
@@ -1948,28 +1948,28 @@ fe_make_styles1_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_NONE,
                  XmNrightAttachment, XmATTACH_WIDGET,
                  XmNrightWidget, browser_p,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (browser_p,
                  XmNtopAttachment, XmATTACH_FORM,
                  XmNbottomAttachment, XmATTACH_NONE,
                  XmNleftAttachment, XmATTACH_POSITION,
                  XmNleftPosition, 30,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (mail_p,
 		 XmNtopAttachment, XmATTACH_FORM,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_POSITION,
 		 XmNleftPosition, 54,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (news_p,
 		 XmNtopAttachment, XmATTACH_FORM,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_POSITION,
 		 XmNleftPosition, 74,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   XtVaSetValues (start_label,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -1978,7 +1978,7 @@ fe_make_styles1_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_FORM,
                  XmNrightAttachment, XmATTACH_WIDGET,
                  XmNrightWidget, blank_p,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (blank_p,
                  XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, browser_p,
@@ -1986,7 +1986,7 @@ fe_make_styles1_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_POSITION,
                  XmNleftPosition, 30,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
 
   XtVaSetValues (home_p,
 		 XmNtopAttachment, XmATTACH_WIDGET,
@@ -1995,7 +1995,7 @@ fe_make_styles1_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, blank_p,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (home_text,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, home_p,
@@ -2003,7 +2003,7 @@ fe_make_styles1_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, home_p,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
 
   XtManageChildren (kids, i);
   XtManageChild (label2);
@@ -2039,13 +2039,13 @@ fe_make_styles1_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, underline_p,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (underline_p,
 		 XmNtopAttachment, XmATTACH_FORM,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   XtVaSetValues (expire_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -2055,7 +2055,7 @@ fe_make_styles1_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, underline_p,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (never_expire_p,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, underline_p,
@@ -2063,7 +2063,7 @@ fe_make_styles1_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, underline_p,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (expire_days_p,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, underline_p,
@@ -2071,7 +2071,7 @@ fe_make_styles1_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, never_expire_p,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (expire_days_text,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, underline_p,
@@ -2079,7 +2079,7 @@ fe_make_styles1_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, expire_days_p,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (expire_days_label,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, underline_p,
@@ -2087,7 +2087,7 @@ fe_make_styles1_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, expire_days_text,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (expire_now_button,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, expire_days_text,
@@ -2096,28 +2096,28 @@ fe_make_styles1_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, expire_days_label,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   fe_attach_field_to_labels (underline_p, underline_label, expire_label, 0);
 
   {
     Dimension h1, h2, h3, h4, h5, h;
-    XtVaGetValues (expire_label, XmNheight, &h1, 0);
-    XtVaGetValues (never_expire_p, XmNheight, &h2, 0);
-    XtVaGetValues (expire_days_p, XmNheight, &h3, 0);
-    XtVaGetValues (expire_days_text, XmNheight, &h4, 0);
-    XtVaGetValues (expire_days_label, XmNheight, &h5, 0);
+    XtVaGetValues (expire_label, XmNheight, &h1, (XtPointer) 0);
+    XtVaGetValues (never_expire_p, XmNheight, &h2, (XtPointer) 0);
+    XtVaGetValues (expire_days_p, XmNheight, &h3, (XtPointer) 0);
+    XtVaGetValues (expire_days_text, XmNheight, &h4, (XtPointer) 0);
+    XtVaGetValues (expire_days_label, XmNheight, &h5, (XtPointer) 0);
     h = h1;
     if (h < h2) h = h2;
     if (h < h3) h = h3;
     if (h < h4) h = h4;
     if (h < h5) h = h5;
-    XtVaSetValues (expire_label, XmNheight, h, 0);
-    XtVaSetValues (never_expire_p, XmNheight, h, 0);
-    XtVaSetValues (expire_days_p, XmNheight, h, 0);
-    XtVaSetValues (expire_days_text, XmNheight, h, 0);
-    XtVaSetValues (expire_days_label, XmNheight, h, 0);
-    XtVaSetValues (expire_now_button, XmNheight, h, 0);
+    XtVaSetValues (expire_label, XmNheight, h, (XtPointer) 0);
+    XtVaSetValues (never_expire_p, XmNheight, h, (XtPointer) 0);
+    XtVaSetValues (expire_days_p, XmNheight, h, (XtPointer) 0);
+    XtVaSetValues (expire_days_text, XmNheight, h, (XtPointer) 0);
+    XtVaSetValues (expire_days_label, XmNheight, h, (XtPointer) 0);
+    XtVaSetValues (expire_now_button, XmNheight, h, (XtPointer) 0);
   }
 
   XtManageChildren (kids, i);
@@ -2233,22 +2233,22 @@ fe_make_bookmarks_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_FORM,
                  XmNrightAttachment, XmATTACH_WIDGET,
                  XmNrightWidget, book_text,
-                 0);
+                 (XtPointer) 0);
 
   XtVaSetValues (book_text,
                  XmNtopAttachment, XmATTACH_FORM,
                  XmNbottomAttachment, XmATTACH_NONE,
                  XmNleftAttachment, XmATTACH_NONE,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (book_browse,
                  XmNtopAttachment, XmATTACH_FORM,
                  XmNbottomAttachment, XmATTACH_NONE,
                  XmNleftAttachment, XmATTACH_WIDGET,
                  XmNleftWidget, book_text,
                  XmNrightAttachment, XmATTACH_FORM,
-                 0);
-  XtVaSetValues (book_browse, XmNheight, book_text->core.height, 0);
+                 (XtPointer) 0);
+  XtVaSetValues (book_browse, XmNheight, book_text->core.height, (XtPointer) 0);
 
   XtAddCallback (book_browse, XmNactivateCallback, fe_browse_book_cb, fep);
 
@@ -2316,7 +2316,7 @@ fe_make_fonts_page (MWContext *context, struct fe_prefs_data *fep)
 	av, ac);
 
   XtVaGetValues (CONTEXT_WIDGET (context), XtNvisual, &v, XtNcolormap, &cmap,
-	XtNdepth, &depth, 0);
+	XtNdepth, &depth, (XtPointer) 0);
 
   ac = 0;
   XtSetArg (av[ac], XmNvisual, v); ac++;
@@ -2342,7 +2342,7 @@ fe_make_fonts_page (MWContext *context, struct fe_prefs_data *fep)
 	XtVaSetValues(button, XmNuserData, fe_SortedFontCharSets[j], NULL);
 	XtAddCallback (button, XmNactivateCallback, fe_font_charset_cb, fep);
 	if (charset->selected) {
-		XtVaSetValues (encoding_menu, XmNmenuHistory, button, 0);
+		XtVaSetValues (encoding_menu, XmNmenuHistory, button, (XtPointer) 0);
 		selectedCharSet = j;
 	}
 	XtManageChild (button);
@@ -2444,13 +2444,13 @@ fe_make_fonts_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, encoding_menu,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (encoding_menu,
 		 XmNtopAttachment, XmATTACH_FORM,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   XtVaSetValues (proportional_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -2460,7 +2460,7 @@ fe_make_fonts_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, encoding_menu,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (fep->prop_family_option,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, encoding_menu,
@@ -2469,7 +2469,7 @@ fe_make_fonts_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, encoding_menu,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (prop_size_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, fep->prop_family_option,
@@ -2478,7 +2478,7 @@ fe_make_fonts_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, fep->prop_family_option,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (fep->prop_size_option,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, fep->prop_family_option,
@@ -2487,7 +2487,7 @@ fe_make_fonts_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, prop_size_label,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (fep->prop_size_field,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, fep->prop_size_option,
@@ -2496,7 +2496,7 @@ fe_make_fonts_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, fep->prop_size_option,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (fep->prop_size_toggle,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, fep->prop_size_field,
@@ -2504,7 +2504,7 @@ fe_make_fonts_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, prop_size_label,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   XtVaSetValues (fixed_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -2514,7 +2514,7 @@ fe_make_fonts_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, fep->prop_family_option,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (fep->fixed_family_option,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, fep->prop_size_toggle,
@@ -2523,7 +2523,7 @@ fe_make_fonts_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, fep->prop_family_option,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (fixed_size_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, fep->fixed_family_option,
@@ -2532,7 +2532,7 @@ fe_make_fonts_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, fep->prop_family_option,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (fep->fixed_size_option,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, fep->fixed_family_option,
@@ -2541,7 +2541,7 @@ fe_make_fonts_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, fixed_size_label,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (fep->fixed_size_field,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, fep->fixed_size_option,
@@ -2550,7 +2550,7 @@ fe_make_fonts_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, fep->fixed_size_option,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (fep->fixed_size_toggle,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, fep->fixed_size_field,
@@ -2558,7 +2558,7 @@ fe_make_fonts_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, fixed_size_label,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   fe_attach_field_to_labels (encoding_menu, encoding_label,
 	proportional_label, fixed_label, 0);
@@ -2646,7 +2646,7 @@ fe_make_apps_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_FORM,
                  XmNrightAttachment, XmATTACH_WIDGET,
                  XmNrightWidget, telnet_text,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (tn3270_label,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNtopWidget, tn3270_text,
@@ -2655,7 +2655,7 @@ fe_make_apps_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_FORM,
                  XmNrightAttachment, XmATTACH_WIDGET,
                  XmNrightWidget, tn3270_text,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (rlogin_label,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNtopWidget, rlogin_text,
@@ -2664,7 +2664,7 @@ fe_make_apps_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_FORM,
                  XmNrightAttachment, XmATTACH_WIDGET,
                  XmNrightWidget, rlogin_text,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (rlogin_user_label,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNtopWidget, rlogin_user_text,
@@ -2673,7 +2673,7 @@ fe_make_apps_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_FORM,
                  XmNrightAttachment, XmATTACH_WIDGET,
                  XmNrightWidget, rlogin_user_text,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (tmp_label,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNtopWidget, tmp_text,
@@ -2682,13 +2682,13 @@ fe_make_apps_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_FORM,
                  XmNrightAttachment, XmATTACH_WIDGET,
                  XmNrightWidget, tmp_text,
-                 0);
+                 (XtPointer) 0);
 
   XtVaSetValues (telnet_text,
                  XmNtopAttachment, XmATTACH_FORM,
                  XmNbottomAttachment, XmATTACH_NONE,
                  XmNrightAttachment, XmATTACH_FORM,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (tn3270_text,
                  XmNtopAttachment, XmATTACH_WIDGET,
                  XmNtopWidget, telnet_text,
@@ -2697,7 +2697,7 @@ fe_make_apps_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftWidget, telnet_text,
                  XmNrightAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNrightWidget, telnet_text,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (rlogin_text,
                  XmNtopAttachment, XmATTACH_WIDGET,
                  XmNtopWidget, tn3270_text,
@@ -2706,7 +2706,7 @@ fe_make_apps_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftWidget, tn3270_text,
                  XmNrightAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNrightWidget, tn3270_text,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (rlogin_user_text,
                  XmNtopAttachment, XmATTACH_WIDGET,
                  XmNtopWidget, rlogin_text,
@@ -2715,7 +2715,7 @@ fe_make_apps_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftWidget, rlogin_text,
                  XmNrightAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNrightWidget, rlogin_text,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (tmp_text,
                  XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, rlogin_user_text,
@@ -2724,16 +2724,16 @@ fe_make_apps_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftWidget, rlogin_user_text,
                  XmNrightAttachment, XmATTACH_FORM,
                  XmNrightOffset, tmp_browse->core.width + 10,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (tmp_browse,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, tmp_text,
                  XmNbottomAttachment, XmATTACH_NONE,
                  XmNleftAttachment, XmATTACH_NONE,
                  XmNrightAttachment, XmATTACH_FORM,
-                 0);
+                 (XtPointer) 0);
 
-  XtVaSetValues (tmp_browse, XmNheight, tmp_text->core.height, 0);
+  XtVaSetValues (tmp_browse, XmNheight, tmp_text->core.height, (XtPointer) 0);
 
   fep->telnet_text = telnet_text;
   fep->tn3270_text = tn3270_text;
@@ -2834,11 +2834,11 @@ fe_make_images_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, auto_p,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (auto_p,
 		 XmNtopAttachment, XmATTACH_FORM,
 		 XmNbottomAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (dither_p,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, auto_p,
@@ -2846,7 +2846,7 @@ fe_make_images_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, auto_p,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (closest_p,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, dither_p,
@@ -2854,28 +2854,28 @@ fe_make_images_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, dither_p,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (display_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, while_p,
 		 XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNbottomWidget, while_p,
 		 XmNleftAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (while_p,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, closest_p,
 		 XmNbottomAttachment, XmATTACH_FORM,
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, closest_p,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (after_p,
 		 XmNtopAttachment, XmATTACH_NONE,
 		 XmNbottomAttachment, XmATTACH_FORM,
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, while_p,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
 
   XtManageChildren (kids, i);
   XtManageChild (label1);
@@ -2978,7 +2978,7 @@ fe_make_languages_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (right,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, list2,
@@ -2986,7 +2986,7 @@ fe_make_languages_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, list1,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (left,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, right,
@@ -2994,21 +2994,21 @@ fe_make_languages_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, list1,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (others,
 		 XmNtopAttachment, XmATTACH_FORM,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, right,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (text,
 		 XmNtopAttachment, XmATTACH_FORM,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, others,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (list2,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, text,
@@ -3016,7 +3016,7 @@ fe_make_languages_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, right,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (up,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, list2,
@@ -3024,7 +3024,7 @@ fe_make_languages_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, list2,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (down,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, list2,
@@ -3032,7 +3032,7 @@ fe_make_languages_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, up,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   XtManageChild (list1);
 
@@ -3137,7 +3137,7 @@ fe_make_appearance_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftOffset, 10,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (fixed_message_font_p,
                  XmNtopAttachment, XmATTACH_WIDGET,
                  XmNtopWidget, fixed_label,
@@ -3145,7 +3145,7 @@ fe_make_appearance_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNleftWidget, plain1_p,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (var_message_font_p,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNtopWidget, fixed_message_font_p,
@@ -3154,7 +3154,7 @@ fe_make_appearance_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_WIDGET,
                  XmNleftWidget, fixed_message_font_p,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
 
   XtVaSetValues (quoted_label,
 		 XmNtopAttachment, XmATTACH_FORM,
@@ -3163,7 +3163,7 @@ fe_make_appearance_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftOffset, 10,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (qstyle_label,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, plain1_p,
@@ -3172,7 +3172,7 @@ fe_make_appearance_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_FORM,
                  XmNrightAttachment, XmATTACH_WIDGET,
                  XmNrightWidget, plain1_p,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (plain1_p,
                  XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, quoted_label,
@@ -3180,7 +3180,7 @@ fe_make_appearance_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftPosition, 15,
                  XmNbottomAttachment, XmATTACH_NONE,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (bold_p,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, plain1_p,
@@ -3188,7 +3188,7 @@ fe_make_appearance_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_POSITION,
                  XmNleftPosition, 30,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (italic_p,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, bold_p,
@@ -3196,7 +3196,7 @@ fe_make_appearance_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_POSITION,
                  XmNleftPosition, 45,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (bold_italic_p,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, italic_p,
@@ -3204,7 +3204,7 @@ fe_make_appearance_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_POSITION,
                  XmNleftPosition, 60,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
 
   XtVaSetValues (qsize_label,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -3213,7 +3213,7 @@ fe_make_appearance_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNbottomWidget, plain2_p,
                  XmNrightAttachment, XmATTACH_WIDGET,
                  XmNrightWidget, plain2_p,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (plain2_p,
                  XmNtopAttachment, XmATTACH_WIDGET,
                  XmNtopWidget, plain1_p,
@@ -3221,7 +3221,7 @@ fe_make_appearance_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNleftWidget, plain1_p,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (bigger_p,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNtopWidget, plain2_p,
@@ -3229,7 +3229,7 @@ fe_make_appearance_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNleftWidget, bold_p,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (smaller_p,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNtopWidget, bigger_p,
@@ -3237,7 +3237,7 @@ fe_make_appearance_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNleftWidget, italic_p,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
 
   XtVaSetValues (qcolor_label,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -3246,7 +3246,7 @@ fe_make_appearance_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNbottomWidget, qcolor_text,
                  XmNrightAttachment, XmATTACH_WIDGET,
                  XmNrightWidget, qcolor_text,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (qcolor_text,
                  XmNtopAttachment, XmATTACH_WIDGET,
                  XmNtopWidget, plain2_p,
@@ -3254,7 +3254,7 @@ fe_make_appearance_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNleftWidget, plain2_p,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
 
   XtManageChildren (kids, i);
   XtManageChild (label1);
@@ -3323,14 +3323,14 @@ fe_make_appearance_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_NONE,
                  XmNrightAttachment, XmATTACH_WIDGET,
                  XmNrightWidget, mail_horiz_p,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (mail_horiz_p,
                  XmNtopAttachment, XmATTACH_FORM,
                  XmNleftAttachment, XmATTACH_POSITION,
                  XmNleftPosition, 15,
                  XmNbottomAttachment, XmATTACH_NONE,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (mail_vert_p,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, mail_horiz_p,
@@ -3338,7 +3338,7 @@ fe_make_appearance_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_POSITION,
                  XmNleftPosition, 40,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (mail_stack_p,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, mail_horiz_p,
@@ -3346,7 +3346,7 @@ fe_make_appearance_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_POSITION,
                  XmNleftPosition, 65,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (mail_tall_p,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, mail_horiz_p,
@@ -3354,7 +3354,7 @@ fe_make_appearance_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_POSITION,
                  XmNleftPosition, 90,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
 
   XtVaSetValues (nPane_label,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -3364,7 +3364,7 @@ fe_make_appearance_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_NONE,
                  XmNrightAttachment, XmATTACH_WIDGET,
                  XmNrightWidget, news_horiz_p,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (news_horiz_p,
                  XmNtopAttachment, XmATTACH_WIDGET,
                  XmNtopWidget, mail_horiz_p,
@@ -3372,7 +3372,7 @@ fe_make_appearance_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNleftWidget, mail_horiz_p,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (news_vert_p,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNtopWidget, news_horiz_p,
@@ -3380,7 +3380,7 @@ fe_make_appearance_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNleftWidget, mail_vert_p,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (news_stack_p,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNtopWidget, news_vert_p,
@@ -3388,7 +3388,7 @@ fe_make_appearance_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNleftWidget, mail_stack_p,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (news_tall_p,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNtopWidget, news_vert_p,
@@ -3396,7 +3396,7 @@ fe_make_appearance_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNleftWidget, mail_tall_p,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
 
   XtManageChildren (kids, i);
   XtManageChild (label2);
@@ -3519,12 +3519,12 @@ fe_make_compose_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, eightbit_toggle,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (eightbit_toggle,
 		 XmNtopAttachment, XmATTACH_FORM,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (qp_toggle,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, eightbit_toggle,
@@ -3533,7 +3533,7 @@ fe_make_compose_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, eightbit_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 #ifdef PREFS_QUEUED_DELIVERY
   XtVaSetValues (deliver_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -3543,7 +3543,7 @@ fe_make_compose_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, deliverAuto_toggle,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (deliverAuto_toggle,
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, eightbit_toggle,
@@ -3551,7 +3551,7 @@ fe_make_compose_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNtopWidget, eightbit_toggle,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (deliverQ_toggle,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, deliverAuto_toggle,
@@ -3560,7 +3560,7 @@ fe_make_compose_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, deliverAuto_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 #endif
   XtAddCallback (eightbit_toggle, XmNvalueChangedCallback,
 		 fe_mail_eightbit_toggle_cb, fep);
@@ -3648,12 +3648,12 @@ fe_make_compose_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, mMailOutSelf_toggle,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (mMailOutSelf_toggle,
 		 XmNtopAttachment, XmATTACH_FORM,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (mMailOutOther_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, mMailOutSelf_toggle,
@@ -3662,7 +3662,7 @@ fe_make_compose_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, mMailOutSelf_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (mMailOutOther_text,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, mMailOutSelf_toggle,
@@ -3671,7 +3671,7 @@ fe_make_compose_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, mMailOutOther_label,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (nMailOut_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, nMailOutSelf_toggle,
@@ -3680,7 +3680,7 @@ fe_make_compose_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, nMailOutSelf_toggle,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (nMailOutSelf_toggle,
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, mMailOutSelf_toggle,
@@ -3688,7 +3688,7 @@ fe_make_compose_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNtopWidget, mMailOutSelf_toggle,
 		 XmNbottomAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (nMailOutOther_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, nMailOutSelf_toggle,
@@ -3697,7 +3697,7 @@ fe_make_compose_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, nMailOutSelf_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (nMailOutOther_text,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, nMailOutSelf_toggle,
@@ -3706,7 +3706,7 @@ fe_make_compose_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, nMailOutOther_label,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
 
   fep->mMailOutSelf_toggle  = mMailOutSelf_toggle;
   fep->mMailOutOther_text   = mMailOutOther_text;
@@ -3772,20 +3772,20 @@ fe_make_compose_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, mCopyOut_text,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (mCopyOut_text,
 		 XmNtopAttachment, XmATTACH_FORM,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_FORM,
 		 XmNrightOffset, mCopyOut_browse->core.width + 10,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (mCopyOut_browse,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, mCopyOut_text,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (nCopyOut_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, nCopyOut_text,
@@ -3794,7 +3794,7 @@ fe_make_compose_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, nCopyOut_text,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (nCopyOut_text,
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, mCopyOut_text,
@@ -3803,24 +3803,24 @@ fe_make_compose_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNbottomAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_FORM,
 		 XmNrightOffset, nCopyOut_browse->core.width + 10,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (nCopyOut_browse,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, nCopyOut_text,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
 
   fep->mCopyOut_text  = mCopyOut_text;
   fep->nCopyOut_text  = nCopyOut_text;
 
   fe_attach_field_to_labels (mCopyOut_text, mCopyOut_label, nCopyOut_label, 0);
 
-  XtVaSetValues (mCopyOut_browse, XmNuserData, mCopyOut_text, 0);
+  XtVaSetValues (mCopyOut_browse, XmNuserData, mCopyOut_text, (XtPointer) 0);
   XtAddCallback (mCopyOut_browse, XmNactivateCallback, fe_browse_to_text_cb,
 			fep);
-  XtVaSetValues (nCopyOut_browse, XmNuserData, nCopyOut_text, 0);
+  XtVaSetValues (nCopyOut_browse, XmNuserData, nCopyOut_text, (XtPointer) 0);
   XtAddCallback (nCopyOut_browse, XmNactivateCallback, fe_browse_to_text_cb,
 			fep);
 
@@ -3840,7 +3840,7 @@ fe_make_compose_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNtopWidget, frame3,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   fep->autoquote_toggle  = autoquote_toggle;
 
@@ -3962,13 +3962,13 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_FORM,
                  XmNrightAttachment, XmATTACH_WIDGET,
                  XmNrightWidget, smtp_text,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (smtp_text,
                  XmNtopAttachment, XmATTACH_FORM,
                  XmNbottomAttachment, XmATTACH_FORM,
 		 XmNbottomOffset, 10,
                  XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
 
   fe_attach_field_to_labels (smtp_text, smtp_label, 0);
 
@@ -4049,7 +4049,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNbottomWidget, srvr_text,
                  XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   XtVaSetValues (builtin_toggle,
                  XmNtopAttachment, XmATTACH_WIDGET,
@@ -4058,7 +4058,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNleftWidget, pop_toggle,
                  XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   XtVaSetValues (external_toggle,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -4070,7 +4070,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNrightAttachment, XmATTACH_WIDGET,
                  XmNrightWidget, movemail_text,
                  XmNalignment, XmALIGNMENT_BEGINNING,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (srvr_label,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNtopWidget, srvr_text,
@@ -4079,13 +4079,13 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_NONE,
                  XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, srvr_text,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (srvr_text,
                  XmNtopAttachment, XmATTACH_FORM,
                  XmNbottomAttachment, XmATTACH_NONE,
                  XmNleftAttachment, XmATTACH_FORM,
                  XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (user_label,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNtopWidget, user_text,
@@ -4094,7 +4094,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_NONE,
                  XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, user_text,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (user_text,
                  XmNtopAttachment, XmATTACH_WIDGET,
                  XmNtopWidget, srvr_text,
@@ -4102,7 +4102,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNleftWidget, srvr_text,
                  XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (movemail_text,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, builtin_toggle,
@@ -4111,7 +4111,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftWidget, user_text,
 		 XmNrightAttachment, XmATTACH_FORM,
 		 XmNrightOffset, movemail_browse->core.width + 10,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (movemail_browse,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, movemail_text,
@@ -4119,7 +4119,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNbottomWidget, movemail_text,
 		 XmNleftAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
 
   XtVaSetValues (limit_label,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -4129,7 +4129,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_NONE,
                  XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, no_limit,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (no_limit,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, movemail_text,
@@ -4137,7 +4137,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, movemail_text,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (msg_limit,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, no_limit,
@@ -4146,7 +4146,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, no_limit,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (limit_text,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, no_limit,
@@ -4155,7 +4155,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, msg_limit,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (limit_suffix,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, no_limit,
@@ -4164,7 +4164,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, limit_text,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   XtVaSetValues (msg_label,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -4174,7 +4174,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_NONE,
                  XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, msg_remove,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (msg_remove,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, no_limit,
@@ -4182,7 +4182,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, no_limit,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (msg_leave,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, msg_remove,
@@ -4191,7 +4191,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, msg_remove,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   XtVaSetValues (check_label,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -4201,7 +4201,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_NONE,
                  XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, check_every,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (check_every,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, msg_remove,
@@ -4209,7 +4209,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, msg_remove,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (check_text,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, check_every,
@@ -4218,7 +4218,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, check_every,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (check_suffix,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, check_every,
@@ -4227,7 +4227,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, check_text,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (check_never,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, check_every,
@@ -4236,7 +4236,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, check_suffix,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   XtVaSetValues (maildir_label,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -4246,7 +4246,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_NONE,
                  XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, maildir_text,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (maildir_text,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, check_every,
@@ -4255,7 +4255,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftWidget, check_every,
 		 XmNrightAttachment, XmATTACH_FORM,
 		 XmNrightOffset, maildir_browse->core.width + 10,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (maildir_browse,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, maildir_text,
@@ -4263,7 +4263,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNbottomWidget, maildir_text,
 		 XmNleftAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
 
   XtAddCallback (pop_toggle, XmNvalueChangedCallback,
                  fe_mail_pop_toggle_cb, fep);
@@ -4330,7 +4330,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_FORM,
                  XmNrightAttachment, XmATTACH_WIDGET,
                  XmNrightWidget, newshost_text,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (newsrc_label,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNtopWidget, newsrc_text,
@@ -4339,7 +4339,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_FORM,
                  XmNrightAttachment, XmATTACH_WIDGET,
                  XmNrightWidget, newsrc_text,
-                 0);
+                 (XtPointer) 0);
 #ifdef PREFS_NEWS_MAX
   XtVaSetValues (newsmax_label,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -4349,7 +4349,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_FORM,
                  XmNrightAttachment, XmATTACH_WIDGET,
                  XmNrightWidget, newsmax_text,
-                 0);
+                 (XtPointer) 0);
 #endif
 
   XtVaSetValues (newshost_text,
@@ -4357,7 +4357,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNbottomAttachment, XmATTACH_NONE,
                  XmNleftAttachment, XmATTACH_NONE,
                  XmNrightAttachment, XmATTACH_FORM,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (newsrc_text,
                  XmNtopAttachment, XmATTACH_WIDGET,
                  XmNtopWidget, newshost_text,
@@ -4366,7 +4366,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftWidget, newshost_text,
                  XmNrightAttachment, XmATTACH_FORM,
                  XmNrightOffset, newsrc_browse->core.width + 10,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (newsrc_browse,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNtopWidget, newsrc_text,
@@ -4374,7 +4374,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNbottomWidget, newsrc_text,
                  XmNleftAttachment, XmATTACH_NONE,
                  XmNrightAttachment, XmATTACH_FORM,
-                 0);
+                 (XtPointer) 0);
 #ifdef PREFS_NEWS_MAX
   XtVaSetValues (newsmax_text,
                  XmNtopAttachment, XmATTACH_WIDGET,
@@ -4383,7 +4383,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNleftWidget, newsrc_text,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (newsmax_suff,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
                  XmNtopWidget, newsmax_text,
@@ -4392,7 +4392,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_WIDGET,
                  XmNleftWidget, newsmax_text,
                  XmNrightAttachment, XmATTACH_FORM,
-                 0);
+                 (XtPointer) 0);
 #endif
   fe_attach_field_to_labels (newshost_text, newshost_label, newsrc_label,
 #ifdef PREFS_NEWS_MAX
@@ -4400,7 +4400,7 @@ fe_make_servers_page (MWContext *context, struct fe_prefs_data *fep)
 #endif
                              0);
 
-  XtVaSetValues (newsrc_browse, XmNheight, newsrc_text->core.height, 0);
+  XtVaSetValues (newsrc_browse, XmNheight, newsrc_text->core.height, (XtPointer) 0);
   XtAddCallback (newsrc_browse, XmNactivateCallback, fe_browse_newsrc_cb, fep);
 
   fep->newshost_text = newshost_text;
@@ -4517,7 +4517,7 @@ fe_make_identity_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, name_text,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (mail_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, mail_text,
@@ -4526,7 +4526,7 @@ fe_make_identity_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, mail_text,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (org_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, org_text,
@@ -4535,7 +4535,7 @@ fe_make_identity_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, org_text,
-		 0);
+		 (XtPointer) 0);
 #ifdef PREFS_SIG
   XtVaSetValues (sig_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -4545,14 +4545,14 @@ fe_make_identity_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, sig_text,
-		 0);
+		 (XtPointer) 0);
 #endif
 
   XtVaSetValues (name_text,
 		 XmNtopAttachment, XmATTACH_FORM,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (mail_text,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, name_text,
@@ -4560,7 +4560,7 @@ fe_make_identity_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, name_text,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (org_text,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, mail_text,
@@ -4572,7 +4572,7 @@ fe_make_identity_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, mail_text,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
 #ifdef PREFS_SIG
   XtVaSetValues (sig_text,
 		 XmNtopAttachment, XmATTACH_WIDGET,
@@ -4583,15 +4583,15 @@ fe_make_identity_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftWidget, org_text,
 		 XmNrightAttachment, XmATTACH_FORM,
 		 XmNrightOffset, sig_browse->core.width + 10,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (sig_browse,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, org_text,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
-  XtVaSetValues (sig_browse, XmNheight, sig_text->core.height, 0);
+		 (XtPointer) 0);
+  XtVaSetValues (sig_browse, XmNheight, sig_text->core.height, (XtPointer) 0);
   XtAddCallback (sig_browse, XmNactivateCallback, fe_browse_sig_cb, fep);
 #endif
 
@@ -4696,21 +4696,21 @@ fe_make_organization_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (rememberPswd_toggle,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, emptyTrash_toggle,
 		 XmNbottomAttachment, XmATTACH_FORM,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 #else
   XtVaSetValues (rememberPswd_toggle,
                  XmNtopAttachment, XmATTACH_FORM,
                  XmNbottomAttachment, XmATTACH_NONE,
                  XmNleftAttachment, XmATTACH_FORM,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
 #endif
 
 #if PREFS_EMPTY_TRASH
@@ -4752,28 +4752,28 @@ fe_make_organization_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (line2,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, line1,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (threadmail_toggle,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, line2,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (threadnews_toggle,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, threadmail_toggle,
 		 XmNbottomAttachment, XmATTACH_FORM,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   fep->threadmail_toggle = threadmail_toggle;
   fep->threadnews_toggle = threadnews_toggle;
@@ -4830,13 +4830,13 @@ fe_make_organization_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, mdate_toggle,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (mdate_toggle,
 		 XmNtopAttachment, XmATTACH_FORM,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (mnum_toggle,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, mdate_toggle,
@@ -4845,7 +4845,7 @@ fe_make_organization_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, mdate_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (msubject_toggle,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, mdate_toggle,
@@ -4854,7 +4854,7 @@ fe_make_organization_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, mnum_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (msender_toggle,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, mdate_toggle,
@@ -4863,7 +4863,7 @@ fe_make_organization_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, msubject_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (nsort_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, ndate_toggle,
@@ -4872,7 +4872,7 @@ fe_make_organization_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, ndate_toggle,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (ndate_toggle,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, mdate_toggle,
@@ -4880,7 +4880,7 @@ fe_make_organization_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, mdate_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (nnum_toggle,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, ndate_toggle,
@@ -4889,7 +4889,7 @@ fe_make_organization_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, ndate_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (nsubject_toggle,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, ndate_toggle,
@@ -4898,7 +4898,7 @@ fe_make_organization_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, nnum_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (nsender_toggle,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, ndate_toggle,
@@ -4907,7 +4907,7 @@ fe_make_organization_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, nsubject_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   fe_attach_field_to_labels (mdate_toggle, msort_label, nsort_label, 0);
 
@@ -4999,7 +4999,7 @@ fe_make_cache_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, mem_text,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (mem_text,
 		 XmNtopAttachment, XmATTACH_FORM,
 #ifdef PREFS_DISK_CACHE
@@ -5008,7 +5008,7 @@ fe_make_cache_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNbottomAttachment, XmATTACH_FORM,
 #endif
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (mem_k,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, mem_text,
@@ -5017,7 +5017,7 @@ fe_make_cache_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, mem_text,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 #ifdef PREFS_CLEAR_CACHE_BUTTONS
   XtVaSetValues (mem_clear,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -5027,7 +5027,7 @@ fe_make_cache_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, mem_k,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 #endif
 
 #ifdef PREFS_DISK_CACHE
@@ -5069,7 +5069,7 @@ fe_make_cache_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, disk_text,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (disk_text,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, mem_text,
@@ -5077,7 +5077,7 @@ fe_make_cache_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, mem_text,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (disk_k,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, disk_text,
@@ -5086,7 +5086,7 @@ fe_make_cache_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, disk_text,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 #ifdef PREFS_CLEAR_CACHE_BUTTONS
   XtVaSetValues (disk_clear,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -5096,9 +5096,9 @@ fe_make_cache_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, disk_k,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   if (disk_clear->core.width < mem_clear->core.width)
-    XtVaSetValues (disk_clear, XmNwidth, mem_clear->core.width, 0);
+    XtVaSetValues (disk_clear, XmNwidth, mem_clear->core.width, (XtPointer) 0);
 #endif
   XtVaSetValues (disk_dir_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -5108,7 +5108,7 @@ fe_make_cache_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, disk_dir,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (disk_dir,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, disk_text,
@@ -5121,14 +5121,14 @@ fe_make_cache_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftWidget, disk_text,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, browse,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (browse,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, disk_text,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
 
 #ifdef PREFS_VERIFY
   XtVaSetValues (verify_label,
@@ -5139,7 +5139,7 @@ fe_make_cache_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, once_p,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (once_p,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, disk_dir,
@@ -5147,7 +5147,7 @@ fe_make_cache_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, disk_dir,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (every_p,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, once_p,
@@ -5156,7 +5156,7 @@ fe_make_cache_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, once_p,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (expired_p,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, every_p,
@@ -5165,14 +5165,14 @@ fe_make_cache_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, every_p,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (cache_ssl_p,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, once_p,
 		 XmNbottomAttachment, XmATTACH_FORM,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   XtAddCallback (once_p, XmNvalueChangedCallback,
 		 fe_cache_verify_toggle_cb, fep);
@@ -5181,7 +5181,7 @@ fe_make_cache_page (MWContext *context, struct fe_prefs_data *fep)
   XtAddCallback (expired_p, XmNvalueChangedCallback,
 		 fe_cache_verify_toggle_cb, fep);
 
-  XtVaSetValues (browse, XmNheight, disk_dir->core.height, 0);
+  XtVaSetValues (browse, XmNheight, disk_dir->core.height, (XtPointer) 0);
 
   XtAddCallback (browse, XmNactivateCallback, fe_disk_cache_browse_cb, fep);
 #endif /* PREFS_DISK_CACHE */
@@ -5276,7 +5276,7 @@ fe_make_network_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (conn_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, conn_text,
@@ -5285,13 +5285,13 @@ fe_make_network_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, conn_text,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (conn_text,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, conn_explain,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (conn_suffix,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, conn_text,
@@ -5300,14 +5300,14 @@ fe_make_network_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, conn_text,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (buf_explain,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, conn_text,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (buf_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, buf_text,
@@ -5316,7 +5316,7 @@ fe_make_network_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, buf_text,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (buf_text,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, buf_explain,
@@ -5324,7 +5324,7 @@ fe_make_network_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, conn_text,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (buf_k,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, buf_text,
@@ -5333,7 +5333,7 @@ fe_make_network_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, buf_text,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtManageChildren (kids, i);
   XtManageChild (label2);
   XtManageChild (form2);
@@ -5403,14 +5403,14 @@ fe_make_protocols_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (email_form_p,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, cookie_p,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNbottomAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtManageChildren (kids, i);
   XtManageChild (label1);
   XtManageChild (form1);
@@ -5425,7 +5425,7 @@ fe_make_protocols_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtManageChildren (kids, i);
 
   fep->cookie_p = cookie_p;
@@ -5487,7 +5487,7 @@ fe_make_lang_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   fep->java_toggle = java_toggle;
 #endif /* JAVA */
@@ -5506,7 +5506,7 @@ fe_make_lang_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   fep->javascript_toggle = javascript_toggle;
 #endif /* MOCHA */
 
@@ -5589,7 +5589,7 @@ fe_make_proxies_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_FORM,
 		 XmNleftOffset, 40,
                  XmNrightAttachment, XmATTACH_FORM,
-                 0);
+                 (XtPointer) 0);
 
   XtVaSetValues (no_proxies_p,
                  XmNtopAttachment, XmATTACH_WIDGET,
@@ -5598,7 +5598,7 @@ fe_make_proxies_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_FORM,
 		 XmNleftOffset, 50,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
 
   XtVaSetValues (manual_p,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -5609,7 +5609,7 @@ fe_make_proxies_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftOffset, 50,
                  XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, manual_browse,
-                 0);
+                 (XtPointer) 0);
 
   XtVaSetValues (manual_browse,
                  XmNtopAttachment, XmATTACH_WIDGET,
@@ -5618,7 +5618,7 @@ fe_make_proxies_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_FORM,
 		 XmNleftOffset, manual_p->core.width + 50,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
 
   XtVaSetValues (auto_proxies_p,
                  XmNtopAttachment, XmATTACH_WIDGET,
@@ -5627,7 +5627,7 @@ fe_make_proxies_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNleftAttachment, XmATTACH_FORM,
 		 XmNleftOffset, 50,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
 
   XtVaSetValues (proxy_label,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -5636,7 +5636,7 @@ fe_make_proxies_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNbottomWidget, proxy_text,
                  XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, proxy_text,
-                 0);
+                 (XtPointer) 0);
 
   XtVaSetValues (proxy_text,
                  XmNtopAttachment, XmATTACH_WIDGET,
@@ -5646,7 +5646,7 @@ fe_make_proxies_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftWidget, manual_browse,
                  XmNrightAttachment, XmATTACH_FORM,
 		 XmNrightOffset, proxy_reload->core.width + 20,
-                 0);
+                 (XtPointer) 0);
 
   XtVaSetValues (proxy_reload,
                  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -5655,7 +5655,7 @@ fe_make_proxies_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNbottomWidget, proxy_text,
                  XmNleftAttachment, XmATTACH_NONE,
                  XmNrightAttachment, XmATTACH_FORM,
-                 0);
+                 (XtPointer) 0);
 
   XtAddCallback (manual_browse, XmNactivateCallback,
                  fe_view_proxies_cb, fep);
@@ -5728,8 +5728,8 @@ fe_proxy_done_cb (Widget widget, XtPointer closure, XtPointer call_data)
 
 #define SNARFP(NAME,SUFFIX,empty_port_ok) \
   /*if (fe_globalPrefs.NAME##_##SUFFIX) free (fe_globalPrefs.NAME##_##SUFFIX);*/ \
-  XtVaGetValues (fep->NAME##_text, XmNvalue, &s1, 0);                   \
-  XtVaGetValues (fep->NAME##_port, XmNvalue, &s2, 0);                   \
+  XtVaGetValues (fep->NAME##_text, XmNvalue, &s1, (XtPointer) 0);                   \
+  XtVaGetValues (fep->NAME##_port, XmNvalue, &s2, (XtPointer) 0);                   \
   if (*s1 && *s2) PR_snprintf (buf, sizeof (buf), "%.400s:%.400s", s1, s2); \
   else if (*s1 && empty_port_ok) PR_snprintf (buf,                      \
                                             sizeof (buf), "%.900s", s1); \
@@ -5796,7 +5796,7 @@ fe_make_proxies_dialog (MWContext *context, struct fe_prefs_data *fep)
   Widget no_label, no_text;
 
   XtVaGetValues (mainw, XtNvisual, &v, XtNcolormap, &cmap,
-                 XtNdepth, &depth, 0);
+                 XtNdepth, &depth, (XtPointer) 0);
   ac = 0;
   XtSetArg (av[ac], XmNvisual, v); ac++;
   XtSetArg (av[ac], XmNdepth, depth); ac++;
@@ -5910,7 +5910,7 @@ fe_make_proxies_dialog (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, ftp_text,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (gopher_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, gopher_text,
@@ -5919,7 +5919,7 @@ fe_make_proxies_dialog (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, gopher_text,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (http_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, http_text,
@@ -5928,7 +5928,7 @@ fe_make_proxies_dialog (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, http_text,
-		 0);
+		 (XtPointer) 0);
 #ifdef HAVE_SECURITY
   XtVaSetValues (https_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -5938,7 +5938,7 @@ fe_make_proxies_dialog (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, https_text,
-		 0);
+		 (XtPointer) 0);
 #endif
   XtVaSetValues (wais_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -5948,7 +5948,7 @@ fe_make_proxies_dialog (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, wais_text,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (no_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, no_text,
@@ -5957,7 +5957,7 @@ fe_make_proxies_dialog (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, no_text,
-		 0);
+		 (XtPointer) 0);
 #ifdef PREFS_SOCKS
   XtVaSetValues (socks_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -5967,7 +5967,7 @@ fe_make_proxies_dialog (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, socks_text,
-		 0);
+		 (XtPointer) 0);
 #endif
 
   XtVaSetValues (ftp_text,
@@ -5988,7 +5988,7 @@ fe_make_proxies_dialog (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftWidget, ftp_text,
 		 XmNrightAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNrightWidget, ftp_text,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (http_text,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNtopAttachment, XmATTACH_WIDGET,
@@ -5997,7 +5997,7 @@ fe_make_proxies_dialog (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftWidget, gopher_text,
 		 XmNrightAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNrightWidget, gopher_text,
-		 0);
+		 (XtPointer) 0);
 #ifdef HAVE_SECURITY
   XtVaSetValues (https_text,
 		 XmNbottomAttachment, XmATTACH_NONE,
@@ -6007,7 +6007,7 @@ fe_make_proxies_dialog (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftWidget, http_text,
 		 XmNrightAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNrightWidget, http_text,
-		 0);
+		 (XtPointer) 0);
 #endif
   XtVaSetValues (wais_text,
 		 XmNbottomAttachment, XmATTACH_NONE,
@@ -6021,7 +6021,7 @@ fe_make_proxies_dialog (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftWidget, http_text,
 		 XmNrightAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNrightWidget, http_text,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (no_text,
 #ifdef PREFS_SOCKS
 		 XmNbottomAttachment, XmATTACH_NONE,
@@ -6034,7 +6034,7 @@ fe_make_proxies_dialog (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftWidget, wais_text,
 		 XmNrightAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNrightWidget, wais_text,
-		 0);
+		 (XtPointer) 0);
 #ifdef PREFS_SOCKS
   XtVaSetValues (socks_text,
 		 XmNbottomAttachment, XmATTACH_FORM,
@@ -6044,7 +6044,7 @@ fe_make_proxies_dialog (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftWidget, no_text,
 		 XmNrightAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNrightWidget, no_text,
-		 0);
+		 (XtPointer) 0);
 #endif
   XtVaSetValues (ftp_plabel,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -6054,7 +6054,7 @@ fe_make_proxies_dialog (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, ftp_port,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (gopher_plabel,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, gopher_text,
@@ -6064,7 +6064,7 @@ fe_make_proxies_dialog (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftWidget, ftp_plabel,
 		 XmNleftOffset, 0,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (http_plabel,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, http_text,
@@ -6074,7 +6074,7 @@ fe_make_proxies_dialog (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftWidget, gopher_plabel,
 		 XmNleftOffset, 0,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 #ifdef HAVE_SECURITY
   XtVaSetValues (https_plabel,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -6085,7 +6085,7 @@ fe_make_proxies_dialog (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftWidget, http_plabel,
 		 XmNleftOffset, 0,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 #endif
   XtVaSetValues (wais_plabel,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -6096,7 +6096,7 @@ fe_make_proxies_dialog (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftWidget, http_plabel,
 		 XmNleftOffset, 0,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 #ifdef PREFS_SOCKS
   XtVaSetValues (socks_plabel,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -6107,14 +6107,14 @@ fe_make_proxies_dialog (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftWidget, wais_plabel,
 		 XmNleftOffset, 0,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 #endif
   XtVaSetValues (ftp_port,
 		 XmNtopAttachment, XmATTACH_FORM,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (gopher_port,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, gopher_plabel,
@@ -6124,7 +6124,7 @@ fe_make_proxies_dialog (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftWidget, ftp_port,
 		 XmNrightAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNrightWidget, ftp_port,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (http_port,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, http_plabel,
@@ -6134,7 +6134,7 @@ fe_make_proxies_dialog (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftWidget, gopher_port,
 		 XmNrightAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNrightWidget, gopher_port,
-		 0);
+		 (XtPointer) 0);
 #ifdef HAVE_SECURITY
   XtVaSetValues (https_port,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -6145,7 +6145,7 @@ fe_make_proxies_dialog (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftWidget, http_port,
 		 XmNrightAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNrightWidget, http_port,
-		 0);
+		 (XtPointer) 0);
 #endif
   XtVaSetValues (wais_port,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -6156,7 +6156,7 @@ fe_make_proxies_dialog (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftWidget, http_port,
 		 XmNrightAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNrightWidget, http_port,
-		 0);
+		 (XtPointer) 0);
 #ifdef PREFS_SOCKS
   XtVaSetValues (socks_port,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -6167,7 +6167,7 @@ fe_make_proxies_dialog (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftWidget, wais_port,
 		 XmNrightAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNrightWidget, wais_port,
-		 0);
+		 (XtPointer) 0);
 #endif
 
   fe_attach_field_to_labels (ftp_text,
@@ -6184,7 +6184,7 @@ fe_make_proxies_dialog (MWContext *context, struct fe_prefs_data *fep)
   XtVaSetValues (ftp_text,
 		 XmNrightOffset, (ftp_plabel->core.width + 10 +
 				  ftp_port->core.width + 10),
-		 0);
+		 (XtPointer) 0);
 
   if (fe_globalData.nonterminal_text_translations)
     {
@@ -6334,7 +6334,7 @@ fe_make_sec_passwords_page (MWContext *context, struct fe_prefs_data *fep)
   kids [i++] = change_password =
     XmCreatePushButtonGadget (form2, "changePassword", av, ac);
 
-  XtVaSetValues (change_password, XmNsensitive, False, 0);
+  XtVaSetValues (change_password, XmNsensitive, False, (XtPointer) 0);
 
 
   XtVaSetValues (banner_label,
@@ -6342,7 +6342,7 @@ fe_make_sec_passwords_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
 
   XtVaSetValues (pass_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -6352,7 +6352,7 @@ fe_make_sec_passwords_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, change_password,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (change_password,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, banner_label,
@@ -6360,7 +6360,7 @@ fe_make_sec_passwords_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_POSITION,
 		 XmNleftPosition, 30,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   XtVaSetValues (ask_label,
 		 XmNtopAttachment, XmATTACH_WIDGET,
@@ -6369,7 +6369,7 @@ fe_make_sec_passwords_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, once_toggle,
-		 0);
+		 (XtPointer) 0);
 
   XtVaSetValues (once_toggle,
 		 XmNtopAttachment, XmATTACH_WIDGET,
@@ -6378,7 +6378,7 @@ fe_make_sec_passwords_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, change_password,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   XtVaSetValues (every_toggle,
 		 XmNtopAttachment, XmATTACH_WIDGET,
@@ -6387,7 +6387,7 @@ fe_make_sec_passwords_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, once_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   XtVaSetValues (periodic_toggle,
 		 XmNtopAttachment, XmATTACH_WIDGET,
@@ -6396,7 +6396,7 @@ fe_make_sec_passwords_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, every_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   XtVaSetValues (periodic_text,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -6405,7 +6405,7 @@ fe_make_sec_passwords_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, periodic_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   XtVaSetValues (periodic_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -6414,7 +6414,7 @@ fe_make_sec_passwords_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, periodic_text,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   XtAddCallback (once_toggle, XmNvalueChangedCallback,
                  fe_set_pass_toggle_cb, fep);
@@ -6517,14 +6517,14 @@ fe_make_sec_general_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNbottomAttachment, XmATTACH_NONE,
                  XmNleftAttachment, XmATTACH_FORM,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (enter_toggle,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, alert_label,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (leave_toggle,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, enter_toggle,
@@ -6532,7 +6532,7 @@ fe_make_sec_general_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, enter_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (mixed_toggle,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, leave_toggle,
@@ -6540,7 +6540,7 @@ fe_make_sec_general_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, leave_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (submit_toggle,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, mixed_toggle,
@@ -6548,7 +6548,7 @@ fe_make_sec_general_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, mixed_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   XtManageChildren (kids, i);
   XtManageChild (label2);
@@ -6579,21 +6579,21 @@ fe_make_sec_general_page (MWContext *context, struct fe_prefs_data *fep)
                  XmNbottomAttachment, XmATTACH_NONE,
                  XmNleftAttachment, XmATTACH_FORM,
                  XmNrightAttachment, XmATTACH_NONE,
-                 0);
+                 (XtPointer) 0);
   XtVaSetValues (ssl3_toggle,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, ssl2_toggle,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (ssl2_configure,
 		 XmNtopAttachment, XmATTACH_FORM,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, ssl2_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (ssl3_configure,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, ssl2_configure,
@@ -6601,14 +6601,14 @@ fe_make_sec_general_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, ssl2_configure,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   XtAddCallback (ssl2_configure, XmNactivateCallback,
 		 fe_ssl_enable_cb, fep);
   XtAddCallback (ssl3_configure, XmNactivateCallback,
 		 fe_ssl_enable_cb, fep);
-  XtVaSetValues(ssl2_configure, XmNuserData, SSL_LIBRARY_VERSION_2, 0);
-  XtVaSetValues(ssl3_configure, XmNuserData, SSL_LIBRARY_VERSION_3_0, 0);
+  XtVaSetValues(ssl2_configure, XmNuserData, SSL_LIBRARY_VERSION_2, (XtPointer) 0);
+  XtVaSetValues(ssl3_configure, XmNuserData, SSL_LIBRARY_VERSION_3_0, (XtPointer) 0);
 
   XtManageChildren (kids, i);
   XtManageChild (label3);
@@ -6718,7 +6718,7 @@ fe_make_personal_page (MWContext *context, struct fe_prefs_data *fep)
 
 
   XtVaGetValues (CONTEXT_WIDGET (context), XtNvisual, &v, XtNcolormap, &cmap,
-	XtNdepth, &depth, 0);
+	XtNdepth, &depth, (XtPointer) 0);
 
   ac = 0;
   XtSetArg (av[ac], XmNvisual, v); ac++;
@@ -6753,7 +6753,7 @@ fe_make_personal_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (XtParent (pers_list),
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, pers_label,
@@ -6763,7 +6763,7 @@ fe_make_personal_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftOffset, 10,
 		 XmNrightAttachment, XmATTACH_FORM,
 		 XmNrightOffset, pers_new_cert->core.width + 10,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (pers_info,
 		 XmNtopAttachment, XmATTACH_FORM,
 		 XmNtopOffset, pers_label->core.height, /*  + 10, */
@@ -6771,7 +6771,7 @@ fe_make_personal_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, pers_list,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (pers_delete_cert,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, pers_info,
@@ -6779,7 +6779,7 @@ fe_make_personal_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, pers_info,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (pers_new_cert,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, pers_delete_cert,
@@ -6787,7 +6787,7 @@ fe_make_personal_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, pers_info,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (site_default,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, pers_cert_menu,
@@ -6796,13 +6796,13 @@ fe_make_personal_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, pers_cert_menu,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (pers_cert_menu,
 		 XmNtopAttachment, XmATTACH_NONE,
 		 XmNbottomAttachment, XmATTACH_FORM,
 		 XmNleftAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
 
   XtManageChildren (kids, i);
   XtManageChild (label1);
@@ -6872,7 +6872,7 @@ fe_make_site_cert_page (MWContext *context, struct fe_prefs_data *fep)
 
 
   XtVaGetValues (CONTEXT_WIDGET (context), XtNvisual, &v, XtNcolormap, &cmap,
-	XtNdepth, &depth, 0);
+	XtNdepth, &depth, (XtPointer) 0);
 
   i = 0;
   ac = 0;
@@ -6956,14 +6956,14 @@ fe_make_site_cert_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (cert_menu,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, all_label,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (XtParent (all_list),
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, cert_menu,
@@ -6972,7 +6972,7 @@ fe_make_site_cert_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNleftOffset, 10,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (all_edit_cert,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, XtParent (all_list),
@@ -6981,7 +6981,7 @@ fe_make_site_cert_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftWidget, XtParent (all_list),
 		 XmNleftOffset, 10,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (all_delete_cert,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, all_edit_cert,
@@ -6989,7 +6989,7 @@ fe_make_site_cert_page (MWContext *context, struct fe_prefs_data *fep)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, all_edit_cert,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
 
   XtManageChildren (kids, i);
   XtManageChild (label1);
@@ -7034,15 +7034,15 @@ fep_to_dither_mode_pref_string (struct fe_prefs_data *fep)
 {
   Boolean b;
     
-  XtVaGetValues (fep->auto_p, XmNset, &b, 0);
+  XtVaGetValues (fep->auto_p, XmNset, &b, (XtPointer) 0);
   if (b)
     return "Auto";
 
-  XtVaGetValues (fep->dither_p, XmNset, &b, 0);
+  XtVaGetValues (fep->dither_p, XmNset, &b, (XtPointer) 0);
   if (b)
     return "Dither";
 
-  XtVaGetValues (fep->closest_p, XmNset, &b, 0);
+  XtVaGetValues (fep->closest_p, XmNset, &b, (XtPointer) 0);
   if (b)
     return "ClosestColor";
 
@@ -7068,56 +7068,56 @@ fe_general_reset_1 (struct fe_prefs_data *fep, XFE_GlobalPrefs *prefs)
       /*#### int msg_sort_style; */
       /*#### int msg_thread_p; */
 
-      XtVaSetValues (fep->both_p,  XmNset, (state == 0), 0);
-      XtVaSetValues (fep->icons_p, XmNset, (state == 1), 0);
-      XtVaSetValues (fep->text_p,  XmNset, (state == 2), 0);
-      XtVaSetValues (fep->tips_p,  XmNset, prefs->toolbar_tips_p, 0);
+      XtVaSetValues (fep->both_p,  XmNset, (state == 0), (XtPointer) 0);
+      XtVaSetValues (fep->icons_p, XmNset, (state == 1), (XtPointer) 0);
+      XtVaSetValues (fep->text_p,  XmNset, (state == 2), (XtPointer) 0);
+      XtVaSetValues (fep->tips_p,  XmNset, prefs->toolbar_tips_p, (XtPointer) 0);
 	  
       XtVaSetValues (fep->blank_p, XmNset,
 		     (!prefs->home_document ||
-		      !*prefs->home_document), 0);
+		      !*prefs->home_document), (XtPointer) 0);
 
       XtVaSetValues (fep->home_p, XmNset,
 		     (prefs->home_document &&
-		      *prefs->home_document), 0);
+		      *prefs->home_document), (XtPointer) 0);
 
       XtVaSetValues (fep->home_text,
 		     XmNvalue, prefs->home_document,
 		     XmNsensitive, (prefs->home_document &&
 				    *prefs->home_document &&
                                     !ekit_HomePage()),
-		     0);
+		     (XtPointer) 0);
 
       state = prefs->startup_mode;
-      XtVaSetValues (fep->browser_p, XmNset, (state == 0), 0);
-      XtVaSetValues (fep->mail_p,    XmNset, (state == 1), 0);
-      XtVaSetValues (fep->news_p,    XmNset, (state == 2), 0);
+      XtVaSetValues (fep->browser_p, XmNset, (state == 0), (XtPointer) 0);
+      XtVaSetValues (fep->mail_p,    XmNset, (state == 1), (XtPointer) 0);
+      XtVaSetValues (fep->news_p,    XmNset, (state == 2), (XtPointer) 0);
 
-      XtVaSetValues (fep->underline_p, XmNset, prefs->underline_links_p, 0);
+      XtVaSetValues (fep->underline_p, XmNset, prefs->underline_links_p, (XtPointer) 0);
       XtVaSetValues (fep->expire_days_p,
-		     XmNset, prefs->global_history_expiration >= 0, 0);
+		     XmNset, prefs->global_history_expiration >= 0, (XtPointer) 0);
       if (prefs->global_history_expiration >= 0)
 	PR_snprintf (buf, sizeof (buf), "%d", prefs->global_history_expiration);
       else
 	*buf = 0;
       XtVaSetValues (fep->expire_days_text,
 		     XmNsensitive, prefs->global_history_expiration >= 0,
-		     XmNvalue, buf, 0);
+		     XmNvalue, buf, (XtPointer) 0);
       XtVaSetValues (fep->never_expire_p,
-		     XmNset, prefs->global_history_expiration < 0, 0);
+		     XmNset, prefs->global_history_expiration < 0, (XtPointer) 0);
     }
   else if (current_general_page == xfe_PREFS_FONTS)
     {
     }
   else if (current_general_page == xfe_PREFS_APPS)
     {
-      XtVaSetValues (fep->telnet_text, XmNvalue, prefs->telnet_command, 0);
-      XtVaSetValues (fep->tn3270_text, XmNvalue, prefs->tn3270_command, 0);
-      XtVaSetValues (fep->rlogin_text, XmNvalue, prefs->rlogin_command, 0);
+      XtVaSetValues (fep->telnet_text, XmNvalue, prefs->telnet_command, (XtPointer) 0);
+      XtVaSetValues (fep->tn3270_text, XmNvalue, prefs->tn3270_command, (XtPointer) 0);
+      XtVaSetValues (fep->rlogin_text, XmNvalue, prefs->rlogin_command, (XtPointer) 0);
       XtVaSetValues (fep->rlogin_user_text, XmNvalue,
-		     prefs->rlogin_user_command, 0);
-      XtVaSetValues (fep->rlogin_text, XmNvalue, prefs->rlogin_command, 0);
-      XtVaSetValues (fep->tmp_text, XmNvalue, prefs->tmp_dir, 0);
+		     prefs->rlogin_user_command, (XtPointer) 0);
+      XtVaSetValues (fep->rlogin_text, XmNvalue, prefs->rlogin_command, (XtPointer) 0);
+      XtVaSetValues (fep->tmp_text, XmNvalue, prefs->tmp_dir, (XtPointer) 0);
     }
   else if (current_general_page == xfe_PREFS_HELPERS)
     {
@@ -7130,11 +7130,11 @@ fe_general_reset_1 (struct fe_prefs_data *fep, XFE_GlobalPrefs *prefs)
       IL_ColorRenderMode render_mode =
           fe_pref_string_to_dither_mode(prefs->dither_images);
       
-      XtVaSetValues (fep->auto_p, XmNset, render_mode == ilAuto, 0);
-      XtVaSetValues (fep->dither_p, XmNset, render_mode == ilDither, 0);
-      XtVaSetValues (fep->closest_p, XmNset, render_mode == ilClosestColor, 0);
-      XtVaSetValues (fep->while_loading_p, XmNset, prefs->streaming_images, 0);
-      XtVaSetValues (fep->after_loading_p, XmNset,!prefs->streaming_images, 0);
+      XtVaSetValues (fep->auto_p, XmNset, render_mode == ilAuto, (XtPointer) 0);
+      XtVaSetValues (fep->dither_p, XmNset, render_mode == ilDither, (XtPointer) 0);
+      XtVaSetValues (fep->closest_p, XmNset, render_mode == ilClosestColor, (XtPointer) 0);
+      XtVaSetValues (fep->while_loading_p, XmNset, prefs->streaming_images, (XtPointer) 0);
+      XtVaSetValues (fep->after_loading_p, XmNset,!prefs->streaming_images, (XtPointer) 0);
     }
   else if (current_general_page == xfe_PREFS_LANGUAGES)
     {
@@ -7151,69 +7151,69 @@ fe_mailnews_reset_1 (struct fe_prefs_data *fep, XFE_GlobalPrefs *prefs)
   if (current_mailnews_page == xfe_PREFS_APPEARANCE)
     {
       XtVaSetValues (fep->cite_plain_p,
-		     XmNset, prefs->citation_font == MSG_PlainFont, 0);
+		     XmNset, prefs->citation_font == MSG_PlainFont, (XtPointer) 0);
       XtVaSetValues (fep->cite_bold_p,
-		     XmNset, prefs->citation_font == MSG_BoldFont, 0);
+		     XmNset, prefs->citation_font == MSG_BoldFont, (XtPointer) 0);
       XtVaSetValues (fep->cite_italic_p,
-		     XmNset, prefs->citation_font == MSG_ItalicFont, 0);
+		     XmNset, prefs->citation_font == MSG_ItalicFont, (XtPointer) 0);
       XtVaSetValues (fep->cite_bold_italic_p,
-		     XmNset, prefs->citation_font == MSG_BoldItalicFont, 0);
+		     XmNset, prefs->citation_font == MSG_BoldItalicFont, (XtPointer) 0);
 
       XtVaSetValues (fep->cite_normal_p,
-		     XmNset, prefs->citation_size == MSG_NormalSize, 0);
+		     XmNset, prefs->citation_size == MSG_NormalSize, (XtPointer) 0);
       XtVaSetValues (fep->cite_bigger_p,
-		     XmNset, prefs->citation_size == MSG_Bigger, 0);
+		     XmNset, prefs->citation_size == MSG_Bigger, (XtPointer) 0);
       XtVaSetValues (fep->cite_smaller_p,
-		     XmNset, prefs->citation_size == MSG_Smaller, 0);
+		     XmNset, prefs->citation_size == MSG_Smaller, (XtPointer) 0);
 
       XmTextFieldSetString(fep->cite_color_text, prefs->citation_color);
 
       XtVaSetValues (fep->fixed_message_font_p,
-		     XmNset, prefs->fixed_message_font_p, 0);
+		     XmNset, prefs->fixed_message_font_p, (XtPointer) 0);
       XtVaSetValues (fep->var_message_font_p,
-		     XmNset, !prefs->fixed_message_font_p, 0);
+		     XmNset, !prefs->fixed_message_font_p, (XtPointer) 0);
 
       XtVaSetValues (fep->mail_horiz_p,
-		     XmNset, prefs->mail_pane_style == FE_PANES_NORMAL, 0);
+		     XmNset, prefs->mail_pane_style == FE_PANES_NORMAL, (XtPointer) 0);
       XtVaSetValues (fep->mail_vert_p,
-		     XmNset, prefs->mail_pane_style == FE_PANES_HORIZONTAL, 0);
+		     XmNset, prefs->mail_pane_style == FE_PANES_HORIZONTAL, (XtPointer) 0);
       XtVaSetValues (fep->mail_stack_p,
-		     XmNset, prefs->mail_pane_style == FE_PANES_STACKED, 0);
+		     XmNset, prefs->mail_pane_style == FE_PANES_STACKED, (XtPointer) 0);
       XtVaSetValues (fep->mail_tall_p,
-		     XmNset, prefs->mail_pane_style == FE_PANES_TALL_FOLDERS, 0);
+		     XmNset, prefs->mail_pane_style == FE_PANES_TALL_FOLDERS, (XtPointer) 0);
 
       XtVaSetValues (fep->news_horiz_p,
-		     XmNset, prefs->news_pane_style == FE_PANES_NORMAL, 0);
+		     XmNset, prefs->news_pane_style == FE_PANES_NORMAL, (XtPointer) 0);
       XtVaSetValues (fep->news_vert_p,
-		     XmNset, prefs->news_pane_style == FE_PANES_HORIZONTAL, 0);
+		     XmNset, prefs->news_pane_style == FE_PANES_HORIZONTAL, (XtPointer) 0);
       XtVaSetValues (fep->news_stack_p,
-		     XmNset, prefs->news_pane_style == FE_PANES_STACKED, 0);
+		     XmNset, prefs->news_pane_style == FE_PANES_STACKED, (XtPointer) 0);
       XtVaSetValues (fep->news_tall_p,
-		     XmNset, prefs->news_pane_style == FE_PANES_TALL_FOLDERS, 0);
+		     XmNset, prefs->news_pane_style == FE_PANES_TALL_FOLDERS, (XtPointer) 0);
 
     }
   else if (current_mailnews_page == xfe_PREFS_COMPOSITION)
     {
 #ifdef PREFS_8BIT
-      XtVaSetValues (fep->eightbit_toggle, XmNset, !prefs->qp_p, 0);
-      XtVaSetValues (fep->qp_toggle,       XmNset,  prefs->qp_p, 0);
+      XtVaSetValues (fep->eightbit_toggle, XmNset, !prefs->qp_p, (XtPointer) 0);
+      XtVaSetValues (fep->qp_toggle,       XmNset,  prefs->qp_p, (XtPointer) 0);
 #endif
 #ifdef PREFS_QUEUED_DELIVERY
       XtVaSetValues (fep->deliverAuto_toggle,
-			XmNset, !prefs->queue_for_later_p, 0);
+			XmNset, !prefs->queue_for_later_p, (XtPointer) 0);
       XtVaSetValues (fep->deliverQ_toggle,
-			XmNset, prefs->queue_for_later_p, 0);
+			XmNset, prefs->queue_for_later_p, (XtPointer) 0);
 #endif
-      XtVaSetValues (fep->mMailOutOther_text, XmNvalue, prefs->mail_bcc, 0);
-      XtVaSetValues (fep->nMailOutOther_text, XmNvalue, prefs->news_bcc, 0);
+      XtVaSetValues (fep->mMailOutOther_text, XmNvalue, prefs->mail_bcc, (XtPointer) 0);
+      XtVaSetValues (fep->nMailOutOther_text, XmNvalue, prefs->news_bcc, (XtPointer) 0);
 
-      XtVaSetValues (fep->mCopyOut_text, XmNvalue, prefs->mail_fcc, 0);
-      XtVaSetValues (fep->nCopyOut_text, XmNvalue, prefs->news_fcc, 0);
+      XtVaSetValues (fep->mCopyOut_text, XmNvalue, prefs->mail_fcc, (XtPointer) 0);
+      XtVaSetValues (fep->nCopyOut_text, XmNvalue, prefs->news_fcc, (XtPointer) 0);
 
       XtVaSetValues (fep->autoquote_toggle,
-			XmNset, prefs->autoquote_reply, 0);
-      XtVaSetValues (fep->mMailOutSelf_toggle, XmNset, prefs->mailbccself_p, 0);
-      XtVaSetValues (fep->nMailOutSelf_toggle, XmNset, prefs->newsbccself_p, 0);
+			XmNset, prefs->autoquote_reply, (XtPointer) 0);
+      XtVaSetValues (fep->mMailOutSelf_toggle, XmNset, prefs->mailbccself_p, (XtPointer) 0);
+      XtVaSetValues (fep->nMailOutSelf_toggle, XmNset, prefs->newsbccself_p, (XtPointer) 0);
       /*#### XP_Bool send_formatted_text_p; */
     }
   else if (current_mailnews_page == xfe_PREFS_SERVERS)
@@ -7223,8 +7223,8 @@ fe_mailnews_reset_1 (struct fe_prefs_data *fep, XFE_GlobalPrefs *prefs)
 #ifdef PREFS_NEWS_MAX
       char buf [1024];
 #endif
-      XtVaSetValues (fep->newshost_text, XmNvalue, prefs->newshost, 0);
-      XtVaSetValues (fep->newsrc_text, XmNvalue, prefs->newsrc_directory, 0);
+      XtVaSetValues (fep->newshost_text, XmNvalue, prefs->newshost, (XtPointer) 0);
+      XtVaSetValues (fep->newsrc_text, XmNvalue, prefs->newsrc_directory, (XtPointer) 0);
 #ifdef PREFS_NEWS_MAX
       {
 	if (prefs->news_max_articles > 0) {
@@ -7233,66 +7233,66 @@ fe_mailnews_reset_1 (struct fe_prefs_data *fep, XFE_GlobalPrefs *prefs)
 	  PR_snprintf (buf, sizeof (buf), "%d", prefs->news_max_articles);
 	} else
 	  *buf = 0;
-	XtVaSetValues (fep->newsmax_text, XmNvalue, buf, 0);
+	XtVaSetValues (fep->newsmax_text, XmNvalue, buf, (XtPointer) 0);
       }
 #endif
-      XtVaSetValues (fep->smtp_text, XmNvalue, prefs->mailhost, 0);
+      XtVaSetValues (fep->smtp_text, XmNvalue, prefs->mailhost, (XtPointer) 0);
 
-      XtVaSetValues (fep->movemail_text, XmNvalue, prefs->movemail_program, 0);
-      XtVaSetValues (fep->srvr_text, XmNvalue, prefs->pop3_host, 0);
-      XtVaSetValues (fep->user_text, XmNvalue, prefs->pop3_user_id, 0);
+      XtVaSetValues (fep->movemail_text, XmNvalue, prefs->movemail_program, (XtPointer) 0);
+      XtVaSetValues (fep->srvr_text, XmNvalue, prefs->pop3_host, (XtPointer) 0);
+      XtVaSetValues (fep->user_text, XmNvalue, prefs->pop3_user_id, (XtPointer) 0);
 
       if (prefs->use_movemail_p) {
 
 	b = prefs->builtin_movemail_p;
-	XtVaSetValues (fep->builtin_toggle, XmNset, b, 0);
-	XtVaSetValues (fep->external_toggle, XmNset, !b, 0);
-	XtVaSetValues (fep->movemail_text, XmNsensitive, !b, 0);
-	XtVaSetValues (fep->pop_toggle, XmNset, False, 0);
-	XtVaSetValues (fep->srvr_text, XmNsensitive, False, 0);
-	XtVaSetValues (fep->user_text, XmNsensitive, False, 0);
+	XtVaSetValues (fep->builtin_toggle, XmNset, b, (XtPointer) 0);
+	XtVaSetValues (fep->external_toggle, XmNset, !b, (XtPointer) 0);
+	XtVaSetValues (fep->movemail_text, XmNsensitive, !b, (XtPointer) 0);
+	XtVaSetValues (fep->pop_toggle, XmNset, False, (XtPointer) 0);
+	XtVaSetValues (fep->srvr_text, XmNsensitive, False, (XtPointer) 0);
+	XtVaSetValues (fep->user_text, XmNsensitive, False, (XtPointer) 0);
 
       } else {
 
-	XtVaSetValues (fep->pop_toggle, XmNset, True, 0);
+	XtVaSetValues (fep->pop_toggle, XmNset, True, (XtPointer) 0);
         if ( !ekit_PopServer() ) {
-	  XtVaSetValues (fep->srvr_text, XmNsensitive, True, 0);
+	  XtVaSetValues (fep->srvr_text, XmNsensitive, True, (XtPointer) 0);
         }
         if ( !ekit_PopName() ) {
-	    XtVaSetValues (fep->user_text, XmNsensitive, True, 0);
+	    XtVaSetValues (fep->user_text, XmNsensitive, True, (XtPointer) 0);
         }
-	XtVaSetValues (fep->builtin_toggle, XmNset, False, 0);
-	XtVaSetValues (fep->external_toggle, XmNset, False, 0);
-	XtVaSetValues (fep->movemail_text, XmNsensitive, False, 0);
+	XtVaSetValues (fep->builtin_toggle, XmNset, False, (XtPointer) 0);
+	XtVaSetValues (fep->external_toggle, XmNset, False, (XtPointer) 0);
+	XtVaSetValues (fep->movemail_text, XmNsensitive, False, (XtPointer) 0);
 
       }
 
       /* int pop3_msg_size_limit; */
       b = prefs->pop3_msg_size_limit_p;
-      XtVaSetValues (fep->no_limit, XmNset, !b, 0);
-      XtVaSetValues (fep->msg_limit, XmNset, b, 0);
+      XtVaSetValues (fep->no_limit, XmNset, !b, (XtPointer) 0);
+      XtVaSetValues (fep->msg_limit, XmNset, b, (XtPointer) 0);
       if ( !ekit_MsgSizeLimit() ) {
-          XtVaSetValues (fep->limit_text, XmNsensitive, b, 0);
+          XtVaSetValues (fep->limit_text, XmNsensitive, b, (XtPointer) 0);
       }
 
       PR_snprintf (buf, sizeof (buf), "%d", abs(prefs->pop3_msg_size_limit));
-      XtVaSetValues (fep->limit_text, XmNvalue, buf, 0);
+      XtVaSetValues (fep->limit_text, XmNvalue, buf, (XtPointer) 0);
 
       /* XP_Bool pop3_leave_mail_on_server; */
       b = prefs->pop3_leave_mail_on_server;
-      XtVaSetValues (fep->msg_remove, XmNset, !b, 0);
-      XtVaSetValues (fep->msg_leave, XmNset, b, 0);
+      XtVaSetValues (fep->msg_remove, XmNset, !b, (XtPointer) 0);
+      XtVaSetValues (fep->msg_leave, XmNset, b, (XtPointer) 0);
 
       /* int biff_interval; */
       b = prefs->auto_check_mail;
-      XtVaSetValues (fep->check_never, XmNset, !b, 0);
-      XtVaSetValues (fep->check_every, XmNset, b, 0);
-      XtVaSetValues (fep->check_text, XmNsensitive, b, 0);
+      XtVaSetValues (fep->check_never, XmNset, !b, (XtPointer) 0);
+      XtVaSetValues (fep->check_every, XmNset, b, (XtPointer) 0);
+      XtVaSetValues (fep->check_text, XmNsensitive, b, (XtPointer) 0);
 
       PR_snprintf (buf, sizeof (buf), "%d", prefs->biff_interval);
-      XtVaSetValues (fep->check_text, XmNvalue, buf, 0);
+      XtVaSetValues (fep->check_text, XmNvalue, buf, (XtPointer) 0);
 
-      XtVaSetValues (fep->maildir_text, XmNvalue, prefs->mail_directory, 0);
+      XtVaSetValues (fep->maildir_text, XmNvalue, prefs->mail_directory, (XtPointer) 0);
 
       /*####  char *history_file; */
     }
@@ -7300,79 +7300,79 @@ fe_mailnews_reset_1 (struct fe_prefs_data *fep, XFE_GlobalPrefs *prefs)
     {
       fe_SetTextField (fep->user_name_text, prefs->real_name);
       XtVaSetValues (fep->user_mail_text, XmNvalue,
-		     prefs->email_address, 0);
+		     prefs->email_address, (XtPointer) 0);
       fe_SetTextField (fep->user_org_text, prefs->organization);
 #ifdef PREFS_SIG
       XtVaSetValues (fep->user_sig_text, XmNvalue,
-		     prefs->signature_file, 0);
+		     prefs->signature_file, (XtPointer) 0);
 #endif
       /* #### int anonymity_level; */
     }
   else if (current_mailnews_page == xfe_PREFS_ORGANIZATION)
     {
 #ifdef PREFS_EMPTY_TRASH
-      XtVaSetValues (fep->emptyTrash_toggle, XmNset, prefs->emptyTrash, 0);
+      XtVaSetValues (fep->emptyTrash_toggle, XmNset, prefs->emptyTrash, (XtPointer) 0);
 #endif
-      XtVaSetValues (fep->rememberPswd_toggle, XmNset, prefs->rememberPswd, 0);
-      XtVaSetValues (fep->threadmail_toggle, XmNset, prefs->mail_thread_p, 0);
+      XtVaSetValues (fep->rememberPswd_toggle, XmNset, prefs->rememberPswd, (XtPointer) 0);
+      XtVaSetValues (fep->threadmail_toggle, XmNset, prefs->mail_thread_p, (XtPointer) 0);
       XtVaSetValues (fep->threadnews_toggle, XmNset,
-			!prefs->no_news_thread_p, 0);
+			!prefs->no_news_thread_p, (XtPointer) 0);
       switch (prefs->mail_sort_style) {
 	default:	/* FALL THROUGH */
 	case 0:		/* DATE by default */
-	  XtVaSetValues (fep->mdate_toggle,    XmNset, True,  0);
-	  XtVaSetValues (fep->mnum_toggle,     XmNset, False, 0);
-	  XtVaSetValues (fep->msubject_toggle, XmNset, False, 0);
-	  XtVaSetValues (fep->msender_toggle,  XmNset, False, 0);
+	  XtVaSetValues (fep->mdate_toggle,    XmNset, True,  (XtPointer) 0);
+	  XtVaSetValues (fep->mnum_toggle,     XmNset, False, (XtPointer) 0);
+	  XtVaSetValues (fep->msubject_toggle, XmNset, False, (XtPointer) 0);
+	  XtVaSetValues (fep->msender_toggle,  XmNset, False, (XtPointer) 0);
 	  break;
 	case 1:		/* Message Number by default */
-	  XtVaSetValues (fep->mdate_toggle,    XmNset, False, 0);
-	  XtVaSetValues (fep->mnum_toggle,     XmNset, True,  0);
-	  XtVaSetValues (fep->msubject_toggle, XmNset, False, 0);
-	  XtVaSetValues (fep->msender_toggle,  XmNset, False, 0);
+	  XtVaSetValues (fep->mdate_toggle,    XmNset, False, (XtPointer) 0);
+	  XtVaSetValues (fep->mnum_toggle,     XmNset, True,  (XtPointer) 0);
+	  XtVaSetValues (fep->msubject_toggle, XmNset, False, (XtPointer) 0);
+	  XtVaSetValues (fep->msender_toggle,  XmNset, False, (XtPointer) 0);
 	  break;
 	case 2:		/* Subject by default */
-	  XtVaSetValues (fep->mdate_toggle,    XmNset, False, 0);
-	  XtVaSetValues (fep->mnum_toggle,     XmNset, False, 0);
-	  XtVaSetValues (fep->msubject_toggle, XmNset, True,  0);
-	  XtVaSetValues (fep->msender_toggle,  XmNset, False, 0);
+	  XtVaSetValues (fep->mdate_toggle,    XmNset, False, (XtPointer) 0);
+	  XtVaSetValues (fep->mnum_toggle,     XmNset, False, (XtPointer) 0);
+	  XtVaSetValues (fep->msubject_toggle, XmNset, True,  (XtPointer) 0);
+	  XtVaSetValues (fep->msender_toggle,  XmNset, False, (XtPointer) 0);
 	  break;
 	case 3:		/* Sender by default */
-	  XtVaSetValues (fep->mdate_toggle,    XmNset, False, 0);
-	  XtVaSetValues (fep->mnum_toggle,     XmNset, False, 0);
-	  XtVaSetValues (fep->msubject_toggle, XmNset, False, 0);
-	  XtVaSetValues (fep->msender_toggle,  XmNset, True,  0);
+	  XtVaSetValues (fep->mdate_toggle,    XmNset, False, (XtPointer) 0);
+	  XtVaSetValues (fep->mnum_toggle,     XmNset, False, (XtPointer) 0);
+	  XtVaSetValues (fep->msubject_toggle, XmNset, False, (XtPointer) 0);
+	  XtVaSetValues (fep->msender_toggle,  XmNset, True,  (XtPointer) 0);
 	  break;
       }
       switch (prefs->news_sort_style) {
 	default:	/* FALL THROUGH */
 	case 0:		/* DATE by default */
-	  XtVaSetValues (fep->ndate_toggle,    XmNset, True,  0);
-	  XtVaSetValues (fep->nnum_toggle,     XmNset, False, 0);
-	  XtVaSetValues (fep->nsubject_toggle, XmNset, False, 0);
-	  XtVaSetValues (fep->nsender_toggle,  XmNset, False, 0);
+	  XtVaSetValues (fep->ndate_toggle,    XmNset, True,  (XtPointer) 0);
+	  XtVaSetValues (fep->nnum_toggle,     XmNset, False, (XtPointer) 0);
+	  XtVaSetValues (fep->nsubject_toggle, XmNset, False, (XtPointer) 0);
+	  XtVaSetValues (fep->nsender_toggle,  XmNset, False, (XtPointer) 0);
 	  break;
 	case 1:		/* Message Number by default */
-	  XtVaSetValues (fep->ndate_toggle,    XmNset, False, 0);
-	  XtVaSetValues (fep->nnum_toggle,     XmNset, True,  0);
-	  XtVaSetValues (fep->nsubject_toggle, XmNset, False, 0);
-	  XtVaSetValues (fep->nsender_toggle,  XmNset, False, 0);
+	  XtVaSetValues (fep->ndate_toggle,    XmNset, False, (XtPointer) 0);
+	  XtVaSetValues (fep->nnum_toggle,     XmNset, True,  (XtPointer) 0);
+	  XtVaSetValues (fep->nsubject_toggle, XmNset, False, (XtPointer) 0);
+	  XtVaSetValues (fep->nsender_toggle,  XmNset, False, (XtPointer) 0);
 	  break;
 	case 2:		/* Subject by default */
-	  XtVaSetValues (fep->ndate_toggle,    XmNset, False, 0);
-	  XtVaSetValues (fep->nnum_toggle,     XmNset, False, 0);
-	  XtVaSetValues (fep->nsubject_toggle, XmNset, True,  0);
-	  XtVaSetValues (fep->nsender_toggle,  XmNset, False, 0);
+	  XtVaSetValues (fep->ndate_toggle,    XmNset, False, (XtPointer) 0);
+	  XtVaSetValues (fep->nnum_toggle,     XmNset, False, (XtPointer) 0);
+	  XtVaSetValues (fep->nsubject_toggle, XmNset, True,  (XtPointer) 0);
+	  XtVaSetValues (fep->nsender_toggle,  XmNset, False, (XtPointer) 0);
 	  break;
 	case 3:		/* Sender by default */
-	  XtVaSetValues (fep->ndate_toggle,    XmNset, False, 0);
-	  XtVaSetValues (fep->nnum_toggle,     XmNset, False, 0);
-	  XtVaSetValues (fep->nsubject_toggle, XmNset, False, 0);
-	  XtVaSetValues (fep->nsender_toggle,  XmNset, True,  0);
+	  XtVaSetValues (fep->ndate_toggle,    XmNset, False, (XtPointer) 0);
+	  XtVaSetValues (fep->nnum_toggle,     XmNset, False, (XtPointer) 0);
+	  XtVaSetValues (fep->nsubject_toggle, XmNset, False, (XtPointer) 0);
+	  XtVaSetValues (fep->nsender_toggle,  XmNset, True,  (XtPointer) 0);
 	  break;
       }
 #ifdef PREFS_EMPTY_TRASH
-    XtVaSetValues (fep->emptyTrash_toggle, XmNsensitive, False, 0);
+    XtVaSetValues (fep->emptyTrash_toggle, XmNsensitive, False, (XtPointer) 0);
 #endif
     }
   else
@@ -7394,7 +7394,7 @@ fe_proxy_reset (struct fe_prefs_data *fep, XFE_GlobalPrefs *prefs)
     *s++ = 0;                                               \
   else                                                      \
     s = DEF;                                                \
-  XtVaSetValues (fep->SLOT##_text, XmNvalue, buf, 0);       \
+  XtVaSetValues (fep->SLOT##_text, XmNvalue, buf, (XtPointer) 0);       \
   XtVaSetValues (fep->SLOT##_port, XmNvalue, s, 0)
 
   FROB (ftp,    proxy, "");
@@ -7408,7 +7408,7 @@ fe_proxy_reset (struct fe_prefs_data *fep, XFE_GlobalPrefs *prefs)
   FROB (socks,  host,  "1080");
 #endif
 #undef FROB
-  XtVaSetValues (fep->no_text, XmNvalue, prefs->no_proxy, 0);
+  XtVaSetValues (fep->no_text, XmNvalue, prefs->no_proxy, (XtPointer) 0);
 }
 
 static void
@@ -7418,27 +7418,27 @@ fe_network_reset_1 (struct fe_prefs_data *fep, XFE_GlobalPrefs *prefs)
     {
       char buf [255];
       PR_snprintf (buf, sizeof (buf), "%d", prefs->memory_cache_size);
-      XtVaSetValues (fep->memory_text, XmNvalue, buf, 0);
+      XtVaSetValues (fep->memory_text, XmNvalue, buf, (XtPointer) 0);
 #ifdef PREFS_DISK_CACHE
       PR_snprintf (buf, sizeof (buf), "%d", prefs->disk_cache_size);
-      XtVaSetValues (fep->disk_text, XmNvalue, buf, 0);
-      XtVaSetValues (fep->disk_dir, XmNvalue, prefs->cache_dir, 0);
+      XtVaSetValues (fep->disk_text, XmNvalue, buf, (XtPointer) 0);
+      XtVaSetValues (fep->disk_dir, XmNvalue, prefs->cache_dir, (XtPointer) 0);
 #endif
 #ifdef PREFS_VERIFY
-      XtVaSetValues (fep->once_p,    XmNset, prefs->verify_documents == 0, 0);
-      XtVaSetValues (fep->every_p,   XmNset, prefs->verify_documents == 1, 0);
-      XtVaSetValues (fep->expired_p, XmNset, prefs->verify_documents == 2, 0);
+      XtVaSetValues (fep->once_p,    XmNset, prefs->verify_documents == 0, (XtPointer) 0);
+      XtVaSetValues (fep->every_p,   XmNset, prefs->verify_documents == 1, (XtPointer) 0);
+      XtVaSetValues (fep->expired_p, XmNset, prefs->verify_documents == 2, (XtPointer) 0);
 #endif
-      XtVaSetValues (fep->cache_ssl_p, XmNset, prefs->cache_ssl_p, 0);
+      XtVaSetValues (fep->cache_ssl_p, XmNset, prefs->cache_ssl_p, (XtPointer) 0);
     }
   else if (current_network_page == xfe_PREFS_NETWORK)
     {
 #ifdef PREFS_NET
       char buf [1024];
       PR_snprintf (buf, sizeof (buf), "%d", prefs->max_connections);
-      XtVaSetValues (fep->conn_text, XmNvalue, buf, 0);
+      XtVaSetValues (fep->conn_text, XmNvalue, buf, (XtPointer) 0);
       PR_snprintf (buf, sizeof (buf), "%d", prefs->network_buffer_size);
-      XtVaSetValues (fep->buf_text, XmNvalue, buf, 0);
+      XtVaSetValues (fep->buf_text, XmNvalue, buf, (XtPointer) 0);
 #endif /* PREFS_NET */
     }
   else if (current_network_page == xfe_PREFS_PROXIES)
@@ -7446,15 +7446,15 @@ fe_network_reset_1 (struct fe_prefs_data *fep, XFE_GlobalPrefs *prefs)
       int state = 0;
 
       state = prefs->proxy_mode;
-      XtVaSetValues (fep->no_proxies_p,   XmNset, (state == 0), 0);
-      XtVaSetValues (fep->manual_p,       XmNset, (state == 1), 0);
-      XtVaSetValues (fep->manual_browse,  XmNsensitive, (state == 1), 0);
-      XtVaSetValues (fep->auto_proxies_p, XmNset, (state == 2), 0);
+      XtVaSetValues (fep->no_proxies_p,   XmNset, (state == 0), (XtPointer) 0);
+      XtVaSetValues (fep->manual_p,       XmNset, (state == 1), (XtPointer) 0);
+      XtVaSetValues (fep->manual_browse,  XmNsensitive, (state == 1), (XtPointer) 0);
+      XtVaSetValues (fep->auto_proxies_p, XmNset, (state == 2), (XtPointer) 0);
 
-      XtVaSetValues (fep->proxy_text, XmNvalue, prefs->proxy_url, 0);
+      XtVaSetValues (fep->proxy_text, XmNvalue, prefs->proxy_url, (XtPointer) 0);
       if (state != 2) {
-	XtVaSetValues (fep->proxy_text, XmNsensitive, False, 0);
-	XtVaSetValues (fep->proxy_reload, XmNsensitive, False, 0);
+	XtVaSetValues (fep->proxy_text, XmNsensitive, False, (XtPointer) 0);
+	XtVaSetValues (fep->proxy_reload, XmNsensitive, False, (XtPointer) 0);
       }
     }
   else if (current_network_page == xfe_PREFS_PROTOCOLS)
@@ -7462,17 +7462,17 @@ fe_network_reset_1 (struct fe_prefs_data *fep, XFE_GlobalPrefs *prefs)
       /* accept_cookie has 3 states. We are not implementing the disable cookie
 	 state. */
       XtVaSetValues (fep->cookie_p, XmNset,
-		     prefs->accept_cookie==NET_WhineAboutCookies, 0);
-      XtVaSetValues (fep->anon_ftp_p, XmNset, prefs->email_anonftp, 0);
-      XtVaSetValues (fep->email_form_p, XmNset, prefs->email_submit, 0);
+		     prefs->accept_cookie==NET_WhineAboutCookies, (XtPointer) 0);
+      XtVaSetValues (fep->anon_ftp_p, XmNset, prefs->email_anonftp, (XtPointer) 0);
+      XtVaSetValues (fep->email_form_p, XmNset, prefs->email_submit, (XtPointer) 0);
     }
   else if (current_network_page == xfe_PREFS_LANG)
     {
 #ifdef JAVA
-      XtVaSetValues (fep->java_toggle, XmNset, !prefs->disable_java, 0);
+      XtVaSetValues (fep->java_toggle, XmNset, !prefs->disable_java, (XtPointer) 0);
 #endif
 #ifdef MOCHA
-      XtVaSetValues (fep->javascript_toggle, XmNset, !prefs->disable_javascript, 0);
+      XtVaSetValues (fep->javascript_toggle, XmNset, !prefs->disable_javascript, (XtPointer) 0);
 #endif
     }
   else
@@ -7488,12 +7488,12 @@ fe_security_reset_1 (struct fe_prefs_data *fep, XFE_GlobalPrefs *prefs)
   if (current_security_page == xfe_PREFS_SEC_GENERAL)
     {
 #ifdef HAVE_SECURITY
-      XtVaSetValues (fep->enter_toggle, XmNset, prefs->enter_warn, 0);
-      XtVaSetValues (fep->leave_toggle, XmNset, prefs->leave_warn, 0);
-      XtVaSetValues (fep->mixed_toggle, XmNset, prefs->mixed_warn, 0);
-      XtVaSetValues (fep->submit_toggle, XmNset, prefs->submit_warn, 0);
-      XtVaSetValues (fep->ssl2_toggle, XmNset, prefs->ssl2_enable, 0);
-      XtVaSetValues (fep->ssl3_toggle, XmNset, prefs->ssl3_enable, 0);
+      XtVaSetValues (fep->enter_toggle, XmNset, prefs->enter_warn, (XtPointer) 0);
+      XtVaSetValues (fep->leave_toggle, XmNset, prefs->leave_warn, (XtPointer) 0);
+      XtVaSetValues (fep->mixed_toggle, XmNset, prefs->mixed_warn, (XtPointer) 0);
+      XtVaSetValues (fep->submit_toggle, XmNset, prefs->submit_warn, (XtPointer) 0);
+      XtVaSetValues (fep->ssl2_toggle, XmNset, prefs->ssl2_enable, (XtPointer) 0);
+      XtVaSetValues (fep->ssl3_toggle, XmNset, prefs->ssl3_enable, (XtPointer) 0);
 #endif /* HAVE_SECURITY */
     }
   else if (current_security_page == xfe_PREFS_SEC_PASSWORDS)
@@ -7510,15 +7510,15 @@ fe_security_reset_1 (struct fe_prefs_data *fep, XFE_GlobalPrefs *prefs)
 	s = XP_GetString(XFE_SET_PASSWORD);
       fe_SetString (fep->change_password, XmNlabelString, s);
       
-      XtVaSetValues (fep->every_toggle, XmNset, (state == 0), 0);
-      XtVaSetValues (fep->once_toggle, XmNset, (state == 1), 0);
-      XtVaSetValues (fep->periodic_toggle, XmNset, (state == 2), 0);
+      XtVaSetValues (fep->every_toggle, XmNset, (state == 0), (XtPointer) 0);
+      XtVaSetValues (fep->once_toggle, XmNset, (state == 1), (XtPointer) 0);
+      XtVaSetValues (fep->periodic_toggle, XmNset, (state == 2), (XtPointer) 0);
 
       PR_snprintf (buf, sizeof (buf), "%d", prefs->password_timeout);
-      XtVaSetValues (fep->periodic_text, XmNvalue, buf, 0);
+      XtVaSetValues (fep->periodic_text, XmNvalue, buf, (XtPointer) 0);
 
       if (state != 2)
-	XtVaSetValues (fep->periodic_text, XmNsensitive, False, 0);
+	XtVaSetValues (fep->periodic_text, XmNsensitive, False, (XtPointer) 0);
     }
   else if (current_security_page == xfe_PREFS_SEC_PERSONAL)
     {
@@ -7527,16 +7527,16 @@ fe_security_reset_1 (struct fe_prefs_data *fep, XFE_GlobalPrefs *prefs)
       Widget *kids;
       int i;
 
-      XtVaGetValues(fep->pers_cert_menu, XmNsubMenuId, &w, 0);
-      XtVaGetValues(w, XmNnumChildren, &nkids, XmNchildren, &kids, 0);
+      XtVaGetValues(fep->pers_cert_menu, XmNsubMenuId, &w, (XtPointer) 0);
+      XtVaGetValues(w, XmNnumChildren, &nkids, XmNchildren, &kids, (XtPointer) 0);
       for (i=0; i<nkids; i++) {
 	XmString xms;
 	char *s = NULL;
-	XtVaGetValues(kids[i], XmNlabelString, &xms, 0);
+	XtVaGetValues(kids[i], XmNlabelString, &xms, (XtPointer) 0);
 	XmStringGetLtoR(xms, XmFONTLIST_DEFAULT_TAG, &s);
 	XmStringFree(xms);
 	if (s && !strcmp(s, prefs->def_user_cert)) {
-	  XtVaSetValues(fep->pers_cert_menu, XmNmenuHistory, kids[i], 0);
+	  XtVaSetValues(fep->pers_cert_menu, XmNmenuHistory, kids[i], (XtPointer) 0);
 	  XtFree(s);
 	  break;
 	}
@@ -7594,7 +7594,7 @@ fe_prefs_set_current_page (struct fe_prefs_data *fep, int reset)
 
   if (fep->general_form)
   {
-    XtVaGetValues (fep->general_form, XmNactiveTab, &current_page, 0);
+    XtVaGetValues (fep->general_form, XmNactiveTab, &current_page, (XtPointer) 0);
     current_general_page = current_page + xfe_GENERAL_OFFSET;
     if (reset)
     {
@@ -7612,20 +7612,20 @@ fe_prefs_set_current_page (struct fe_prefs_data *fep, int reset)
   }
   else if (fep->mailnews_form)
   {
-    XtVaGetValues (fep->mailnews_form, XmNactiveTab, &current_page, 0);
+    XtVaGetValues (fep->mailnews_form, XmNactiveTab, &current_page, (XtPointer) 0);
     current_mailnews_page = current_page + xfe_MAILNEWS_OFFSET;
     if (reset) fe_mailnews_reset_1 (fep, &fe_defaultPrefs);
   }
   else if (fep->network_form)
   {
-    XtVaGetValues (fep->network_form, XmNactiveTab, &current_page, 0);
+    XtVaGetValues (fep->network_form, XmNactiveTab, &current_page, (XtPointer) 0);
     current_network_page = current_page + xfe_NETWORK_OFFSET;
     if (reset) fe_network_reset_1 (fep, &fe_defaultPrefs);
   }
 #ifdef DUPLICATE_SEC_PREFS
   else if (fep->security_form)
   {
-    XtVaGetValues (fep->security_form, XmNactiveTab, &current_page, 0);
+    XtVaGetValues (fep->security_form, XmNactiveTab, &current_page, (XtPointer) 0);
     current_security_page = current_page + xfe_SECURITY_OFFSET;
     if (reset) fe_security_reset_1 (fep, &fe_defaultPrefs);
   }
@@ -7712,32 +7712,32 @@ fe_general_done_cb (Widget widget, XtPointer closure, XtPointer call_data)
 
   /* ============================================================ Styles */
 
-  XtVaGetValues (fep->icons_p, XmNset, &b, 0);
+  XtVaGetValues (fep->icons_p, XmNset, &b, (XtPointer) 0);
   fe_globalPrefs.toolbar_icons_p = b;
-  XtVaGetValues (fep->text_p, XmNset, &b, 0);
+  XtVaGetValues (fep->text_p, XmNset, &b, (XtPointer) 0);
   fe_globalPrefs.toolbar_text_p = b;
-  XtVaGetValues (fep->both_p, XmNset, &b, 0);
+  XtVaGetValues (fep->both_p, XmNset, &b, (XtPointer) 0);
   if (b)
     fe_globalPrefs.toolbar_icons_p = fe_globalPrefs.toolbar_text_p = True;
-  XtVaGetValues (fep->tips_p, XmNset, &b, 0);
+  XtVaGetValues (fep->tips_p, XmNset, &b, (XtPointer) 0);
   fe_globalPrefs.toolbar_tips_p = b;
 
-  XtVaGetValues (fep->browser_p, XmNset, &b, 0);
+  XtVaGetValues (fep->browser_p, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.startup_mode = 0;
-  XtVaGetValues (fep->mail_p, XmNset, &b, 0);
+  XtVaGetValues (fep->mail_p, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.startup_mode = 1;
-  XtVaGetValues (fep->news_p, XmNset, &b, 0);
+  XtVaGetValues (fep->news_p, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.startup_mode = 2;
 
   {
     char *old_home = fe_globalPrefs.home_document;
     struct fe_MWContext_cons *cons = NULL;
 
-    XtVaGetValues (fep->blank_p, XmNset, &b, 0);
+    XtVaGetValues (fep->blank_p, XmNset, &b, (XtPointer) 0);
     if (b)
       fe_globalPrefs.home_document = strdup ("");
     else
-      XtVaGetValues (fep->home_text, XmNvalue,&fe_globalPrefs.home_document,0);
+      XtVaGetValues (fep->home_text, XmNvalue,&fe_globalPrefs.home_document,(XtPointer) 0);
 
     fe_globalPrefs.home_document = fe_StringTrim(fe_globalPrefs.home_document);
 
@@ -7747,11 +7747,11 @@ fe_general_done_cb (Widget widget, XtPointer closure, XtPointer call_data)
       if (cons->context->type == MWContextBrowser) {
 	if (CONTEXT_DATA (cons->context)->home_menuitem)
 	  XtVaSetValues (CONTEXT_DATA (cons->context)->home_menuitem,
-				XmNsensitive, b, 0);
+				XmNsensitive, b, (XtPointer) 0);
 	if (CONTEXT_DATA (cons->context)->show_toolbar_p &&
 		CONTEXT_DATA (cons->context)->home_button)
 	  XtVaSetValues (CONTEXT_DATA (cons->context)->home_button,
-				XmNsensitive, b, 0);
+				XmNsensitive, b, (XtPointer) 0);
       }
     }
 
@@ -7762,16 +7762,16 @@ fe_general_done_cb (Widget widget, XtPointer closure, XtPointer call_data)
 
   fe_get_scaled_font_size(fep);
 
-  XtVaGetValues (fep->underline_p, XmNset, &b, 0);
+  XtVaGetValues (fep->underline_p, XmNset, &b, (XtPointer) 0);
   fe_globalPrefs.underline_links_p = b;
 
-  XtVaGetValues (fep->never_expire_p, XmNset, &b, 0);
+  XtVaGetValues (fep->never_expire_p, XmNset, &b, (XtPointer) 0);
 
   fe_globalPrefs.global_history_expiration = -1;
   if (! b)
     {
       char *text, dummy;
-      XtVaGetValues (fep->expire_days_text, XmNvalue, &text, 0);
+      XtVaGetValues (fep->expire_days_text, XmNvalue, &text, (XtPointer) 0);
       sscanf (text, " %d %c", &fe_globalPrefs.global_history_expiration,
               &dummy);
       if (fe_globalPrefs.global_history_expiration < 0)
@@ -7784,7 +7784,7 @@ fe_general_done_cb (Widget widget, XtPointer closure, XtPointer call_data)
   if (fe_globalPrefs.dither_images)
       free (fe_globalPrefs.dither_images);
   fe_globalPrefs.dither_images = strdup (fep_to_dither_mode_pref_string (fep));
-  XtVaGetValues (fep->while_loading_p, XmNset, &b, 0);
+  XtVaGetValues (fep->while_loading_p, XmNset, &b, (XtPointer) 0);
   fe_globalPrefs.streaming_images = b;
 
 
@@ -7835,7 +7835,7 @@ fe_general_done_cb (Widget widget, XtPointer closure, XtPointer call_data)
 	  if (rest->context->type != MWContextBrowser) continue;
 
           XtVaGetValues (CONTEXT_DATA (rest->context)->drawing_area,
-                         XmNwidth, &w, XmNheight, &h, 0);
+                         XmNwidth, &w, XmNheight, &h, (XtPointer) 0);
           fe_ClearArea (rest->context, 0, 0, w, h);
           fe_RefreshArea (rest->context,
                           CONTEXT_DATA (rest->context)->document_x,
@@ -7881,13 +7881,13 @@ fe_general_done_cb (Widget widget, XtPointer closure, XtPointer call_data)
       XtUnrealizeWidget (CONTEXT_DATA (fep->context)->top_area);
       XtVaGetValues (CONTEXT_DATA (fep->context)->toolbar,
                      XmNwidth, &w, XmNheight, &h,
-                     XmNchildren, &kids, XmNnumChildren, &nkids, 0);
+                     XmNchildren, &kids, XmNnumChildren, &nkids, (XtPointer) 0);
 
       old_h = kids[0]->core.height;
 
       /* Gag!! The fucking toolbar keeps wanting to go to two lines... */
       XtVaGetValues (XtParent (CONTEXT_DATA (fep->context)->toolbar),
-                     XmNwidth, &w, 0);
+                     XmNwidth, &w, (XtPointer) 0);
       CONTEXT_DATA (fep->context)->show_toolbar_icons_p
         = fe_globalPrefs.toolbar_icons_p;
       for (i = 0; i < nkids; i++)
@@ -7903,7 +7903,7 @@ fe_general_done_cb (Widget widget, XtPointer closure, XtPointer call_data)
                                         ? XmPIXMAP : XmSTRING),
                          XmNlabelPixmap, p,
                          XmNlabelInsensitivePixmap, ip,
-                         0);
+                         (XtPointer) 0);
         }
 
       /* Maybe it will help to break this all the way down. */
@@ -7911,7 +7911,7 @@ fe_general_done_cb (Widget widget, XtPointer closure, XtPointer call_data)
 
       h = kids[0]->core.height;
       XtVaSetValues (CONTEXT_DATA (fep->context)->toolbar,
-                     XmNwidth, w, XmNheight, h, 0);
+                     XmNwidth, w, XmNheight, h, (XtPointer) 0);
 
       XtManageChild (CONTEXT_DATA (fep->context)->toolbar);
 
@@ -7925,7 +7925,7 @@ fe_general_done_cb (Widget widget, XtPointer closure, XtPointer call_data)
 
       delta = h - old_h;
       XtVaSetValues (CONTEXT_DATA (fep->context)->top_area,
-                     XmNheight, top_h + delta, 0);
+                     XmNheight, top_h + delta, (XtPointer) 0);
 /*      XtResizeWidget (CONTEXT_DATA (fep->context)->top_area,
                       top_w, top_h + delta, 0); */
       XtUnmanageChild (XtParent (CONTEXT_DATA (fep->context)->top_area));
@@ -7981,27 +7981,27 @@ fe_mailnews_done_cb (Widget widget, XtPointer closure, XtPointer call_data)
 
   /* ============================================================ Appearance */
 
-  XtVaGetValues (fep->fixed_message_font_p, XmNset, &b, 0);
+  XtVaGetValues (fep->fixed_message_font_p, XmNset, &b, (XtPointer) 0);
   if (b != fe_globalPrefs.fixed_message_font_p) reload_required_p = True;
   fe_globalPrefs.fixed_message_font_p = b;
 
   citation_font = fe_globalPrefs.citation_font;
-  XtVaGetValues (fep->cite_plain_p, XmNset, &b, 0);
+  XtVaGetValues (fep->cite_plain_p, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.citation_font = MSG_PlainFont;
-  XtVaGetValues (fep->cite_bold_p, XmNset, &b, 0);
+  XtVaGetValues (fep->cite_bold_p, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.citation_font = MSG_BoldFont;
-  XtVaGetValues (fep->cite_italic_p, XmNset, &b, 0);
+  XtVaGetValues (fep->cite_italic_p, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.citation_font = MSG_ItalicFont;
-  XtVaGetValues (fep->cite_bold_italic_p, XmNset, &b, 0);
+  XtVaGetValues (fep->cite_bold_italic_p, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.citation_font = MSG_BoldItalicFont;
   if (citation_font != fe_globalPrefs.citation_font) reload_required_p = True;
 
   citation_size = fe_globalPrefs.citation_size;
-  XtVaGetValues (fep->cite_normal_p, XmNset, &b, 0);
+  XtVaGetValues (fep->cite_normal_p, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.citation_size = MSG_NormalSize;
-  XtVaGetValues (fep->cite_bigger_p, XmNset, &b, 0);
+  XtVaGetValues (fep->cite_bigger_p, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.citation_size = MSG_Bigger;
-  XtVaGetValues (fep->cite_smaller_p, XmNset, &b, 0);
+  XtVaGetValues (fep->cite_smaller_p, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.citation_size = MSG_Smaller;
   if (citation_size != fe_globalPrefs.citation_size) reload_required_p = True;
 
@@ -8017,22 +8017,22 @@ fe_mailnews_done_cb (Widget widget, XtPointer closure, XtPointer call_data)
                         fe_globalPrefs.citation_size,
                         fe_globalPrefs.citation_color);
 
-  XtVaGetValues (fep->mail_horiz_p, XmNset, &b, 0);
+  XtVaGetValues (fep->mail_horiz_p, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.mail_pane_style = FE_PANES_NORMAL;
-  XtVaGetValues (fep->mail_vert_p, XmNset, &b, 0);
+  XtVaGetValues (fep->mail_vert_p, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.mail_pane_style = FE_PANES_HORIZONTAL;
-  XtVaGetValues (fep->mail_stack_p, XmNset, &b, 0);
+  XtVaGetValues (fep->mail_stack_p, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.mail_pane_style = FE_PANES_STACKED;
-  XtVaGetValues (fep->mail_tall_p, XmNset, &b, 0);
+  XtVaGetValues (fep->mail_tall_p, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.mail_pane_style = FE_PANES_TALL_FOLDERS;
 
-  XtVaGetValues (fep->news_horiz_p, XmNset, &b, 0);
+  XtVaGetValues (fep->news_horiz_p, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.news_pane_style = FE_PANES_NORMAL;
-  XtVaGetValues (fep->news_vert_p, XmNset, &b, 0);
+  XtVaGetValues (fep->news_vert_p, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.news_pane_style = FE_PANES_HORIZONTAL;
-  XtVaGetValues (fep->news_stack_p, XmNset, &b, 0);
+  XtVaGetValues (fep->news_stack_p, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.news_pane_style = FE_PANES_STACKED;
-  XtVaGetValues (fep->news_tall_p, XmNset, &b, 0);
+  XtVaGetValues (fep->news_tall_p, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.news_pane_style = FE_PANES_TALL_FOLDERS;
 
   /* ============================================================ Mail */
@@ -8042,11 +8042,11 @@ fe_mailnews_done_cb (Widget widget, XtPointer closure, XtPointer call_data)
 
   SNARF (pop3_user_id, user_text);
 
-  XtVaGetValues (fep->pop_toggle, XmNset, &b, 0);
+  XtVaGetValues (fep->pop_toggle, XmNset, &b, (XtPointer) 0);
   fe_globalPrefs.use_movemail_p = !b;
 
   if (fe_globalPrefs.use_movemail_p) {
-    XtVaGetValues (fep->builtin_toggle, XmNset, &b, 0);
+    XtVaGetValues (fep->builtin_toggle, XmNset, &b, (XtPointer) 0);
     fe_globalPrefs.builtin_movemail_p = b;
   }
 
@@ -8067,7 +8067,7 @@ fe_mailnews_done_cb (Widget widget, XtPointer closure, XtPointer call_data)
   /* Backend doesn't store mail_directory. So it doesn't know if this
      really changed or not when we install the prefs. We have to do this
      explicitly here. */
-  XtVaGetValues(fep->maildir_text, XmNvalue, &s, 0);
+  XtVaGetValues(fep->maildir_text, XmNvalue, &s, (XtPointer) 0);
   if (strcmp(s, fe_globalPrefs.mail_directory)) {
     if (fe_globalPrefs.mail_directory) free(fe_globalPrefs.mail_directory);
     fe_globalPrefs.mail_directory = s;
@@ -8077,28 +8077,28 @@ fe_mailnews_done_cb (Widget widget, XtPointer closure, XtPointer call_data)
   SNARF (signature_file, user_sig_text);
 #endif
 
-  XtVaGetValues (fep->msg_limit, XmNset, &b, 0);
+  XtVaGetValues (fep->msg_limit, XmNset, &b, (XtPointer) 0);
   fe_globalPrefs.pop3_msg_size_limit_p = b;
   {
     char c, *s = 0;
     int n;
-    XtVaGetValues (fep->limit_text, XmNvalue, &s, 0);
+    XtVaGetValues (fep->limit_text, XmNvalue, &s, (XtPointer) 0);
     fe_globalPrefs.pop3_msg_size_limit = 0;
     if (1 == sscanf (s, " %d %c", &n, &c))
       fe_globalPrefs.pop3_msg_size_limit = n;
     free (s);
   }
 
-  XtVaGetValues (fep->msg_leave, XmNset, &b, 0);
+  XtVaGetValues (fep->msg_leave, XmNset, &b, (XtPointer) 0);
   fe_globalPrefs.pop3_leave_mail_on_server = b;
 
-  XtVaGetValues (fep->check_every, XmNset, &b, 0);
+  XtVaGetValues (fep->check_every, XmNset, &b, (XtPointer) 0);
   fe_globalPrefs.auto_check_mail = b;
   if (b)
   {
     char c, *s = 0;
     int n;
-    XtVaGetValues (fep->check_text, XmNvalue, &s, 0);
+    XtVaGetValues (fep->check_text, XmNvalue, &s, (XtPointer) 0);
     fe_globalPrefs.biff_interval = 0;
     if (1 == sscanf (s, " %d %c", &n, &c))
       fe_globalPrefs.biff_interval = n;
@@ -8106,13 +8106,13 @@ fe_mailnews_done_cb (Widget widget, XtPointer closure, XtPointer call_data)
   }
 
 #ifdef PREFS_8BIT
-  XtVaGetValues (fep->qp_toggle, XmNset, &b, 0);
+  XtVaGetValues (fep->qp_toggle, XmNset, &b, (XtPointer) 0);
   fe_globalPrefs.qp_p = b;
   /* eightbit_toggle?? */
 #endif
 #ifdef PREFS_QUEUED_DELIVERY
   XtVaGetValues (fep->deliverQ_toggle,
-			XmNset, &fe_globalPrefs.queue_for_later_p, 0);
+			XmNset, &fe_globalPrefs.queue_for_later_p, (XtPointer) 0);
 #endif
   SNARF (mail_bcc, mMailOutOther_text);
   SNARF (news_bcc, nMailOutOther_text);
@@ -8120,18 +8120,18 @@ fe_mailnews_done_cb (Widget widget, XtPointer closure, XtPointer call_data)
   SNARF (news_fcc, nCopyOut_text);
 
   XtVaGetValues (fep->autoquote_toggle, XmNset,
-			&fe_globalPrefs.autoquote_reply, 0);
+			&fe_globalPrefs.autoquote_reply, (XtPointer) 0);
   XtVaGetValues (fep->mMailOutSelf_toggle, XmNset,
-			&fe_globalPrefs.mailbccself_p, 0);
+			&fe_globalPrefs.mailbccself_p, (XtPointer) 0);
   XtVaGetValues (fep->nMailOutSelf_toggle, XmNset,
-			&fe_globalPrefs.newsbccself_p, 0);
+			&fe_globalPrefs.newsbccself_p, (XtPointer) 0);
 
   SNARF (newshost, newshost_text);
   /*  SNARF (newsrc_directory, newsrc_text); */
   /* Backend doesn't store newsrc_directory. So it doesn't know if this
      really changed or not when we install the prefs. We have to do this
      explicitly here. */
-  XtVaGetValues(fep->newsrc_text, XmNvalue, &s, 0);
+  XtVaGetValues(fep->newsrc_text, XmNvalue, &s, (XtPointer) 0);
   if (strcmp(s, fe_globalPrefs.newsrc_directory)) {
     if (fe_globalPrefs.newsrc_directory) free(fe_globalPrefs.newsrc_directory);
     fe_globalPrefs.newsrc_directory = s;
@@ -8144,7 +8144,7 @@ fe_mailnews_done_cb (Widget widget, XtPointer closure, XtPointer call_data)
   {
     char c, *s = 0;
     int n;
-    XtVaGetValues (fep->newsmax_text, XmNvalue, &s, 0);
+    XtVaGetValues (fep->newsmax_text, XmNvalue, &s, (XtPointer) 0);
     fe_globalPrefs.news_max_articles = 0;
     if (1 == sscanf (s, " %d %c", &n, &c))
       fe_globalPrefs.news_max_articles = n;
@@ -8153,24 +8153,24 @@ fe_mailnews_done_cb (Widget widget, XtPointer closure, XtPointer call_data)
 #endif
   /* ============================================================ Organization */
 #ifdef PREFS_EMPTY_TRASH
-    XtVaGetValues (fep->emptyTrash_toggle, XmNset, &fe_globalPrefs.emptyTrash, 0);
+    XtVaGetValues (fep->emptyTrash_toggle, XmNset, &fe_globalPrefs.emptyTrash, (XtPointer) 0);
 #endif
-    XtVaGetValues (fep->rememberPswd_toggle, XmNset, &fe_globalPrefs.rememberPswd, 0);
-    XtVaGetValues (fep->threadmail_toggle, XmNset, &fe_globalPrefs.mail_thread_p, 0);
-    XtVaGetValues (fep->threadnews_toggle, XmNset, &b, 0);
+    XtVaGetValues (fep->rememberPswd_toggle, XmNset, &fe_globalPrefs.rememberPswd, (XtPointer) 0);
+    XtVaGetValues (fep->threadmail_toggle, XmNset, &fe_globalPrefs.mail_thread_p, (XtPointer) 0);
+    XtVaGetValues (fep->threadnews_toggle, XmNset, &b, (XtPointer) 0);
     fe_globalPrefs.no_news_thread_p = !b;
 
     i = 0;
-    XtVaGetValues (fep->mdate_toggle, XmNset, &b, 0);
+    XtVaGetValues (fep->mdate_toggle, XmNset, &b, (XtPointer) 0);
     if (!b) {
       i++;
-      XtVaGetValues (fep->mnum_toggle,  XmNset, &b, 0);
+      XtVaGetValues (fep->mnum_toggle,  XmNset, &b, (XtPointer) 0);
       if (!b) {
 	i++;
-	XtVaGetValues (fep->msubject_toggle,  XmNset, &b, 0);
+	XtVaGetValues (fep->msubject_toggle,  XmNset, &b, (XtPointer) 0);
 	if (!b) {
 	  i++;
-	  XtVaGetValues (fep->msender_toggle,  XmNset, &b, 0);
+	  XtVaGetValues (fep->msender_toggle,  XmNset, &b, (XtPointer) 0);
 	}
       }
     }
@@ -8178,16 +8178,16 @@ fe_mailnews_done_cb (Widget widget, XtPointer closure, XtPointer call_data)
     fe_globalPrefs.mail_sort_style = i;
 
     i = 0;
-    XtVaGetValues (fep->ndate_toggle, XmNset, &b, 0);
+    XtVaGetValues (fep->ndate_toggle, XmNset, &b, (XtPointer) 0);
     if (!b) {
       i++;
-      XtVaGetValues (fep->nnum_toggle,  XmNset, &b, 0);
+      XtVaGetValues (fep->nnum_toggle,  XmNset, &b, (XtPointer) 0);
       if (!b) {
 	i++;
-	XtVaGetValues (fep->nsubject_toggle,  XmNset, &b, 0);
+	XtVaGetValues (fep->nsubject_toggle,  XmNset, &b, (XtPointer) 0);
 	if (!b) {
 	  i++;
-	  XtVaGetValues (fep->nsender_toggle,  XmNset, &b, 0);
+	  XtVaGetValues (fep->nsender_toggle,  XmNset, &b, (XtPointer) 0);
 	}
       }
     }
@@ -8230,7 +8230,7 @@ fe_network_done_cb (Widget widget, XtPointer closure, XtPointer call_data)
   XtVaGetValues (fep->SLOT2, XmNvalue, &fe_globalPrefs.SLOT1, 0)
 
 # define SNARFB(SLOT1,SLOT2) \
-    XtVaGetValues (fep->SLOT1, XmNset, &b, 0); \
+    XtVaGetValues (fep->SLOT1, XmNset, &b, (XtPointer) 0); \
     fe_globalPrefs.SLOT2 = b
 
   /* ============================================================ Cache */
@@ -8238,13 +8238,13 @@ fe_network_done_cb (Widget widget, XtPointer closure, XtPointer call_data)
   {
     char *text, dummy;
     int size = 0;
-    XtVaGetValues (fep->memory_text, XmNvalue, &text, 0);
+    XtVaGetValues (fep->memory_text, XmNvalue, &text, (XtPointer) 0);
     if (1 == sscanf (text, " %d %c", &size, &dummy) &&
 	size >= 0)
       fe_globalPrefs.memory_cache_size = size;
     free (text);
 #ifdef PREFS_DISK_CACHE
-    XtVaGetValues (fep->disk_text, XmNvalue, &text, 0);
+    XtVaGetValues (fep->disk_text, XmNvalue, &text, (XtPointer) 0);
     if (1 == sscanf (text, " %d %c", &size, &dummy) &&
 	size >= 0)
       fe_globalPrefs.disk_cache_size = size;
@@ -8252,24 +8252,24 @@ fe_network_done_cb (Widget widget, XtPointer closure, XtPointer call_data)
     SNARF (cache_dir, disk_dir);
 #endif /* PREFS_DISK_CACHE */
 #ifdef PREFS_VERIFY
-  XtVaGetValues (fep->once_p, XmNset, &b, 0);
+  XtVaGetValues (fep->once_p, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.verify_documents = 0;
-  XtVaGetValues (fep->every_p, XmNset, &b, 0);
+  XtVaGetValues (fep->every_p, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.verify_documents = 1;
-  XtVaGetValues (fep->expired_p, XmNset, &b, 0);
+  XtVaGetValues (fep->expired_p, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.verify_documents = 2;
-  XtVaGetValues (fep->cache_ssl_p, XmNset, &b, 0);
+  XtVaGetValues (fep->cache_ssl_p, XmNset, &b, (XtPointer) 0);
   fe_globalPrefs.cache_ssl_p = b;
   
 #endif
 
 #ifdef PREFS_NET
-    XtVaGetValues (fep->buf_text, XmNvalue, &text, 0);
+    XtVaGetValues (fep->buf_text, XmNvalue, &text, (XtPointer) 0);
     if (1 == sscanf (text, " %d %c", &size, &dummy) &&
 	size > 0)
       fe_globalPrefs.network_buffer_size = size;
     free (text);
-    XtVaGetValues (fep->conn_text, XmNvalue, &text, 0);
+    XtVaGetValues (fep->conn_text, XmNvalue, &text, (XtPointer) 0);
     if (1 == sscanf (text, " %d %c", &size, &dummy) &&
 	size > 0)
       {
@@ -8282,7 +8282,7 @@ fe_network_done_cb (Widget widget, XtPointer closure, XtPointer call_data)
 
   /* ============================================================ Proxies */
  
-  XtVaGetValues (fep->proxy_text, XmNvalue, &s1, 0);
+  XtVaGetValues (fep->proxy_text, XmNvalue, &s1, (XtPointer) 0);
   if (*s1) {
     NET_SetProxyServer(PROXY_AUTOCONF_URL, s1);
     fe_globalPrefs.proxy_url = XP_STRDUP (s1);
@@ -8291,43 +8291,43 @@ fe_network_done_cb (Widget widget, XtPointer closure, XtPointer call_data)
     fe_globalPrefs.proxy_url = 0;
   }
 
-  XtVaGetValues (fep->no_proxies_p, XmNset, &b, 0);
+  XtVaGetValues (fep->no_proxies_p, XmNset, &b, (XtPointer) 0);
   if (b) {
     NET_SelectProxyStyle(PROXY_STYLE_NONE);
     fe_globalPrefs.proxy_mode = 0;
   }
 
-  XtVaGetValues (fep->manual_p, XmNset, &b, 0);
+  XtVaGetValues (fep->manual_p, XmNset, &b, (XtPointer) 0);
   if (b) {
     NET_SelectProxyStyle(PROXY_STYLE_MANUAL);
     fe_globalPrefs.proxy_mode = 1;
   }
 
-  XtVaGetValues (fep->auto_proxies_p, XmNset, &b, 0);
+  XtVaGetValues (fep->auto_proxies_p, XmNset, &b, (XtPointer) 0);
   if (b) {
     NET_SelectProxyStyle(PROXY_STYLE_AUTOMATIC);
     fe_globalPrefs.proxy_mode = 2;
   }
 
   /* ============================================================ Protocols */
-  XtVaGetValues (fep->cookie_p, XmNset, &b, 0);
+  XtVaGetValues (fep->cookie_p, XmNset, &b, (XtPointer) 0);
   if (b)
     fe_globalPrefs.accept_cookie = NET_WhineAboutCookies;
   else
     fe_globalPrefs.accept_cookie = NET_SilentCookies;
-  XtVaGetValues (fep->anon_ftp_p, XmNset, &b, 0);
+  XtVaGetValues (fep->anon_ftp_p, XmNset, &b, (XtPointer) 0);
   fe_globalPrefs.email_anonftp = b;
-  XtVaGetValues (fep->email_form_p, XmNset, &b, 0);
+  XtVaGetValues (fep->email_form_p, XmNset, &b, (XtPointer) 0);
   fe_globalPrefs.email_submit = b;
 
   /* ============================================================ Languages */
 #ifdef JAVA
-  XtVaGetValues (fep->java_toggle, XmNset, &b, 0);
+  XtVaGetValues (fep->java_toggle, XmNset, &b, (XtPointer) 0);
   fe_globalPrefs.disable_java = !b;
   LJ_SetJavaEnabled(!fe_globalPrefs.disable_java);
 #endif
 #ifdef MOCHA
-  XtVaGetValues (fep->javascript_toggle, XmNset, &b, 0);
+  XtVaGetValues (fep->javascript_toggle, XmNset, &b, (XtPointer) 0);
   fe_globalPrefs.disable_javascript = !b;
   LM_SwitchMocha(!fe_globalPrefs.disable_javascript);
 #endif
@@ -8367,7 +8367,7 @@ fe_security_done_cb (Widget widget, XtPointer closure, XtPointer call_data)
   {
     Boolean b;
 # define SNARFB(SLOT1,SLOT2) \
-    XtVaGetValues (fep->SLOT1, XmNset, &b, 0); \
+    XtVaGetValues (fep->SLOT1, XmNset, &b, (XtPointer) 0); \
     fe_globalPrefs.SLOT2 = b
 
     SNARFB (enter_toggle, enter_warn);
@@ -8390,16 +8390,16 @@ fe_security_done_cb (Widget widget, XtPointer closure, XtPointer call_data)
     char *s1;
     int timeout;
 
-    XtVaGetValues (fep->every_toggle, XmNset, &b, 0);
+    XtVaGetValues (fep->every_toggle, XmNset, &b, (XtPointer) 0);
     if (b) fe_globalPrefs.ask_password = ask_pass = 0;
 
-    XtVaGetValues (fep->once_toggle, XmNset, &b, 0);
+    XtVaGetValues (fep->once_toggle, XmNset, &b, (XtPointer) 0);
     if (b) fe_globalPrefs.ask_password = ask_pass = 1;
 
-    XtVaGetValues (fep->periodic_toggle, XmNset, &b, 0);
+    XtVaGetValues (fep->periodic_toggle, XmNset, &b, (XtPointer) 0);
     if (b) fe_globalPrefs.ask_password = ask_pass = 2;
 
-    XtVaGetValues (fep->periodic_text, XmNvalue, &s1, 0);
+    XtVaGetValues (fep->periodic_text, XmNvalue, &s1, (XtPointer) 0);
     fe_globalPrefs.password_timeout = timeout = atoi (s1);
     XP_FREE (s1);
   }
@@ -8409,8 +8409,8 @@ fe_security_done_cb (Widget widget, XtPointer closure, XtPointer call_data)
     char *s = NULL;
     Widget w;
     XmString xms;
-    XtVaGetValues(fep->pers_cert_menu, XmNmenuHistory, &w, 0);
-    XtVaGetValues(w, XmNlabelString, &xms, 0);
+    XtVaGetValues(fep->pers_cert_menu, XmNmenuHistory, &w, (XtPointer) 0);
+    XtVaGetValues(w, XmNlabelString, &xms, (XtPointer) 0);
     XmStringGetLtoR(xms, XmFONTLIST_DEFAULT_TAG, &s);
     if (s) {
       fe_globalPrefs.def_user_cert = s;
@@ -8504,7 +8504,7 @@ fe_prefs_destroy_dialog (struct fe_prefs_data *fep)
 #define CHECK_FILE(W,DESC,MSG,N)				\
   {								\
     char *text = 0;						\
-    XtVaGetValues (W, XmNvalue, &text, 0);			\
+    XtVaGetValues (W, XmNvalue, &text, (XtPointer) 0);			\
     text = fe_StringTrim (text);				\
     if (!text || !*text || stat (text, &st))			\
       {								\
@@ -8537,7 +8537,7 @@ fe_prefs_destroy_dialog (struct fe_prefs_data *fep)
 #define CHECK_HOST(W,DESC,MSG,N)				\
   {								\
     char *text = 0;						\
-    XtVaGetValues (W, XmNvalue, &text, 0);			\
+    XtVaGetValues (W, XmNvalue, &text, (XtPointer) 0);			\
     text = fe_StringTrim (text);				\
     CHECK_HOST_1 (text, DESC, MSG, N);				\
     if (text) free (text);					\
@@ -8546,14 +8546,14 @@ fe_prefs_destroy_dialog (struct fe_prefs_data *fep)
 #define CHECK_PROXY(W1,W2,DESC,PORT_REQUIRED,MSG,N)		\
   {								\
     char *text = 0;						\
-    XtVaGetValues (W1, XmNvalue, &text, 0);			\
+    XtVaGetValues (W1, XmNvalue, &text, (XtPointer) 0);			\
     text = fe_StringTrim (text);				\
     if (text && *text)						\
       {								\
         CHECK_HOST_1 (text, DESC, MSG, N);			\
         free (text);						\
         text = 0;						\
-        XtVaGetValues (W2, XmNvalue, &text, 0);			\
+        XtVaGetValues (W2, XmNvalue, &text, (XtPointer) 0);			\
         text = fe_StringTrim (text);				\
         if ((!text || !*text) && PORT_REQUIRED)			\
           {							\
@@ -9116,7 +9116,7 @@ fe_GeneralPrefsDialog (MWContext *context)
   fep->context = context;
 
   XtVaGetValues (mainw, XtNvisual, &v, XtNcolormap, &cmap,
-                 XtNdepth, &depth, 0);
+                 XtNdepth, &depth, (XtPointer) 0);
   ac = 0;
   XtSetArg (av[ac], XmNvisual, v); ac++;
   XtSetArg (av[ac], XmNdepth, depth); ac++;
@@ -9296,7 +9296,7 @@ fe_MailNewsPrefsDialog (MWContext *context)
   fep->context = context;
 
   XtVaGetValues (mainw, XtNvisual, &v, XtNcolormap, &cmap,
-                 XtNdepth, &depth, 0);
+                 XtNdepth, &depth, (XtPointer) 0);
   ac = 0;
   XtSetArg (av[ac], XmNvisual, v); ac++;
   XtSetArg (av[ac], XmNdepth, depth); ac++;
@@ -9404,7 +9404,7 @@ fe_NetworkPrefsDialog (MWContext *context)
   fep->context = context;
 
   XtVaGetValues (mainw, XtNvisual, &v, XtNcolormap, &cmap,
-                 XtNdepth, &depth, 0);
+                 XtNdepth, &depth, (XtPointer) 0);
   ac = 0;
   XtSetArg (av[ac], XmNvisual, v); ac++;
   XtSetArg (av[ac], XmNdepth, depth); ac++;
@@ -9514,7 +9514,7 @@ fe_SecurityPrefsDialog (MWContext *context)
   fep->context = context;
 
   XtVaGetValues (mainw, XtNvisual, &v, XtNcolormap, &cmap,
-                 XtNdepth, &depth, 0);
+                 XtNdepth, &depth, (XtPointer) 0);
   ac = 0;
   XtSetArg (av[ac], XmNvisual, v); ac++;
   XtSetArg (av[ac], XmNdepth, depth); ac++;
@@ -9641,8 +9641,8 @@ fe_VerifyDiskCache (MWContext *context)
           if (!error || !*error)
             error = XP_GetString( XFE_UNKNOWN_ERROR );
 #else /* !DEBUG_jwz */
-	  char *error = ((errno >= 0 && errno < sys_nerr)
-			 ? sys_errlist [errno]
+	  char *error = ((errno >= 0 && errno < 1000)
+			 ? strerror (errno)
 			 : XP_GetString( XFE_UNKNOWN_ERROR));
 #endif /* !DEBUG_jwz */
 	  PR_snprintf (message, sizeof (message),

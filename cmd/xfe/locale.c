@@ -301,7 +301,7 @@ fe_GetTextField(Widget widget)
 	XP_ASSERT(XmIsText(widget) || XmIsTextField(widget));
 
 	loc = NULL;
-	XtVaGetValues(widget, XmNvalue, &loc, 0);
+	XtVaGetValues(widget, XmNvalue, &loc, (XtPointer) 0);
 	if (!loc)
 	{
 		return NULL;
@@ -330,7 +330,7 @@ fe_SetTextField(Widget widget, const char *str)
 	XP_ASSERT(XmIsText(widget) || XmIsTextField(widget));
 
 	if ((NULL==str) || ('\0'==*str)) {
-		XtVaSetValues(widget, XmNvalue, str, 0);
+		XtVaSetValues(widget, XmNvalue, str, (XtPointer) 0);
 		return;
 	}
 
@@ -352,7 +352,7 @@ fe_SetTextField(Widget widget, const char *str)
         }
 #endif /* DEBUG_jwz */
 
-	XtVaSetValues(widget, XmNvalue, loc, 0);
+	XtVaSetValues(widget, XmNvalue, loc, (XtPointer) 0);
 	if (loc != ((unsigned char *) str))
 	{
 		XP_FREE(loc);

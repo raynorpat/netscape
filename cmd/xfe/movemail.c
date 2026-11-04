@@ -65,9 +65,9 @@ fe_movemail_perror(MWContext *context, const char *message)
     es = strerror (e);
   if (!es || !*es)
 #else /* !DEBUG_jwz */
-  if ((unsigned)e < (unsigned)sys_nerr)
+  if (e >= 0)
     {
-      es = sys_errlist [e];
+      es = strerror (e);
     }
   else
 #endif /* !DEBUG_jwz */

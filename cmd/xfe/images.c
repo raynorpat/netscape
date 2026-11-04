@@ -119,7 +119,7 @@ XFE_GetImageInfo (MWContext *context, LO_ImageStruct *lo_image,
 	{
 	  /* If this is a mono system, don't do backdrops. */
 	  Cardinal depth = 0;
-	  XtVaGetValues (CONTEXT_WIDGET (context), XtNdepth, &depth, 0);
+	  XtVaGetValues (CONTEXT_WIDGET (context), XtNdepth, &depth, (XtPointer) 0);
 	  if (depth <= 1 || fe_globalData.force_mono_p)
 	    {
 	      /* This will Do the Right Thing. */
@@ -246,7 +246,7 @@ fe_DisplaySubImage (MWContext *context, int iLocation,
       XGCValues gcv;
       GC gc;
 
-      XtVaGetValues (widget, XmNscreen, &screen, XmNvisual, &visual, 0);
+      XtVaGetValues (widget, XmNscreen, &screen, XmNvisual, &visual, (XtPointer) 0);
       if (!visual) visual = fe_globalData.default_visual;
       visual_depth = fe_VisualDepth (dpy, visual);
 
@@ -573,10 +573,10 @@ fe_LoadDelayedImage (MWContext *context, const char *url)
   CONTEXT_DATA (context)->delayed_images_p = False;
   if (CONTEXT_DATA (context)->delayed_button)
     XtVaSetValues (CONTEXT_DATA (context)->delayed_button,
-		   XmNsensitive, False, 0);
+		   XmNsensitive, False, (XtPointer) 0);
   if (CONTEXT_DATA (context)->delayed_menuitem)
     XtVaSetValues (CONTEXT_DATA (context)->delayed_menuitem,
-		   XmNsensitive, False, 0);
+		   XmNsensitive, False, (XtPointer) 0);
 
   fe_ReLayout (context, 0);
 }
@@ -619,17 +619,17 @@ fe_set_backdrop (MWContext *context, LO_ImageStruct *lo_image)
   if (CONTEXT_DATA (context)->backdrop_pixmap)
     {
       XtVaSetValues (CONTEXT_DATA (context)->drawing_area,
-		     XmNbackgroundPixmap, None, 0);
+		     XmNbackgroundPixmap, None, (XtPointer) 0);
       XtVaSetValues (CONTEXT_DATA (context)->scrolled,
-		     XmNbackgroundPixmap, None, 0);
+		     XmNbackgroundPixmap, None, (XtPointer) 0);
     }
   else
     {
       Pixel bg = CONTEXT_DATA (context)->bg_pixel;
       XtVaSetValues (CONTEXT_DATA (context)->drawing_area,
-		     XmNbackground, bg, 0);
+		     XmNbackground, bg, (XtPointer) 0);
       XtVaSetValues (CONTEXT_DATA (context)->scrolled,
-		     XmNbackground, bg, 0);
+		     XmNbackground, bg, (XtPointer) 0);
     }
 
 #endif /* 0 */
@@ -687,7 +687,7 @@ fe_update_image_pixmap (MWContext *context, struct fe_Pixmap *fep,
   Pixel *pixels = fe_ColormapMapping(context);
   fe_ImageData *fe_image_data = (fe_ImageData*)il_image->platformData;
 
-  XtVaGetValues (widget, XmNscreen, &screen, XmNvisual, &visual, 0);
+  XtVaGetValues (widget, XmNscreen, &screen, XmNvisual, &visual, (XtPointer) 0);
   if (!visual) visual = fe_globalData.default_visual;
   window = XtWindow (CONTEXT_DATA (context)->drawing_area);
   visual_depth = fe_VisualDepth (dpy, visual);

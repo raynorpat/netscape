@@ -250,7 +250,7 @@ NPP_SetWindow(NPP instance, NPWindow* window)
 			This->width = window->width;
 			This->height = window->height;
 			XtVaSetValues(This->form, XmNx, This->x, XmNy, This->y,
-						XmNheight, This->height, XmNwidth, This->width, 0);
+						XmNheight, This->height, XmNwidth, This->width, (XtPointer) 0);
 		}
 #endif /* TEXT_PLUGIN */
 	}
@@ -382,7 +382,7 @@ NPP_Write(NPP instance, NPStream *stream, int32 offset, int32 len, void *buffer)
 		cbuf[len] = '\0';
 #ifdef TEXT_PLUGIN
 		if (This->text) {
-			XtVaGetValues(This->text, XmNcursorPosition, &pos, 0);
+			XtVaGetValues(This->text, XmNcursorPosition, &pos, (XtPointer) 0);
 			XmTextInsert(This->text, pos, cbuf);
 		}
 		else {

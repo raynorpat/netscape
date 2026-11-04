@@ -312,6 +312,7 @@ void HopToadNoArgs(void)
     void *o = thread->asyncArg0;
     void *a = thread->asyncArg1;
 
+    thread->contextRestored = 0;
     thread->asyncCall = 0;
     thread->asyncArg0 = 0;
     thread->asyncArg1 = 0;

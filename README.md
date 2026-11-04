@@ -21,15 +21,14 @@ The top-level `Makefile` includes `config/config.mk` and builds the source direc
 
 ## Building
 
-Start by reviewing `config/README` (if present) and the platform configuration under `config/` to determine whether this source tree supports your host. The top-level build uses `gmake` and the project’s historical make rules. Build configuration and required tools vary by platform; there is no single modern, portable build command guaranteed to work out of the box.
-
-For the browser export target, the top-level makefile defines:
+The modular CMake build is described in [cmake/README.md](cmake/README.md). It defines the Linux XFE browser, core and security archives, generated resources, and optional Mocha and Java integration. The original Makefiles remain available as the historical build reference.
 
 ```sh
-make netscape-export
+cmake -S . -B out/cmake -DCMAKE_BUILD_TYPE=Release
+cmake --build out/cmake --parallel
 ```
 
-Run it only after configuring the tree for a supported platform. The build may require platform-specific dependencies and patches.
+The browser requires Linux, Python 3, POSIX text utilities, and zlib/X11/Motif development libraries. Java and Mocha default to disabled. See the CMake guide for library-only builds, dependency prefixes, Sun Java source targets and imported-runtime mode, and verification limits.
 
 ## Historical context
 

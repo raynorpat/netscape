@@ -116,7 +116,7 @@ option_press (Widget widget, XtPointer closure, XEvent *event)
   XWindowAttributes attr;
 
   XGetWindowAttributes(XtDisplay(widget), XtWindow(widget), &attr);
-  XtVaSetValues (widget, XmNx, (Position)attr.x, XmNy, (Position)attr.y, 0);
+  XtVaSetValues (widget, XmNx, (Position)attr.x, XmNy, (Position)attr.y, (XtPointer) 0);
 }
 
 /*
@@ -174,7 +174,7 @@ fe_list_find_eh(Widget widget, XtPointer closure, XEvent* event,
     /* Wrap search for input[] in List */
     i = index;
     i = (i == nitems) ? 1 : i+1;		/* Increment i */
-    XtVaGetValues(widget, XmNitems, &items, XmNitemCount, &nitems, 0);
+    XtVaGetValues(widget, XmNitems, &items, XmNitemCount, &nitems, (XtPointer) 0);
     while (i != index) {
 	if (!XmStringGetLtoR(items[i-1], XmSTRING_DEFAULT_CHARSET, &s))
 	    continue;
@@ -435,7 +435,7 @@ XFE_GetFormElementInfo (MWContext *context, LO_FormElementStruct *form)
 				      nonterminal_text_translations);
 
 	    /* Must be after passwd setup. */
-	    XtVaSetValues (fed->file_widget, XmNcursorPosition, 0, 0);
+	    XtVaSetValues (fed->file_widget, XmNcursorPosition, 0, (XtPointer) 0);
 	    loc = fe_ConvertToLocaleEncoding (charset, text);
 	    /*
 	     * I don't know whether it is SGI or some version of Motif
@@ -499,7 +499,7 @@ XFE_GetFormElementInfo (MWContext *context, LO_FormElementStruct *form)
 	      fe_SetupPasswdText (widget, (data->max_size > 0
 					   ? data->max_size : 1024));
 	    /* Must be after passwd setup. */
-	    XtVaSetValues (widget, XmNcursorPosition, 0, 0);
+	    XtVaSetValues (widget, XmNcursorPosition, 0, (XtPointer) 0);
 	    loc = fe_ConvertToLocaleEncoding (charset, text);
 	    /*
 	     * I don't know whether it is SGI or some version of Motif
@@ -696,7 +696,7 @@ XFE_GetFormElementInfo (MWContext *context, LO_FormElementStruct *form)
 		if (selected_p [i])
 		  {
 		    s = i;
-		    XtVaSetValues (popup_menu, XmNmenuHistory, kids [i], 0);
+		    XtVaSetValues (popup_menu, XmNmenuHistory, kids [i], (XtPointer) 0);
 		  }
 		XmStringFree (xmstring);
 		height += kids[i]->core.height;
@@ -725,7 +725,7 @@ XFE_GetFormElementInfo (MWContext *context, LO_FormElementStruct *form)
 	     */
 	    if (s != -1)
 	      {
-		XtVaSetValues (option_button, XmNmenuHistory, kids [s], 0);
+		XtVaSetValues (option_button, XmNmenuHistory, kids [s], (XtPointer) 0);
 	      }
 
 	    /*
@@ -892,7 +892,7 @@ XFE_GetFormElementInfo (MWContext *context, LO_FormElementStruct *form)
 	    /* The scroller must have the prevailing color of the text,
 	       or it looks funny.*/
 	    XtVaSetValues (XtParent (widget),
-			   XmNforeground, fg, XmNbackground, bg, 0);
+			   XmNforeground, fg, XmNbackground, bg, (XtPointer) 0);
 
 	    XtUnmanageChild (XtParent (widget));
 	    XtManageChild (widget);
@@ -937,7 +937,7 @@ XFE_GetFormElementInfo (MWContext *context, LO_FormElementStruct *form)
 	      XtOverrideTranslations (widget, fe_globalData.
 				      nonterminal_text_translations);
 
-	    XtVaSetValues (widget, XmNcursorPosition, 0, 0);
+	    XtVaSetValues (widget, XmNcursorPosition, 0, (XtPointer) 0);
 	    loc = fe_ConvertToLocaleEncoding (charset, text);
 	    /*
 	     * I don't know whether it is SGI or some version of Motif
@@ -969,9 +969,9 @@ XFE_GetFormElementInfo (MWContext *context, LO_FormElementStruct *form)
   widget = fed->widget;
 
   if (form->element_data->type == FORM_TYPE_SELECT_ONE)
-    XtVaGetValues (XmOptionButtonGadget (widget), XmNfontList, &font_list, 0);
+    XtVaGetValues (XmOptionButtonGadget (widget), XmNfontList, &font_list, (XtPointer) 0);
   else
-    XtVaGetValues (widget, XmNfontList, &font_list, 0);
+    XtVaGetValues (widget, XmNfontList, &font_list, (XtPointer) 0);
 
   fed->form = form;	/* might be different this time around. */
 
@@ -1016,7 +1016,7 @@ XFE_GetFormElementInfo (MWContext *context, LO_FormElementStruct *form)
 		   XmNhighlightThickness, &ht,
 		   XmNmarginHeight,	  &margin_height,
 		   XmNmarginBottom,	  &bottom,
-		   0);
+		   (XtPointer) 0);
 
     if (form->element_data->type == FORM_TYPE_SELECT_ONE) /* you suck! */
       {
@@ -1031,7 +1031,7 @@ XFE_GetFormElementInfo (MWContext *context, LO_FormElementStruct *form)
 		       XmNhighlightThickness,	&ht2,
 		       XmNmarginHeight,		&mh2,
 		       XmNmarginBottom,		&bt2,
-		       0);
+		       (XtPointer) 0);
 	bw += bw2;
 	st += st2;
 	ht += ht2;
@@ -1252,13 +1252,13 @@ XFE_DisplayFormElement (MWContext *context, int iLocation,
 	  {
 	    Pixel fg = 0, bg = 0;
 	    XtVaGetValues (widget_to_ream,
-			   XmNforeground, &fg, XmNbackground, &bg, 0);
+			   XmNforeground, &fg, XmNbackground, &bg, (XtPointer) 0);
 	    XtVaSetValues (button,
-			   XmNforeground, fg, XmNbackground, bg, 0);
+			   XmNforeground, fg, XmNbackground, bg, (XtPointer) 0);
 	  }
       }
 
-      XtVaGetValues (widget_to_ream, XmNborderWidth, &bw, 0);
+      XtVaGetValues (widget_to_ream, XmNborderWidth, &bw, (XtPointer) 0);
       /* Since I told layout that width was width+bw+bw (for its sizing and
 	 positioning purposes), subtract it out again when setting the size of
 	 the text area.  X thinks the borders are outside the WxH rectangle,
@@ -1328,11 +1328,11 @@ XFE_GetFormElementValue (MWContext *context, LO_FormElementStruct *form,
 	char *text = 0;
 	fed = data->FE_Data;
 	if (form->element_data->type == FORM_TYPE_TEXT)
-	  XtVaGetValues (fed->widget, XmNvalue, &text, 0);
+	  XtVaGetValues (fed->widget, XmNvalue, &text, (XtPointer) 0);
 	else if (form->element_data->type == FORM_TYPE_PASSWORD)
 	  text = fe_GetPasswdText (fed->widget);
 	else /* FORM_TYPE_FILE */
-	  XtVaGetValues (fed->file_widget, XmNvalue, &text, 0);
+	  XtVaGetValues (fed->file_widget, XmNvalue, &text, (XtPointer) 0);
 	if (data->current_text && data->current_text != data->default_text)
 	  free (data->current_text);
 	data->current_text = (XP_Block)
@@ -1357,7 +1357,7 @@ XFE_GetFormElementValue (MWContext *context, LO_FormElementStruct *form,
 	lo_FormElementToggleData *data = &form->element_data->ele_toggle;
 	Boolean set = False;
 	fed = data->FE_Data;
-	XtVaGetValues (fed->widget, XmNset, &set, 0);
+	XtVaGetValues (fed->widget, XmNset, &set, (XtPointer) 0);
 	data->toggled = set;
 	break;
       }
@@ -1378,7 +1378,7 @@ XFE_GetFormElementValue (MWContext *context, LO_FormElementStruct *form,
 	lo_FormElementTextareaData *data = &form->element_data->ele_textarea;
 	char *text = 0;
 	fed = data->FE_Data;
-	XtVaGetValues (fed->widget, XmNvalue, &text, 0);
+	XtVaGetValues (fed->widget, XmNvalue, &text, (XtPointer) 0);
 	if (! text) break;
 	if (data->auto_wrap == TEXTAREA_WRAP_HARD) {
 	  char *tmp = XP_WordWrap(fe_LocaleCharSetID, text, data->cols, 0);
@@ -1451,7 +1451,7 @@ XFE_ResetFormElement (MWContext *context, LO_FormElementStruct *form)
 	fe_forms_clean_text (context, charset, text, True);
 	if (form->element_data->type == FORM_TYPE_FILE)
 	    w = fed->file_widget;
-	XtVaSetValues (w, XmNcursorPosition, 0, 0);
+	XtVaSetValues (w, XmNcursorPosition, 0, (XtPointer) 0);
 	loc = fe_ConvertToLocaleEncoding (charset, text);
 	/*
 	 * I don't know whether it is SGI or some version of Motif
@@ -1474,9 +1474,9 @@ XFE_ResetFormElement (MWContext *context, LO_FormElementStruct *form)
 	char *text = (data->default_text ? (char *) data->default_text : "");
 	unsigned char *loc;
 	fe_forms_clean_text (context, charset, text, False);
-	XtVaSetValues (fed->widget, XmNcursorPosition, 0, 0);
+	XtVaSetValues (fed->widget, XmNcursorPosition, 0, (XtPointer) 0);
 	loc = fe_ConvertToLocaleEncoding (charset, text);
-	XtVaSetValues (fed->widget, XmNvalue, loc, 0);
+	XtVaSetValues (fed->widget, XmNvalue, loc, (XtPointer) 0);
 	if (((char *) loc) != text)
 	  {
 	    XP_FREE (loc);
@@ -1488,7 +1488,7 @@ XFE_ResetFormElement (MWContext *context, LO_FormElementStruct *form)
       {
 	lo_FormElementToggleData *data = &form->element_data->ele_toggle;
 	struct fe_form_data *fed = data->FE_Data;
-	XtVaSetValues (fed->widget, XmNset, data->default_toggle, 0);
+	XtVaSetValues (fed->widget, XmNset, data->default_toggle, (XtPointer) 0);
 	break;
       }
     case FORM_TYPE_SELECT_ONE:
@@ -1505,9 +1505,9 @@ XFE_ResetFormElement (MWContext *context, LO_FormElementStruct *form)
 	    if (d2[i].selected) s = i;
 	  }
 	XtVaSetValues (fed->popup_widget,
-		       XmNmenuHistory, fed->popup_kids [s], 0);
+		       XmNmenuHistory, fed->popup_kids [s], (XtPointer) 0);
 	XtVaSetValues (fed->widget,
-		       XmNmenuHistory, fed->popup_kids [s], 0);
+		       XmNmenuHistory, fed->popup_kids [s], (XtPointer) 0);
 	break;
       }
     case FORM_TYPE_SELECT_MULT:
@@ -1551,7 +1551,7 @@ XFE_SetFormElementToggle (MWContext *context, LO_FormElementStruct *form,
       {
 	lo_FormElementToggleData *data = &form->element_data->ele_toggle;
 	struct fe_form_data *fed = data->FE_Data;
-	XtVaSetValues (fed->widget, XmNset, state, 0);
+	XtVaSetValues (fed->widget, XmNset, state, (XtPointer) 0);
 	break;
       }
     default:
@@ -1586,7 +1586,7 @@ fe_lost_focus_cb (Widget widget, XtPointer closure, XtPointer call_data)
 
   data = (lo_FormElementTextData *) &fed->form->element_data->ele_text;
 
-  XtVaGetValues (widget, XmNvalue, &text, 0);
+  XtVaGetValues (widget, XmNvalue, &text, (XtPointer) 0);
 
   if (data->type == FORM_TYPE_READONLY) return;
 
@@ -1623,7 +1623,7 @@ fe_form_file_browse_cb (Widget widget, XtPointer closure, XtPointer call_data)
   XmString xm_title = 0;
   char *title = 0;
 
-  XtVaGetValues (widget, XmNlabelString, &xm_title, 0);
+  XtVaGetValues (widget, XmNlabelString, &xm_title, (XtPointer) 0);
   if (xm_title)
     XmStringGetLtoR (xm_title, XmFONTLIST_DEFAULT_TAG, &title);
   XmStringFree(xm_title);
@@ -1758,7 +1758,7 @@ fe_radio_form_cb (Widget widget, XtPointer closure, XtPointer call_data)
   else
     /* Don't allow the user to ever toggle a button off - exactly one
        must be selected at all times. */
-    XtVaSetValues (widget, XmNset, True, 0);
+    XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
 
   XFE_GetFormElementValue (fed->context, fed->form, False);
 
@@ -1803,7 +1803,7 @@ fe_check_form_cb (Widget widget, XtPointer closure, XtPointer call_data)
 
       if (IS_FORM_DESTROYED(fed->context)) return;
 
-      XtVaSetValues (widget, XmNset, restore, 0);
+      XtVaSetValues (widget, XmNset, restore, (XtPointer) 0);
       data->toggled = restore;
     }
   else
@@ -1910,7 +1910,7 @@ fe_ScrollForms (MWContext *context, int x_off, int y_off)
 
   XtVaGetValues (CONTEXT_DATA (context)->drawing_area,
 		 XmNchildren, &kids, XmNnumChildren, &nkids,
-		 0);
+		 (XtPointer) 0);
   while (nkids--)
     XtMoveWidget (kids [nkids],
 		  kids [nkids]->core.x + x_off,
@@ -1929,7 +1929,7 @@ fe_GravityCorrectForms (MWContext *context, int x_off, int y_off)
 
   XtVaGetValues (CONTEXT_DATA (context)->drawing_area,
                  XmNchildren, &kids, XmNnumChildren, &nkids,
-                 0);
+                 (XtPointer) 0);
 
   while (nkids--)
   {
@@ -1953,7 +1953,7 @@ fe_SetFormsGravity (MWContext *context, int gravity)
  
   XtVaGetValues (CONTEXT_DATA (context)->drawing_area,
                  XmNchildren, &kids, XmNnumChildren, &nkids,
-                 0);
+                 (XtPointer) 0);
  
   valuemask = CWBitGravity | CWWinGravity;
   attr.win_gravity = gravity;
@@ -2121,7 +2121,7 @@ FE_ChangeInputElement(MWContext *context, LO_Element *element)
 
 	if (!text) text = (char *) data->default_text;
 	loc = fe_ConvertToLocaleEncoding (charset, text);
-	XtVaSetValues (fed->widget, XmNvalue, text, 0);
+	XtVaSetValues (fed->widget, XmNvalue, text, (XtPointer) 0);
 	if (((char *) loc) != text)
 	  {
 	    XP_FREE (loc);
@@ -2141,7 +2141,7 @@ FE_ChangeInputElement(MWContext *context, LO_Element *element)
 	break;
       case FORM_TYPE_CHECKBOX: {
 	lo_FormElementToggleData *data = &form->element_data->ele_toggle;
-	XtVaSetValues (fed->widget, XmNset, data->toggled, 0);
+	XtVaSetValues (fed->widget, XmNset, data->toggled, (XtPointer) 0);
 	break;
       }
       case FORM_TYPE_RESET:

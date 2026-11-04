@@ -153,11 +153,11 @@ fe_mailfilt_getTerm(MWContext *context,
 
   w=0;
   XtVaGetValues(d->scopeOpt[num], XmNmenuHistory, &w, NULL);
-  XtVaGetValues(w, XmNuserData, &userData, 0);
+  XtVaGetValues(w, XmNuserData, &userData, (XtPointer) 0);
   *attrib = (MSG_SearchAttribute) userData->attrib;
   w=0;
   XtVaGetValues(d->whereOpt[num], XmNmenuHistory, &w, NULL);
-  XtVaGetValues(w, XmNuserData, &userData, 0);
+  XtVaGetValues(w, XmNuserData, &userData, (XtPointer) 0);
   *op = (MSG_SearchOperator) userData->attrib;
 
 
@@ -165,7 +165,7 @@ fe_mailfilt_getTerm(MWContext *context,
 	value->attribute = *attrib;
   	w=0;
   	XtVaGetValues(d->priLevel[num], XmNmenuHistory, &w, NULL);
-  	XtVaGetValues(w, XmNuserData, &userData, 0);
+	XtVaGetValues(w, XmNuserData, &userData, (XtPointer) 0);
   	value->u.priority = (MSG_PRIORITY) userData->attrib;
   } else if (*attrib == attribDate) {                   /* Date */
   } else if (*attrib == attribMsgStatus) {              /* Status */
@@ -189,7 +189,7 @@ fe_mailfilt_getAction(MWContext *context,
 
   w=0;
   XtVaGetValues(d->thenClause, XmNmenuHistory, &w, NULL);
-  XtVaGetValues(w, XmNuserData, &userData, 0);
+  XtVaGetValues(w, XmNuserData, &userData, (XtPointer) 0);
   *action = (MSG_RuleActionType) userData->attrib;
   switch (*action) {
 	case acMoveToFolder:
@@ -198,7 +198,7 @@ fe_mailfilt_getAction(MWContext *context,
 	case acChangePriority:
   		w=0;
   		XtVaGetValues(d->priAction, XmNmenuHistory, &w, NULL);
-  		XtVaGetValues(w, XmNuserData, &userData, 0);
+		XtVaGetValues(w, XmNuserData, &userData, (XtPointer) 0);
 		*value = (void *) userData->attrib;
 	default:
 		*value = NULL;
@@ -228,9 +228,9 @@ fe_mailfilt_get_option_size ( Widget optionMenu, Widget btn,
 				XmNhighlightThickness, &ht,
 				XmNshadowThickness, &st,
 				XmNborderWidth, &bw,
-				0);
+				(XtPointer) 0);
   
-  XtVaGetValues(optionMenu, XmNspacing, &space, 0);
+  XtVaGetValues(optionMenu, XmNspacing, &space, (XtPointer) 0);
   
   *retHeight = height + (mh+mt+mb+bw+st+ht + space ) * 2;
   *retWidth  = width + (mw+ml+mr+bw+st+ht + space) * 2;
@@ -289,7 +289,7 @@ fe_mailfilt_make_option_menu( MWContext *context,
   Widget option_menu;
   
   XtVaGetValues(CONTEXT_WIDGET(context),
-				XtNvisual, &v, XtNcolormap, &cmap, XtNdepth, &depth, 0);
+				XtNvisual, &v, XtNcolormap, &cmap, XtNdepth, &depth, (XtPointer) 0);
   
   ac = 0;
   XtSetArg(av[ac], XmNvisual, v); ac++;
@@ -409,10 +409,10 @@ fe_mailfilt_whereOpt_cb(Widget w, XtPointer closure, XtPointer calldata)
   fe_mailfilt_userData *userData;
   MSG_SearchAttribute attrib;
   MSG_SearchOperator op;
-  XtVaGetValues(w, XmNuserData, &userData, 0);
+  XtVaGetValues(w, XmNuserData, &userData, (XtPointer) 0);
   num = userData->row - 1;
   op = (MSG_SearchOperator) userData->attrib;
-  XtVaGetValues(d->scopeOptSelected[num], XmNuserData, &userData, 0);
+  XtVaGetValues(d->scopeOptSelected[num], XmNuserData, &userData, (XtPointer) 0);
   attrib = (MSG_SearchAttribute) userData->attrib;
   if (op == opIsEmpty || attrib == attribPriority) {
   	XtUnmanageChild(d->scopeText[num]);
@@ -422,7 +422,7 @@ fe_mailfilt_whereOpt_cb(Widget w, XtPointer closure, XtPointer calldata)
 				  XmNleftAttachment, XmATTACH_WIDGET,
 				  XmNleftWidget, d->whereLabel[num],
 				  XmNrightAttachment, XmATTACH_FORM,
-				  0);
+				  (XtPointer) 0);
   } else if (!XtIsManaged(d->scopeText[num])) {
   	XtVaSetValues(d->whereOpt[num],
 				  XmNtopAttachment, XmATTACH_FORM,
@@ -430,13 +430,13 @@ fe_mailfilt_whereOpt_cb(Widget w, XtPointer closure, XtPointer calldata)
 				  XmNleftAttachment, XmATTACH_WIDGET,
 				  XmNleftWidget, d->whereLabel[num],
 				  XmNrightAttachment, XmATTACH_NONE,
-				  0);
+				  (XtPointer) 0);
   	XtVaSetValues(d->scopeText[num],
 				  XmNtopAttachment, XmATTACH_FORM,
 				  XmNbottomAttachment, XmATTACH_NONE,
 				  XmNleftAttachment, XmATTACH_WIDGET,
 				  XmNleftWidget, d->whereOpt[num],
-				  0);
+				  (XtPointer) 0);
   	XtManageChild(d->scopeText[num]);
   }
   d->whereOptSelected[num] = w;
@@ -466,7 +466,7 @@ fe_mailfilt_scopeOpt_cb(Widget w, XtPointer closure, XtPointer calldata)
   Dimension width, height;
   Widget popupW;
   
-  XtVaGetValues(w, XmNuserData, &userData, 0);
+  XtVaGetValues(w, XmNuserData, &userData, (XtPointer) 0);
   num = userData->row - 1;
   attrib = userData->attrib;
 
@@ -483,14 +483,14 @@ fe_mailfilt_scopeOpt_cb(Widget w, XtPointer closure, XtPointer calldata)
 				  XmNleftAttachment, XmATTACH_WIDGET,
 				  XmNleftWidget, d->whereLabel[num],
 				  XmNrightAttachment, XmATTACH_NONE,
-				  0);
+				  (XtPointer) 0);
   	XtVaSetValues(d->priLevel[num],
 				  XmNtopAttachment, XmATTACH_FORM,
 				  XmNbottomAttachment, XmATTACH_NONE,
 				  XmNleftAttachment, XmATTACH_WIDGET,
 				  XmNleftWidget, d->whereOpt[num],
 				  XmNrightAttachment, XmATTACH_FORM,
-				  0);
+				  (XtPointer) 0);
   	XtManageChild(d->whereOpt[num]);
   	XtManageChild(d->priLevel[num]);
   } else {
@@ -506,14 +506,14 @@ fe_mailfilt_scopeOpt_cb(Widget w, XtPointer closure, XtPointer calldata)
 				  XmNleftAttachment, XmATTACH_WIDGET,
 				  XmNleftWidget, d->whereLabel[num],
 				  XmNrightAttachment, XmATTACH_NONE,
-				  0);
+				  (XtPointer) 0);
   	XtVaSetValues(d->scopeText[num],
 				  XmNtopAttachment, XmATTACH_FORM,
 				  XmNbottomAttachment, XmATTACH_NONE,
 				  XmNleftAttachment, XmATTACH_WIDGET,
 				  XmNleftWidget, d->whereOpt[num],
 				  XmNrightAttachment, XmATTACH_FORM,
-				  0);
+				  (XtPointer) 0);
   	XtManageChild(d->whereOpt[num]);
   	XtManageChild(d->scopeText[num]);
   }
@@ -529,7 +529,7 @@ fe_mailfilt_thenClause_cb(Widget w, XtPointer closure, XtPointer calldata)
   fe_mailfilt_userData *userData;
   int num; 
   MSG_SearchAttribute attrib;
-  XtVaGetValues(w, XmNuserData, &userData, 0);
+  XtVaGetValues(w, XmNuserData, &userData, (XtPointer) 0);
   num = userData->row - 1;
   attrib = userData->attrib;
   if (attrib==acChangePriority) {
@@ -541,7 +541,7 @@ fe_mailfilt_thenClause_cb(Widget w, XtPointer closure, XtPointer calldata)
 					XmNleftAttachment, XmATTACH_WIDGET,
 					XmNleftWidget, d->thenClause,
 					XmNrightAttachment, XmATTACH_NONE,
-					0);
+					(XtPointer) 0);
 	  XtManageChild(d->priAction);
   } else if (attrib==acMoveToFolder) {
 	  XtUnmanageChild(d->priAction);
@@ -552,12 +552,12 @@ fe_mailfilt_thenClause_cb(Widget w, XtPointer closure, XtPointer calldata)
 					XmNleftAttachment, XmATTACH_WIDGET,
 					XmNleftWidget, d->thenClause,
 					XmNrightAttachment, XmATTACH_NONE,
-					0);
+					(XtPointer) 0);
       XtManageChild(d->thenTo);
   } else {
 	  XtUnmanageChild(d->priAction);
 	  XtUnmanageChild(d->thenTo);
-	  XtVaSetValues(d->thenClause, XmNrightAttachment, XmATTACH_NONE, 0);
+	  XtVaSetValues(d->thenClause, XmNrightAttachment, XmATTACH_NONE, (XtPointer) 0);
   }
   d->thenClauseSelected = w;
 }
@@ -583,11 +583,11 @@ fe_mailfilt_buildWhereOpt(MWContext *context, Dimension *width,
   /** MOTIF SUCKS **/
 
   XtVaGetValues(CONTEXT_WIDGET(context),
-				XtNvisual, &v, XtNcolormap, &cmap, XtNdepth, &depth, 0);
+				XtNvisual, &v, XtNcolormap, &cmap, XtNdepth, &depth, (XtPointer) 0);
 
   if (d->whereOptPopup[num]) {
 	XtVaGetValues(d->whereOptPopup[num], XmNchildren, &childrenList,
-                  XmNnumChildren, &numChildren, 0);
+                  XmNnumChildren, &numChildren, (XtPointer) 0);
   	for ( i = 0; i < numChildren; i++ ) {
 		XtDestroyWidget(childrenList[i]);
   	}
@@ -623,9 +623,9 @@ fe_mailfilt_setRulesParams(MWContext *context, int num,
   WidgetList childrenList;
 
   XtVaGetValues(d->scopeOptPopup[num], XmNchildren, &childrenList,
-                XmNnumChildren, &numChildren, 0);
+                XmNnumChildren, &numChildren, (XtPointer) 0);
   for ( i = 0; i < numChildren; i++ ) {
-	XtVaGetValues(childrenList[i], XmNuserData, &userData, 0);
+	XtVaGetValues(childrenList[i], XmNuserData, &userData, (XtPointer) 0);
 	if (attrib == (MSG_SearchAttribute) userData->attrib) {
 	  	XtVaSetValues(d->scopeOpt[num], XmNmenuHistory, childrenList[i], NULL);
 		break;
@@ -634,9 +634,9 @@ fe_mailfilt_setRulesParams(MWContext *context, int num,
   fe_mailfilt_scopeOpt_cb(childrenList[i], (XtPointer) context, NULL);
 
   XtVaGetValues(d->whereOptPopup[num], XmNchildren, &childrenList,
-                XmNnumChildren, &numChildren, 0);
+                XmNnumChildren, &numChildren, (XtPointer) 0);
   for ( i = 0; i < numChildren; i++ ) {
-	XtVaGetValues(childrenList[i], XmNuserData, &userData, 0);
+	XtVaGetValues(childrenList[i], XmNuserData, &userData, (XtPointer) 0);
 	if (op == (MSG_SearchOperator) userData->attrib) {
 	  	XtVaSetValues(d->whereOpt[num], XmNmenuHistory, childrenList[i], NULL);
 		break;
@@ -651,9 +651,9 @@ fe_mailfilt_setRulesParams(MWContext *context, int num,
 		break;
 	case attribPriority:
   		XtVaGetValues(d->priLevelPopup[num], XmNchildren, &childrenList,
-                      XmNnumChildren, &numChildren, 0);
+                      XmNnumChildren, &numChildren, (XtPointer) 0);
   		for ( i = 0; i < numChildren; i++ ) {
-			XtVaGetValues(childrenList[i], XmNuserData, &userData, 0);
+			XtVaGetValues(childrenList[i], XmNuserData, &userData, (XtPointer) 0);
 			if (value.u.priority == (MSG_PRIORITY) userData->attrib) {
 	  			XtVaSetValues(d->priLevel[num], 
 							  XmNmenuHistory, childrenList[i], NULL);
@@ -679,9 +679,9 @@ fe_mailfilt_setActionParams(MWContext *context,
   WidgetList childrenList;
 
   XtVaGetValues(d->thenClausePopup, XmNchildren, &childrenList,
-                XmNnumChildren, &numChildren, 0);
+                XmNnumChildren, &numChildren, (XtPointer) 0);
   for ( i = 0; i < numChildren; i++ ) {
-	XtVaGetValues(childrenList[i], XmNuserData, &userData, 0);
+	XtVaGetValues(childrenList[i], XmNuserData, &userData, (XtPointer) 0);
 	if (type == (MSG_RuleActionType) userData->attrib) {
 	  	XtVaSetValues(d->thenClause, XmNmenuHistory, childrenList[i], NULL);
 		break;
@@ -693,9 +693,9 @@ fe_mailfilt_setActionParams(MWContext *context,
   if (type == acMoveToFolder) {
   } else if (type == acChangePriority) {
   	XtVaGetValues(d->priActionPopup, XmNchildren, &childrenList,
-                  XmNnumChildren, &numChildren, 0);
+                  XmNnumChildren, &numChildren, (XtPointer) 0);
   	for ( i = 0; i < numChildren; i++ ) {
-		XtVaGetValues(childrenList[i], XmNuserData, &userData, 0);
+		XtVaGetValues(childrenList[i], XmNuserData, &userData, (XtPointer) 0);
 		if ((MSG_PRIORITY) value == (MSG_PRIORITY) userData->attrib) {
 	  		XtVaSetValues(d->priAction, XmNmenuHistory, childrenList[i], NULL);
 			break;
@@ -714,7 +714,7 @@ fe_mailfilt_priLevel_cb(Widget w, XtPointer closure, XtPointer calldata)
   fe_mailfilt_data *d = FILTER_DATA(context);
   fe_mailfilt_userData *userData;
   int num;
-  XtVaGetValues(w, XmNuserData, &userData, 0);
+  XtVaGetValues(w, XmNuserData, &userData, (XtPointer) 0);
   num = userData->row - 1;
   d->priLevelSelected[num] = w;
 }
@@ -931,7 +931,7 @@ void fe_mailfilt_makeRules(Widget rowcol, int fake_num,
   d->whereLabel[num] = XmCreateLabelGadget(d->strip[num], "whereLabel", av, ac);
 
   /* get what's needed in the option menu from backend */
-  XtVaGetValues(d->scopeOptSelected[num], XmNuserData, &userData, 0);
+  XtVaGetValues(d->scopeOptSelected[num], XmNuserData, &userData, (XtPointer) 0);
   attrib = userData->attrib;
   popupW = 0;
   d->whereOpt[num] = fe_mailfilt_make_option_menu(context, d->strip[num],
@@ -961,13 +961,13 @@ void fe_mailfilt_makeRules(Widget rowcol, int fake_num,
                 XmNbottomWidget, d->strip[num],
                 XmNleftAttachment, XmATTACH_FORM,
                 XmNrightAttachment, XmATTACH_NONE,
-                0);
+                (XtPointer) 0);
   
   XtVaSetValues(d->scopeOpt[num],
                 XmNtopAttachment, XmATTACH_FORM,
                 XmNbottomAttachment, XmATTACH_FORM,
                 XmNleftAttachment, XmATTACH_FORM,
-                0);
+                (XtPointer) 0);
   
   XtVaSetValues(d->whereLabel[num],
                 XmNalignment, XmALIGNMENT_BEGINNING,
@@ -977,14 +977,14 @@ void fe_mailfilt_makeRules(Widget rowcol, int fake_num,
                 XmNleftAttachment, XmATTACH_WIDGET,
                 XmNleftWidget, d->scopeOpt[num],
                 XmNheight, (d->scopeOpt[num])->core.height,
-                0);
+                (XtPointer) 0);
 
   XtVaSetValues(d->whereOpt[num],
                 XmNtopAttachment, XmATTACH_FORM,
                 XmNbottomAttachment, XmATTACH_FORM,
                 XmNleftAttachment, XmATTACH_WIDGET,
                 XmNleftWidget, d->whereLabel[num],
-								0);
+								(XtPointer) 0);
 
   XtVaSetValues(d->scopeText[num],
                 XmNtopAttachment, XmATTACH_FORM,
@@ -992,14 +992,14 @@ void fe_mailfilt_makeRules(Widget rowcol, int fake_num,
                 XmNleftAttachment, XmATTACH_WIDGET,
                 XmNleftWidget, d->whereOpt[num],
                 XmNrightAttachment, XmATTACH_FORM,
-				0);
+				(XtPointer) 0);
   
   XtVaSetValues(d->strip[num],
                 XmNtopAttachment, XmATTACH_FORM,
                 XmNbottomAttachment, XmATTACH_FORM,
                 XmNleftAttachment, XmATTACH_FORM,
                 XmNrightAttachment, XmATTACH_FORM,
-                0);
+                (XtPointer) 0);
 
   XtManageChild(d->rulesLabel[num]);
   XtManageChild(d->scopeOpt[num]);
@@ -1016,8 +1016,8 @@ fe_mailfilt_setRulesGeo(Dimension width, fe_mailfilt_data *d)
 {
   int i;
   for (i=0; i<d->stripCount; i++) {
-  	XtVaSetValues(d->rulesLabel[i], XmNwidth, width, 0);
-	XtVaSetValues(d->strip[i], XmNleftOffset, width, 0);
+	XtVaSetValues(d->rulesLabel[i], XmNwidth, width, (XtPointer) 0);
+	XtVaSetValues(d->strip[i], XmNleftOffset, width, (XtPointer) 0);
   }
 }
 
@@ -1180,7 +1180,7 @@ fe_mailfilt_edit(MWContext *context, XP_Bool isNew)
   	mainw = CONTEXT_WIDGET(context);	
   
   	XtVaGetValues (mainw, XtNvisual, &v, XtNcolormap, &cmap, 
-				   XtNdepth, &depth, 0);
+				   XtNdepth, &depth, (XtPointer) 0);
   
   	ac = 0;
   	XtSetArg(av[ac], XmNvisual, v); ac++;
@@ -1236,7 +1236,7 @@ fe_mailfilt_edit(MWContext *context, XP_Bool isNew)
                 	XmNbottomAttachment, XmATTACH_FORM,
                 	XmNleftAttachment, XmATTACH_FORM,
                 	XmNrightAttachment, XmATTACH_NONE,
-                	0);
+	(XtPointer) 0);
   	
   	XtVaSetValues(lessbtn,
                 	XmNtopAttachment, XmATTACH_FORM,
@@ -1244,7 +1244,7 @@ fe_mailfilt_edit(MWContext *context, XP_Bool isNew)
                 	XmNleftAttachment, XmATTACH_WIDGET,
                 	XmNleftWidget, morebtn,
                 	XmNrightAttachment, XmATTACH_NONE,
-                	0);
+	(XtPointer) 0);
   	
   	XtManageChild(morebtn);
   	XtManageChild(lessbtn);
@@ -1256,21 +1256,21 @@ fe_mailfilt_edit(MWContext *context, XP_Bool isNew)
                 	XmNbottomWidget, filterName,
                 	XmNleftAttachment, XmATTACH_FORM,
                 	XmNrightAttachment, XmATTACH_NONE,
-                	0);
+	(XtPointer) 0);
   	
   	XtVaSetValues(filterName,
                 	XmNtopAttachment, XmATTACH_FORM,
                 	XmNbottomAttachment, XmATTACH_NONE,
                 	XmNleftAttachment, XmATTACH_FORM,
                 	XmNrightAttachment, XmATTACH_NONE,
-                	0);
+	(XtPointer) 0);
   	
   	XtVaSetValues(d->rulesRC,
                 	XmNtopAttachment, XmATTACH_WIDGET,
 					XmNtopWidget, filterName,
                 	XmNleftAttachment, XmATTACH_FORM,
                 	XmNrightAttachment, XmATTACH_FORM,
-                	0);
+	(XtPointer) 0);
   	
   	XtVaSetValues(commandGroup,
                 	XmNnoResize, True,
@@ -1280,7 +1280,7 @@ fe_mailfilt_edit(MWContext *context, XP_Bool isNew)
                 	XmNbottomAttachment, XmATTACH_NONE,
                 	XmNleftAttachment, XmATTACH_FORM,
                 	XmNrightAttachment, XmATTACH_FORM,
-                	0);
+	(XtPointer) 0);
   	
   	fe_mailfilt_makeRules(d->rulesRC, 1, d, context);
   	d->stripCount=1;
@@ -1336,13 +1336,13 @@ fe_mailfilt_edit(MWContext *context, XP_Bool isNew)
                 	XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET,
                 	XmNbottomWidget, thenClause,
                 	XmNleftAttachment, XmATTACH_FORM,
-                	0);
+	(XtPointer) 0);
   	XtVaSetValues(thenClause,
                 	XmNtopAttachment, XmATTACH_WIDGET,
 					XmNtopWidget, commandGroup,
                 	XmNbottomAttachment, XmATTACH_NONE,
                 	XmNleftAttachment, XmATTACH_FORM,
-                	0);
+	(XtPointer) 0);
   	XtVaSetValues(thenTo,
                 	XmNtopAttachment, XmATTACH_WIDGET,
 					XmNtopWidget, commandGroup,
@@ -1350,7 +1350,7 @@ fe_mailfilt_edit(MWContext *context, XP_Bool isNew)
                 	XmNleftAttachment, XmATTACH_WIDGET,
 					XmNleftWidget, thenClause,
                 	XmNrightAttachment, XmATTACH_NONE,
-                	0);
+	(XtPointer) 0);
   	
   	XtManageChild(thenLabel);
   	XtManageChild(thenClause);
@@ -1371,14 +1371,14 @@ fe_mailfilt_edit(MWContext *context, XP_Bool isNew)
                 	XmNbottomWidget, despField,
                 	XmNleftAttachment, XmATTACH_FORM,
                 	XmNrightAttachment, XmATTACH_NONE,
-                	0);
+	(XtPointer) 0);
   	XtVaSetValues(despField,
                 	XmNtopAttachment, XmATTACH_WIDGET,
 					XmNtopWidget, thenClause,
                 	XmNbottomAttachment, XmATTACH_NONE,
                 	XmNleftAttachment, XmATTACH_FORM,
                 	XmNrightAttachment, XmATTACH_FORM,
-                	0);
+	(XtPointer) 0);
   	
   	XtManageChild(despField);
   	XtManageChild(despLabel);
@@ -1408,7 +1408,7 @@ fe_mailfilt_edit(MWContext *context, XP_Bool isNew)
   	d->filterOnBtn = statusOn = 
 		XtVaCreateManagedWidget("on", xmToggleButtonGadgetClass, 
 								statusRadioBox, NULL);
-  	XtVaSetValues(statusOn, XmNuserData, userData, 0);
+	XtVaSetValues(statusOn, XmNuserData, userData, (XtPointer) 0);
 	XtAddCallback(statusOn, XmNvalueChangedCallback, fe_mailfilt_turnOnOff,
 				  context);
 
@@ -1418,7 +1418,7 @@ fe_mailfilt_edit(MWContext *context, XP_Bool isNew)
   	d->filterOffBtn = statusOff = 
 		XtVaCreateManagedWidget("off", xmToggleButtonGadgetClass, 
                                	statusRadioBox, NULL);
-  	XtVaSetValues(statusOff, XmNuserData, userData, 0);
+	XtVaSetValues(statusOff, XmNuserData, userData, (XtPointer) 0);
 	XtAddCallback(statusOff, XmNvalueChangedCallback, fe_mailfilt_turnOnOff,
 				  context);
 
@@ -1430,39 +1430,39 @@ fe_mailfilt_edit(MWContext *context, XP_Bool isNew)
                 	XmNbottomAttachment, XmATTACH_FORM,
                 	XmNleftAttachment, XmATTACH_WIDGET,
                 	XmNleftWidget, statusRadioBox,
-                	0);
+	(XtPointer) 0);
   	XtVaSetValues(cancelbtn,
                 	XmNtopAttachment, XmATTACH_FORM,
                 	XmNbottomAttachment, XmATTACH_FORM,
                 	XmNleftAttachment, XmATTACH_WIDGET,
 					XmNleftWidget, okbtn,
                 	XmNrightAttachment, XmATTACH_FORM,
-                	0);
+	(XtPointer) 0);
   	XtVaSetValues(statusRadioBox,
                 	XmNtopAttachment, XmATTACH_FORM,
                 	XmNbottomAttachment, XmATTACH_FORM,
                 	XmNrightOffset, 20,
                 	XmNleftAttachment, XmATTACH_WIDGET,
 					XmNleftWidget, statusLabel,
-                	0);
+	(XtPointer) 0);
   	XtVaSetValues(statusLabel,
                 	XmNtopAttachment, XmATTACH_FORM,
                 	XmNbottomAttachment, XmATTACH_FORM,
                 	XmNleftAttachment, XmATTACH_NONE,
-                	0);
+	(XtPointer) 0);
   	XtManageChild(okbtn);
   	XtManageChild(cancelbtn);
   	XtManageChild(statusLabel);
   	XtManageChild(statusRadioBox);
   	XtManageChild(btnform);
   	
-  	XtVaGetValues(despLabel, XmNwidth, &width, 0);
-  	XtVaSetValues(thenLabel, XmNwidth, width, 0 );
-  	XtVaSetValues(despLabel, XmNwidth, width, 0 );
-  	XtVaSetValues(filterName, XmNleftOffset, width, 0);
-  	XtVaSetValues(commandGroup, XmNleftOffset, width, 0);
-  	XtVaSetValues(thenClause, XmNleftOffset, width, 0);
-  	XtVaSetValues(despField, XmNleftOffset, width, 0);
+	XtVaGetValues(despLabel, XmNwidth, &width, (XtPointer) 0);
+	XtVaSetValues(thenLabel, XmNwidth, width, (XtPointer) 0 );
+	XtVaSetValues(despLabel, XmNwidth, width, (XtPointer) 0 );
+	XtVaSetValues(filterName, XmNleftOffset, width, (XtPointer) 0);
+	XtVaSetValues(commandGroup, XmNleftOffset, width, (XtPointer) 0);
+	XtVaSetValues(thenClause, XmNleftOffset, width, (XtPointer) 0);
+	XtVaSetValues(despField, XmNleftOffset, width, (XtPointer) 0);
   	
   	fe_mailfilt_setRulesGeo(width, d);
 	d->despwidth = width;
@@ -1518,15 +1518,15 @@ fe_mailfilt_del_cb(Widget w, XtPointer closure, XtPointer calldata)
 	  MSG_GetFilterCount(d->filterlist, &count);
 	  fe_OutlineChange(d->filterOutline, 0, count, count);
       if (count > 0) {
-		XtVaSetValues(d->upBtn, XmNsensitive, True, 0);
-		XtVaSetValues(d->downBtn, XmNsensitive, True, 0);
-		XtVaSetValues(d->deletebtn, XmNsensitive, True, 0);
-		XtVaSetValues(d->editbtn, XmNsensitive, True, 0);
+		XtVaSetValues(d->upBtn, XmNsensitive, True, (XtPointer) 0);
+		XtVaSetValues(d->downBtn, XmNsensitive, True, (XtPointer) 0);
+		XtVaSetValues(d->deletebtn, XmNsensitive, True, (XtPointer) 0);
+		XtVaSetValues(d->editbtn, XmNsensitive, True, (XtPointer) 0);
   	  } else {
-		XtVaSetValues(d->upBtn, XmNsensitive, False, 0);
-		XtVaSetValues(d->downBtn, XmNsensitive, False, 0);
-		XtVaSetValues(d->deletebtn, XmNsensitive, False, 0);
-		XtVaSetValues(d->editbtn, XmNsensitive, False, 0);
+		XtVaSetValues(d->upBtn, XmNsensitive, False, (XtPointer) 0);
+		XtVaSetValues(d->downBtn, XmNsensitive, False, (XtPointer) 0);
+		XtVaSetValues(d->deletebtn, XmNsensitive, False, (XtPointer) 0);
+		XtVaSetValues(d->editbtn, XmNsensitive, False, (XtPointer) 0);
   	  }
 	
   	  if (count > 0) {
@@ -1624,15 +1624,15 @@ fe_mailfilt_clickfunc(Widget widget, void* closure, int row, int column,
   
   MSG_GetFilterCount(d->filterlist, &count);
   if (count > 0) {
-	XtVaSetValues(d->upBtn, XmNsensitive, True, 0);
-	XtVaSetValues(d->downBtn, XmNsensitive, True, 0);
-	XtVaSetValues(d->deletebtn, XmNsensitive, True, 0);
-	XtVaSetValues(d->editbtn, XmNsensitive, True, 0);
+	XtVaSetValues(d->upBtn, XmNsensitive, True, (XtPointer) 0);
+	XtVaSetValues(d->downBtn, XmNsensitive, True, (XtPointer) 0);
+	XtVaSetValues(d->deletebtn, XmNsensitive, True, (XtPointer) 0);
+	XtVaSetValues(d->editbtn, XmNsensitive, True, (XtPointer) 0);
   } else {
-	XtVaSetValues(d->upBtn, XmNsensitive, False, 0);
-	XtVaSetValues(d->downBtn, XmNsensitive, False, 0);
-	XtVaSetValues(d->deletebtn, XmNsensitive, False, 0);
-	XtVaSetValues(d->editbtn, XmNsensitive, False, 0);
+	XtVaSetValues(d->upBtn, XmNsensitive, False, (XtPointer) 0);
+	XtVaSetValues(d->downBtn, XmNsensitive, False, (XtPointer) 0);
+	XtVaSetValues(d->deletebtn, XmNsensitive, False, (XtPointer) 0);
+	XtVaSetValues(d->editbtn, XmNsensitive, False, (XtPointer) 0);
   }
 
   count = XmLGridGetSelectedRowCount(d->filterOutline);
@@ -1769,7 +1769,7 @@ void fe_mailfilter_cb(Widget w, XtPointer closure, XtPointer call_data)
 	d->editDialog = NULL;
 	d->curPos = 0;
     XtVaGetValues(CONTEXT_WIDGET(context), XtNvisual, &v,
-				  XtNcolormap, &cmap, XtNdepth, &depth, 0);
+				  XtNcolormap, &cmap, XtNdepth, &depth, (XtPointer) 0);
     
     ac = 0;
     XtSetArg (av[ac], XmNvisual, v); ac++;
@@ -1838,7 +1838,7 @@ void fe_mailfilter_cb(Widget w, XtPointer closure, XtPointer call_data)
     XtVaSetValues(d->filterOutline, 
 				  XmNshowHideButton, True,
 				  XmNselectionPolicy, XmSELECT_SINGLE_ROW,
-				  0);
+				  (XtPointer) 0);
 	
     ac = 0;
     dummy = XtVaCreateManagedWidget("btnrowcol", 
@@ -1907,7 +1907,7 @@ void fe_mailfilter_cb(Widget w, XtPointer closure, XtPointer call_data)
 				  XmNtopAttachment, XmATTACH_NONE,
 				  XmNleftAttachment, XmATTACH_FORM,
 				  XmNbottomAttachment, XmATTACH_FORM,
-				  0);
+				  (XtPointer) 0);
     XtVaSetValues(okbtn,
 				  XmNtopAttachment, XmATTACH_NONE,
 				  XmNleftAttachment, XmATTACH_NONE,
@@ -1915,25 +1915,25 @@ void fe_mailfilter_cb(Widget w, XtPointer closure, XtPointer call_data)
 				  XmNrightWidget, cancelbtn,
 				  XmNbottomAttachment, XmATTACH_FORM,
 				  XmNwidth, cancelbtn->core.width,
-				  0);
+				  (XtPointer) 0);
     XtVaSetValues(cancelbtn,
 				  XmNtopAttachment, XmATTACH_NONE,
 				  XmNrightAttachment, XmATTACH_FORM,
 				  XmNbottomAttachment, XmATTACH_FORM,
-				  0);
+				  (XtPointer) 0);
     XtVaSetValues(text,
 				  XmNtopAttachment, XmATTACH_NONE,
 				  XmNleftAttachment, XmATTACH_FORM,
 				  XmNrightAttachment, XmATTACH_FORM,
 				  XmNbottomAttachment, XmATTACH_WIDGET,
 				  XmNbottomWidget, okbtn,
-				  0);
+				  (XtPointer) 0);
     XtVaSetValues(dummy,
 				  XmNtopAttachment, XmATTACH_FORM,
 				  XmNleftAttachment, XmATTACH_NONE,
 				  XmNrightAttachment, XmATTACH_FORM,
 				  XmNbottomAttachment, XmATTACH_NONE,
-				  0);
+				  (XtPointer) 0);
     XtVaSetValues(d->filterOutline,
 				  XmNtopAttachment, XmATTACH_FORM,
 				  XmNleftAttachment, XmATTACH_FORM,
@@ -1943,19 +1943,19 @@ void fe_mailfilter_cb(Widget w, XtPointer closure, XtPointer call_data)
 				  XmNrightWidget, dummy,
 				  XmNbottomAttachment, XmATTACH_WIDGET,
 				  XmNbottomWidget, text,
-				  0);
+				  (XtPointer) 0);
     XtVaSetValues(orderBox,
 				  XmNtopAttachment, XmATTACH_NONE, 
 				  XmNleftAttachment, XmATTACH_FORM,
 				  XmNrightAttachment, XmATTACH_NONE,
 				  XmNbottomAttachment, XmATTACH_WIDGET,
 				  XmNbottomWidget, text,
-				  0);
+				  (XtPointer) 0);
 	d->mainDespField = text;	
-	XtVaSetValues(d->upBtn, XmNsensitive, False, 0);
-	XtVaSetValues(d->downBtn, XmNsensitive, False, 0);
-	XtVaSetValues(d->deletebtn, XmNsensitive, False, 0);
-	XtVaSetValues(d->editbtn, XmNsensitive, False, 0);
+	XtVaSetValues(d->upBtn, XmNsensitive, False, (XtPointer) 0);
+	XtVaSetValues(d->downBtn, XmNsensitive, False, (XtPointer) 0);
+	XtVaSetValues(d->deletebtn, XmNsensitive, False, (XtPointer) 0);
+	XtVaSetValues(d->editbtn, XmNsensitive, False, (XtPointer) 0);
     XtManageChild (mainw);
     
     /* don't put translations for this because we don't want many of

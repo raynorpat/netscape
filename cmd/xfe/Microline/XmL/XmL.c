@@ -533,34 +533,13 @@ Boolean useAverageWidth;
 	XmFontContext context;
 	XFontStruct *fs;
 	short w, h;
-	/* --- begin code to work around Motif internal bug */
-	typedef struct {
-		XmFontList nextFontList;
-		Boolean unused;
-	} XmFontListContextRec;
-	typedef struct {
-		XFontStruct *font;
-		XmStringCharSet unused;
-	} XmFontListRec;
-	XmFontList nextFontList;
-	/* --- end Motif workaround code */
 
 	*width = 0;
 	*height = 0;
 	if (XmFontListInitFontContext(&context, fontList))
 		{
-		while (1)
+		while (XmFontListGetNextFont(context, &charset, &fs) != False)
 			{
-			/* --- begin code to work around Motif internal bug */
-			/* --- this code can be removed for Motif 2.0    */
-			nextFontList = ((XmFontListContextRec *)context)->nextFontList;
-			if (!nextFontList)
-				break;
-			if (!((XmFontListRec *)nextFontList)->font)
-				break;
-			/* --- end Motif workaround code */
-			if (XmFontListGetNextFont(context, &charset, &fs) == False)
-				break;
 			XtFree(charset);
 			if (useAverageWidth == True)
 				XmLFontGetAverageWidth(fs, &w);

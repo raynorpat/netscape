@@ -741,7 +741,7 @@ fe_qf_add_menu_items (qf_popup *popup,
 #endif
 
   XtVaGetValues (popup->shell, XtNvisual, &v,
-		 XtNcolormap, &cmap, XtNdepth, &depth, 0);
+		 XtNcolormap, &cmap, XtNdepth, &depth, (XtPointer) 0);
 
   while (entry)
   {

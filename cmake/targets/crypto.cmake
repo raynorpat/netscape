@@ -1,0 +1,32 @@
+# Source manifest translated from security/lib/crypto/Makefile.
+netscape_archive(netscape_crypto security/lib/crypto crypto
+  algdes.c
+  algrc2.c
+  algrc4.c
+  algrc5.c
+  algrsa.c
+  algrsaky.c
+  secdig.c
+  secsign.c
+  secvfy.c
+  cmpmontg.c
+  cmpmuldv.c
+  rsa.c
+  cmpcnv.c
+  crt.c
+  cmparith.c
+  cmpmdexp.c
+  cmpvectr.c
+  cmpmem.c
+  cmpmod.c
+  cmpspprt.c
+  rsakeygn.c
+  cmpbits.c
+  prime.c
+  dsakg.c
+  dsas.c
+  dsav.c
+  dsautil.c
+  pqggen.c
+  fipstest.c
+)

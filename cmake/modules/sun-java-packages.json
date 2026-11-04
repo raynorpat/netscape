@@ -1,0 +1,34 @@
+{
+  "runtime": [
+    "java/lang",
+    "java/io",
+    "java/util",
+    "java/net",
+    "java/awt",
+    "java/awt/peer",
+    "java/awt/image",
+    "java/applet",
+    "sun/audio",
+    "sun/awt",
+    "sun/awt/image",
+    "sun/awt/macos",
+    "sun/awt/motif",
+    "sun/awt/win32",
+    "sun/awt/windows",
+    "sun/misc",
+    "netscape/applet",
+    "netscape/plugin",
+    "netscape/javascript",
+    "netscape/net"
+  ],
+  "compiler": [
+    "sun/tools/asm",
+    "sun/tools/java",
+    "sun/tools/javac",
+    "sun/tools/javadoc",
+    "sun/tools/tree",
+    "sun/tools/zip",
+    "sun/tools/debug",
+    "sun/tools/ttydebug"
+  ]
+}

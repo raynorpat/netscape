@@ -94,7 +94,7 @@ fe_CreateFormDialog(MWContext* context, char* name)
    *    Inherit MainW attributes.
    */
   XtVaGetValues(mainw, XtNvisual, &v, XtNcolormap, &cmap,
-		XtNdepth, &depth, 0);
+		XtNdepth, &depth, (XtPointer) 0);
   ac = 0;
   XtSetArg(av[ac], XmNvisual, v); ac++;
   XtSetArg(av[ac], XmNdepth, depth); ac++;
@@ -293,7 +293,7 @@ XtPointer
 fe_GetUserData(Widget widget)
 {
     void* rv;
-    XtVaGetValues(widget, XmNuserData, &rv, 0);
+    XtVaGetValues(widget, XmNuserData, &rv, (XtPointer) 0);
     return rv;
 }
 
@@ -906,7 +906,7 @@ fe_CreateSaveRemoteDialog(MWContext* context, SaveRemoteInfo* info)
   XtAddCallback(save_button, XmNactivateCallback, fe_save_remote_save_cb, info);
   XtAddCallback(cancel_button, XmNactivateCallback, fe_save_remote_cancel_cb, info);
 
-  XtVaSetValues(form, XmNdefaultButton, save_button, 0);
+  XtVaSetValues(form, XmNdefaultButton, save_button, (XtPointer) 0);
 
   /*
    *    Links group.
@@ -1782,7 +1782,7 @@ fe_editor_reload_update_cb(Widget widget,
     MWContext* context = (MWContext *)closure;
     Boolean sensitive = !EDT_IS_NEW_DOCUMENT(context);
     
-    XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+    XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 CB_STATIC void
@@ -1803,7 +1803,7 @@ fe_editor_cut_update_cb(Widget widget, XtPointer closure, XtPointer call_data)
     if (fe_EditorCanCut(context))
 	sensitive = TRUE;
 
-    XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+    XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 CB_STATIC void
@@ -1824,7 +1824,7 @@ fe_editor_copy_update_cb(Widget widget, XtPointer closure, XtPointer call_data)
     if (fe_EditorCanCopy(context))
 	sensitive = TRUE;
 
-    XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+    XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 CB_STATIC void
@@ -1846,7 +1846,7 @@ fe_editor_paste_update_cb(Widget widget,
     if (fe_EditorCanPaste(context))
 	sensitive = TRUE;
 
-    XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+    XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 CB_STATIC void
@@ -1978,7 +1978,7 @@ fe_editor_find_again_update_cb(Widget widget,
     MWContext*   context = (MWContext *)closure;
     Boolean      sensitive = fe_EditorCanFindAgain(context);
 
-    XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+    XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 CB_STATIC void
@@ -2015,7 +2015,7 @@ fe_editor_select_table_update_cb(Widget widget,
     MWContext*   context = (MWContext *)closure;
     Boolean      sensitive = fe_EditorTableCanDelete(context);
 
-    XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+    XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 CB_STATIC void
@@ -2041,7 +2041,7 @@ fe_editor_remove_links_update_cb(Widget widget, XtPointer closure,
 	sensitive = TRUE;
     }
 
-    XtVaSetValues(widget, XtNsensitive, sensitive, 0);
+    XtVaSetValues(widget, XtNsensitive, sensitive, (XtPointer) 0);
 }
 
 CB_STATIC void
@@ -2166,7 +2166,7 @@ fe_editor_insert_line_break_cb(Widget widget, XtPointer closure,
     MWContext* context = (MWContext *)closure;
     XtPointer* userdata;
 
-    XtVaGetValues(widget, XmNuserData, &userdata, 0);
+    XtVaGetValues(widget, XmNuserData, &userdata, (XtPointer) 0);
     
     fe_EditorLineBreak(context, (ED_BreakType)userdata);
 }
@@ -2179,7 +2179,7 @@ fe_editor_insert_line_break_update_cb(Widget widget,
     Boolean sensitive = FALSE;
     if (fe_EditorLineBreakCanInsert(context))
 	sensitive = TRUE;
-    XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+    XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 CB_STATIC void
@@ -2210,7 +2210,7 @@ fe_editor_insert_menu_cb(Widget widget, XtPointer closure, XtPointer call_data)
 {
     Widget menu;
 
-    XtVaGetValues(widget, XmNsubMenuId, &menu, 0);
+    XtVaGetValues(widget, XmNsubMenuId, &menu, (XtPointer) 0);
 
     fe_WidgetTreeWalk(menu, fe_insert_menu_mappee, closure);
 }
@@ -2264,7 +2264,7 @@ fe_editor_view_menu_cb(Widget widget, XtPointer closure, XtPointer call_data)
 {
     Widget menu;
 
-    XtVaGetValues(widget, XmNsubMenuId, &menu, 0);
+    XtVaGetValues(widget, XmNsubMenuId, &menu, (XtPointer) 0);
 
     fe_WidgetTreeWalk(menu, fe_view_menu_mappee, closure);
 }
@@ -2279,7 +2279,7 @@ fe_editor_windows_menu_cb(Widget widget, XtPointer closure,
 
     fe_UserActivity(context);
 
-    XtVaGetValues(widget, XmNsubMenuId, &submenu, 0);
+    XtVaGetValues(widget, XmNsubMenuId, &submenu, (XtPointer) 0);
 
     data->windows_menu_up_to_date_p = False;
     fe_GenerateWindowsMenu(context);
@@ -2404,7 +2404,7 @@ create_option_menu(
   }
   
   XtVaGetValues(CONTEXT_WIDGET (context), XtNvisual, &v, XtNcolormap, &cmap,
-	XtNdepth, &depth, 0);
+	XtNdepth, &depth, (XtPointer) 0);
 
   argc = 0;
   XtSetArg (argv[argc], XmNvisual, v); argc++;
@@ -2641,7 +2641,7 @@ fe_SizeGroupUpdate(fe_EditorContextData* editor, int edt_size)
 	    sensitive = TRUE;
 	else
 	    sensitive = FALSE;
-	XtVaSetValues(editor->toolbar_smaller, XtNsensitive, sensitive, 0);
+	XtVaSetValues(editor->toolbar_smaller, XtNsensitive, sensitive, (XtPointer) 0);
     }
 
     if (editor->toolbar_bigger) {
@@ -2649,7 +2649,7 @@ fe_SizeGroupUpdate(fe_EditorContextData* editor, int edt_size)
 	    sensitive = TRUE;
 	else
 	    sensitive = FALSE;
-	XtVaSetValues(editor->toolbar_bigger, XtNsensitive, sensitive, 0);
+	XtVaSetValues(editor->toolbar_bigger, XtNsensitive, sensitive, (XtPointer) 0);
     }
 
     if (editor->toolbar_size) {
@@ -3067,7 +3067,7 @@ fe_editor_image_properties_dialog_update_cb(Widget widget,
     Boolean    sensitive;
     sensitive = (EDT_GetCurrentElementType(context) == ED_ELEMENT_IMAGE);
 
-    XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+    XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 static void
@@ -3089,7 +3089,7 @@ fe_editor_link_properties_dialog_update_cb(Widget widget,
     Boolean    sensitive;
     sensitive = (EDT_CanSetHREF(context) != FALSE);
 
-    XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+    XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 static void
@@ -3101,7 +3101,7 @@ fe_editor_target_properties_dialog_update_cb(Widget widget,
     Boolean    sensitive;
     sensitive = (EDT_GetCurrentElementType(context) == ED_ELEMENT_TARGET);
 
-    XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+    XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 static void
@@ -3124,7 +3124,7 @@ fe_editor_hrule_properties_dialog_update_cb(Widget widget,
 
     sensitive = (EDT_GetCurrentElementType(context) == ED_ELEMENT_HRULE);
 
-    XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+    XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 CB_STATIC void
@@ -3351,7 +3351,7 @@ fe_editor_html_properties_dialog_update_cb(Widget widget,
     Boolean    sensitive;
     sensitive = (EDT_GetCurrentElementType(context) == ED_ELEMENT_UNKNOWN_TAG);
 
-    XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+    XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 CB_STATIC void 
@@ -3384,7 +3384,7 @@ fe_editor_show_character_toolbar_cb(Widget widget,
   Boolean toolbar_p = False;
 
   fe_UserActivity (context);
-  XtVaGetValues (widget, XmNset, &toolbar_p, 0);
+  XtVaGetValues (widget, XmNset, &toolbar_p, (XtPointer) 0);
   if (CONTEXT_DATA (context)->show_character_toolbar_p == toolbar_p)
     return;
   CONTEXT_DATA (context)->show_character_toolbar_p = toolbar_p;
@@ -3398,7 +3398,7 @@ fe_editor_show_character_toolbar_update_cb(Widget widget,
     MWContext* context = (MWContext *)closure;
     Boolean    set = CONTEXT_DATA (context)->show_character_toolbar_p;
 
-    XtVaSetValues(widget, XmNset, set, 0);
+    XtVaSetValues(widget, XmNset, set, (XtPointer) 0);
 }
 
 CB_STATIC void
@@ -3409,7 +3409,7 @@ fe_editor_show_paragraph_toolbar_cb(Widget widget,
   Boolean toolbar_p = False;
 
   fe_UserActivity (context);
-  XtVaGetValues (widget, XmNset, &toolbar_p, 0);
+  XtVaGetValues (widget, XmNset, &toolbar_p, (XtPointer) 0);
   if (CONTEXT_DATA (context)->show_paragraph_toolbar_p == toolbar_p)
     return;
   CONTEXT_DATA (context)->show_paragraph_toolbar_p = toolbar_p;
@@ -3423,7 +3423,7 @@ fe_editor_show_paragraph_toolbar_update_cb(Widget widget,
     MWContext* context = (MWContext *)closure;
     Boolean    set = CONTEXT_DATA (context)->show_paragraph_toolbar_p;
 
-    XtVaSetValues(widget, XmNset, set, 0);
+    XtVaSetValues(widget, XmNset, set, (XtPointer) 0);
 }
 
 CB_STATIC void
@@ -3437,9 +3437,9 @@ fe_editor_options_menu_cb(Widget cascade,
     Widget button;
     char* name;
 
-    XtVaGetValues(cascade, XmNsubMenuId, &pulldown, 0);
+    XtVaGetValues(cascade, XmNsubMenuId, &pulldown, (XtPointer) 0);
     XtVaGetValues(pulldown, XmNchildren, &children,
-		  XmNnumChildren, &nchildren, 0);
+		  XmNnumChildren, &nchildren, (XtPointer) 0);
 
     for (i = 0; i < nchildren; i++) {
 
@@ -3789,7 +3789,7 @@ fe_caret_undraw(MWContext *context)
 	LO_RefreshArea(context, x, y, width + 1, height + 1);
 	XFlush(dpy);
 
-	XtVaGetValues(CONTEXT_WIDGET(context), XmNvisual, &visual, 0);
+	XtVaGetValues(CONTEXT_WIDGET(context), XmNvisual, &visual, (XtPointer) 0);
 	if (!visual)
 	    visual = fe_globalData.default_visual;
 	
@@ -4765,7 +4765,7 @@ fe_save_dialog_info_init(Widget msg_box, fe_SaveDialogType type, unsigned n)
     info->type = type;
     info->current = 0;
 
-    XtVaSetValues(msg_box, XmNuserData, (XtPointer)info, 0);
+    XtVaSetValues(msg_box, XmNuserData, (XtPointer)info, (XtPointer) 0);
 }
 
 #define XFE_SAVE_DIALOG_NEXT (-1)
@@ -4780,7 +4780,7 @@ fe_save_dialog_info_set(Widget msg_box, char* filename, int index)
     char*              string;
     XmString           xm_string;
 
-    XtVaGetValues(msg_box, XmNuserData, &user_data, 0);
+    XtVaGetValues(msg_box, XmNuserData, &user_data, (XtPointer) 0);
     if (user_data != 0) {
 	info = (fe_SaveDialogInfo*)user_data;
 
@@ -4815,7 +4815,7 @@ fe_save_dialog_info_set(Widget msg_box, char* filename, int index)
     } else {
 	xm_string = XmStringCreateLocalized(filename);
     }
-    XtVaSetValues(msg_box, XmNmessageString, xm_string, 0);
+    XtVaSetValues(msg_box, XmNmessageString, xm_string, (XtPointer) 0);
     XmStringFree(xm_string);
 }
 
@@ -4854,7 +4854,7 @@ fe_save_dialog_create(MWContext* context, char* name)
 	return CONTEXT_DATA(context)->posted_msg_box;
 
     XtVaGetValues(mainw, XtNvisual, &v, XtNcolormap, &cmap,
-		  XtNdepth, &depth, 0);
+		  XtNdepth, &depth, (XtPointer) 0);
 
     n = 0;
     XtSetArg(args[n], XmNvisual, v); n++;
@@ -4886,7 +4886,7 @@ fe_save_dialog_destroy(Widget msg_box)
 {
     XtPointer  user_data;
     
-    XtVaGetValues(msg_box, XmNuserData, &user_data, 0);
+    XtVaGetValues(msg_box, XmNuserData, &user_data, (XtPointer) 0);
     if (user_data != NULL)
 	XtFree(user_data);
 
@@ -8058,7 +8058,7 @@ fe_editor_table_properties_dialog_update_cb(Widget widget,
 
     Boolean sensitive = fe_EditorTableCanDelete(context);
 
-    XtVaSetValues(widget, XtNsensitive, sensitive, 0);
+    XtVaSetValues(widget, XtNsensitive, sensitive, (XtPointer) 0);
 }
 
 
@@ -8082,7 +8082,7 @@ fe_editor_table_insert_update_cb(Widget widget,
     Boolean sensitive = FALSE;
     if (fe_EditorTableCanInsert(context))
 	sensitive = TRUE;
-    XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+    XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 CB_STATIC void
@@ -8101,7 +8101,7 @@ fe_editor_table_row_insert_update_cb(Widget widget,
     Boolean sensitive = FALSE;
     if (fe_EditorTableRowCanInsert(context))
 	sensitive = TRUE;
-    XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+    XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 CB_STATIC void
@@ -8120,7 +8120,7 @@ fe_editor_table_column_insert_update_cb(Widget widget,
     Boolean sensitive = FALSE;
     if (fe_EditorTableColumnCanInsert(context))
 	sensitive = TRUE;
-    XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+    XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 CB_STATIC void
@@ -8139,7 +8139,7 @@ fe_editor_table_caption_insert_update_cb(Widget widget,
     Boolean sensitive = FALSE;
     if (fe_EditorTableCaptionCanInsert(context))
 	sensitive = TRUE;
-    XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+    XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 CB_STATIC void
@@ -8158,7 +8158,7 @@ fe_editor_table_cell_insert_update_cb(Widget widget,
     Boolean sensitive = FALSE;
     if (fe_EditorTableCellCanInsert(context))
 	sensitive = TRUE;
-    XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+    XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 CB_STATIC void
@@ -8177,7 +8177,7 @@ fe_editor_table_delete_update_cb(Widget widget,
     Boolean sensitive = FALSE;
     if (fe_EditorTableCanDelete(context))
 	sensitive = TRUE;
-    XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+    XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 CB_STATIC void
@@ -8196,7 +8196,7 @@ fe_editor_table_row_delete_update_cb(Widget widget,
     Boolean sensitive = FALSE;
     if (fe_EditorTableRowCanDelete(context))
 	sensitive = TRUE;
-    XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+    XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 CB_STATIC void
@@ -8215,7 +8215,7 @@ fe_editor_table_column_delete_update_cb(Widget widget,
     Boolean sensitive = FALSE;
     if (fe_EditorTableColumnCanDelete(context))
 	sensitive = TRUE;
-    XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+    XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 CB_STATIC void
@@ -8234,7 +8234,7 @@ fe_editor_table_caption_delete_update_cb(Widget widget,
     Boolean sensitive = FALSE;
     if (fe_EditorTableCaptionCanDelete(context))
 	sensitive = TRUE;
-    XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+    XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 CB_STATIC void
@@ -8253,7 +8253,7 @@ fe_editor_table_cell_delete_update_cb(Widget widget,
     Boolean sensitive = FALSE;
     if (fe_EditorTableCellCanDelete(context))
 	sensitive = TRUE;
-    XtVaSetValues(widget, XmNsensitive, sensitive, 0);
+    XtVaSetValues(widget, XmNsensitive, sensitive, (XtPointer) 0);
 }
 
 CB_STATIC void
@@ -8266,9 +8266,9 @@ fe_editor_table_menu_cb(Widget cascade, XtPointer closure, XtPointer c_data)
     Widget button;
     char* name;
 
-    XtVaGetValues(cascade, XmNsubMenuId, &pulldown, 0);
+    XtVaGetValues(cascade, XmNsubMenuId, &pulldown, (XtPointer) 0);
     XtVaGetValues(pulldown, XmNchildren, &children,
-		  XmNnumChildren, &nchildren, 0);
+		  XmNnumChildren, &nchildren, (XtPointer) 0);
 
     for (i = 0; i < nchildren; i++) {
 
@@ -8328,7 +8328,7 @@ fe_CreatePopupMenu(MWContext* context,
     Widget mainw = CONTEXT_WIDGET(context);
 
     XtVaGetValues(mainw, XtNvisual, &v, XtNcolormap, &cmap,
-		  XtNdepth, &depth, 0);
+		  XtNdepth, &depth, (XtPointer) 0);
     
     n = 0;
     XtSetArg(args[n], XmNvisual, v); n++;
@@ -8353,7 +8353,7 @@ fe_CreatePulldownMenu(MWContext* context,
     Widget mainw = CONTEXT_WIDGET(context);
 
     XtVaGetValues(mainw, XtNvisual, &v, XtNcolormap, &cmap,
-		  XtNdepth, &depth, 0);
+		  XtNdepth, &depth, (XtPointer) 0);
     
     n = 0;
     XtSetArg(args[n], XmNvisual, v); n++;
@@ -8434,9 +8434,9 @@ fe_menu_menu_cascading_cb(Widget widget, XtPointer closure, XtPointer cb)
     Widget button;
     MWContext* context = (MWContext *)fe_WidgetToMWContext(widget);
 
-    XtVaGetValues(widget, XmNsubMenuId, &menu, 0);
+    XtVaGetValues(widget, XmNsubMenuId, &menu, (XtPointer) 0);
     XtVaGetValues(menu, XmNchildren, &children,
-		  menu, &nchildren, 0);
+		  menu, &nchildren, (XtPointer) 0);
 
     for (i = 0; i < nchildren && description[i].name != NULL; i++) {
 	button = children[i];
@@ -8663,7 +8663,7 @@ fe_editor_destroy_mappee(Widget widget, XtPointer data)
     Widget menu;
 
     if (XtIsSubclass(widget, xmCascadeButtonGadgetClass)) {
-	XtVaGetValues(widget, XmNsubMenuId, &menu, 0);
+	XtVaGetValues(widget, XmNsubMenuId, &menu, (XtPointer) 0);
 	if (menu != 0)
 	    fe_WidgetTreeWalk(menu, fe_editor_destroy_mappee, NULL);
     }

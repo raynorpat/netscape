@@ -95,30 +95,30 @@ XFE_EnableClicking (MWContext *context)
   if (CONTEXT_DATA (top)->show_toolbar_p && CONTEXT_DATA (top)->toolbar) {
     if (CONTEXT_DATA (top)->abort_button)
       XtVaSetValues (CONTEXT_DATA (top)->abort_button,
-		   XmNsensitive, XP_IsContextStoppable(top), 0);
+		   XmNsensitive, XP_IsContextStoppable(top), (XtPointer) 0);
   }
   if (CONTEXT_DATA (top)->show_menubar_p && CONTEXT_DATA (top)->menubar) {
     if (CONTEXT_DATA (top)->abort_menuitem)
       XtVaSetValues (CONTEXT_DATA (top)->abort_menuitem,
-		   XmNsensitive, XP_IsContextStoppable(top), 0);
+		   XmNsensitive, XP_IsContextStoppable(top), (XtPointer) 0);
 
 #if defined(DEBUG_jwz) && defined(MOCHA)
     /* this really doesn't belong here... */
     if (CONTEXT_DATA (context)->toggleJS_menuitem)
       XtVaSetValues (CONTEXT_DATA (context)->toggleJS_menuitem, XmNset,
-                     !fe_globalPrefs.disable_javascript, 0);
+                     !fe_globalPrefs.disable_javascript, (XtPointer) 0);
 #endif /* DEBUG_jwz && MOCHA */
 
 #ifdef DEBUG_jwz
     if (CONTEXT_DATA (context)->toggleAnim_menuitem)
      XtVaSetValues (CONTEXT_DATA (context)->toggleAnim_menuitem, XmNset,
-      IL_AnimationsEnabled, 0);
+      IL_AnimationsEnabled, (XtPointer) 0);
     if (CONTEXT_DATA (context)->toggleLoops_menuitem)
      XtVaSetValues (CONTEXT_DATA (context)->toggleLoops_menuitem, XmNset,
-      (IL_AnimationsEnabled && IL_AnimationLoopsEnabled), 0);
+      (IL_AnimationsEnabled && IL_AnimationLoopsEnabled), (XtPointer) 0);
     if (CONTEXT_DATA (context)->toggleSizes_menuitem)
      XtVaSetValues (CONTEXT_DATA (context)->toggleSizes_menuitem, XmNset,
-      !fe_ignore_font_size_changes_p, 0);
+      !fe_ignore_font_size_changes_p, (XtPointer) 0);
 #endif /* DEBUG_jwz */
   }
 
@@ -143,31 +143,31 @@ FE_UpdateStopState(MWContext *context)
   if (CONTEXT_DATA (top)->show_toolbar_p && CONTEXT_DATA (top)->toolbar) {
     if (CONTEXT_DATA (top)->abort_button)
       XtVaSetValues (CONTEXT_DATA (top)->abort_button,
-		   XmNsensitive, XP_IsContextStoppable(top), 0);
+		   XmNsensitive, XP_IsContextStoppable(top), (XtPointer) 0);
   }
   if (CONTEXT_DATA (top)->show_menubar_p && CONTEXT_DATA (top)->menubar) {
     if (CONTEXT_DATA (top)->abort_menuitem)
       XtVaSetValues (CONTEXT_DATA (top)->abort_menuitem,
-		   XmNsensitive, XP_IsContextStoppable(top), 0);
+		   XmNsensitive, XP_IsContextStoppable(top), (XtPointer) 0);
 
 #if defined(DEBUG_jwz) && defined(MOCHA)
     /* this really doesn't belong here... */
     if (CONTEXT_DATA (context)->toggleJS_menuitem)
       XtVaSetValues (CONTEXT_DATA (context)->toggleJS_menuitem, XmNset,
-                     !fe_globalPrefs.disable_javascript, 0);
+                     !fe_globalPrefs.disable_javascript, (XtPointer) 0);
 #endif /* DEBUG_jwz && MOCHA */
 
 #ifdef DEBUG_jwz
     /* this really doesn't belong here... */
     if (CONTEXT_DATA (context)->toggleAnim_menuitem)
      XtVaSetValues (CONTEXT_DATA (context)->toggleAnim_menuitem, XmNset,
-      IL_AnimationsEnabled, 0);
+      IL_AnimationsEnabled, (XtPointer) 0);
     if (CONTEXT_DATA (context)->toggleLoops_menuitem)
      XtVaSetValues (CONTEXT_DATA (context)->toggleLoops_menuitem, XmNset,
-      (IL_AnimationsEnabled && IL_AnimationLoopsEnabled), 0);
+      (IL_AnimationsEnabled && IL_AnimationLoopsEnabled), (XtPointer) 0);
     if (CONTEXT_DATA (context)->toggleSizes_menuitem)
      XtVaSetValues (CONTEXT_DATA (context)->toggleSizes_menuitem, XmNset,
-      !fe_ignore_font_size_changes_p, 0);
+      !fe_ignore_font_size_changes_p, (XtPointer) 0);
 #endif /* DEBUG_jwz */
   }
 }
@@ -543,32 +543,32 @@ fe_GetSecondaryURL (MWContext *context,
     {
       if (CONTEXT_DATA (context)->abort_button)
         XtVaSetValues (CONTEXT_DATA (context)->abort_button,
-		   XmNsensitive, True, 0);
+		   XmNsensitive, True, (XtPointer) 0);
     }
   if (CONTEXT_DATA (context)->show_menubar_p)
     {
       if (CONTEXT_DATA (context)->abort_menuitem)
         XtVaSetValues (CONTEXT_DATA (context)->abort_menuitem,
-		   XmNsensitive, True, 0);
+		   XmNsensitive, True, (XtPointer) 0);
 
 #if defined(DEBUG_jwz) && defined(MOCHA)
     /* this really doesn't belong here... */
     if (CONTEXT_DATA (context)->toggleJS_menuitem)
       XtVaSetValues (CONTEXT_DATA (context)->toggleJS_menuitem, XmNset,
-                     !fe_globalPrefs.disable_javascript, 0);
+                     !fe_globalPrefs.disable_javascript, (XtPointer) 0);
 #endif /* DEBUG_jwz && MOCHA */
 
 #ifdef DEBUG_jwz
     /* this really doesn't belong here... */
     if (CONTEXT_DATA (context)->toggleAnim_menuitem)
      XtVaSetValues (CONTEXT_DATA (context)->toggleAnim_menuitem, XmNset,
-      IL_AnimationsEnabled, 0);
+      IL_AnimationsEnabled, (XtPointer) 0);
     if (CONTEXT_DATA (context)->toggleLoops_menuitem)
      XtVaSetValues (CONTEXT_DATA (context)->toggleLoops_menuitem, XmNset,
-      (IL_AnimationsEnabled && IL_AnimationLoopsEnabled), 0);
+      (IL_AnimationsEnabled && IL_AnimationLoopsEnabled), (XtPointer) 0);
     if (CONTEXT_DATA (context)->toggleSizes_menuitem)
      XtVaSetValues (CONTEXT_DATA (context)->toggleSizes_menuitem, XmNset,
-      !fe_ignore_font_size_changes_p, 0);
+      !fe_ignore_font_size_changes_p, (XtPointer) 0);
 #endif /* DEBUG_jwz */
     }
 
@@ -768,9 +768,9 @@ fe_position_download_context(MWContext *context)
     XtRealizeWidget (shell);  /* to cause its size to be computed */
 
     XtVaGetValues(shell,
-		      XtNwidth, &child_width, XtNheight, &child_height, 0);
+		      XtNwidth, &child_width, XtNheight, &child_height, (XtPointer) 0);
     XtVaGetValues (parent,
-		       XtNwidth, &parent_width, XtNheight, &parent_height, 0);
+		       XtNwidth, &parent_width, XtNheight, &parent_height, (XtPointer) 0);
 
     x = (((Position)parent_width) - ((Position)child_width)) / 2;
     y = (((Position)parent_height) - ((Position)child_height)) / 2;
@@ -786,7 +786,7 @@ fe_position_download_context(MWContext *context)
     if (y < 0)
       y = 0;
 
-    XtVaSetValues (shell, XtNx, x, XtNy, y, 0);
+    XtVaSetValues (shell, XtNx, x, XtNy, y, (XtPointer) 0);
 
     /* Horrific kludge because Xt sucks */
     wmshell->wm.size_hints.flags &= (~PPosition);
@@ -810,13 +810,13 @@ fe_find_scrollbar_sizes(MWContext *context)
   if (CONTEXT_DATA(context)->scrolled) {
     Dimension w1 = 0, w2 = 0;
 
-    XtVaGetValues (CONTEXT_DATA (context)->scrolled, XmNwidth, &w1, 0);
-    XtVaGetValues (CONTEXT_DATA (context)->drawing_area, XmNwidth, &w2, 0);
+    XtVaGetValues (CONTEXT_DATA (context)->scrolled, XmNwidth, &w1, (XtPointer) 0);
+    XtVaGetValues (CONTEXT_DATA (context)->drawing_area, XmNwidth, &w2, (XtPointer) 0);
     CONTEXT_DATA (context)->scrolled_width = (unsigned long) w2;
     CONTEXT_DATA (context)->sb_w = w1 - w2;
 
-    XtVaGetValues (CONTEXT_DATA (context)->scrolled, XmNheight, &w1, 0);
-    XtVaGetValues (CONTEXT_DATA (context)->drawing_area, XmNheight, &w2, 0);
+    XtVaGetValues (CONTEXT_DATA (context)->scrolled, XmNheight, &w1, (XtPointer) 0);
+    XtVaGetValues (CONTEXT_DATA (context)->drawing_area, XmNheight, &w2, (XtPointer) 0);
     CONTEXT_DATA (context)->scrolled_height = (unsigned long) w2;
     CONTEXT_DATA (context)->sb_h = w1 - w2;
 
@@ -1357,10 +1357,10 @@ fe_MakeNewWindow(Widget toplevel, MWContext *context_to_copy,
 	   * as it sets the width and height. */
 	  if (decor->w_hint > 0)
 	    XtVaSetValues(CONTEXT_DATA (context)->scrolled,
-				XmNwidth, decor->w_hint, 0);
+				XmNwidth, decor->w_hint, (XtPointer) 0);
 	  if (decor->h_hint > 0)
 	    XtVaSetValues(CONTEXT_DATA (context)->scrolled,
-				XmNheight, decor->h_hint, 0);
+				XmNheight, decor->h_hint, (XtPointer) 0);
 	}
 	SHIST_InitSession (context);	/* Initialize the history library. */
 
@@ -1377,7 +1377,7 @@ fe_MakeNewWindow(Widget toplevel, MWContext *context_to_copy,
 	  XtVaSetValues(CONTEXT_WIDGET(context),
 			XmNdeleteResponse,
 			XmDO_NOTHING,
-			0);
+			(XtPointer) 0);
 
 	  WM_DELETE_WINDOW = XmInternAtom(XtDisplay(CONTEXT_WIDGET(context)),
 					  "WM_DELETE_WINDOW",
@@ -1451,10 +1451,10 @@ fe_MakeNewWindow(Widget toplevel, MWContext *context_to_copy,
 	 * as it sets the width and height. */
 	if (decor->w_hint > 0)
 	  XtVaSetValues(CONTEXT_DATA (context)->scrolled,
-				XmNwidth, decor->w_hint, 0);
+				XmNwidth, decor->w_hint, (XtPointer) 0);
 	if (decor->h_hint > 0)
 	  XtVaSetValues(CONTEXT_DATA (context)->scrolled,
-				XmNheight, decor->h_hint, 0);
+				XmNheight, decor->h_hint, (XtPointer) 0);
 
 	XtAddCallback (CONTEXT_WIDGET (context), XtNdestroyCallback,
 			fe_delete_cb, context);
@@ -1615,10 +1615,10 @@ fe_SetGridFocus (MWContext *context)
   if ((focus_grid = fe_GetFocusGridOfContext (top))) {
     CONTEXT_DATA (focus_grid)->focus_grid = False;
     w = CONTEXT_DATA (focus_grid)->main_pane;
-    XtVaGetValues (w, XmNborderWidth, &border_width, 0);
+    XtVaGetValues (w, XmNborderWidth, &border_width, (XtPointer) 0);
     if (border_width)
       XtVaSetValues (w, XmNborderColor, 
-		     (CONTEXT_DATA (context)->default_bg_pixel), 0);
+		     (CONTEXT_DATA (context)->default_bg_pixel), (XtPointer) 0);
   }
 
   /* Then indicate which cell has focus */
@@ -1626,10 +1626,10 @@ fe_SetGridFocus (MWContext *context)
   CONTEXT_DATA (context)->focus_grid = True;
   w = CONTEXT_DATA (context)->main_pane;
 
-  XtVaGetValues (w, XmNborderWidth, &border_width, 0);
+  XtVaGetValues (w, XmNborderWidth, &border_width, (XtPointer) 0);
   if (border_width)
     XtVaSetValues (w, XmNborderColor,
-		   CONTEXT_DATA (context)->default_fg_pixel, 0);
+		   CONTEXT_DATA (context)->default_fg_pixel, (XtPointer) 0);
 
   XFE_SetDocTitle (context, 0);
 }
@@ -1783,12 +1783,12 @@ FE_MakeGridWindow (MWContext *old_context, void *history, int32 x, int32 y,
 		   XmNbottomAttachment, XmATTACH_FORM,
 		   XmNleftAttachment, XmATTACH_FORM,
 		   XmNrightAttachment, XmATTACH_FORM,
-		   0);
+		   (XtPointer) 0);
 
     /* The actual work area */
     scroller = fe_MakeScrolledWindow (context, pane, "scroller");
     XtVaSetValues (CONTEXT_DATA (context)->scrolled,
-		   XmNborderWidth, 0, 0);
+		   XmNborderWidth, 0, (XtPointer) 0);
 
     XtManageChild (scroller);
     XtManageChild (pane);
@@ -1811,14 +1811,14 @@ FE_MakeGridWindow (MWContext *old_context, void *history, int32 x, int32 y,
     XtVaGetValues (CONTEXT_DATA (context)->drawing_area,
                                  XmNwidth, &w1,
                                  XmNheight, &h1,
-                                 0);
+                                 (XtPointer) 0);
 
     XtUnmanageChild (CONTEXT_DATA (context)->hscroll);
     XtUnmanageChild (CONTEXT_DATA (context)->vscroll);
     XtVaGetValues (CONTEXT_DATA (context)->drawing_area,
                                  XmNwidth, &w2,
                                  XmNheight, &h2,
-                                 0);
+                                 (XtPointer) 0);
 
     CONTEXT_DATA (context)->sb_w = w2 - w1;
     CONTEXT_DATA (context)->sb_h = h2 - h1;
@@ -1827,7 +1827,7 @@ FE_MakeGridWindow (MWContext *old_context, void *history, int32 x, int32 y,
   }
 
   XtVaSetValues (CONTEXT_DATA (context)->scrolled, XmNinitialFocus,
-                 CONTEXT_DATA (context)->drawing_area, 0);
+                 CONTEXT_DATA (context)->drawing_area, (XtPointer) 0);
 
   fe_SetGridFocus (context);  /* Give this grid focus */
   fe_InitScrolling (context); /* big voodoo */
@@ -1878,7 +1878,7 @@ FE_RestructureGridWindow (MWContext *context, int32 x, int32 y,
 		 XmNy, (Position)y,
 		 XmNwidth, (Dimension)width - 4,   /* Adjust for focus border */
 		 XmNheight, (Dimension)height - 4,
-		 0);
+		 (XtPointer) 0);
   fe_SetGuffaw(context, TRUE);
 #endif /* GRIDS */
 }
@@ -2075,7 +2075,7 @@ fe_get_context_resources (MWContext *context)
   fe_ContextData *fec = CONTEXT_DATA (context);
   if (fec->drawing_area) {
     XtVaGetValues (fec->drawing_area,
-		   XmNbackground, &fec->bg_pixel, 0);
+		   XmNbackground, &fec->bg_pixel, (XtPointer) 0);
   } /* else??? ### */
 
   /* If the selection colors ended up mapping to the same pixel values,
@@ -2146,9 +2146,9 @@ fe_get_context_resources (MWContext *context)
        the scrollbar and associated chrome is going to take up... */
     Dimension bw1 = 0, bw2 = 0;
     Dimension w, h;
-    XtVaGetValues (scrolled, XmNverticalScrollBar, &vscroll, 0);
+    XtVaGetValues (scrolled, XmNverticalScrollBar, &vscroll, (XtPointer) 0);
     XtVaGetValues (vscroll, XmNwidth, &bw1, XmNscrolledWindowMarginWidth, &bw2,
-		   0);
+		   (XtPointer) 0);
     w = (cw * 80) + bw1 + bw2;
     h = w;
 #else
@@ -2189,7 +2189,7 @@ fe_get_context_resources (MWContext *context)
         case FE_PANES_NORMAL:   
         case FE_PANES_TALL_FOLDERS:   
 	  XtVaGetValues(CONTEXT_DATA(context)->messageform,
-			XmNheight, &messageh, 0);
+			XmNheight, &messageh, (XtPointer) 0);
 	  h -= (messageh - 200);
 	  break;
         case FE_PANES_HORIZONTAL:       
@@ -2197,9 +2197,9 @@ fe_get_context_resources (MWContext *context)
           break;
         case FE_PANES_STACKED:  
 	  XtVaGetValues(CONTEXT_DATA(context)->folderform,
-			XmNheight, &folderh, 0);
+			XmNheight, &folderh, (XtPointer) 0);
 	  XtVaGetValues(CONTEXT_DATA(context)->messageform,
-			XmNheight, &messageh, 0);
+			XmNheight, &messageh, (XtPointer) 0);
 	  h -= (folderh + messageh - 200);
           break;
       }
@@ -2216,7 +2216,7 @@ fe_get_context_resources (MWContext *context)
       if (h > pseudo_max_height)
 	h = pseudo_max_height;
 
-      XtVaSetValues (scrolled, XmNwidth, w, XmNheight, h, 0);
+      XtVaSetValues (scrolled, XmNwidth, w, XmNheight, h, (XtPointer) 0);
     }
   }
 }
@@ -2613,7 +2613,7 @@ fe_WidgetToMWContext (Widget widget)
   while (!XtIsWMShell (widget))
     widget = XtParent (widget);
   if (XtIsSubclass(widget, transientShellWidgetClass))
-      XtVaGetValues(widget, XmNtransientFor, &transient_for, 0);
+      XtVaGetValues(widget, XmNtransientFor, &transient_for, (XtPointer) 0);
   for (rest = fe_all_MWContexts; rest; rest = rest->next)
     if ((CONTEXT_WIDGET (rest->context) == widget) ||
 	(XtParent(CONTEXT_WIDGET (rest->context)) == widget) ||
@@ -3569,7 +3569,7 @@ fe_WidgetTreeWalkChildren(Widget widget, fe_WidgetTreeWalkMappee callback,
   Cardinal nbuttons = 0;
   int i;
   XtPointer ret = 0;
-  XtVaGetValues (widget, XmNchildren, &buttons, XmNnumChildren, &nbuttons, 0);
+  XtVaGetValues (widget, XmNchildren, &buttons, XmNnumChildren, &nbuttons, (XtPointer) 0);
   for (i = 0; ret == 0 && i < nbuttons; i++)
     {
       Widget item = buttons[i];
@@ -3579,7 +3579,7 @@ fe_WidgetTreeWalkChildren(Widget widget, fe_WidgetTreeWalkMappee callback,
 	ret = (callback) (item, closure);
       if (ret != 0) break;
       if (XmIsCascadeButton(item) || XmIsCascadeButtonGadget(item)) {
-	XtVaGetValues (item, XmNsubMenuId, &menu, 0);
+	XtVaGetValues (item, XmNsubMenuId, &menu, (XtPointer) 0);
 	if (menu)
 	  ret = fe_WidgetTreeWalkChildren(menu, callback, closure);
       }
@@ -3616,7 +3616,7 @@ fe_IsOptionMenu(Widget widget)
 {
     unsigned char type;
     if (XtClass(widget) == xmRowColumnWidgetClass) {
-	XtVaGetValues(widget, XmNrowColumnType, &type, 0);
+	XtVaGetValues(widget, XmNrowColumnType, &type, (XtPointer) 0);
 	if (type == XmMENU_OPTION)
 	    return TRUE;
     }
@@ -3735,7 +3735,7 @@ fe_tooltip_create_effects(Widget parent, char* name, char* string)
         return NULL;
 
     XtVaGetValues(shell, XtNvisual, &v, XtNcolormap, &cmap,
-		   XtNdepth, &depth, 0);
+		   XtNdepth, &depth, (XtPointer) 0);
 
     XtVaGetValues(parent, XmNfontList, &fontList, NULL);
 
@@ -3797,7 +3797,7 @@ fe_tooltips_display_stage_two(Widget widget)
 
     parent = XtParent(label);
 
-    XtVaGetValues(widget, XmNwidth, &width, XmNheight, &height, 0);
+    XtVaGetValues(widget, XmNwidth, &width, XmNheight, &height, (XtPointer) 0);
 
     XtTranslateCoords(widget, 0, 0, &x_root, &y_root_orig);
     x_root += (width/2); /* positon in center of button */
@@ -3806,8 +3806,8 @@ fe_tooltips_display_stage_two(Widget widget)
     /*
      *    Make sure it fits on screen.
      */
-    XtVaGetValues(parent, XmNborderWidth, &border_width, 0);
-    XtVaGetValues(label, XmNwidth, &width, XmNheight, &height, 0);
+    XtVaGetValues(parent, XmNborderWidth, &border_width, (XtPointer) 0);
+    XtVaGetValues(label, XmNwidth, &width, XmNheight, &height, (XtPointer) 0);
     screen = XtScreen(label);
 
     height += (2*border_width);
@@ -3822,7 +3822,7 @@ fe_tooltips_display_stage_two(Widget widget)
     else if (y_root < 0)
 	y_root = 0;
 
-    XtVaSetValues(parent, XmNx, x_root, XmNy, y_root, 0);
+    XtVaSetValues(parent, XmNx, x_root, XmNy, y_root, (XtPointer) 0);
 
     /*
      *    Make sure the user cannot shoot themselves with a random
@@ -3832,7 +3832,7 @@ fe_tooltips_display_stage_two(Widget widget)
     char buf[128];
     sprintf(buf, "%dx%d", width, height);
     XtVaSetValues(parent, XmNwidth, width, XmNheight, height,
-		  XmNgeometry, buf, 0);
+		  XmNgeometry, buf, (XtPointer) 0);
     }
 
     XtPopup(parent, XtGrabNone);
@@ -4085,7 +4085,7 @@ fe_ManagerCheckGadgetToolTips(Widget manager, fe_ToolTipGadgetCheckProc check)
 	check = fe_manager_tt_default_check;
 
     XtVaGetValues(manager,
-		  XmNchildren, &children, XmNnumChildren, &nchildren, 0);
+		  XmNchildren, &children, XmNnumChildren, &nchildren, (XtPointer) 0);
 
     for (i = 0; i < nchildren; i++) {
 	widget = children[i];
@@ -4118,9 +4118,9 @@ fe_CreateOptionMenu(Widget parent, char* name, Arg* p_argv, Cardinal p_argc)
 
 	menu = XmCreateOptionMenu(parent, name, p_argv, p_argc);
 
-	XtVaGetValues(menu, XmNsubMenuId, &submenu, 0);
+	XtVaGetValues(menu, XmNsubMenuId, &submenu, (XtPointer) 0);
 	if (submenu)
-	  XtVaSetValues(submenu, XmNtraversalOn, False, 0);
+	  XtVaSetValues(submenu, XmNtraversalOn, False, (XtPointer) 0);
 
 	return menu;
 }
@@ -4144,10 +4144,10 @@ fe_ProtectContext(MWContext *context)
        * Dont allow the user to destroy this context using the windowmanger
        * delete menu item.
        */
-      XtVaGetValues(CONTEXT_WIDGET(context), XmNdeleteResponse, &del, 0);
+      XtVaGetValues(CONTEXT_WIDGET(context), XmNdeleteResponse, &del, (XtPointer) 0);
       CONTEXT_DATA(context)->delete_response = del;
       XtVaSetValues(CONTEXT_WIDGET(context),
-		    XmNdeleteResponse, XmDO_NOTHING, 0);
+		    XmNdeleteResponse, XmDO_NOTHING, (XtPointer) 0);
     }
   CONTEXT_DATA(context)->dont_free_context_memory++;
 }
@@ -4170,7 +4170,7 @@ fe_UnProtectContext(MWContext *context)
 	 * Set the delete_response to what it was before.
 	 */
 	XtVaSetValues(CONTEXT_WIDGET(context), XmNdeleteResponse,
-		      CONTEXT_DATA(context)->delete_response, 0);
+		      CONTEXT_DATA(context)->delete_response, (XtPointer) 0);
       }
     }
 }

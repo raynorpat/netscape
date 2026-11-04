@@ -183,7 +183,7 @@ fe_make_outline_drag_widget (fe_OutlineInfo *info,
   }
 
   XtVaGetValues (shell, XtNvisual, &v, XtNcolormap, &cmap,
-		 XtNdepth, &depth, 0);
+		 XtNdepth, &depth, (XtPointer) 0);
 
   XtVaGetValues (info->widget, XmNfontList, &fontList, NULL);
 
@@ -240,7 +240,7 @@ static fe_OutlineInfo*
 fe_get_info(Widget outline)
 {
   fe_OutlineInfo* result = NULL;
-  XtVaGetValues(outline, XmNuserData, &result, 0);
+  XtVaGetValues(outline, XmNuserData, &result, (XtPointer) 0);
   assert(result->widget == outline);
   return result;
 }
@@ -790,7 +790,7 @@ fe_set_default_column_widths(Widget widget) {
 		  XmNcolumn, i + 1,
 		  XmNcolumnSizePolicy, XmCONSTANT,
 		  XmNcolumnWidth, width,
-		  0);
+		  (XtPointer) 0);
   }
 }
 
@@ -860,7 +860,7 @@ fe_OutlineCreate(MWContext* context, Widget parent, String name,
 		XmNcellTopBorderType, XmBORDER_NONE,
 		XmNcellBottomBorderType, XmBORDER_NONE,
 		XmNcellAlignment, XmALIGNMENT_LEFT,
-		0);
+		(XtPointer) 0);
 
   XmLGridAddColumns(result, XmCONTENT, -1, info->numcolumns + 1);
 
@@ -868,7 +868,7 @@ fe_OutlineCreate(MWContext* context, Widget parent, String name,
 		XmNcolumnSizePolicy, XmCONSTANT,
 		XmNcolumnWidth,
 		(maxindentdepth - 1) * PIXMAP_INDENT + PIXMAP_WIDTH,
-		0);
+		(XtPointer) 0);
 
   info->allowiconresize = (maxindentdepth > 0);
 
@@ -1009,7 +1009,7 @@ fe_outline_remember_columns(Widget widget)
   ptr = *(info->posinfo);
   for (i=0 ; i<=info->numcolumns ; i++) {
     col = XmLGridGetColumn(widget, XmCONTENT, i);
-    XtVaGetValues(widget, XmNcolumnPtr, col, XmNcolumnWidth, &width, 0);
+    XtVaGetValues(widget, XmNcolumnPtr, col, XmNcolumnWidth, &width, (XtPointer) 0);
     PR_snprintf(ptr, *(info->posinfo) + length - ptr,
 		"%s:%d;", info->headers[info->columnIndex[i]],
 		(int) width);
@@ -1033,13 +1033,13 @@ fe_outline_resize(Widget widget, XtPointer clientData, XtPointer callData)
   if (call->reason != XmCR_RESIZE_COLUMN) return;
   if (!info->allowiconresize && call->column == 0) {
     XtVaSetValues(widget, XmNcolumn, call->column, XmNcolumnWidth,
-		  info->iconcolumnwidth, 0);
+		  info->iconcolumnwidth, (XtPointer) 0);
   } else {
     col = XmLGridGetColumn(widget, call->columnType, call->column);
-    XtVaGetValues(widget, XmNcolumnPtr, col, XmNcolumnWidth, &width, 0);
+    XtVaGetValues(widget, XmNcolumnPtr, col, XmNcolumnWidth, &width, (XtPointer) 0);
     if (width < MIN_COLUMN_WIDTH) {
       XtVaSetValues(widget, XmNcolumn, call->column,
-		    XmNcolumnWidth, MIN_COLUMN_WIDTH, 0);
+		    XmNcolumnWidth, MIN_COLUMN_WIDTH, (XtPointer) 0);
     }
   }
   fe_outline_remember_columns(widget);
@@ -1054,7 +1054,7 @@ fe_OutlineSetMaxDepth(Widget outline, int maxdepth)
   XP_ASSERT(maxdepth > 0);
   if (value != info->iconcolumnwidth) {
     info->iconcolumnwidth = value;
-    XtVaSetValues(outline, XmNcolumn, 0, XmNcolumnWidth, value, 0);
+    XtVaSetValues(outline, XmNcolumn, 0, XmNcolumnWidth, value, (XtPointer) 0);
   }
 }
 
@@ -1134,7 +1134,7 @@ fe_OutlineSetHeaders(Widget widget, char** headers)
 		  XmNcolumn, i,
 		  XmNcolumnSizePolicy, XmCONSTANT,
 		  XmNcolumnWidth, width,
-		  0);
+		  (XtPointer) 0);
     if (ptr2) *ptr2++ = ';';
     ptr = ptr2;
   }
@@ -1181,7 +1181,7 @@ fe_OutlineSetHeaders(Widget widget, char** headers)
 		    XmNcellRightBorderType, XmBORDER_LINE,
 		    XmNcellTopBorderType, XmBORDER_LINE,
 		    XmNcellBottomBorderType, XmBORDER_LINE,
-		    XmNcellString, str, 0);
+		    XmNcellString, str, (XtPointer) 0);
       XmStringFree(str);
     } else {
       fe_icon* icon = fe_outline_lookup_icon(type);
@@ -1191,10 +1191,10 @@ fe_OutlineSetHeaders(Widget widget, char** headers)
 		    XmNcellTopBorderType, XmBORDER_LINE,
 		    XmNcellBottomBorderType, XmBORDER_LINE,
 		    XmNcellType, XmPIXMAP_CELL, XmNcellPixmap, icon->pixmap,
-		    0);
+		    (XtPointer) 0);
     }
   }
-  XtVaSetValues(widget, XmNallowColumnResize, True, 0);
+  XtVaSetValues(widget, XmNallowColumnResize, True, (XtPointer) 0);
   XtAddCallback(widget, XmNresizeCallback, fe_outline_resize, info);
 }
 
@@ -1210,7 +1210,7 @@ fe_OutlineChangeHeaderLabel(Widget widget, const char* headername,
   if (label == NULL) label = headername;
   for (i=0 ; i<info->numcolumns ; i++) {
     unsigned char celltype;
-    XtVaGetValues(widget, XmNcellType, &celltype, 0);
+    XtVaGetValues(widget, XmNcellType, &celltype, (XtPointer) 0);
 
     if (XP_STRCMP(info->headers[i], headername) == 0) {
       for (j=0 ; j<info->numcolumns ; j++) {
@@ -1219,7 +1219,7 @@ fe_OutlineChangeHeaderLabel(Widget widget, const char* headername,
 			     info->headerhighlight[i] ? "BOLD"
 			     : XmFONTLIST_DEFAULT_TAG);
 	XtVaSetValues(widget, XmNcolumn, j, XmNrowType, XmHEADING, XmNrow, 0,
-		      XmNcellString, str, XmNcellType, XmTEXT_CELL, 0);
+		      XmNcellString, str, XmNcellType, XmTEXT_CELL, (XtPointer) 0);
 	XmStringFree(str);
 	return;
       }
@@ -1243,7 +1243,7 @@ fe_OutlineSetHeaderHighlight(Widget widget, const char* header, XP_Bool value)
 	if (info->columnIndex[j] == i) {
 	  str = fe_outline_get_header(XtName(widget), info->headers[i], value);
 	  XtVaSetValues(widget, XmNcolumn, j, XmNrowType, XmHEADING,
-			XmNrow, 0, XmNcellString, str, 0);
+			XmNrow, 0, XmNcellString, str, (XtPointer) 0);
 	  XmStringFree(str);
 	  return;
 	}
@@ -1329,7 +1329,7 @@ fe_OutlineMakeVisible(Widget widget, int visible)
   if (visible >= firstrow && visible < lastrow) return;
   firstrow = visible - ((lastrow - firstrow) / 2);
   if (firstrow < 0) firstrow = 0;
-  XtVaSetValues(widget, XmNscrollRow, firstrow, 0);
+  XtVaSetValues(widget, XmNscrollRow, firstrow, (XtPointer) 0);
 }
 
 
@@ -1375,9 +1375,9 @@ fe_outline_drag_scroll(void* closure)
   int row;
   info->dragscrolltimer = FE_SetTimeout(fe_outline_drag_scroll, info,
 					REPEATINTERVAL);
-  XtVaGetValues(info->widget, XmNscrollRow, &row, 0);
+  XtVaGetValues(info->widget, XmNscrollRow, &row, (XtPointer) 0);
   row += info->dragscrolldir;
-  XtVaSetValues(info->widget, XmNscrollRow, row, 0);
+  XtVaSetValues(info->widget, XmNscrollRow, row, (XtPointer) 0);
 }
 
 void
@@ -1416,7 +1416,7 @@ fe_OutlineHandleDragEvent(Widget outline, XEvent* event, fe_dnd_Event type,
 	    col = XmLGridGetColumn(outline, XmCONTENT, i);
 	    XtVaGetValues(outline,
 			  XmNcolumnPtr, col,
-			  XmNcolumnWidth, &width, 0
+			  XmNcolumnWidth, &width, (XtPointer) 0
 			  );
 	    total -= ((int) width); /* Beware any unsigned lossage... */
 	  }
@@ -1424,7 +1424,7 @@ fe_OutlineHandleDragEvent(Widget outline, XEvent* event, fe_dnd_Event type,
 	  width = total;
 	  if (width > MAX_COLUMN_WIDTH) width = MAX_COLUMN_WIDTH;
 	  XtVaSetValues(outline, XmNcolumn, info->numcolumns,
-			XmNcolumnWidth, width, 0);
+			XmNcolumnWidth, width, (XtPointer) 0);
 
 	  if (info->dragcolumn < column) {
 	    delta = 1;
@@ -1441,7 +1441,7 @@ fe_OutlineHandleDragEvent(Widget outline, XEvent* event, fe_dnd_Event type,
 
 	  /* Now restore the hack of having the last column be wide. */
 	  XtVaSetValues(outline, XmNcolumn, info->numcolumns,
-			XmNcolumnWidth, MAX_COLUMN_WIDTH, 0);
+			XmNcolumnWidth, MAX_COLUMN_WIDTH, (XtPointer) 0);
 
 	  fe_outline_remember_columns(outline);
 	}

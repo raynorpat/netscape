@@ -1,0 +1,30 @@
+# Sources from sun-java/awt/x/Makefile.
+sun_java_archive(netscape_java_awt awt/x awt lib
+  awt_Button.c
+  awt_Canvas.c
+  awt_Checkbox.c
+  awt_Component.c
+  awt_Dialog.c
+  awt_FileDialog.c
+  awt_Font.c
+  awt_Frame.c
+  awt_Graphics.c
+  awt_Label.c
+  awt_List.c
+  awt_Menu.c
+  awt_MenuBar.c
+  awt_MenuItem.c
+  awt_MToolkit.c
+  awt_Scrollbar.c
+  awt_TextArea.c
+  awt_TextField.c
+  awt_Window.c
+  awt_util.c
+  canvas.c
+  color.c
+  image.c
+  imageconvert.c
+  stubs.c
+  awt_nodl.c
+  ustring.c
+)

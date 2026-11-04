@@ -438,7 +438,7 @@ fe_MakeIcon(MWContext *context, Pixel transparent_color, fe_icon* result,
 	&color_data, &mask_data);
 
   XtVaGetValues (widget, XtNvisual, &v, XtNcolormap, &cmap,
-		 XtNscreen, &screen, XtNdepth, &visual_depth, 0);
+		 XtNscreen, &screen, XtNdepth, &visual_depth, (XtPointer) 0);
 
   if (hack_mask_and_cmap_p)
     {
@@ -763,7 +763,7 @@ fe_init_document_icons (MWContext *c)
   bg2 = bg;
   if (CONTEXT_DATA(c)->dashboard) {
    /* XXX need to find why we do this - dp */
-    XtVaGetValues (CONTEXT_DATA (c)->dashboard, XmNbackground, &bg2, 0);
+    XtVaGetValues (CONTEXT_DATA (c)->dashboard, XmNbackground, &bg2, (XtPointer) 0);
   }
   fe_make_icon (c, bg2, IL_ICON_SECURITY_ON,
 		NULL,
@@ -896,7 +896,7 @@ fe_init_toolbar_icons_1 (MWContext *c)
   if (done)
     return;
 
-  XtVaGetValues (CONTEXT_DATA (c)->top_area, XmNbackground, &bg2, 0);
+  XtVaGetValues (CONTEXT_DATA (c)->top_area, XmNbackground, &bg2, (XtPointer) 0);
 
   done = True;
   fe_make_icon (c, bg2, IL_ICON_BACK,
@@ -983,7 +983,7 @@ fe_init_toolbar_icons_2 (MWContext *c)
   if (done)
     return;
 
-  XtVaGetValues (CONTEXT_DATA (c)->top_area, XmNbackground, &bg2, 0);
+  XtVaGetValues (CONTEXT_DATA (c)->top_area, XmNbackground, &bg2, (XtPointer) 0);
 
   done = True;
 
@@ -1087,7 +1087,7 @@ fe_init_editor_icons_notext(MWContext* c)
   if (done)
     return;
 
-  XtVaGetValues (CONTEXT_DATA (c)->top_area, XmNbackground, &bg2, 0);
+  XtVaGetValues (CONTEXT_DATA (c)->top_area, XmNbackground, &bg2, (XtPointer) 0);
 
   fe_make_icon (c, bg2, IL_EDITOR_NEW,		/* 23FEB96RCJ */
 		"ed_new",
@@ -1194,7 +1194,7 @@ static void fe_init_align_icons(MWContext* c) /* added 14MAR96RCJ */
 {
   Pixel  bg2 = 0;
 
-  XtVaGetValues (CONTEXT_DATA (c)->top_area, XmNbackground, &bg2, 0);
+  XtVaGetValues (CONTEXT_DATA (c)->top_area, XmNbackground, &bg2, (XtPointer) 0);
 
   fe_make_icon (c, bg2, IL_ALIGN4_RAISED,
 		"ImgB2B_r",
@@ -1242,7 +1242,7 @@ fe_init_editor_icons_withtext(MWContext* c)
   if (done)
     return;
 
-  XtVaGetValues (CONTEXT_DATA (c)->top_area, XmNbackground, &bg2, 0);
+  XtVaGetValues (CONTEXT_DATA (c)->top_area, XmNbackground, &bg2, (XtPointer) 0);
 
   fe_make_icon (c, bg2, IL_EDITOR_NEW_PT,
 		"ed_new.pt",
@@ -1354,7 +1354,7 @@ fe_init_editor_icons_other(MWContext* c)
   if (done)
     return;
 
-  XtVaGetValues (CONTEXT_DATA (c)->top_area, XmNbackground, &bg2, 0);
+  XtVaGetValues (CONTEXT_DATA (c)->top_area, XmNbackground, &bg2, (XtPointer) 0);
 
   done = True;
   
@@ -1460,7 +1460,7 @@ fe_init_editor_icons(MWContext* c)
   if (done)
     return;
 
-  XtVaGetValues (CONTEXT_DATA (c)->top_area, XmNbackground, &bg_pixel, 0);
+  XtVaGetValues (CONTEXT_DATA (c)->top_area, XmNbackground, &bg_pixel, (XtPointer) 0);
 
   done = True;
   
@@ -1530,7 +1530,7 @@ fe_init_news_icons (MWContext *c)
   if (done) return;
   done = True;
 
-  XtVaGetValues (CONTEXT_DATA (c)->top_area, XmNbackground, &bg, 0);
+  XtVaGetValues (CONTEXT_DATA (c)->top_area, XmNbackground, &bg, (XtPointer) 0);
 
 #if 0
   fe_make_icon (c, bg, IL_MSG_HIER_ARTICLE,
@@ -1825,7 +1825,7 @@ fe_init_compose_icons (MWContext *c)
 
   fe_init_toolbar_icons_1 (c);
 
-  XtVaGetValues (CONTEXT_DATA (c)->top_area, XmNbackground, &bg, 0);
+  XtVaGetValues (CONTEXT_DATA (c)->top_area, XmNbackground, &bg, (XtPointer) 0);
 
   fe_make_icon (c, bg, IL_COMPOSE_SEND,
 		"CSendM",
@@ -1938,7 +1938,7 @@ fe_init_sa_icons (MWContext *c)
 
   XP_ASSERT(c && CONTEXT_DATA (c)->top_area);
   if (CONTEXT_DATA (c)->top_area)
-    XtVaGetValues (CONTEXT_DATA (c)->top_area, XmNbackground, &bg, 0);
+    XtVaGetValues (CONTEXT_DATA (c)->top_area, XmNbackground, &bg, (XtPointer) 0);
   else
     bg = WhitePixelOfScreen (XtScreen (CONTEXT_WIDGET (c)));
 
@@ -2165,7 +2165,7 @@ fe_LogoPixmap (MWContext *context, Dimension *w, Dimension *h, Boolean large_p)
       int i = id0;
       int j;
 
-      XtVaGetValues (CONTEXT_DATA (context)->top_area, XmNbackground, &bg, 0);
+      XtVaGetValues (CONTEXT_DATA (context)->top_area, XmNbackground, &bg, (XtPointer) 0);
       for (j = 0; j < frames; j++)
 	fe_make_icon (context, bg, i++,
 		      NULL,
@@ -2513,10 +2513,10 @@ XFE_ImageIcon (MWContext *context, int icon_number, void* client_data)
       CONTEXT_DATA (context)->delayed_images_p = True;
       if (CONTEXT_DATA (context)->delayed_button)
 	XtVaSetValues (CONTEXT_DATA (context)->delayed_button,
-		       XmNsensitive, True, 0);
+		       XmNsensitive, True, (XtPointer) 0);
       if (CONTEXT_DATA (context)->delayed_menuitem)
 	XtVaSetValues (CONTEXT_DATA (context)->delayed_menuitem,
-		       XmNsensitive, True, 0);
+		       XmNsensitive, True, (XtPointer) 0);
     }
 
   if (fe_icons [icon_number].pixmap)
@@ -2635,7 +2635,7 @@ fe_DrawPixmapAndMask(MWContext* context, Drawable window,
      */
     if (mask) {
 
-        XtVaGetValues(widget, XmNvisual, &visual, 0);
+        XtVaGetValues(widget, XmNvisual, &visual, (XtPointer) 0);
 	if (!visual)
 	    visual = fe_globalData.default_visual;
 #if 1
@@ -2929,8 +2929,7 @@ fe_ResetLogo (MWContext *context, Boolean large_p)
   pixmap = fe_LogoPixmap (context, &w, &h, large_p);
   XtVaSetValues (widget,
 		 XmNlabelPixmap, pixmap,
-		 XmNlabelInsensitivePixmap, pixmap,
-		 0);
+		 XmNlabelInsensitivePixmap, pixmap, (XtPointer) 0);
   fe_DrawLogo (context, False, large_p);
 }
 

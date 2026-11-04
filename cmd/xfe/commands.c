@@ -106,7 +106,7 @@ fe_text_insert (Widget text, const char *s, int16 charset)
 {
   /* Gee, I wonder what other gratuitous junk I need to worry about? */
   Boolean pdel = True;
-  XtVaGetValues (text, XmNpendingDelete, &pdel, 0);
+  XtVaGetValues (text, XmNpendingDelete, &pdel, (XtPointer) 0);
 
   if (XmIsText (text))
     {
@@ -235,7 +235,7 @@ fe_spacebar_cb (Widget widget, XtPointer closure, XtPointer call_data)
   if (fe_hack_self_inserting_accelerator (widget, closure, call_data))
     return;
   XtVaGetValues (sb, XmNpageIncrement, &pi, XmNvalue, &v,
-		 XmNmaximum, &max, XmNminimum, &min, 0);
+		 XmNmaximum, &max, XmNminimum, &min, (XtPointer) 0);
   cb.reason = XmCR_PAGE_INCREMENT;
   cb.event = 0;
   cb.pixel = 0;
@@ -267,7 +267,7 @@ fe_page_forward_cb (Widget widget, XtPointer closure, XtPointer call_data)
   if (fe_hack_self_inserting_accelerator (widget, closure, call_data))
     return;
   XtVaGetValues (sb, XmNpageIncrement, &pi, XmNvalue, &v,
-		 XmNmaximum, &max, XmNminimum, &min, 0);
+		 XmNmaximum, &max, XmNminimum, &min, (XtPointer) 0);
   cb.reason = XmCR_PAGE_INCREMENT;
   cb.event = 0;
   cb.pixel = 0;
@@ -291,7 +291,7 @@ fe_page_backward_cb (Widget widget, XtPointer closure, XtPointer call_data)
   fe_UserActivity (context);
   if (fe_hack_self_inserting_accelerator (widget, closure, call_data))
     return;
-  XtVaGetValues (sb, XmNpageIncrement, &pi, XmNvalue, &v, XmNminimum, &min, 0);
+  XtVaGetValues (sb, XmNpageIncrement, &pi, XmNvalue, &v, XmNminimum, &min, (XtPointer) 0);
   cb.reason = XmCR_PAGE_INCREMENT;
   cb.event = 0;
   cb.pixel = 0;
@@ -321,7 +321,7 @@ fe_line_forward_1 (Widget widget, XtPointer closure, XtPointer call_data,
   if (fe_hack_self_inserting_accelerator (widget, closure, call_data))
     return;
   XtVaGetValues (sb, XmNincrement, &li, XmNvalue, &v,
-		 XmNmaximum, &max, XmNminimum, &min, 0);
+		 XmNmaximum, &max, XmNminimum, &min, (XtPointer) 0);
   cb.reason = XmCR_INCREMENT;
   cb.event = 0;
   cb.pixel = 0;
@@ -359,7 +359,7 @@ fe_column_forward_cb (Widget widget, XtPointer closure, XtPointer call_data)
   fe_UserActivity (context);
   if (fe_hack_self_inserting_accelerator (widget, closure, call_data))
     return;
-  XtVaGetValues (sb, XmNincrement, &li, XmNvalue, &v, XmNminimum, &min, 0);
+  XtVaGetValues (sb, XmNincrement, &li, XmNvalue, &v, XmNminimum, &min, (XtPointer) 0);
   cb.reason = XmCR_INCREMENT;
   cb.event = 0;
   cb.pixel = 0;
@@ -383,7 +383,7 @@ fe_column_backward_cb (Widget widget, XtPointer closure, XtPointer call_data)
   if (fe_hack_self_inserting_accelerator (widget, closure, call_data))
     return;
   XtVaGetValues (sb, XmNincrement, &li, XmNvalue, &v,
-		 XmNmaximum, &max, XmNminimum, &min, 0);
+		 XmNmaximum, &max, XmNminimum, &min, (XtPointer) 0);
   cb.reason = XmCR_INCREMENT;
   cb.event = 0;
   cb.pixel = 0;
@@ -477,7 +477,7 @@ fe_upload_file_cb (Widget widget, XtPointer closure, XtPointer call_data)
   if (fe_hack_self_inserting_accelerator (widget, closure, call_data))
     return;
 
-  XtVaGetValues(widget, XmNlabelString, &xm_title, 0);
+  XtVaGetValues(widget, XmNlabelString, &xm_title, (XtPointer) 0);
   XmStringGetLtoR (xm_title, XmFONTLIST_DEFAULT_TAG, &title);
   XmStringFree(xm_title);
 
@@ -643,7 +643,7 @@ fe_refresh_cb (Widget widget, XtPointer closure, XtPointer call_data)
     return;
 
   XtVaGetValues (wid, XmNbackground, &gcv.foreground,
-		 XmNwidth, &w, XmNheight, &h, 0);
+		 XmNwidth, &w, XmNheight, &h, (XtPointer) 0);
   gc = XCreateGC (dpy, win, GCForeground, &gcv);
   XFillRectangle (dpy, win, gc, 0, 0, w, h);
   XFreeGC (dpy, gc);
@@ -1434,7 +1434,7 @@ fe_view_source_stream_write_method (void *closure, const char *str, int32 len)
   if (!vsd || !vsd->widget) return -1;
   pos = XmTextGetLastPosition (vsd->widget);
   cpos = 0;
-  XtVaGetValues (vsd->widget, XmNcursorPosition, &cpos, 0);
+  XtVaGetValues (vsd->widget, XmNcursorPosition, &cpos, (XtPointer) 0);
 
   /* We copy the data first because XmTextInsert() needs a null-terminated
      string, and there isn't necessarily room on the end of `str' for us
@@ -1454,7 +1454,7 @@ fe_view_source_stream_write_method (void *closure, const char *str, int32 len)
       XmTextInsert (vsd->widget, pos, buf);
       pos += L;
     }
-  XtVaSetValues (vsd->widget, XmNcursorPosition, cpos, 0);
+  XtVaSetValues (vsd->widget, XmNcursorPosition, cpos, (XtPointer) 0);
   return 1;
 }
 
@@ -2398,18 +2398,18 @@ fe_save_options_cb (Widget widget, XtPointer closure, XtPointer call_data)
     
     switch (pane_style) {
 	case FE_PANES_NORMAL:
-	    XtVaGetValues(data->folderform, XmNwidth, &w, XmNheight, &h, 0);
+	    XtVaGetValues(data->folderform, XmNwidth, &w, XmNheight, &h, (XtPointer) 0);
 	    break;
 	case FE_PANES_HORIZONTAL:
-	    XtVaGetValues(data->folderform, XmNwidth, &w, XmNheight, &h, 0);
+	    XtVaGetValues(data->folderform, XmNwidth, &w, XmNheight, &h, (XtPointer) 0);
 	    break;
 	case FE_PANES_STACKED:
-	    XtVaGetValues(data->folderform, XmNheight, &w, 0);
-	    XtVaGetValues(data->messageform, XmNheight, &h, 0);
+	    XtVaGetValues(data->folderform, XmNheight, &w, (XtPointer) 0);
+	    XtVaGetValues(data->messageform, XmNheight, &h, (XtPointer) 0);
 	    break;
         case FE_PANES_TALL_FOLDERS:
-	    XtVaGetValues(data->folderform, XmNwidth, &w, 0);
-	    XtVaGetValues(data->messageform, XmNheight, &h, 0);
+	    XtVaGetValues(data->folderform, XmNwidth, &w, (XtPointer) 0);
+	    XtVaGetValues(data->messageform, XmNheight, &h, (XtPointer) 0);
 	    break;
         default:
             abort();
@@ -3019,7 +3019,7 @@ fe_toggle_loads_cb (Widget widget, XtPointer closure, XtPointer call_data)
   Boolean load_p = False;
   if (cb->reason != XmCR_VALUE_CHANGED) abort ();
   fe_UserActivity (context);
-  XtVaGetValues (widget, XmNset, &load_p, 0);
+  XtVaGetValues (widget, XmNset, &load_p, (XtPointer) 0);
   CONTEXT_DATA (context)->autoload_images_p = load_p;
 }
 
@@ -3032,7 +3032,7 @@ fe_toggle_js_cb (Widget widget, XtPointer closure, XtPointer call_data)
   Boolean enable_p = False;
   if (cb->reason != XmCR_VALUE_CHANGED) abort ();
   fe_UserActivity (context);
-  XtVaGetValues (widget, XmNset, &enable_p, 0);
+  XtVaGetValues (widget, XmNset, &enable_p, (XtPointer) 0);
   fe_globalPrefs.disable_javascript = !enable_p;
   LM_SwitchMocha(enable_p);
 }
@@ -3052,7 +3052,7 @@ fe_toggle_anim_1 (Widget widget, MWContext *context, XmAnyCallbackStruct *cb,
   Boolean enable_p = False;
   if (cb->reason != XmCR_VALUE_CHANGED) abort ();
   fe_UserActivity (context);
-  XtVaGetValues (widget, XmNset, &enable_p, 0);
+  XtVaGetValues (widget, XmNset, &enable_p, (XtPointer) 0);
   if (all_anims_p)
     fe_globalPrefs.anim_p = enable_p;
   else
@@ -3130,7 +3130,7 @@ fe_toggle_fancy_cb (Widget widget, XtPointer closure, XtPointer call_data)
   Boolean fancy_p = False;
   if (cb->reason != XmCR_VALUE_CHANGED) abort ();
   fe_UserActivity (context);
-  XtVaGetValues (widget, XmNset, &fancy_p, 0);
+  XtVaGetValues (widget, XmNset, &fancy_p, (XtPointer) 0);
   CONTEXT_DATA (context)->fancy_ftp_p = fancy_p;
 }
 
@@ -3156,7 +3156,7 @@ fe_toggle_compose_wrap_cb (Widget widget, XtPointer closure,
   Boolean wrap_p = False;
   if (cb->reason != XmCR_VALUE_CHANGED) abort ();
   fe_UserActivity (context);
-  XtVaGetValues (widget, XmNset, &wrap_p, 0);
+  XtVaGetValues (widget, XmNset, &wrap_p, (XtPointer) 0);
   fe_set_compose_wrap_state(context, wrap_p);
 }
 
@@ -3216,7 +3216,7 @@ fe_show_toolbar_cb (Widget widget, XtPointer closure, XtPointer call_data)
   Boolean toolbar_p = False;
   if (cb->reason != XmCR_VALUE_CHANGED) abort ();
   fe_UserActivity (context);
-  XtVaGetValues (widget, XmNset, &toolbar_p, 0);
+  XtVaGetValues (widget, XmNset, &toolbar_p, (XtPointer) 0);
   if (CONTEXT_DATA (context)->show_toolbar_p == toolbar_p)
     return;
   CONTEXT_DATA (context)->show_toolbar_p = toolbar_p;
@@ -3231,7 +3231,7 @@ fe_show_url_cb (Widget widget, XtPointer closure, XtPointer call_data)
   Boolean url_p = False;
   if (cb->reason != XmCR_VALUE_CHANGED) abort ();
   fe_UserActivity (context);
-  XtVaGetValues (widget, XmNset, &url_p, 0);
+  XtVaGetValues (widget, XmNset, &url_p, (XtPointer) 0);
   if (CONTEXT_DATA (context)->show_url_p == url_p)
     return;
   CONTEXT_DATA (context)->show_url_p = url_p;
@@ -3248,7 +3248,7 @@ fe_show_directory_buttons_cb (Widget widget, XtPointer closure,
   Boolean directory_buttons_p = False;
   if (cb->reason != XmCR_VALUE_CHANGED) abort ();
   fe_UserActivity (context);
-  XtVaGetValues (widget, XmNset, &directory_buttons_p, 0);
+  XtVaGetValues (widget, XmNset, &directory_buttons_p, (XtPointer) 0);
   if (CONTEXT_DATA (context)->show_directory_buttons_p == directory_buttons_p)
     return;
   CONTEXT_DATA (context)->show_directory_buttons_p = directory_buttons_p;
@@ -3263,7 +3263,7 @@ fe_show_menubar_cb (Widget widget, XtPointer closure, XtPointer call_data)
   Boolean menubar_p = False;
   if (cb->reason != XmCR_VALUE_CHANGED) abort ();
   fe_UserActivity (context);
-  XtVaGetValues (widget, XmNset, &menubar_p, 0);
+  XtVaGetValues (widget, XmNset, &menubar_p, (XtPointer) 0);
   if (CONTEXT_DATA (context)->show_menubar_p == menubar_p)
     return;
   CONTEXT_DATA (context)->show_menubar_p = menubar_p;
@@ -3279,7 +3279,7 @@ fe_show_bottom_status_bar_cb (Widget widget, XtPointer closure, XtPointer call_d
   Boolean bottom_status_bar_p = False;
   if (cb->reason != XmCR_VALUE_CHANGED) abort ();
   fe_UserActivity (context);
-  XtVaGetValues (widget, XmNset, &bottom_status_bar_p, 0);
+  XtVaGetValues (widget, XmNset, &bottom_status_bar_p, (XtPointer) 0);
   if (CONTEXT_DATA (context)->show_bottom_status_bar_p == bottom_status_bar_p)
     return;
   CONTEXT_DATA (context)->show_bottom_status_bar_p = bottom_status_bar_p;
@@ -3297,7 +3297,7 @@ fe_show_security_bar_cb (Widget widget, XtPointer closure, XtPointer call_data)
   Boolean security_bar_p = False;
   if (cb->reason != XmCR_VALUE_CHANGED) abort ();
   fe_UserActivity (context);
-  XtVaGetValues (widget, XmNset, &security_bar_p, 0);
+  XtVaGetValues (widget, XmNset, &security_bar_p, (XtPointer) 0);
   if (CONTEXT_DATA (context)->show_security_bar_p == security_bar_p)
     return;
   CONTEXT_DATA (context)->show_security_bar_p = security_bar_p;
@@ -3314,7 +3314,7 @@ fe_show_java_console_cb(Widget widget, XtPointer closure, XtPointer call_data)
   MWContext *context = (MWContext *) closure;
 #endif
   Boolean show_java_console_p = False;
-  XtVaGetValues (widget, XmNset, &show_java_console_p, 0);
+  XtVaGetValues (widget, XmNset, &show_java_console_p, (XtPointer) 0);
   if (show_java_console_p) {
       LJ_ShowConsole();
   } else {
@@ -3498,7 +3498,7 @@ fe_pulldown_cb (Widget widget, XtPointer closure, XtPointer call_data)
   fe_ContextData* data = CONTEXT_DATA(context);
   fe_UserActivity (context);
 
-  XtVaGetValues(widget, XmNsubMenuId, &submenu, 0);
+  XtVaGetValues(widget, XmNsubMenuId, &submenu, (XtPointer) 0);
 
   /* Recreate the bookmark menu as necessary each time we popup the
      bookmarks menu from the menubar. 
@@ -3534,7 +3534,7 @@ fe_mailcompose_cb(Widget widget, XtPointer closure, XtPointer call_data)
     XtPointer value;
     fe_MailComposeCallback cbid;
 
-    XtVaGetValues(widget, XmNuserData, &value, 0);
+    XtVaGetValues(widget, XmNuserData, &value, (XtPointer) 0);
     cbid = (fe_MailComposeCallback) value;
 
     fe_mailcompose_obeycb(context, cbid, call_data);
@@ -3576,15 +3576,15 @@ fe_handle_delivery_cb(Widget widget, XtPointer closure, XtPointer call_data)
   fe_UserActivity (context);
 
   if (!cb->set)
-    XtVaSetValues (widget, XmNset, True, 0);
+    XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
   else if (widget == CONTEXT_DATA (context)->deliverLater_menuitem)
     {
-      XtVaSetValues (CONTEXT_DATA (context)->deliverNow_menuitem, XmNset, False, 0);
+      XtVaSetValues (CONTEXT_DATA (context)->deliverNow_menuitem, XmNset, False, (XtPointer) 0);
       fe_globalPrefs.queue_for_later_p = True;
     }
   else if (widget == CONTEXT_DATA (context)->deliverNow_menuitem)
     {
-      XtVaSetValues (CONTEXT_DATA (context)->deliverLater_menuitem, XmNset, False, 0);
+      XtVaSetValues (CONTEXT_DATA (context)->deliverLater_menuitem, XmNset, False, (XtPointer) 0);
       fe_globalPrefs.queue_for_later_p = False;
     }
   else
@@ -3599,7 +3599,7 @@ fe_handle_delivery_cb(Widget widget, XtPointer closure, XtPointer call_data)
       Cardinal nbuttons = 0;
 
       XtVaGetValues(CONTEXT_DATA(cntx->context)->toolbar,
-		XmNchildren, &buttons, XmNnumChildren, &nbuttons, 0);
+		XmNchildren, &buttons, XmNnumChildren, &nbuttons, (XtPointer) 0);
       if (nbuttons >= 1) {
 	/* Change the sensitive and insensitive pixmap and labelString */
 	if (CONTEXT_DATA (context)->show_toolbar_icons_p) {
@@ -3608,7 +3608,7 @@ fe_handle_delivery_cb(Widget widget, XtPointer closure, XtPointer call_data)
 	  if (! ip) ip = p;
           XtVaSetValues (buttons[0],
 	  		 XmNlabelPixmap, p,
-	  		 XmNlabelInsensitivePixmap, ip, 0);
+			 XmNlabelInsensitivePixmap, ip, (XtPointer) 0);
 	}
 	fe_MsgSensitizeChildren(CONTEXT_DATA(cntx->context)->toolbar,
 			(XtPointer)cntx->context, 0);
@@ -3629,7 +3629,7 @@ FE_InsertMessageCompositionText(MWContext* context,
   fe_ContextData* data = CONTEXT_DATA(context);
   XmTextPosition pos = 0, newpos = 0;
   unsigned char *loc;
-  XtVaGetValues(data->mcBodyText, XmNcursorPosition, &pos, 0);
+  XtVaGetValues(data->mcBodyText, XmNcursorPosition, &pos, (XtPointer) 0);
   loc = fe_ConvertToLocaleEncoding(INTL_DefaultWinCharSetID(context),
 				   (unsigned char *) text);
 
@@ -3652,9 +3652,9 @@ FE_InsertMessageCompositionText(MWContext* context,
   if (((char *) loc) != text) {
     XP_FREE(loc);
   }
-  XtVaGetValues(data->mcBodyText, XmNcursorPosition, &newpos, 0);
+  XtVaGetValues(data->mcBodyText, XmNcursorPosition, &newpos, (XtPointer) 0);
   if (leaveCursorAtBeginning) {
-    XtVaSetValues(data->mcBodyText, XmNcursorPosition, pos, 0);
+    XtVaSetValues(data->mcBodyText, XmNcursorPosition, pos, (XtPointer) 0);
   }
   else if (pos == newpos) {
     /* On some motif (eg. AIX), text insertion point is not moved after
@@ -3663,7 +3663,7 @@ FE_InsertMessageCompositionText(MWContext* context,
      * WARNING: XXX I18N watch. The strlen might not be the right i18n way.
      */
     newpos = pos+strlen(text);
-    XtVaSetValues(data->mcBodyText, XmNcursorPosition, newpos, 0);
+    XtVaSetValues(data->mcBodyText, XmNcursorPosition, newpos, (XtPointer) 0);
   }
 }
 
@@ -3703,7 +3703,7 @@ fe_doc_enc_cb(Widget widget, XtPointer closure, XtPointer call_data)
 #endif
 		nkids = 0;
 		XtVaGetValues(XtParent(widget), XmNchildren, &kids,
-			XmNnumChildren, &nkids, 0);
+			XmNnumChildren, &nkids, (XtPointer) 0);
 		while (nkids-- > 0)
 		{
 			XtVaSetValues(kids[nkids], XmNset, False, NULL);
@@ -5038,40 +5038,40 @@ fe_MakeMenubar (Widget parent, MWContext *context)
   if (CONTEXT_DATA (context)->back_menuitem)
     XtVaSetValues (CONTEXT_DATA (context)->back_menuitem,
 #ifdef NEW_FRAME_HIST
-		   XmNsensitive, SHIST_CanGoBack (context), 0);
+		   XmNsensitive, SHIST_CanGoBack (context), (XtPointer) 0);
 #else
 		   XmNsensitive, SHIST_CanGoBack (&context->hist), 0);
 #endif /* NEW_FRAME_HIST */
   if (CONTEXT_DATA (context)->forward_menuitem)
     XtVaSetValues (CONTEXT_DATA (context)->forward_menuitem,
 #ifdef NEW_FRAME_HIST
-		   XmNsensitive, SHIST_CanGoForward (context), 0);
+		   XmNsensitive, SHIST_CanGoForward (context), (XtPointer) 0);
 #else
 		   XmNsensitive, SHIST_CanGoForward (&context->hist), 0);
 #endif /* NEW_FRAME_HIST */
   if (CONTEXT_DATA (context)->abort_menuitem)
     XtVaSetValues (CONTEXT_DATA (context)->abort_menuitem, XmNsensitive,
-		   XP_IsContextStoppable (context), 0);
+		   XP_IsContextStoppable (context), (XtPointer) 0);
   if (CONTEXT_DATA (context)->home_menuitem)
     XtVaSetValues (CONTEXT_DATA (context)->home_menuitem, XmNsensitive,
-      (fe_globalPrefs.home_document && *fe_globalPrefs.home_document), 0);
+      (fe_globalPrefs.home_document && *fe_globalPrefs.home_document), (XtPointer) 0);
 
 #if defined(DEBUG_jwz) && defined(MOCHA)
     if (CONTEXT_DATA (context)->toggleJS_menuitem)
      XtVaSetValues (CONTEXT_DATA (context)->toggleJS_menuitem, XmNset,
-      !fe_globalPrefs.disable_javascript, 0);
+      !fe_globalPrefs.disable_javascript, (XtPointer) 0);
 #endif /* DEBUG_jwz && MOCHA */
 
 #ifdef DEBUG_jwz
     if (CONTEXT_DATA (context)->toggleAnim_menuitem)
      XtVaSetValues (CONTEXT_DATA (context)->toggleAnim_menuitem, XmNset,
-      IL_AnimationsEnabled, 0);
+      IL_AnimationsEnabled, (XtPointer) 0);
     if (CONTEXT_DATA (context)->toggleLoops_menuitem)
      XtVaSetValues (CONTEXT_DATA (context)->toggleLoops_menuitem, XmNset,
-      (IL_AnimationsEnabled && IL_AnimationLoopsEnabled), 0);
+      (IL_AnimationsEnabled && IL_AnimationLoopsEnabled), (XtPointer) 0);
     if (CONTEXT_DATA (context)->toggleSizes_menuitem)
      XtVaSetValues (CONTEXT_DATA (context)->toggleSizes_menuitem, XmNset,
-      fe_ignore_font_size_changes_p, 0);
+      fe_ignore_font_size_changes_p, (XtPointer) 0);
 #endif /* DEBUG_jwz */
 
   return menubar;
@@ -5205,7 +5205,7 @@ fe_MakeToolbar (Widget parent, MWContext *context, Boolean directory_buttons_p)
 	  XtAddCallback (b, XmNactivateCallback, tb[i].callback, context);
 
 	  if (tb[i].type == UNSELECTABLE)
-	    XtVaSetValues (b, XtNsensitive, False, 0);
+	    XtVaSetValues (b, XtNsensitive, False, (XtPointer) 0);
 	  else if (tb[i].type != SELECTABLE)
 	    abort ();
 	  icon_number++;
@@ -5240,26 +5240,26 @@ fe_MakeToolbar (Widget parent, MWContext *context, Boolean directory_buttons_p)
     if (CONTEXT_DATA (context)->back_button)
       XtVaSetValues (CONTEXT_DATA (context)->back_button,
 #ifdef NEW_FRAME_HIST
-		   XmNsensitive, SHIST_CanGoBack (context), 0);
+		   XmNsensitive, SHIST_CanGoBack (context), (XtPointer) 0);
 #else
 		   XmNsensitive, SHIST_CanGoBack (&context->hist), 0);
 #endif /* NEW_FRAME_HIST */
     if (CONTEXT_DATA (context)->forward_button)
       XtVaSetValues (CONTEXT_DATA (context)->forward_button,
 #ifdef NEW_FRAME_HIST
-		   XmNsensitive, SHIST_CanGoForward (context), 0);
+		   XmNsensitive, SHIST_CanGoForward (context), (XtPointer) 0);
 #else
 		   XmNsensitive, SHIST_CanGoForward (&context->hist), 0);
 #endif /* NEW_FRAME_HIST */
     if (CONTEXT_DATA (context)->home_button)
       XtVaSetValues (CONTEXT_DATA (context)->home_button, XmNsensitive,
-      (fe_globalPrefs.home_document && *fe_globalPrefs.home_document), 0);
+      (fe_globalPrefs.home_document && *fe_globalPrefs.home_document), (XtPointer) 0);
     if (CONTEXT_DATA (context)->delayed_button)
       XtVaSetValues (CONTEXT_DATA (context)->delayed_button,
-		   XmNsensitive, CONTEXT_DATA (context)->delayed_images_p, 0);
+		   XmNsensitive, CONTEXT_DATA (context)->delayed_images_p, (XtPointer) 0);
     if (CONTEXT_DATA (context)->abort_button)
       XtVaSetValues (CONTEXT_DATA (context)->abort_button, XmNsensitive,
-		   XP_IsContextStoppable (context), 0);
+		   XP_IsContextStoppable (context), (XtPointer) 0);
   }
 
   XtManageChildren (kids, j);
@@ -5309,15 +5309,15 @@ fe_SensitizeForSelectedFrame(MWContext *context)
 
   if (data->reloadFrame_menuitem)
     XtVaSetValues(data->reloadFrame_menuitem, XmNsensitive,
-		    anySelectedFrame, 0);
+		    anySelectedFrame, (XtPointer) 0);
 
   if (data->frameSource_menuitem)
     XtVaSetValues(data->frameSource_menuitem, XmNsensitive,
-		    anySelectedFrame, 0);
+		    anySelectedFrame, (XtPointer) 0);
 
   if (data->frameInfo_menuitem)
     XtVaSetValues(data->frameInfo_menuitem, XmNsensitive,
-		    anySelectedFrame, 0);
+		    anySelectedFrame, (XtPointer) 0);
 }
 
 void
@@ -5329,44 +5329,44 @@ fe_SensitizeMenus (MWContext *context)
   fe_ContextData* data = CONTEXT_DATA(context);
   
   if (data->cut_menuitem) {
-    XtVaSetValues(data->cut_menuitem,   XmNsensitive, s, 0);
+    XtVaSetValues(data->cut_menuitem,   XmNsensitive, s, (XtPointer) 0);
   }
   if (data->copy_menuitem) {
-    XtVaSetValues(data->copy_menuitem,  XmNsensitive, s, 0);
+    XtVaSetValues(data->copy_menuitem,  XmNsensitive, s, (XtPointer) 0);
   }
   if (data->paste_menuitem) {
-    XtVaSetValues(data->paste_menuitem, XmNsensitive, c, 0);
+    XtVaSetValues(data->paste_menuitem, XmNsensitive, c, (XtPointer) 0);
   }
   if (data->paste_quoted_menuitem) {
-    XtVaSetValues(data->paste_quoted_menuitem, XmNsensitive, c, 0);
+    XtVaSetValues(data->paste_quoted_menuitem, XmNsensitive, c, (XtPointer) 0);
   }
   if (data->delayed_menuitem) {
     XtVaSetValues(data->delayed_menuitem,
-		  XmNsensitive, data->delayed_images_p, 0);
+		  XmNsensitive, data->delayed_images_p, (XtPointer) 0);
   }
   /* Quit menu item is always available, but Delete is only available when
      there is more than one window. */
   if (data->delete_menuitem) {
     XtVaSetValues(data->delete_menuitem,
-		  XmNsensitive, (fe_WindowCount > 1), 0);
+		  XmNsensitive, (fe_WindowCount > 1), (XtPointer) 0);
   }
 
 #if defined(DEBUG_jwz) && defined(MOCHA)
   if (data->toggleJS_menuitem)
     XtVaSetValues (data->toggleJS_menuitem, XmNset,
-                   !fe_globalPrefs.disable_javascript, 0);
+                   !fe_globalPrefs.disable_javascript, (XtPointer) 0);
 #endif /* DEBUG_jwz && MOCHA */
 
 #ifdef DEBUG_jwz
     if (data->toggleAnim_menuitem)
       XtVaSetValues (data->toggleAnim_menuitem, XmNset,
-                     IL_AnimationsEnabled, 0);
+                     IL_AnimationsEnabled, (XtPointer) 0);
     if (data->toggleLoops_menuitem)
       XtVaSetValues (data->toggleLoops_menuitem, XmNset,
-                     (IL_AnimationsEnabled && IL_AnimationLoopsEnabled), 0);
+                     (IL_AnimationsEnabled && IL_AnimationLoopsEnabled), (XtPointer) 0);
     if (data->toggleSizes_menuitem)
       XtVaSetValues (data->toggleSizes_menuitem, XmNset,
-                     !fe_ignore_font_size_changes_p, 0);
+                     !fe_ignore_font_size_changes_p, (XtPointer) 0);
 #endif /* DEBUG_jwz */
 
 
@@ -5386,9 +5386,9 @@ fe_SensitizeMenus (MWContext *context)
        context->type == MWContextNews) && data->findAgain_menuitem) {
     fe_FindData *find_data = CONTEXT_DATA(context)->find_data;
     if (find_data && find_data->string && find_data->string[0] != '\0')
-      XtVaSetValues(data->findAgain_menuitem, XmNsensitive, True, 0);
+      XtVaSetValues(data->findAgain_menuitem, XmNsensitive, True, (XtPointer) 0);
     else
-      XtVaSetValues(data->findAgain_menuitem, XmNsensitive, False, 0);
+      XtVaSetValues(data->findAgain_menuitem, XmNsensitive, False, (XtPointer) 0);
   }
 
 #if 0
@@ -5399,7 +5399,7 @@ fe_SensitizeMenus (MWContext *context)
        context->type == MWContextNews) && data->findAgain_menuitem &&
        last_find_junk && last_find_junk->string &&
        last_find_junk->string[0] != '\0')
-    XtVaSetValues(data->findAgain_menuitem, XmNsensitive, True, 0);
+    XtVaSetValues(data->findAgain_menuitem, XmNsensitive, True, (XtPointer) 0);
 #endif /* 0 */
 
   /* If we're looking at an ftp site, enable file upload */
@@ -5411,7 +5411,7 @@ fe_SensitizeMenus (MWContext *context)
       if (he && he->address && (XP_STRNCMP (he->address, "ftp://", 6) == 0)
       	&& (he->address[XP_STRLEN(he->address)-1] == '/'))
 	b = True;
-      XtVaSetValues (data->uploadFile_menuitem, XmNsensitive, b, 0);
+      XtVaSetValues (data->uploadFile_menuitem, XmNsensitive, b, (XtPointer) 0);
     }
 
   /* If we're building a mail composition window, init the
@@ -5420,9 +5420,9 @@ fe_SensitizeMenus (MWContext *context)
   if (context->type == MWContextMessageComposition)
     {
       XtVaSetValues (CONTEXT_DATA (context)->deliverNow_menuitem, XmNset,
-		     !fe_globalPrefs.queue_for_later_p, 0);
+		     !fe_globalPrefs.queue_for_later_p, (XtPointer) 0);
       XtVaSetValues (CONTEXT_DATA (context)->deliverLater_menuitem, XmNset,
-		     fe_globalPrefs.queue_for_later_p, 0);
+		     fe_globalPrefs.queue_for_later_p, (XtPointer) 0);
     }
 }
 
@@ -5446,7 +5446,7 @@ fe_save_image_cb (Widget widget, XtPointer closure, XtPointer call_data)
   if (fe_hack_self_inserting_accelerator (widget, closure, call_data))
     return;
 
-  XtVaGetValues (widget, XmNlabelString, &xm_title, 0);
+  XtVaGetValues (widget, XmNlabelString, &xm_title, (XtPointer) 0);
   XmStringGetLtoR (xm_title, XmFONTLIST_DEFAULT_TAG, &title);
   XmStringFree(xm_title);
 
@@ -5472,7 +5472,7 @@ fe_save_link_cb (Widget widget, XtPointer closure, XtPointer call_data)
   if (fe_hack_self_inserting_accelerator (widget, closure, call_data))
     return;
 
-  XtVaGetValues (widget, XmNlabelString, &xm_title, 0);
+  XtVaGetValues (widget, XmNlabelString, &xm_title, (XtPointer) 0);
   XmStringGetLtoR (xm_title, XmFONTLIST_DEFAULT_TAG, &title);
   XmStringFree(xm_title);
 
@@ -5858,7 +5858,7 @@ fe_popup_menu_action (Widget widget, XEvent *event, String *cav, Cardinal *cac)
     }
 
   XtVaGetValues (parent, XtNvisual, &v, XtNcolormap, &cmap,
-		 XtNdepth, &depth, 0);
+		 XtNdepth, &depth, (XtPointer) 0);
 
   ac = 0;
   XtSetArg (av[ac], XmNvisual, v); ac++;
@@ -5875,9 +5875,9 @@ fe_popup_menu_action (Widget widget, XEvent *event, String *cav, Cardinal *cac)
     {
       item = XmCreatePushButtonGadget (menu, fe_popup_all[j].name, av, ac);
 #if 0
-      XtVaGetValues (item, XmNlabelString, &xmstring, 0);
+      XtVaGetValues (item, XmNlabelString, &xmstring, (XtPointer) 0);
       xmstring2 = XmStringConcat (padding, xmstring);
-      XtVaSetValues (item, XmNlabelString, xmstring2, 0);
+      XtVaSetValues (item, XmNlabelString, xmstring2, (XtPointer) 0);
       XmStringFree (xmstring2);
       XmStringFree (xmstring);
 #endif
@@ -5892,7 +5892,7 @@ fe_popup_menu_action (Widget widget, XEvent *event, String *cav, Cardinal *cac)
 	  !SHIST_CanGoBack (&top_context->hist)
 #endif /* NEW_FRAME_HIST */
 	  )
-	XtVaSetValues (item, XmNsensitive, False, 0);
+	XtVaSetValues (item, XmNsensitive, False, (XtPointer) 0);
       else if (!strcmp (fe_popup_all[j].name, "forward") &&
 #ifdef NEW_FRAME_HIST
 	       !SHIST_CanGoForward (top_context)
@@ -5900,7 +5900,7 @@ fe_popup_menu_action (Widget widget, XEvent *event, String *cav, Cardinal *cac)
 	       !SHIST_CanGoForward (&top_context->hist)
 #endif /* NEW_FRAME_HIST */
 	       )
-	XtVaSetValues (item, XmNsensitive, False, 0);
+	XtVaSetValues (item, XmNsensitive, False, (XtPointer) 0);
 
       if (fe_last_popup_item &&
 	  !strcmp (fe_last_popup_item, fe_popup_all[j].name))
@@ -5956,7 +5956,7 @@ fe_popup_menu_action (Widget widget, XEvent *event, String *cav, Cardinal *cac)
 #endif /* DEBUG_jwz */
 
           item = XmCreatePushButtonGadget (menu, fe_popup_link[j].name,av,ac);
-	  XtVaGetValues (item, XmNlabelString, &xmstring, 0);
+	  XtVaGetValues (item, XmNlabelString, &xmstring, (XtPointer) 0);
 	  if (j == 0)
 	    {
 	      if (fe_url_under_mouse)
@@ -5981,7 +5981,7 @@ fe_popup_menu_action (Widget widget, XEvent *event, String *cav, Cardinal *cac)
 
 		  xmstring2 = XmStringCreateLtoR(buf,XmFONTLIST_DEFAULT_TAG);
 		  xmstring3 = XmStringConcat (xmstring, xmstring2);
-		  XtVaSetValues (item, XmNlabelString, xmstring3, 0);
+		  XtVaSetValues (item, XmNlabelString, xmstring3, (XtPointer) 0);
 		  XmStringFree (xmstring2);
 		  XmStringFree (xmstring3);
 		}
@@ -5989,7 +5989,7 @@ fe_popup_menu_action (Widget widget, XEvent *event, String *cav, Cardinal *cac)
 	  else
 	    {
 	      xmstring2 = XmStringConcat (padding, xmstring);
-	      XtVaSetValues (item, XmNlabelString, xmstring2, 0);
+	      XtVaSetValues (item, XmNlabelString, xmstring2, (XtPointer) 0);
 	      XmStringFree (xmstring2);
 	    }
 	  XmStringFree (xmstring);
@@ -5998,7 +5998,7 @@ fe_popup_menu_action (Widget widget, XEvent *event, String *cav, Cardinal *cac)
 	  XtAddCallback (item, XmNactivateCallback, fe_popup_link[j].callback,
 			 context);
 	  if (! fe_url_under_mouse)
-	    XtVaSetValues (item, XmNsensitive, False, 0);
+	    XtVaSetValues (item, XmNsensitive, False, (XtPointer) 0);
 
 	  if (fe_last_popup_item &&
 	      !strcmp (fe_last_popup_item, fe_popup_link[j].name))
@@ -6017,7 +6017,7 @@ fe_popup_menu_action (Widget widget, XEvent *event, String *cav, Cardinal *cac)
       for (j = 0; j < countof (fe_popup_image); j++)
 	{
 	  item = XmCreatePushButtonGadget (menu, fe_popup_image[j].name,av,ac);
-	  XtVaGetValues (item, XmNlabelString, &xmstring, 0);
+	  XtVaGetValues (item, XmNlabelString, &xmstring, (XtPointer) 0);
 	  if (j == 0)
 	    {
 	      if (fe_image_under_mouse)
@@ -6042,7 +6042,7 @@ fe_popup_menu_action (Widget widget, XEvent *event, String *cav, Cardinal *cac)
 
 		  xmstring2 = XmStringCreateLtoR(buf,XmFONTLIST_DEFAULT_TAG);
 		  xmstring3 = XmStringConcat (xmstring, xmstring2);
-		  XtVaSetValues (item, XmNlabelString, xmstring3, 0);
+		  XtVaSetValues (item, XmNlabelString, xmstring3, (XtPointer) 0);
 		  XmStringFree (xmstring2);
 		  XmStringFree (xmstring3);
 		}
@@ -6050,7 +6050,7 @@ fe_popup_menu_action (Widget widget, XEvent *event, String *cav, Cardinal *cac)
 	  else
 	    {
 	      xmstring2 = XmStringConcat (padding, xmstring);
-	      XtVaSetValues (item, XmNlabelString, xmstring2, 0);
+	      XtVaSetValues (item, XmNlabelString, xmstring2, (XtPointer) 0);
 	      XmStringFree (xmstring2);
 	    }
 	  XmStringFree (xmstring);
@@ -6059,7 +6059,7 @@ fe_popup_menu_action (Widget widget, XEvent *event, String *cav, Cardinal *cac)
 	  XtAddCallback (item, XmNactivateCallback, fe_popup_image[j].callback,
 			 context);
 	  if (! fe_image_under_mouse)
-	    XtVaSetValues (item, XmNsensitive, False, 0);
+	    XtVaSetValues (item, XmNsensitive, False, (XtPointer) 0);
 
 	  if (fe_last_popup_item &&
 	      !strcmp (fe_last_popup_item, fe_popup_image[j].name))
@@ -6076,9 +6076,9 @@ fe_popup_menu_action (Widget widget, XEvent *event, String *cav, Cardinal *cac)
 	    item = XmCreatePushButtonGadget (menu,
 					     fe_popup_delayed_image[j].name,
 					     av, ac);
-	    XtVaGetValues (item, XmNlabelString, &xmstring, 0);
+	    XtVaGetValues (item, XmNlabelString, &xmstring, (XtPointer) 0);
 	    xmstring2 = XmStringConcat (padding, xmstring);
-	    XtVaSetValues (item, XmNlabelString, xmstring2, 0);
+	    XtVaSetValues (item, XmNlabelString, xmstring2, (XtPointer) 0);
 	    XmStringFree (xmstring2);
 	    XmStringFree (xmstring);
 	    XtAddCallback (item, XmNactivateCallback,
@@ -6086,7 +6086,7 @@ fe_popup_menu_action (Widget widget, XEvent *event, String *cav, Cardinal *cac)
 	    XtAddCallback (item, XmNactivateCallback,
 			   fe_popup_delayed_image[j].callback, context);
 	    if (!fe_image_under_mouse || !image_delayed_p)
-	      XtVaSetValues (item, XmNsensitive, False, 0);
+	      XtVaSetValues (item, XmNsensitive, False, (XtPointer) 0);
 
 	    if (fe_last_popup_item &&
 		!strcmp (fe_last_popup_item, fe_popup_delayed_image[j].name))
@@ -6136,7 +6136,7 @@ fe_popup_menu_action (Widget widget, XEvent *event, String *cav, Cardinal *cac)
 
   /* WHY THE FUCK DOESN'T THIS WORK??????? */
   if (last)
-    XtVaSetValues (menu, XmNmenuHistory, last, 0);
+    XtVaSetValues (menu, XmNmenuHistory, last, (XtPointer) 0);
 
   XmMenuPosition (menu, (XButtonPressedEvent *) event);
 
@@ -6944,7 +6944,7 @@ fe_HackTranslations (MWContext *context, Widget widget)
 
   if (XmIsRowColumn(widget)) {
     unsigned char type;
-    XtVaGetValues(widget, XmNrowColumnType, &type, 0);
+    XtVaGetValues(widget, XmNrowColumnType, &type, (XtPointer) 0);
     if (type == XmMENU_BAR)
       return;
   }
@@ -7037,7 +7037,7 @@ fe_HackTranslations (MWContext *context, Widget widget)
 
       /* Now recurse on the children.
        */
-      XtVaGetValues (widget, XmNchildren, &kids, XmNnumChildren, &nkids, 0);
+      XtVaGetValues (widget, XmNchildren, &kids, XmNnumChildren, &nkids, (XtPointer) 0);
       while (nkids--)
 	  fe_HackTranslations (context, kids [nkids]);
     }
@@ -7093,7 +7093,7 @@ fe_HackDialogTranslations (Widget widget)
     {
       Widget *kids = 0;
       Cardinal nkids = 0;
-      XtVaGetValues (widget, XmNchildren, &kids, XmNnumChildren, &nkids, 0);
+      XtVaGetValues (widget, XmNchildren, &kids, XmNnumChildren, &nkids, (XtPointer) 0);
       while (nkids--)
 	fe_HackDialogTranslations (kids [nkids]);
     }
@@ -7299,7 +7299,7 @@ fe_SetString(Widget widget, const char* propname, char* str)
 {
   XmString xmstr;
   xmstr = XmStringCreate(str, XmFONTLIST_DEFAULT_TAG);
-  XtVaSetValues(widget, propname, xmstr, 0);
+  XtVaSetValues(widget, propname, xmstr, (XtPointer) 0);
   XmStringFree(xmstr);
 }
 
@@ -7401,7 +7401,7 @@ fe_addto_windows_menu(Widget w, MWContext *context, MWContextType lookfor)
       if (!button)
 	button = XmCreateToggleButtonGadget (menu, "windowButton", NULL, 0);
       XtVaSetValues(button, XmNset, (context == cntx->context),
-			XmNvisibleWhenOff, False, 0);
+			XmNvisibleWhenOff, False, (XtPointer) 0);
       XtAddCallback (button, XmNvalueChangedCallback, fe_switch_context_cb,
 			cntx->context);
 
@@ -7443,7 +7443,7 @@ fe_addto_windows_menu(Widget w, MWContext *context, MWContextType lookfor)
     }
     /* If nothing found, turn button off */
     if (w && !cntx)
-      XtVaSetValues(w, XmNset, False, XmNvisibleWhenOff, False, 0);
+      XtVaSetValues(w, XmNset, False, XmNvisibleWhenOff, False, (XtPointer) 0);
 }
 
 void
@@ -7456,7 +7456,7 @@ fe_GenerateWindowsMenu (MWContext *context)
   if (menu == NULL || CONTEXT_DATA (context)->windows_menu_up_to_date_p)
     return;
 
-  XtVaGetValues (menu, XmNchildren, &kids, XmNnumChildren, &nkids, 0);
+  XtVaGetValues (menu, XmNchildren, &kids, XmNnumChildren, &nkids, (XtPointer) 0);
 
   if (context->type == MWContextBrowser)
     XP_ASSERT(nkids >= 7);
@@ -7480,7 +7480,7 @@ fe_GenerateWindowsMenu (MWContext *context)
 
   /* next is history for MWContextBrowser only */
   if (context->type == MWContextBrowser)
-      XtVaSetValues(kids[kid++], XmNset, False, XmNvisibleWhenOff, False, 0);
+      XtVaSetValues(kids[kid++], XmNset, False, XmNvisibleWhenOff, False, (XtPointer) 0);
 
   /* next is separator */
   kid++;

@@ -353,17 +353,9 @@ fe_perror_2 (Widget parent, const char *message)
   char buf2 [512];
   char *b = buf1;
 
-#ifdef DEBUG_jwz  /* this is the modern way */
   if (e >= 0)
     es = strerror (e);
   if (!es || !*es)
-#else /* !DEBUG_jwz */
-  if (e >= 0 && e < sys_nerr)
-    {
-      es = sys_errlist [e];
-    }
-  else
-#endif /* !DEBUG_jwz */
     {
       PR_snprintf (buf2, sizeof (buf2), XP_GetString( XFE_UNKNOWN_ERROR_CODE ),
 		errno);
@@ -480,9 +472,9 @@ void fe_fixFocusAndGrab(MWContext *context)
   if (focus_w && XmIsRowColumn(XtParent(focus_w))) {
     unsigned char type;
     Widget w;
-    XtVaGetValues(XtParent(focus_w), XmNrowColumnType, &type, 0);
+    XtVaGetValues(XtParent(focus_w), XmNrowColumnType, &type, (XtPointer) 0);
     if (type == XmMENU_OPTION) {
-      XtVaGetValues(focus_w, XmNsubMenuId, &w, 0);
+      XtVaGetValues(focus_w, XmNsubMenuId, &w, (XtPointer) 0);
       if (w) XtUnmanageChild(w);
     }
   }
@@ -651,7 +643,7 @@ fe_dialog (Widget mainw,
     fe_fixFocusAndGrab(cons->context);
 
   XtVaGetValues (mainw, XtNvisual, &v, XtNcolormap, &cmap,
-		 XtNdepth, &depth, 0);
+		 XtNdepth, &depth, (XtPointer) 0);
 
   ac = 0;
   XtSetArg (av[ac], XmNvisual, v); ac++;
@@ -663,7 +655,7 @@ fe_dialog (Widget mainw,
 
   /* If it is java script that is posting this, use this special title */
   if (javaScriptTitle) {
-	XtVaSetValues (shell, XmNtitle, javaScriptTitle, 0);
+	XtVaSetValues (shell, XmNtitle, javaScriptTitle, (XtPointer) 0);
 	free(javaScriptTitle);
   }
 
@@ -695,7 +687,7 @@ fe_dialog (Widget mainw,
   if (! question_p)
     {
       Widget cancel = 0;
-      XtVaGetValues (dialog, XmNcancelButton, &cancel, 0);
+      XtVaGetValues (dialog, XmNcancelButton, &cancel, (XtPointer) 0);
       if (! cancel) abort ();
       XtUnmanageChild (cancel);
     }
@@ -722,13 +714,13 @@ fe_dialog (Widget mainw,
 			 XmNleftAttachment, XmATTACH_FORM,
 			 XmNrightAttachment, XmATTACH_OPPOSITE_WIDGET,
 			 XmNrightWidget, plabel,
-			 0);
+			 (XtPointer) 0);
 	  XtVaSetValues (plabel,
 			 XmNtopAttachment, XmATTACH_NONE,
 			 XmNbottomAttachment, XmATTACH_FORM,
 			 XmNleftAttachment, XmATTACH_FORM,
 			 XmNrightAttachment, XmATTACH_NONE,
-			 0);
+			 (XtPointer) 0);
 	}
 
       if (passwd != (char **) 1)
@@ -736,7 +728,7 @@ fe_dialog (Widget mainw,
 	  ac = 0;
 	  text = fe_CreateTextField (text_parent, "text", av, ac);
 	  fe_SetTextField(text, default_text);
-	  XtVaSetValues (text, XmNcursorPosition, 0, 0);
+	  XtVaSetValues (text, XmNcursorPosition, 0, (XtPointer) 0);
 	}
 
       if (passwd)
@@ -758,14 +750,14 @@ fe_dialog (Widget mainw,
 			 XmNleftAttachment, XmATTACH_WIDGET,
 			 XmNleftWidget, ulabel,
 			 XmNrightAttachment, XmATTACH_FORM,
-			 0);
+			 (XtPointer) 0);
 	  XtVaSetValues (pwtext,
 			 XmNtopAttachment, XmATTACH_NONE,
 			 XmNbottomAttachment, XmATTACH_FORM,
 			 XmNleftAttachment, XmATTACH_WIDGET,
 			 XmNleftWidget, plabel,
 			 XmNrightAttachment, XmATTACH_FORM,
-			 0);
+			 (XtPointer) 0);
 	  XtManageChild (ulabel);
 	  XtManageChild (plabel);
 	}
@@ -778,8 +770,8 @@ fe_dialog (Widget mainw,
       if (text && pwtext)
 	XtManageChild (text_parent);
 
-      XtVaSetValues (text_parent, XmNinitialFocus, (text ? text : pwtext), 0);
-      XtVaSetValues (dialog, XmNinitialFocus, (text ? text : pwtext), 0);
+      XtVaSetValues (text_parent, XmNinitialFocus, (text ? text : pwtext), (XtPointer) 0);
+      XtVaSetValues (dialog, XmNinitialFocus, (text ? text : pwtext), (XtPointer) 0);
 
       ac = 0;
       clear = XmCreatePushButtonGadget (dialog, "clear", av, ac);
@@ -812,7 +804,7 @@ fe_dialog (Widget mainw,
       data.return_value = 0;
       data.return_value_2 = 0;
 
-      XtVaSetValues (shell, XmNdeleteResponse, XmDESTROY, 0);
+      XtVaSetValues (shell, XmNdeleteResponse, XmDESTROY, (XtPointer) 0);
       XtAddCallback (dialog, XmNokCallback, fe_destroy_ok_cb, &data);
       XtAddCallback (dialog, XmNcancelCallback, fe_destroy_cancel_cb, &data);
       XtAddCallback (dialog, XmNdestroyCallback, fe_destroy_finish_cb, &data);
@@ -836,8 +828,8 @@ fe_dialog (Widget mainw,
 
       if (text)
 	{
-	  XtVaSetValues (text, XmNcursorPosition, 0, 0);
-	  XtVaSetValues (text, XmNcursorPositionVisible, True, 0);
+	  XtVaSetValues (text, XmNcursorPosition, 0, (XtPointer) 0);
+	  XtVaSetValues (text, XmNcursorPositionVisible, True, (XtPointer) 0);
 	  if (select_p)
 	    fe_select_text (text);
 	}
@@ -902,7 +894,7 @@ fe_Message (MWContext *context, const char *message)
   Cardinal depth = 0;
 
   XtVaGetValues (mainw, XtNvisual, &v, XtNcolormap, &cmap,
-		 XtNdepth, &depth, 0);
+		 XtNdepth, &depth, (XtPointer) 0);
 
   ac = 0;
   XtSetArg (av[ac], XmNvisual, v); ac++;
@@ -926,7 +918,7 @@ fe_Message (MWContext *context, const char *message)
 
   {
     Widget cancel = 0;
-    XtVaGetValues (dialog, XmNcancelButton, &cancel, 0);
+    XtVaGetValues (dialog, XmNcancelButton, &cancel, (XtPointer) 0);
     if (! cancel) abort ();
     XtUnmanageChild (cancel);
   }
@@ -1121,7 +1113,7 @@ XFE_Progress (MWContext *context, const char *message)
     message = context->defaultStatus;
     if (message == 0) message = "";
   }
-  XtVaGetValues (w, XmNlabelString, &oldlabel, 0);
+  XtVaGetValues (w, XmNlabelString, &oldlabel, (XtPointer) 0);
   if (XmStringGetLtoR(oldlabel, XmFONTLIST_DEFAULT_TAG, &oldlabelStr)) {
     if (oldlabelStr && !strcmp(oldlabelStr, (char *)message))
       needsChange = False;
@@ -1129,7 +1121,7 @@ XFE_Progress (MWContext *context, const char *message)
   }
   if (needsChange) {
     label = XmStringCreate ((char *) message, XmFONTLIST_DEFAULT_TAG);
-    XtVaSetValues (w, XmNlabelString, label, 0);
+    XtVaSetValues (w, XmNlabelString, label, (XtPointer) 0);
     XmStringFree (label);
   }
   XmStringFree (oldlabel);
@@ -1209,14 +1201,14 @@ fe_MidTruncatedProgress (MWContext *context, const char *message)
     message = context->defaultStatus;
     if (message == 0) message = "";
   }
-  XtVaGetValues (w, XmNfontList, &font_list, 0);
+  XtVaGetValues (w, XmNfontList, &font_list, (XtPointer) 0);
   widget_width = w->core.width - 20; /* #### random slop */
   label = fe_StringChopCreate((char*) message, XmFONTLIST_DEFAULT_TAG,
 			      font_list, widget_width);
 
-  XtVaGetValues (w, XmNlabelString, &oldlabel, 0);
+  XtVaGetValues (w, XmNlabelString, &oldlabel, (XtPointer) 0);
   if (!XmStringCompare(label, oldlabel)) {
-    XtVaSetValues (w, XmNlabelString, label, 0);
+    XtVaSetValues (w, XmNlabelString, label, (XtPointer) 0);
   }
   XmStringFree (label);
   XmStringFree (oldlabel);
@@ -1311,12 +1303,12 @@ fe_attach_field_to_labels (Widget value_field, ...)
   if (! widest)
     abort ();
 #ifdef Motif_doesnt_suck
-  XtVaGetValues (value_field, XmNleftOffset, &left, 0);
+  XtVaGetValues (value_field, XmNleftOffset, &left, (XtPointer) 0);
 #endif
   XtVaSetValues (value_field,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNleftOffset, max_width + left,
-		 0);
+		 (XtPointer) 0);
 }
 
 
@@ -1527,7 +1519,7 @@ fe_file_selection_dir_search_proc(Widget widget, XtPointer call_data)
     int attempts;
     char* p;
 
-    XtVaGetValues(widget, XmNdirectory, &xm_directory, 0);
+    XtVaGetValues(widget, XmNdirectory, &xm_directory, (XtPointer) 0);
 
     if (XmStringByteCompare(xm_directory, search_data->dir) == True) {
 	/* Update the list widget */
@@ -1573,13 +1565,13 @@ fe_file_selection_dir_search_proc(Widget widget, XtPointer call_data)
 		XtVaSetValues(widget,
 			      XmNdirectory, new_data.dir,
 			      XmNdirSpec, new_data.dir,
-			      0);
+			      (XtPointer) 0);
 
 		/*
 		 *    Call qualify proc to install new directory
 		 *    into widget.
 		 */
-		XtVaGetValues(widget, XmNqualifySearchDataProc, &q_proc, 0);
+		XtVaGetValues(widget, XmNqualifySearchDataProc, &q_proc, (XtPointer) 0);
 		(*q_proc)(widget, (XtPointer)&new_data,
 			          (XtPointer)search_data);
 	    }
@@ -1680,7 +1672,7 @@ fe_file_selection_qualify_search_data_proc(Widget widget,
 	if (dir_string[0] == '/') {
 	    dir_part = dir_string;
 	} else {
-	    XtVaGetValues(widget, XmNdirectory, &xm_directory, 0);
+	    XtVaGetValues(widget, XmNdirectory, &xm_directory, (XtPointer) 0);
 	    if (xm_directory != NULL) {
 		dir_part = _XmStringGetTextConcat(xm_directory);
 		p = (String)XtMalloc(strlen(dir_part) +
@@ -1708,7 +1700,7 @@ fe_file_selection_qualify_search_data_proc(Widget widget,
 		}
 	    }
 	} else { /* use XmNdirectory */
-	    XtVaGetValues(widget, XmNdirectory, &xm_directory, 0);
+	    XtVaGetValues(widget, XmNdirectory, &xm_directory, (XtPointer) 0);
 	    if (xm_directory != NULL) {
 		dir_part = _XmStringGetTextConcat(xm_directory);
 		dir_free_string = dir_part; /* to force free */
@@ -1723,7 +1715,7 @@ fe_file_selection_qualify_search_data_proc(Widget widget,
 	    if (!pattern_part)
 		pattern_part = _XmOSFindPatternPart(mask_string);
 	} else {
-	    XtVaGetValues(widget, XmNpattern, &xm_pattern, 0);
+	    XtVaGetValues(widget, XmNpattern, &xm_pattern, (XtPointer) 0);
 	    if (xm_pattern != NULL) {
 		pattern_part = _XmStringGetTextConcat(xm_pattern);
 		pattern_free_string = pattern_part; /* so it gets freed */
@@ -1743,7 +1735,7 @@ fe_file_selection_qualify_search_data_proc(Widget widget,
     if (s_data->value) {
 	qs_data->value = XmStringCopy(s_data->value);
     } else {
-	XtVaGetValues(widget, XmNdirSpec, &xm_dir_spec, 0);
+	XtVaGetValues(widget, XmNdirSpec, &xm_dir_spec, (XtPointer) 0);
 	qs_data->value = XmStringCopy(xm_dir_spec);
     }
     qs_data->length = XmStringLength(qs_data->value) ;
@@ -1827,7 +1819,7 @@ fe_file_selection_dirspec_cb(Widget widget, XtPointer closure, XtPointer cb)
 	vd->text->length = strlen(ptr);
 			
       } else if (vd->text->ptr[0] != '/') {
-	XtVaGetValues(fsb, XmNdirectory, &xm_directory, 0);
+	XtVaGetValues(fsb, XmNdirectory, &xm_directory, (XtPointer) 0);
 	if (xm_directory != NULL) {
 	  directory = _XmStringGetTextConcat(xm_directory);
 				
@@ -1877,7 +1869,7 @@ fe_file_selection_directory_up_action(Widget widget,
 			return;
 	}
 
-	XtVaGetValues(widget, XmNdirectory, &xm_directory, 0);
+	XtVaGetValues(widget, XmNdirectory, &xm_directory, (XtPointer) 0);
 
 	if (xm_directory != NULL) {
 		int len;
@@ -1894,7 +1886,7 @@ fe_file_selection_directory_up_action(Widget widget,
 
 			xm_directory = XmStringCreateSimple(directory);
 
-			XtVaSetValues(widget, XmNdirectory, xm_directory, 0);
+			XtVaSetValues(widget, XmNdirectory, xm_directory, (XtPointer) 0);
 
 			XmStringFree(xm_directory);
 		}
@@ -2314,7 +2306,7 @@ fe_file_selection_save_directory_cb(Widget widget, XtPointer a, XtPointer b)
     XtVaGetValues(widget,
 		  XmNdirectory, &xm_directory,
 		  XmNdirSpec, &xm_dirspec,
-		  0);
+		  (XtPointer) 0);
 
     if (xm_dirspec != 0) {
       char* directory = _XmStringGetTextConcat(xm_dirspec);
@@ -2433,9 +2425,9 @@ fe_CreateFileSelectionBox(Widget parent, char* name,
 		 *    the horizontal scrollbar. Bye...
 		 */
 		dir_list = XmFileSelectionBoxGetChild(fsb, XmDIALOG_DIR_LIST);
-		XtVaSetValues(dir_list, XmNscrollBarDisplayPolicy, XmAS_NEEDED, 0);
+		XtVaSetValues(dir_list, XmNscrollBarDisplayPolicy, XmAS_NEEDED, (XtPointer) 0);
 		file_list = XmFileSelectionBoxGetChild(fsb, XmDIALOG_LIST);
-		XtVaSetValues(file_list, XmNscrollBarDisplayPolicy, XmAS_NEEDED, 0);
+		XtVaSetValues(file_list, XmNscrollBarDisplayPolicy, XmAS_NEEDED, (XtPointer) 0);
 		dirspec = XmFileSelectionBoxGetChild(fsb, XmDIALOG_TEXT);
 		XtAddCallback(dirspec, XmNmodifyVerifyCallback,
 					  fe_file_selection_dirspec_cb, (XtPointer)fsb);
@@ -2598,7 +2590,7 @@ fe_ReadFileName_2 (	MWContext* context,
       else parent = iparent;
 
       XtVaGetValues (parent, XtNvisual, &v, XtNcolormap, &cmap,
-		     XtNdepth, &depth, 0);
+		     XtNdepth, &depth, (XtPointer) 0);
 
       ac = 0;
       XtSetArg (av[ac], XmNvisual, v); ac++;
@@ -2646,7 +2638,7 @@ fe_ReadFileName_2 (	MWContext* context,
 	  /* Make the default "save as" type html (ie, source) */
       ftd->selected_option = fe_FILE_TYPE_HTML;
       XtVaSetValues (samenu, XmNmenuHistory,
-		     ftd->options [ftd->selected_option], 0);
+		     ftd->options [ftd->selected_option], (XtPointer) 0);
       ac = 0;
       XtSetArg (av [ac], XmNsubMenuId, samenu); ac++;
       sabutton = fe_CreateOptionMenu (sabox, "formatType", av, ac);
@@ -2681,7 +2673,7 @@ fe_ReadFileName_2 (	MWContext* context,
 	   *    Restore the values saved in fe_file_selection_save_directory_cb()
 	   */
 	  if (fe_file_selection_directory != 0) {
-		  XtVaSetValues(fileb, XmNdirectory, fe_file_selection_directory, 0);
+		  XtVaSetValues(fileb, XmNdirectory, fe_file_selection_directory, (XtPointer) 0);
 	  }
     }
 
@@ -2705,11 +2697,11 @@ fe_ReadFileName_2 (	MWContext* context,
   XtAddCallback (fileb, XmNcancelCallback,  fe_file_cb, &data);
   XtAddCallback (fileb, XmNdestroyCallback, fe_file_destroy_cb, &data);
 
-  XtVaSetValues (XtParent (fileb), XmNtitle, title, 0);
+  XtVaSetValues (XtParent (fileb), XmNtitle, title, (XtPointer) 0);
 #if 0 /* mustMatch doesn't work! */
-  XtVaSetValues (fileb, XmNmustMatch, must_match, 0);
+  XtVaSetValues (fileb, XmNmustMatch, must_match, (XtPointer) 0);
 #else
-  XtVaSetValues (fileb, XmNmustMatch, False, 0);
+  XtVaSetValues (fileb, XmNmustMatch, False, (XtPointer) 0);
   data.must_match = must_match;
 #endif
 
@@ -2727,7 +2719,7 @@ fe_ReadFileName_2 (	MWContext* context,
     else
       def = default_url;
 
-    XtVaGetValues (fileb, XmNdirSpec, &xms, 0);
+    XtVaGetValues (fileb, XmNdirSpec, &xms, (XtPointer) 0);
     XmStringGetLtoR (xms, XmFONTLIST_DEFAULT_TAG, &s); /* s - is XtMalloc  */
     XmStringFree (xms);
 
@@ -2757,12 +2749,12 @@ fe_ReadFileName_2 (	MWContext* context,
     XtFree (s);
 
     /* If the dialog already existed, its data is out of date.  Resync. */
-    XtVaGetValues (fileb, XmNdirMask, &dirmask, 0);
+    XtVaGetValues (fileb, XmNdirMask, &dirmask, (XtPointer) 0);
     XmFileSelectionDoSearch (fileb, dirmask);
 
     /* Change the default file name. */
     xms = XmStringCreate (buf, XmFONTLIST_DEFAULT_TAG);
-    XtVaSetValues (fileb, XmNdirSpec, xms, 0);
+    XtVaSetValues (fileb, XmNdirSpec, xms, (XtPointer) 0);
     XmStringFree (xms);
 
 #ifdef NEW_DECODERS
@@ -2993,7 +2985,7 @@ fe_file_type_hack_extension_1 (struct fe_file_type_data *ftd,
   /* Get `file' from what's currently typed into the text field.
    */
   XtVaGetValues (ftd->fileb,
-		 (dirspec_p ? XmNdirSpec : XmNdirMask), &xm_file, 0);
+		 (dirspec_p ? XmNdirSpec : XmNdirMask), &xm_file, (XtPointer) 0);
   if (! xm_file) return;
   XmStringGetLtoR (xm_file, XmFONTLIST_DEFAULT_TAG, &file); /* file- XtMalloc */
   XmStringFree (xm_file);
@@ -3056,7 +3048,7 @@ fe_file_type_hack_extension_1 (struct fe_file_type_data *ftd,
 
       if (dirspec_p)
 	{
-	  XtVaSetValues (ftd->fileb, XmNdirSpec, xm_file, 0);
+	  XtVaSetValues (ftd->fileb, XmNdirSpec, xm_file, (XtPointer) 0);
 	}
       else
 	{
@@ -3065,13 +3057,13 @@ fe_file_type_hack_extension_1 (struct fe_file_type_data *ftd,
 	  /* Don't let what's currently typed into the `Selection' field
 	     to change as a result of running this search again -- that's
 	     totally bogus. */
-	  XtVaGetValues (ftd->fileb, XmNdirSpec, &saved_value, 0);
+	  XtVaGetValues (ftd->fileb, XmNdirSpec, &saved_value, (XtPointer) 0);
 
-	  XtVaSetValues (ftd->fileb, XmNdirMask, xm_file, 0);
+	  XtVaSetValues (ftd->fileb, XmNdirMask, xm_file, (XtPointer) 0);
 	  XmFileSelectionDoSearch (ftd->fileb, xm_file);
 	  if (saved_value)
 	    {
-	      XtVaSetValues (ftd->fileb, XmNdirSpec, saved_value, 0);
+	      XtVaSetValues (ftd->fileb, XmNdirSpec, saved_value, (XtPointer) 0);
 	      XmStringFree (saved_value);
 	    }
 	}
@@ -3235,7 +3227,7 @@ fe_open_url_cb (Widget widget, XtPointer closure, XtPointer call_data)
     {
     case XmCR_OK:
       if (! data->text) abort ();
-      XtVaGetValues (data->text, XmNvalue, &text, 0);
+      XtVaGetValues (data->text, XmNvalue, &text, (XtPointer) 0);
       if (! text) abort ();
       if (last_open_url_text) free (last_open_url_text);
       last_open_url_text = strdup (text);
@@ -3271,7 +3263,7 @@ fe_OpenURLCallback (Widget widget, XtPointer closure, XtPointer call_data)
   Colormap cmap = 0;
   Cardinal depth = 0;
   XtVaGetValues (mainw, XtNvisual, &v, XtNcolormap, &cmap,
-		 XtNdepth, &depth, 0);
+		 XtNdepth, &depth, (XtPointer) 0);
   ac = 0;
   XtSetArg (av[ac], XmNvisual, v); ac++;
   XtSetArg (av[ac], XmNdepth, depth); ac++;
@@ -3301,7 +3293,7 @@ fe_OpenURLCallback (Widget widget, XtPointer closure, XtPointer call_data)
   if (! last_open_url_text)
     if (CONTEXT_DATA (context)->url_text)
       XtVaGetValues (CONTEXT_DATA (context)->url_text,
-		     XmNvalue, &last_open_url_text, 0);
+		     XmNvalue, &last_open_url_text, (XtPointer) 0);
 
   ac = 0;
   XtSetArg (av [ac], XmNvalue, (last_open_url_text
@@ -3317,7 +3309,7 @@ fe_OpenURLCallback (Widget widget, XtPointer closure, XtPointer call_data)
 		 XmNbottomAttachment, XmATTACH_FORM,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (text,
 		 XmNtopAttachment, XmATTACH_FORM,
 		 XmNleftAttachment, XmATTACH_WIDGET,
@@ -3325,13 +3317,13 @@ fe_OpenURLCallback (Widget widget, XtPointer closure, XtPointer call_data)
 		 XmNrightAttachment, XmATTACH_FORM,
 		 XmNbottomAttachment, XmATTACH_WIDGET,
 		 XmNbottomWidget, line,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (line,
 		 XmNtopAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_FORM,
 		 XmNbottomAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtManageChild (label);
   XtManageChild (text);
   XtManageChild (line);
@@ -3368,7 +3360,7 @@ fe_CreatePromptDialog(MWContext *context, char* name,
   int ac;
 
   XtVaGetValues (mainw, XtNvisual, &v, XtNcolormap, &cmap,
-                 XtNdepth, &depth, 0);
+                 XtNdepth, &depth, (XtPointer) 0);
   ac = 0;
   XtSetArg (av[ac], XmNvisual, v); ac++;
   XtSetArg (av[ac], XmNdepth, depth); ac++;
@@ -3486,10 +3478,10 @@ fe_OpenURLDialog(MWContext* context)
   data->in_editor = in_editor;
 
   if (context->type == MWContextEditor)
-    XtVaSetValues(dialog, XmNdefaultButton, in_editor, 0);
+    XtVaSetValues(dialog, XmNdefaultButton, in_editor, (XtPointer) 0);
   else
 #endif
-    XtVaSetValues(dialog, XmNdefaultButton, in_browser, 0);
+    XtVaSetValues(dialog, XmNdefaultButton, in_browser, (XtPointer) 0);
 
   XtAddCallback(browse, XmNactivateCallback,fe_open_url_browse_cb, data);
 #ifdef EDITOR
@@ -3625,7 +3617,7 @@ fe_ReadVisual (MWContext *context)
   Cardinal depth = 0;
 
   XtVaGetValues (mainw, XtNvisual, &v, XtNcolormap, &cmap,
-		 XtNdepth, &depth, 0);
+		 XtNdepth, &depth, (XtPointer) 0);
 
   vi_in.screen = fe_ScreenNumber (screen);
   vi_out = XGetVisualInfo (dpy, VisualScreenMask, &vi_in, &item_count);
@@ -3668,7 +3660,7 @@ fe_ReadVisual (MWContext *context)
     XtVaSetValues (list,
 		   XmNselectedItems, (items + default_item),
 		   XmNselectedItemCount, 1,
-		   0);
+		   (XtPointer) 0);
   }
 
   data.context = context;
@@ -3712,7 +3704,7 @@ static void fe_visual_cb (Widget widget, XtPointer closure,
   XtVaGetValues (data->widget,
 		 XmNlistItems, &items,
 		 XmNlistItemCount, &count,
-		 0);
+		 (XtPointer) 0);
   switch (cb->reason)
     {
     case XmCR_OK:
@@ -3789,7 +3781,7 @@ fe_ViewSourceDialog (MWContext *context, const char *title, const char *url)
       sd = (struct fe_source_data *) calloc(sizeof (struct fe_source_data), 1);
 
       XtVaGetValues (mainw, XtNvisual, &v, XtNcolormap, &cmap,
-		     XtNdepth, &depth, 0);
+		     XtNdepth, &depth, (XtPointer) 0);
       ac = 0;
       XtSetArg (av[ac], XmNvisual, v); ac++;
       XtSetArg (av[ac], XmNdepth, depth); ac++;
@@ -3845,7 +3837,7 @@ fe_ViewSourceDialog (MWContext *context, const char *title, const char *url)
 		     XmNleftAttachment, XmATTACH_FORM,
 		     XmNrightAttachment, XmATTACH_WIDGET,
 		     XmNrightWidget, title_text,
-		     0);
+		     (XtPointer) 0);
       XtVaSetValues (url_label,
 		     XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		     XmNtopWidget, url_text,
@@ -3854,13 +3846,13 @@ fe_ViewSourceDialog (MWContext *context, const char *title, const char *url)
 		     XmNleftAttachment, XmATTACH_FORM,
 		     XmNrightAttachment, XmATTACH_WIDGET,
 		     XmNrightWidget, url_text,
-		     0);
+		     (XtPointer) 0);
 
       XtVaSetValues (title_text,
 		     XmNtopAttachment, XmATTACH_FORM,
 		     XmNbottomAttachment, XmATTACH_NONE,
 		     XmNrightAttachment, XmATTACH_FORM,
-		     0);
+		     (XtPointer) 0);
       XtVaSetValues (url_text,
 		     XmNtopAttachment, XmATTACH_WIDGET,
 		     XmNtopWidget, title_text,
@@ -3869,14 +3861,14 @@ fe_ViewSourceDialog (MWContext *context, const char *title, const char *url)
 		     XmNleftWidget, title_text,
 		     XmNrightAttachment, XmATTACH_OPPOSITE_WIDGET,
 		     XmNrightWidget, title_text,
-		     0);
+		     (XtPointer) 0);
       XtVaSetValues (XtParent (text),
 		     XmNtopAttachment, XmATTACH_WIDGET,
 		     XmNtopWidget, url_text,
 		     XmNbottomAttachment, XmATTACH_FORM,
 		     XmNleftAttachment, XmATTACH_FORM,
 		     XmNrightAttachment, XmATTACH_FORM,
-		     0);
+		     (XtPointer) 0);
 
       fe_attach_field_to_labels (title_text, title_label, url_label, 0);
 
@@ -3885,7 +3877,7 @@ fe_ViewSourceDialog (MWContext *context, const char *title, const char *url)
       XtAddCallback (ok_button, XmNactivateCallback,
 		     fe_close_source_cb, context);
 
-      XtVaSetValues (shell, XmNdefaultButton, save_button, 0);
+      XtVaSetValues (shell, XmNdefaultButton, save_button, (XtPointer) 0);
 
       XtManageChild (title_label);
       XtManageChild (title_text);
@@ -3903,11 +3895,11 @@ fe_ViewSourceDialog (MWContext *context, const char *title, const char *url)
       CONTEXT_DATA (context)->sd = sd;
     }
 
-  XtVaSetValues (sd->text, XmNcursorPosition, 0);
+  XtVaSetValues (sd->text, XmNcursorPosition, (XtPointer) 0);
   fe_SetTextField (sd->text, "");
-  XtVaSetValues (sd->name, XmNcursorPosition, 0, 0);
+  XtVaSetValues (sd->name, XmNcursorPosition, 0, (XtPointer) 0);
   fe_SetTextField (sd->name, (title ? title : ""));
-  XtVaSetValues (sd->url, XmNcursorPosition, 0, 0);
+  XtVaSetValues (sd->url, XmNcursorPosition, 0, (XtPointer) 0);
   fe_SetTextField (sd->url, (url ? url : ""));
 
   fe_NukeBackingStore (sd->dialog);
@@ -4098,7 +4090,7 @@ fe_RaiseSynchronousURLDialog (MWContext *context, Widget parent,
 #else /* SYNCHRONOUS_URL_DIALOG_WORKS */
 
   XtVaGetValues (parent, XtNvisual, &v, XtNcolormap, &cmap,
-		 XtNdepth, &depth, 0);
+		 XtNdepth, &depth, (XtPointer) 0);
 
   strcpy (title2, title);
   strcat (title2, "_popup");
@@ -4335,11 +4327,11 @@ fe_add_attachment(struct fe_mail_attach_data *mad, char *name)
   xmstr = XmStringCreate(name, XmFONTLIST_DEFAULT_TAG);
   XmListAddItem(mad->list, xmstr, 0);
 
-  XtVaGetValues (mad->text_p, XmNset, &b, 0);
+  XtVaGetValues (mad->text_p, XmNset, &b, (XtPointer) 0);
   if (b)
     m.desired_type = TEXT_PLAIN;
   else {
-    XtVaGetValues (mad->postscript_p, XmNset, &b, 0);
+    XtVaGetValues (mad->postscript_p, XmNset, &b, (XtPointer) 0);
     if (b)
       m.desired_type = APPLICATION_POSTSCRIPT;
   }
@@ -4412,7 +4404,7 @@ fe_attach_make_location(struct fe_mail_attach_data *mad)
   parent = CONTEXT_WIDGET(mad->context);
 
   XtVaGetValues (parent, XtNvisual, &v, XtNcolormap, &cmap,
-		 XtNdepth, &depth, 0);
+		 XtNdepth, &depth, (XtPointer) 0);
 
   ac = 0;
   XtSetArg (av[ac], XmNvisual, v); ac++;
@@ -4450,14 +4442,14 @@ fe_attach_make_location(struct fe_mail_attach_data *mad)
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (location_label,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, label,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (location_text,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, label,
@@ -4465,7 +4457,7 @@ fe_attach_make_location(struct fe_mail_attach_data *mad)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, location_label,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
 
   _XfeHeight(location_label) = _XfeHeight(location_text);
 
@@ -4572,7 +4564,7 @@ fe_attach_make_file(struct fe_mail_attach_data *mad)
   parent = CONTEXT_WIDGET (mad->context);
 
   XtVaGetValues (parent, XtNvisual, &v, XtNcolormap, &cmap,
-		 XtNdepth, &depth, 0);
+		 XtNdepth, &depth, (XtPointer) 0);
 
   ac = 0;
   XtSetArg (av[ac], XmNvisual, v); ac++;
@@ -4618,22 +4610,22 @@ fe_attach_doc_type_cb (Widget widget, XtPointer closure, XtPointer call_data)
   /*
    * my how intuitive, if the file is attach as source, desired type = NULL.
    */
-  XtVaSetValues (widget, XmNset, True, 0);
+  XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
   if (widget == mad->text_p) {
-    XtVaSetValues (mad->source_p, XmNset, False, 0);
-    XtVaSetValues (mad->postscript_p, XmNset, False, 0);
+    XtVaSetValues (mad->source_p, XmNset, False, (XtPointer) 0);
+    XtVaSetValues (mad->postscript_p, XmNset, False, (XtPointer) 0);
     if (attach_pos >= 0)
       mad->attachments[attach_pos].desired_type = TEXT_PLAIN;
   }
   else if (widget == mad->source_p) {
-    XtVaSetValues (mad->text_p, XmNset, False, 0);
-    XtVaSetValues (mad->postscript_p, XmNset, False, 0);
+    XtVaSetValues (mad->text_p, XmNset, False, (XtPointer) 0);
+    XtVaSetValues (mad->postscript_p, XmNset, False, (XtPointer) 0);
     if (attach_pos >= 0)
       mad->attachments[attach_pos].desired_type = NULL;
   }
   else if (widget == mad->postscript_p) {
-    XtVaSetValues (mad->source_p, XmNset, False, 0);
-    XtVaSetValues (mad->text_p, XmNset, False, 0);
+    XtVaSetValues (mad->source_p, XmNset, False, (XtPointer) 0);
+    XtVaSetValues (mad->text_p, XmNset, False, (XtPointer) 0);
     if (attach_pos >= 0)
       mad->attachments[attach_pos].desired_type = APPLICATION_POSTSCRIPT;
   }
@@ -4754,7 +4746,7 @@ fe_attach_delete_cb (Widget widget, XtPointer closure, XtPointer call_data)
    * the delete button.
    */
   if (!XmListGetSelectedPos(mad->list, &poslist, &npos)) {
-    XtVaSetValues(mad->delete, XmNsensitive, False, 0);
+    XtVaSetValues(mad->delete, XmNsensitive, False, (XtPointer) 0);
   }
   else XP_FREE(poslist);
 }
@@ -4783,7 +4775,7 @@ fe_attach_select_cb (Widget widget, XtPointer closure, XtPointer call_data)
   else XP_ASSERT (which_w != 0);
   fe_attach_doc_type_cb(which_w, mad, NULL);
 
-  XtVaSetValues(mad->delete, XmNsensitive, True, 0);
+  XtVaSetValues(mad->delete, XmNsensitive, True, (XtPointer) 0);
 }
 
 static void
@@ -4811,7 +4803,7 @@ fe_make_attach_dialog(MWContext* context)
     return;
 
   XtVaGetValues (CONTEXT_WIDGET(context), XtNvisual, &v, XtNcolormap, &cmap,
-		 XtNdepth, &depth, 0);
+		 XtNdepth, &depth, (XtPointer) 0);
   ac = 0;
   XtSetArg (av[ac], XmNvisual, v); ac++;
   XtSetArg (av[ac], XmNdepth, depth); ac++;
@@ -4872,13 +4864,13 @@ fe_make_attach_dialog(MWContext* context)
 		 XmNbottomAttachment, XmATTACH_FORM,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (label,
 		 XmNtopAttachment, XmATTACH_NONE,
 		 XmNbottomAttachment, XmATTACH_FORM,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (source_p,
 		 XmNtopAttachment, XmATTACH_NONE,
 		 XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -4886,7 +4878,7 @@ fe_make_attach_dialog(MWContext* context)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, label,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (text_p,
 		 XmNtopAttachment, XmATTACH_NONE,
 		 XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -4894,7 +4886,7 @@ fe_make_attach_dialog(MWContext* context)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, source_p,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (postscript_p,
 		 XmNtopAttachment, XmATTACH_NONE,
 		 XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -4902,7 +4894,7 @@ fe_make_attach_dialog(MWContext* context)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, text_p,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
 #ifdef dp_DEBUG
   fprintf(stderr, "Creating new fe_mail_attach_data...\n");
@@ -4958,7 +4950,7 @@ fe_make_attach_dialog(MWContext* context)
 		 strcmp(fe_last_attach_type,
 			APPLICATION_POSTSCRIPT) == 0 ? postscript_p :
 		 source_p),
-		XmNset, True, 0);
+		XmNset, True, (XtPointer) 0);
 
 #if 0
   /* Decide whether to attach a file or a URL based on what the URL is.
@@ -4997,7 +4989,7 @@ fe_make_attach_dialog(MWContext* context)
     if (file)
       fe_SetTextField (file_text, file);
 
-    XtVaSetValues (doc_p, XmNset, True, 0);
+    XtVaSetValues (doc_p, XmNset, True, (XtPointer) 0);
     fe_SetTextField (doc_text, url);
     if (string) free (string);
   }
@@ -5072,7 +5064,7 @@ fe_attach_dropfunc(Widget dropw, void* closure, fe_dnd_Event type,
     return;
 
   XtVaGetValues(CONTEXT_DATA(compose_context)->mcAttachments,
-		XmNsensitive, &sensitive_p, 0);
+		XmNsensitive, &sensitive_p, (XtPointer) 0);
   if (!sensitive_p)
     {
       /* If the Attachments field is not sensitive, then that means that
@@ -5234,7 +5226,7 @@ FE_InitializeMailCompositionContext (MWContext *context,
   /* #### data->mcReferences */
 
   xmstr = XmStringCreate((/* FUCK */char *) from, XmFONTLIST_DEFAULT_TAG);
-  XtVaSetValues(data->mcFrom, XmNlabelString, xmstr, 0);
+  XtVaSetValues(data->mcFrom, XmNlabelString, xmstr, (XtPointer) 0);
   XmStringFree(xmstr);
 
   /* #### warning this is cloned in mailnews.c (fe_set_compose_wrap_state) */
@@ -5262,7 +5254,7 @@ FE_InitializeMailCompositionContext (MWContext *context,
 		 XmNsensitive, True,
 		 XmNeditable, False,
 		 XmNcursorPositionVisible, False,
-		 0);
+		 (XtPointer) 0);
 
   /* All this focus stuff doesnt work too well yet. But this is better
      than not having this. */
@@ -5275,7 +5267,7 @@ FE_InitializeMailCompositionContext (MWContext *context,
   else if (!s || !*s)
     focusw = data->mcSubject;
     
-  XtVaSetValues(data->main_pane, XmNinitialFocus, focusw, 0);
+  XtVaSetValues(data->main_pane, XmNinitialFocus, focusw, (XtPointer) 0);
   XmProcessTraversal(focusw, XmTRAVERSE_CURRENT);
 
   if (data->show_toolbar_p && data->toolbar)	/* Sensitize the toolbars */
@@ -5325,7 +5317,7 @@ FE_GetMessageBody (MWContext *context,
   *body = 0;
   loc = 0;
   tmp = 0;
-  XtVaGetValues (data->mcBodyText, XmNvalue, &loc, XmNcolumns, &columns, 0);
+  XtVaGetValues (data->mcBodyText, XmNvalue, &loc, XmNcolumns, &columns, (XtPointer) 0);
   if (fe_LocaleCharSetID & MULTIBYTE) {
     columns *= 2;
   }
@@ -5404,7 +5396,7 @@ FE_BogusQuotationQuery (MWContext *context, Boolean double_p)
   Cardinal depth = 0;
   Widget parent = CONTEXT_WIDGET (context);
   XtVaGetValues (parent, XtNvisual, &v, XtNcolormap, &cmap,
-		 XtNdepth, &depth, 0);
+		 XtNdepth, &depth, (XtPointer) 0);
   ac = 0;
   XtSetArg (av[ac], XmNvisual, v); ac++;
   XtSetArg (av[ac], XmNdepth, depth); ac++;
@@ -5476,21 +5468,21 @@ fe_print_to_toggle_cb (Widget widget, XtPointer closure, XtPointer call_data)
   struct fe_print_data *fpd = (struct fe_print_data *) closure;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)call_data;
   if (!cb->set)
-    XtVaSetValues (widget, XmNset, True, 0);
+    XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
   else if (widget == fpd->printer)
     {
-      XtVaSetValues (fpd->file, XmNset, False, 0);
-      XtVaSetValues (fpd->browse, XmNsensitive, False, 0);
-      XtVaSetValues (fpd->file_text, XmNsensitive, False, 0);
-      XtVaSetValues (fpd->command_text, XmNsensitive, True, 0);
+      XtVaSetValues (fpd->file, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fpd->browse, XmNsensitive, False, (XtPointer) 0);
+      XtVaSetValues (fpd->file_text, XmNsensitive, False, (XtPointer) 0);
+      XtVaSetValues (fpd->command_text, XmNsensitive, True, (XtPointer) 0);
       XmProcessTraversal (fpd->command_text, XmTRAVERSE_CURRENT);
     }
   else if (widget == fpd->file)
     {
-      XtVaSetValues (fpd->printer, XmNset, False, 0);
-      XtVaSetValues (fpd->browse, XmNsensitive, True, 0);
-      XtVaSetValues (fpd->file_text, XmNsensitive, True, 0);
-      XtVaSetValues (fpd->command_text, XmNsensitive, False, 0);
+      XtVaSetValues (fpd->printer, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fpd->browse, XmNsensitive, True, (XtPointer) 0);
+      XtVaSetValues (fpd->file_text, XmNsensitive, True, (XtPointer) 0);
+      XtVaSetValues (fpd->command_text, XmNsensitive, False, (XtPointer) 0);
       XmProcessTraversal (fpd->file_text, XmTRAVERSE_CURRENT);
     }
   else
@@ -5503,11 +5495,11 @@ fe_print_order_toggle_cb (Widget widget, XtPointer closure,XtPointer call_data)
   struct fe_print_data *fpd = (struct fe_print_data *) closure;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)call_data;
   if (!cb->set)
-    XtVaSetValues (widget, XmNset, True, 0);
+    XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
   else if (widget == fpd->first)
-    XtVaSetValues (fpd->last, XmNset, False, 0);
+    XtVaSetValues (fpd->last, XmNset, False, (XtPointer) 0);
   else if (widget == fpd->last)
-    XtVaSetValues (fpd->first, XmNset, False, 0);
+    XtVaSetValues (fpd->first, XmNset, False, (XtPointer) 0);
   else
     abort ();
 }
@@ -5519,11 +5511,11 @@ fe_print_orientation_toggle_cb (Widget widget, XtPointer closure,
   struct fe_print_data *fpd = (struct fe_print_data *) closure;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)call_data;
   if (!cb->set)
-    XtVaSetValues (widget, XmNset, True, 0);
+    XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
   else if (widget == fpd->portrait)
-    XtVaSetValues (fpd->landscape, XmNset, False, 0);
+    XtVaSetValues (fpd->landscape, XmNset, False, (XtPointer) 0);
   else if (widget == fpd->landscape)
-    XtVaSetValues (fpd->portrait, XmNset, False, 0);
+    XtVaSetValues (fpd->portrait, XmNset, False, (XtPointer) 0);
   else
     abort ();
 }
@@ -5535,11 +5527,11 @@ fe_print_color_toggle_cb (Widget widget, XtPointer closure,
   struct fe_print_data *fpd = (struct fe_print_data *) closure;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)call_data;
   if (!cb->set)
-    XtVaSetValues (widget, XmNset, True, 0);
+    XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
   else if (widget == fpd->grey)
-    XtVaSetValues (fpd->color, XmNset, False, 0);
+    XtVaSetValues (fpd->color, XmNset, False, (XtPointer) 0);
   else if (widget == fpd->color)
-    XtVaSetValues (fpd->grey, XmNset, False, 0);
+    XtVaSetValues (fpd->grey, XmNset, False, (XtPointer) 0);
   else
     abort ();
 }
@@ -5551,30 +5543,30 @@ fe_print_paper_toggle_cb (Widget widget, XtPointer closure,
   struct fe_print_data *fpd = (struct fe_print_data *) closure;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)call_data;
   if (!cb->set)
-    XtVaSetValues (widget, XmNset, True, 0);
+    XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
   else if (widget == fpd->letter)
     {
-      XtVaSetValues (fpd->legal,  XmNset, False, 0);
-      XtVaSetValues (fpd->exec,   XmNset, False, 0);
-      XtVaSetValues (fpd->a4,     XmNset, False, 0);
+      XtVaSetValues (fpd->legal,  XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fpd->exec,   XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fpd->a4,     XmNset, False, (XtPointer) 0);
     }
   else if (widget == fpd->legal)
     {
-      XtVaSetValues (fpd->letter, XmNset, False, 0);
-      XtVaSetValues (fpd->exec,   XmNset, False, 0);
-      XtVaSetValues (fpd->a4,     XmNset, False, 0);
+      XtVaSetValues (fpd->letter, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fpd->exec,   XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fpd->a4,     XmNset, False, (XtPointer) 0);
     }
   else if (widget == fpd->exec)
     {
-      XtVaSetValues (fpd->letter, XmNset, False, 0);
-      XtVaSetValues (fpd->legal,  XmNset, False, 0);
-      XtVaSetValues (fpd->a4,     XmNset, False, 0);
+      XtVaSetValues (fpd->letter, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fpd->legal,  XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fpd->a4,     XmNset, False, (XtPointer) 0);
     }
   else if (widget == fpd->a4)
     {
-      XtVaSetValues (fpd->letter, XmNset, False, 0);
-      XtVaSetValues (fpd->legal,  XmNset, False, 0);
-      XtVaSetValues (fpd->exec,   XmNset, False, 0);
+      XtVaSetValues (fpd->letter, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fpd->legal,  XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fpd->exec,   XmNset, False, (XtPointer) 0);
     }
   else
     abort ();
@@ -5587,30 +5579,30 @@ fe_print_size_toggle_cb (Widget widget, XtPointer closure, XtPointer call_data)
   struct fe_print_data *fpd = (struct fe_print_data *) closure;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)call_data;
   if (!cb->set)
-    XtVaSetValues (widget, XmNset, True, 0);
+    XtVaSetValues (widget, XmNset, True, (XtPointer) 0);
   else if (widget == fpd->small)
     {
-      XtVaSetValues (fpd->med,   XmNset, False, 0);
-      XtVaSetValues (fpd->large, XmNset, False, 0);
-      XtVaSetValues (fpd->huge,  XmNset, False, 0);
+      XtVaSetValues (fpd->med,   XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fpd->large, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fpd->huge,  XmNset, False, (XtPointer) 0);
     }
   else if (widget == fpd->med)
     {
-      XtVaSetValues (fpd->small, XmNset, False, 0);
-      XtVaSetValues (fpd->large, XmNset, False, 0);
-      XtVaSetValues (fpd->huge,  XmNset, False, 0);
+      XtVaSetValues (fpd->small, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fpd->large, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fpd->huge,  XmNset, False, (XtPointer) 0);
     }
   else if (widget == fpd->large)
     {
-      XtVaSetValues (fpd->small, XmNset, False, 0);
-      XtVaSetValues (fpd->med,   XmNset, False, 0);
-      XtVaSetValues (fpd->huge,  XmNset, False, 0);
+      XtVaSetValues (fpd->small, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fpd->med,   XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fpd->huge,  XmNset, False, (XtPointer) 0);
     }
   else if (widget == fpd->huge)
     {
-      XtVaSetValues (fpd->small, XmNset, False, 0);
-      XtVaSetValues (fpd->med,   XmNset, False, 0);
-      XtVaSetValues (fpd->large, XmNset, False, 0);
+      XtVaSetValues (fpd->small, XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fpd->med,   XmNset, False, (XtPointer) 0);
+      XtVaSetValues (fpd->large, XmNset, False, (XtPointer) 0);
     }
   else
     abort ();
@@ -5645,7 +5637,7 @@ fe_browse_file_of_text (MWContext *context, Widget text_field, Boolean dirp)
     parent = CONTEXT_WIDGET (context);
 
   XtVaGetValues (parent, XtNvisual, &v, XtNcolormap, &cmap,
-		 XtNdepth, &depth, 0);
+		 XtNdepth, &depth, (XtPointer) 0);
   text = fe_GetTextField(text_field);
   text = fe_StringTrim (text);
 
@@ -5718,14 +5710,14 @@ fe_browse_file_of_text (MWContext *context, Widget text_field, Boolean dirp)
     {
       XtVaSetValues (fileb,
 		     XmNdirMask, xmpat,
-		     XmNpattern, xmpat, 0);
+		     XmNpattern, xmpat, (XtPointer) 0);
 #if 0
       /*
        *    The XtVaSetValues on dirMask/pattern will cause this anyway.
        */
       XmFileSelectionDoSearch (fileb, xmpat);
 #endif
-      XtVaSetValues (fileb, XmNdirSpec, xmfile, 0);
+      XtVaSetValues (fileb, XmNdirSpec, xmfile, (XtPointer) 0);
       XmStringFree (xmpat);
       XmStringFree (xmfile);
     }
@@ -5785,7 +5777,7 @@ fe_browse_file_of_text_in_url (MWContext *context, Widget text_field, Boolean di
     parent = CONTEXT_WIDGET (context);
 
   XtVaGetValues (parent, XtNvisual, &v, XtNcolormap, &cmap,
-		 XtNdepth, &depth, 0);
+		 XtNdepth, &depth, (XtPointer) 0);
   text = fe_GetTextField(text_field);
   orig_text = text;
   text = fe_StringTrim (text);
@@ -5867,14 +5859,14 @@ fe_browse_file_of_text_in_url (MWContext *context, Widget text_field, Boolean di
   if (xmpat) {
     XtVaSetValues (fileb,
 		   XmNdirMask, xmpat,
-		   XmNpattern, xmpat, 0);
+		   XmNpattern, xmpat, (XtPointer) 0);
 #if 0
     /*
      *    The XtVaSetValues on dirMask/pattern will cause this anyway.
      */
     XmFileSelectionDoSearch (fileb, xmpat);
 #endif
-    XtVaSetValues (fileb, XmNdirSpec, xmfile, 0);
+    XtVaSetValues (fileb, XmNdirSpec, xmfile, (XtPointer) 0);
     XmStringFree (xmpat);
     XmStringFree (xmfile);
   }
@@ -6150,40 +6142,40 @@ fe_print_cb (Widget widget, XtPointer closure, XtPointer call_data)
    */
   fe_UnmanageChild_safe (fpd->shell);
 
-  XtVaGetValues (fpd->printer, XmNset, &b, 0);
+  XtVaGetValues (fpd->printer, XmNset, &b, (XtPointer) 0);
   last_to_file_p = !b;
   if (fe_globalPrefs.print_command) free (fe_globalPrefs.print_command);
-  XtVaGetValues (fpd->command_text, XmNvalue, &fe_globalPrefs.print_command,0);
+  XtVaGetValues (fpd->command_text, XmNvalue, &fe_globalPrefs.print_command,(XtPointer) 0);
   if (last_print_file_name) free (last_print_file_name);
   last_print_file_name = fe_GetTextField(fpd->file_text);
-  XtVaGetValues (fpd->portrait, XmNset, &b, 0);
+  XtVaGetValues (fpd->portrait, XmNset, &b, (XtPointer) 0);
   fe_globalPrefs.print_landscape = !b;
-  XtVaGetValues (fpd->last, XmNset, &b, 0);
+  XtVaGetValues (fpd->last, XmNset, &b, (XtPointer) 0);
   fe_globalPrefs.print_reversed = b;
-  XtVaGetValues (fpd->grey, XmNset, &b, 0);
+  XtVaGetValues (fpd->grey, XmNset, &b, (XtPointer) 0);
   fe_globalPrefs.print_color = !b;
-  XtVaGetValues (fpd->letter, XmNset, &b, 0);
+  XtVaGetValues (fpd->letter, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.print_paper_size = 0;
-  XtVaGetValues (fpd->legal, XmNset, &b, 0);
+  XtVaGetValues (fpd->legal, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.print_paper_size = 1;
-  XtVaGetValues (fpd->exec, XmNset, &b, 0);
+  XtVaGetValues (fpd->exec, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.print_paper_size = 2;
-  XtVaGetValues (fpd->a4, XmNset, &b, 0);
+  XtVaGetValues (fpd->a4, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.print_paper_size = 3;
 
 #ifdef DEBUG_jwz
-  XtVaGetValues (fpd->small, XmNset, &b, 0);
+  XtVaGetValues (fpd->small, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.print_font_size = -1;
-  XtVaGetValues (fpd->med, XmNset, &b, 0);
+  XtVaGetValues (fpd->med, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.print_font_size = 0;
-  XtVaGetValues (fpd->large, XmNset, &b, 0);
+  XtVaGetValues (fpd->large, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.print_font_size = 1;
-  XtVaGetValues (fpd->huge, XmNset, &b, 0);
+  XtVaGetValues (fpd->huge, XmNset, &b, (XtPointer) 0);
   if (b) fe_globalPrefs.print_font_size = 2;
 
-  XtVaGetValues (fpd->header_toggle, XmNset, &b, 0);
+  XtVaGetValues (fpd->header_toggle, XmNset, &b, (XtPointer) 0);
   fe_globalPrefs.print_header_p = b;
-  XtVaGetValues (fpd->footer_toggle, XmNset, &b, 0);
+  XtVaGetValues (fpd->footer_toggle, XmNset, &b, (XtPointer) 0);
   fe_globalPrefs.print_footer_p = b;
 
   {
@@ -6272,7 +6264,7 @@ fe_PrintDialog (MWContext *context)
     calloc (sizeof (struct fe_print_data), 1);
 
   XtVaGetValues (mainw, XtNvisual, &v, XtNcolormap, &cmap,
-		 XtNdepth, &depth, 0);
+		 XtNdepth, &depth, (XtPointer) 0);
 
   ac = 0;
   XtSetArg (av[ac], XmNvisual, v); ac++;
@@ -6400,12 +6392,12 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, to_printer_toggle,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (to_printer_toggle,
 		 XmNtopAttachment, XmATTACH_FORM,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (to_file_toggle,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, to_printer_toggle,
@@ -6414,7 +6406,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, to_printer_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (print_command_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, print_command_text,
@@ -6423,7 +6415,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, print_command_text,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (print_command_text,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, to_printer_toggle,
@@ -6431,7 +6423,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, to_printer_toggle,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (file_name_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, file_name_text,
@@ -6440,7 +6432,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, file_name_text,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (file_name_text,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, print_command_text,
@@ -6449,14 +6441,14 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftWidget, print_command_text,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, browse_button,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (browse_button,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, print_command_text,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
 
   fe_attach_field_to_labels (to_printer_toggle,
 			     print_to_label, print_command_label,
@@ -6465,7 +6457,7 @@ fe_PrintDialog (MWContext *context)
 #endif /* DEBUG_jwz */
 			     file_name_label, 0);
 
-  XtVaSetValues (browse_button, XmNheight, file_name_text->core.height, 0);
+  XtVaSetValues (browse_button, XmNheight, file_name_text->core.height, (XtPointer) 0);
 
   XtVaSetValues (line,
 		 XmNtopAttachment, XmATTACH_WIDGET,
@@ -6473,7 +6465,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
 
   XtVaSetValues (print_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -6483,7 +6475,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, first_first_toggle,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (first_first_toggle,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, line,
@@ -6491,7 +6483,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, print_command_text,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (last_first_toggle,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, first_first_toggle,
@@ -6500,7 +6492,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, first_first_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   XtVaSetValues (orientation_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -6510,7 +6502,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, portrait_toggle,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (portrait_toggle,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, first_first_toggle,
@@ -6518,7 +6510,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, first_first_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (landscape_toggle,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, portrait_toggle,
@@ -6527,7 +6519,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, portrait_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   XtVaSetValues (print_color_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -6537,7 +6529,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, greyscale_toggle,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (greyscale_toggle,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, portrait_toggle,
@@ -6545,7 +6537,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, portrait_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (color_toggle,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, greyscale_toggle,
@@ -6554,7 +6546,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, greyscale_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   XtVaSetValues (paper_size_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -6564,7 +6556,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, letter_toggle,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (letter_toggle,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, greyscale_toggle,
@@ -6572,7 +6564,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, greyscale_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (legal_toggle,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, letter_toggle,
@@ -6581,7 +6573,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, letter_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (executive_toggle,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, letter_toggle,
@@ -6589,7 +6581,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, letter_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (a4_toggle,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, executive_toggle,
@@ -6598,7 +6590,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, executive_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
 #ifdef DEBUG_jwz
   XtVaSetValues (line2,
@@ -6607,7 +6599,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (font_size_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, small_toggle,
@@ -6616,7 +6608,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, small_toggle,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (small_toggle,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, line2,
@@ -6624,7 +6616,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, executive_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (med_toggle,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, small_toggle,
@@ -6633,7 +6625,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, small_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (large_toggle,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, med_toggle,
@@ -6642,7 +6634,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, med_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (huge_toggle,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, large_toggle,
@@ -6651,7 +6643,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, large_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 
   XtVaSetValues (header_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -6661,7 +6653,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, header_text,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (header_text,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, small_toggle,
@@ -6669,7 +6661,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, small_toggle,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
 
   XtVaSetValues (footer_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -6679,7 +6671,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, footer_text,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (footer_text,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, header_text,
@@ -6687,7 +6679,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, header_text,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
 
   XtVaSetValues (header_doc_1,
 		 XmNtopAttachment, XmATTACH_WIDGET,
@@ -6696,7 +6688,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, footer_text,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (header_doc_2,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, header_doc_1,
@@ -6704,7 +6696,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, header_doc_1,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
 
   XtVaSetValues (margins_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -6714,7 +6706,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, hmargin_text,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (hmargin_text,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, header_doc_2,
@@ -6722,7 +6714,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, header_doc_2,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (vmargin_text,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, hmargin_text,
@@ -6731,7 +6723,7 @@ fe_PrintDialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, hmargin_text,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
 #endif /* DEBUG_jwz */
 
 
@@ -6779,7 +6771,7 @@ fe_PrintDialog (MWContext *context)
 #endif /* DEBUG_jwz */
 
 
-  XtVaSetValues (print_command_text, XmNvalue, fe_globalPrefs.print_command,0);
+  XtVaSetValues (print_command_text, XmNvalue, fe_globalPrefs.print_command,(XtPointer) 0);
   if (!last_print_file_name || !*last_print_file_name) {
 	/* Use a default file name. We need to strdup here as we free this
 	   later. */
@@ -6788,50 +6780,50 @@ fe_PrintDialog (MWContext *context)
   fe_SetTextField(file_name_text, last_print_file_name);
   if (last_to_file_p)
     {
-      XtVaSetValues (to_file_toggle, XmNset, True, 0);
-      XtVaSetValues (print_command_text, XmNsensitive, False, 0);
-      XtVaSetValues (shell, XmNinitialFocus, file_name_text, 0);
+      XtVaSetValues (to_file_toggle, XmNset, True, (XtPointer) 0);
+      XtVaSetValues (print_command_text, XmNsensitive, False, (XtPointer) 0);
+      XtVaSetValues (shell, XmNinitialFocus, file_name_text, (XtPointer) 0);
     }
   else
     {
-      XtVaSetValues (to_printer_toggle, XmNset, True, 0);
-      XtVaSetValues (file_name_text, XmNsensitive, False, 0);
-      XtVaSetValues (browse_button, XmNsensitive, False, 0);
-      XtVaSetValues (shell, XmNinitialFocus, print_command_text, 0);
+      XtVaSetValues (to_printer_toggle, XmNset, True, (XtPointer) 0);
+      XtVaSetValues (file_name_text, XmNsensitive, False, (XtPointer) 0);
+      XtVaSetValues (browse_button, XmNsensitive, False, (XtPointer) 0);
+      XtVaSetValues (shell, XmNinitialFocus, print_command_text, (XtPointer) 0);
     }
   XtVaSetValues ((fe_globalPrefs.print_reversed
 		  ? last_first_toggle : first_first_toggle),
-		 XmNset, True, 0);
+		 XmNset, True, (XtPointer) 0);
   XtVaSetValues ((fe_globalPrefs.print_landscape
 		  ? landscape_toggle : portrait_toggle),
-		 XmNset, True, 0);
+		 XmNset, True, (XtPointer) 0);
   XtVaSetValues ((fe_globalPrefs.print_color
 		  ? color_toggle : greyscale_toggle),
-		 XmNset, True, 0);
+		 XmNset, True, (XtPointer) 0);
   XtVaSetValues ((fe_globalPrefs.print_paper_size == 0 ? letter_toggle :
 		  fe_globalPrefs.print_paper_size == 1 ? legal_toggle :
 		  fe_globalPrefs.print_paper_size == 2 ? executive_toggle :
 		  a4_toggle),
-		 XmNset, True, 0);
+		 XmNset, True, (XtPointer) 0);
 
 #ifdef DEBUG_jwz
   XtVaSetValues ((fe_globalPrefs.print_font_size == -1 ? small_toggle :
 		  fe_globalPrefs.print_font_size ==  1 ? large_toggle :
 		  fe_globalPrefs.print_font_size ==  2 ? huge_toggle :
                   med_toggle),
-		 XmNset, True, 0);
-  XtVaSetValues (header_text, XmNvalue, fe_globalPrefs.print_header, 0);
-  XtVaSetValues (footer_text, XmNvalue, fe_globalPrefs.print_footer, 0);
+		 XmNset, True, (XtPointer) 0);
+  XtVaSetValues (header_text, XmNvalue, fe_globalPrefs.print_header, (XtPointer) 0);
+  XtVaSetValues (footer_text, XmNvalue, fe_globalPrefs.print_footer, (XtPointer) 0);
 
-  XtVaSetValues (header_label, XmNset, fe_globalPrefs.print_header_p, 0);
-  XtVaSetValues (footer_label, XmNset, fe_globalPrefs.print_footer_p, 0);
+  XtVaSetValues (header_label, XmNset, fe_globalPrefs.print_header_p, (XtPointer) 0);
+  XtVaSetValues (footer_label, XmNset, fe_globalPrefs.print_footer_p, (XtPointer) 0);
 
   {
     char s[30];
     sprintf (s, "%.1f", (float) (fe_globalPrefs.print_hmargin / 72.0));
-    XtVaSetValues (hmargin_text, XmNvalue, s, 0);
+    XtVaSetValues (hmargin_text, XmNvalue, s, (XtPointer) 0);
     sprintf (s, "%.1f", (float) (fe_globalPrefs.print_vmargin / 72.0));
-    XtVaSetValues (vmargin_text, XmNvalue, s, 0);
+    XtVaSetValues (vmargin_text, XmNvalue, s, (XtPointer) 0);
   }
 #endif /* DEBUG_jwz */
 
@@ -6901,16 +6893,16 @@ fe_find_refresh_data(fe_FindData *find_data)
     if (find_data->string)
       XP_FREE (find_data->string);
     find_data->string = 0;
-    XtVaGetValues (find_data->text, XmNvalue, &loc, 0);
+    XtVaGetValues (find_data->text, XmNvalue, &loc, (XtPointer) 0);
     find_data->string = (char *) fe_ConvertFromLocaleEncoding (
 					find_data->context->win_csid, loc);
     if (find_data->string != (char *) loc) {
       free (loc);
     }
     XtVaGetValues (find_data->case_sensitive, XmNset,
-		   &find_data->case_sensitive_p, 0);
+		   &find_data->case_sensitive_p, (XtPointer) 0);
     XtVaGetValues (find_data->backward,
-		   XmNset, &find_data->backward_p, 0);
+		   XmNset, &find_data->backward_p, (XtPointer) 0);
     /* For mail/news contexts, the Search in Header/Body is loaded into the
        fe_FindData in the valueChangeCallback */
   }
@@ -7083,8 +7075,8 @@ fe_find_cb(Widget widget, XtPointer closure, XtPointer call_data)
       XtUnmanageChild(find_data->shell);
     break;
   case XmCR_APPLY:	/* clear */
-    XtVaSetValues (find_data->text, XmNcursorPosition, 0, 0);
-    XtVaSetValues (find_data->text, XmNvalue, "", 0);
+    XtVaSetValues (find_data->text, XmNcursorPosition, 0, (XtPointer) 0);
+    XtVaSetValues (find_data->text, XmNvalue, "", (XtPointer) 0);
     XmProcessTraversal (find_data->text, XmTRAVERSE_CURRENT);
     break;
   case XmCR_CANCEL:	/* cancel */
@@ -7107,7 +7099,7 @@ fe_find_head_or_body_changed(Widget widget, XtPointer closure,
   }
   XmToggleButtonGadgetSetState(find_data->msg_body, !find_data->find_in_headers, FALSE);
   XmToggleButtonGadgetSetState(find_data->msg_head, find_data->find_in_headers, FALSE);
-  XtVaSetValues(find_data->backward, XmNsensitive, !find_data->find_in_headers, 0);
+  XtVaSetValues(find_data->backward, XmNsensitive, !find_data->find_in_headers, (XtPointer) 0);
 }
   
 
@@ -7251,7 +7243,7 @@ fe_FindDialog (MWContext *context, Boolean again)
 		  XmNrightWidget, msg_head,
 		  XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET,
 		  XmNbottomWidget, msg_head,
-		  0);
+		  (XtPointer) 0);
     XtVaSetValues(msg_head,
 		  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		  XmNtopWidget, msg_body,
@@ -7259,12 +7251,12 @@ fe_FindDialog (MWContext *context, Boolean again)
 		  XmNrightWidget, msg_body,
 		  XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET,
 		  XmNbottomWidget, msg_body,
-		  0);
+		  (XtPointer) 0);
     XtVaSetValues(msg_body,
 		  XmNtopAttachment, XmATTACH_FORM,
 		  XmNrightAttachment, XmATTACH_FORM,
 		  XmNbottomAttachment, XmATTACH_NONE,
-		  0);
+		  (XtPointer) 0);
   }
 
   XtVaSetValues (find_label,
@@ -7275,7 +7267,7 @@ fe_FindDialog (MWContext *context, Boolean again)
 		 XmNrightWidget, find_text,
 		 XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNbottomWidget, find_text,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (find_text,
 		 XmNtopAttachment, msg_body ? XmATTACH_WIDGET : XmATTACH_FORM,
 		 XmNtopWidget, msg_body,
@@ -7283,7 +7275,7 @@ fe_FindDialog (MWContext *context, Boolean again)
 		 XmNleftPosition, 10,
 		 XmNrightAttachment, XmATTACH_FORM,
 		 XmNbottomAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (case_sensitive_toggle,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, find_text,
@@ -7291,7 +7283,7 @@ fe_FindDialog (MWContext *context, Boolean again)
 		 XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNleftWidget, find_text,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (backwards_toggle,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, case_sensitive_toggle,
@@ -7300,7 +7292,7 @@ fe_FindDialog (MWContext *context, Boolean again)
 		 XmNleftAttachment, XmATTACH_WIDGET,
 		 XmNleftWidget, case_sensitive_toggle,
 		 XmNrightAttachment, XmATTACH_NONE,
-		 0);
+		 (XtPointer) 0);
   ac = 0;
   if (findin) {
     fe_find_head_or_body_changed(find_data->find_in_headers ? msg_head : msg_body,
@@ -7316,7 +7308,7 @@ fe_FindDialog (MWContext *context, Boolean again)
   XtManageChildren (kids, ac);
   ac = 0;
   XtManageChild (form);
-  XtVaSetValues (form, XmNinitialFocus, find_text, 0);
+  XtVaSetValues (form, XmNinitialFocus, find_text, (XtPointer) 0);
 
   fe_NukeBackingStore (shell);
   XtManageChild (shell);
@@ -7359,7 +7351,7 @@ XFE_AskStreamQuestion (MWContext *context)
   Colormap cmap = 0;
   Cardinal depth = 0;
   XtVaGetValues (mainw, XtNvisual, &v, XtNcolormap, &cmap,
-		 XtNdepth, &depth, 0);
+		 XtNdepth, &depth, (XtPointer) 0);
   ac = 0;
   XtSetArg (av[ac], XmNvisual, v); ac++;
   XtSetArg (av[ac], XmNdepth, depth); ac++;
@@ -7456,7 +7448,7 @@ fe_LicenseDialog (MWContext *context)
     return;
 
   XtVaGetValues (mainw, XtNvisual, &v, XtNcolormap, &cmap,
-		 XtNdepth, &depth, 0);
+		 XtNdepth, &depth, (XtPointer) 0);
   ac = 0;
   XtSetArg (av[ac], XmNvisual, v); ac++;
   XtSetArg (av[ac], XmNdepth, depth); ac++;
@@ -7495,7 +7487,7 @@ fe_LicenseDialog (MWContext *context)
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (XtParent (text),
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, label1,
@@ -7503,13 +7495,13 @@ fe_LicenseDialog (MWContext *context)
 		 XmNbottomWidget, label2,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (label2,
 		 XmNtopAttachment, XmATTACH_NONE,
 		 XmNbottomAttachment, XmATTACH_FORM,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
 
   {
     char *license = 0;
@@ -7521,7 +7513,7 @@ fe_LicenseDialog (MWContext *context)
         license = "Please fill in";
         /* abort (); */
       }
-    XtVaSetValues (text, XmNvalue, license, 0);
+    XtVaSetValues (text, XmNvalue, license, (XtPointer) 0);
     if (data) free (data);
   }
 
@@ -7535,7 +7527,7 @@ fe_LicenseDialog (MWContext *context)
 
   {
     struct fe_confirm_data data;
-    XtVaSetValues (dialog, XmNdefaultButton, accept, 0);
+    XtVaSetValues (dialog, XmNdefaultButton, accept, (XtPointer) 0);
     XtAddCallback (accept, XmNactivateCallback, fe_destroy_ok_cb, &data);
     XtAddCallback (reject, XmNactivateCallback, fe_destroy_cancel_cb, &data);
     XtAddCallback (dialog, XmNdestroyCallback, fe_destroy_finish_cb, &data);
@@ -7644,7 +7636,7 @@ fe_make_docinfo_dialog (MWContext *context)
   did = (struct fe_docinfo_data *) calloc (sizeof (struct fe_docinfo_data), 1);
 
   XtVaGetValues (mainw, XtNvisual, &v, XtNcolormap, &cmap,
-		 XtNdepth, &depth, 0);
+		 XtNdepth, &depth, (XtPointer) 0);
   ac = 0;
   XtSetArg (av[ac], XmNvisual, v); ac++;
   XtSetArg (av[ac], XmNdepth, depth); ac++;
@@ -7739,7 +7731,7 @@ fe_make_docinfo_dialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, title_text,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (url_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, url_text,
@@ -7748,7 +7740,7 @@ fe_make_docinfo_dialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, url_text,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (mod_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNtopWidget, mod_text,
@@ -7757,7 +7749,7 @@ fe_make_docinfo_dialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, mod_text,
-		 0);
+		 (XtPointer) 0);
 #ifdef DOCINFO_SOURCE_TEXT
   XtVaSetValues (source_label,
 		 XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -7767,7 +7759,7 @@ fe_make_docinfo_dialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, source_text,
-		 0);
+		 (XtPointer) 0);
 #endif
 #ifdef DOCINFO_CHARSET_TEXT
   XtVaSetValues (charset_label,
@@ -7778,7 +7770,7 @@ fe_make_docinfo_dialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, charset_text,
-		 0);
+		 (XtPointer) 0);
 #endif
 #ifdef DOCINFO_VISUAL_TEXT
   XtVaSetValues (dpy_label,
@@ -7788,14 +7780,14 @@ fe_make_docinfo_dialog (MWContext *context)
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_WIDGET,
 		 XmNrightWidget, dpy_text,
-		 0);
+		 (XtPointer) 0);
 #endif
 
   XtVaSetValues (title_text,
 		 XmNtopAttachment, XmATTACH_FORM,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (url_text,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, title_text,
@@ -7806,7 +7798,7 @@ fe_make_docinfo_dialog (MWContext *context)
 		 XmNrightAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNrightWidget, title_text,
 		 XmNrightOffset, 0,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (mod_text,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, url_text,
@@ -7817,7 +7809,7 @@ fe_make_docinfo_dialog (MWContext *context)
 		 XmNrightAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNrightWidget, url_text,
 		 XmNrightOffset, 0,
-		 0);
+		 (XtPointer) 0);
 #ifdef DOCINFO_SOURCE_TEXT
   XtVaSetValues (source_text,
 		 XmNtopAttachment, XmATTACH_WIDGET,
@@ -7829,7 +7821,7 @@ fe_make_docinfo_dialog (MWContext *context)
 		 XmNrightAttachment, XmATTACH_OPPOSITE_WIDGET,
 		 XmNrightWidget, mod_text,
 		 XmNrightOffset, 0,
-		 0);
+		 (XtPointer) 0);
 #endif
 #ifdef DOCINFO_CHARSET_TEXT
   XtVaSetValues (charset_text,
@@ -7901,21 +7893,21 @@ fe_make_docinfo_dialog (MWContext *context)
 		 XmNbottomAttachment, XmATTACH_FORM,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
 
   XtVaSetValues (key_desc_label,
 		 XmNtopAttachment, XmATTACH_FORM,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (certificate_label,
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, key_desc_label,
 		 XmNbottomAttachment, XmATTACH_NONE,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (XtParent (certificate_text),
 		 XmNtopAttachment, XmATTACH_WIDGET,
 		 XmNtopWidget, certificate_label,
@@ -7923,13 +7915,13 @@ fe_make_docinfo_dialog (MWContext *context)
 		 XmNbottomWidget, sec_label,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
   XtVaSetValues (sec_label,
 		 XmNtopAttachment, XmATTACH_NONE,
 		 XmNbottomAttachment, XmATTACH_FORM,
 		 XmNleftAttachment, XmATTACH_FORM,
 		 XmNrightAttachment, XmATTACH_FORM,
-		 0);
+		 (XtPointer) 0);
 
   XtManageChild (certificate_text);
 
@@ -7969,7 +7961,7 @@ fe_make_docinfo_dialog (MWContext *context)
   XtManageChild (form);
   XtManageChild (ok_button);
 
-  XtVaSetValues (shell, XmNdefaultButton, ok_button, 0);
+  XtVaSetValues (shell, XmNdefaultButton, ok_button, (XtPointer) 0);
   XtAddCallback (ok_button, XmNactivateCallback, fe_close_docinfo_cb, context);
 
   did->dialog = shell;
@@ -8085,21 +8077,21 @@ fe_UpdateDocInfoDialog (MWContext *context)
 #endif
 
   XtVaSetValues (did->title_text,
-		 XmNcursorPosition, 0, XmNvalue, (h ? h->title : ""), 0);
+		 XmNcursorPosition, 0, XmNvalue, (h ? h->title : ""), (XtPointer) 0);
   XtVaSetValues (did->url_text,
-		 XmNcursorPosition, 0, XmNvalue, (h ? h->address : ""), 0);
-  XtVaSetValues (did->modified_text, XmNcursorPosition, 0, XmNvalue, mods, 0);
+		 XmNcursorPosition, 0, XmNvalue, (h ? h->address : ""), (XtPointer) 0);
+  XtVaSetValues (did->modified_text, XmNcursorPosition, 0, XmNvalue, mods, (XtPointer) 0);
 #ifdef DOCINFO_SOURCE_TEXT
   XtVaSetValues (did->source_text, XmNcursorPosition, 0,
-		 XmNvalue, source_text, 0);
+		 XmNvalue, source_text, (XtPointer) 0);
 #endif
 #ifdef DOCINFO_VISUAL_TEXT
-  XtVaSetValues (did->dpy_text, XmNcursorPosition, 0, XmNvalue, dpy_text, 0);
+  XtVaSetValues (did->dpy_text, XmNcursorPosition, 0, XmNvalue, dpy_text, (XtPointer) 0);
 #endif
 
 #ifdef DOCINFO_CHARSET_TEXT
   XtVaSetValues (did->charset_text,
-		 XmNvalue, (charset && *charset ? charset : "default"), 0);
+		 XmNvalue, (charset && *charset ? charset : "default"), (XtPointer) 0);
   if (charset) free (charset);
 #endif
 
@@ -8124,13 +8116,13 @@ fe_UpdateDocInfoDialog (MWContext *context)
 #endif
 
   xmstring = XmStringCreateLtoR (sec, XmFONTLIST_DEFAULT_TAG);
-  XtVaSetValues (did->key_desc_label, XmNlabelString, xmstring, 0);
+  XtVaSetValues (did->key_desc_label, XmNlabelString, xmstring, (XtPointer) 0);
   XmStringFree (xmstring);
 
   XtVaSetValues (did->certificate_text,
 		 XmNcursorPosition, 0,
 		 XmNvalue, (cert ? cert : ""),
-		 0);
+		 (XtPointer) 0);
   if (cert) free (cert);
   if (cipher) free (cipher);
 }
@@ -8237,7 +8229,7 @@ fe_MovemailWarning(MWContext *context)
                                       XmFONTLIST_DEFAULT_TAG);
  
     XtVaGetValues (mainw, XtNvisual, &v, XtNcolormap, &cmap,
-                   XtNdepth, &depth, 0);
+                   XtNdepth, &depth, (XtPointer) 0);
     ac = 0;
     XtSetArg (av[ac], XmNvisual, v); ac++;
     XtSetArg (av[ac], XmNdepth, depth); ac++;
@@ -8375,7 +8367,7 @@ FE_SecurityDialog (MWContext *context, int state /* , XP_Bool *prefs_toggle */)
     Colormap cmap = 0;
     Cardinal depth = 0;
     XtVaGetValues (mainw, XtNvisual, &v, XtNcolormap, &cmap,
-		   XtNdepth, &depth, 0);
+		   XtNdepth, &depth, (XtPointer) 0);
     ac = 0;
     XtSetArg (av[ac], XmNvisual, v); ac++;
     XtSetArg (av[ac], XmNdepth, depth); ac++;
@@ -8432,7 +8424,7 @@ FE_SecurityDialog (MWContext *context, int state /* , XP_Bool *prefs_toggle */)
       {
 	Widget c = XmSelectionBoxGetChild (dialog, XmDIALOG_CANCEL_BUTTON);
 	if (!c) abort ();
-	XtVaSetValues (dialog, XmNdefaultButton, c, XmNinitialFocus, c, 0);
+	XtVaSetValues (dialog, XmNdefaultButton, c, XmNinitialFocus, c, (XtPointer) 0);
       }
 
     fe_NukeBackingStore (dialog);

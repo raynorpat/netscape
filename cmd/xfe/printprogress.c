@@ -87,7 +87,8 @@ Widget parent;
     XtSetArg(al[ac], XmNlabelString, xmstrings[0]); ac++;
     pwi->PrintStatusLabel = XmCreateLabel ( PrintBodyForm, "PrintStatusLabel", al, ac );
 
-    pwi->bar = XtVaCreateManagedWidget("thermometer", gbarWidgetClass, PrintProgress, 0);
+    pwi->bar = XtVaCreateManagedWidget("thermometer", gbarWidgetClass, PrintProgress,
+                                       (XtPointer) 0);
     ac = 0;
     XmStringFree ( xmstrings [ 0 ] );
 

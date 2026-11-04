@@ -139,18 +139,18 @@ fe_bm_pulldown_cb(Widget widget, XtPointer closure, XtPointer call_data)
   Widget *buttons = 0;
   Cardinal nbuttons = 0;
   int i;
-  XtVaGetValues(widget, XmNsubMenuId, &menu, 0);
-  XtVaGetValues(menu, XmNchildren, &buttons, XmNnumChildren, &nbuttons, 0);
+  XtVaGetValues(widget, XmNsubMenuId, &menu, (XtPointer) 0);
+  XtVaGetValues(menu, XmNchildren, &buttons, XmNnumChildren, &nbuttons, (XtPointer) 0);
   for (i=0 ; i<nbuttons ; i++) {
     Widget item = buttons[i];
     if (XmIsPushButton(item) || XmIsPushButtonGadget(item)) {
       XtPointer value;
       BM_CommandType cmd;
-      XtVaGetValues(item, XmNuserData, &value, 0);
+      XtVaGetValues(item, XmNuserData, &value, (XtPointer) 0);
       cmd = (BM_CommandType) value;
       if (cmd != BM_Cmd_Invalid) {
 	XP_Bool enable = BM_FindCommandStatus(bm_context, cmd);
-	XtVaSetValues(item, XmNsensitive, enable, 0);
+	XtVaSetValues(item, XmNsensitive, enable, (XtPointer) 0);
       }
     }
   }
@@ -558,7 +558,7 @@ fe_bookmark_menu_cb (Widget widget, XtPointer closure, XtPointer call_data)
   BM_Entry* entry = 0;
   URL_Struct *url;
   fe_UserActivity (context);
-  XtVaGetValues (widget, XmNuserData, &entry, 0);
+  XtVaGetValues (widget, XmNuserData, &entry, (XtPointer) 0);
   if (!entry || !(BM_IsAlias(entry) || BM_IsUrl(entry)))
     return;
   url = NET_CreateURLStruct (BM_GetAddress(entry), FALSE);
@@ -573,7 +573,7 @@ fe_bookmark_menu_arm(Widget widget, XtPointer closure, XtPointer call_data)
   MWContext *context = (MWContext *) closure;
   BM_Entry* entry = 0;
   fe_UserActivity (context);
-  XtVaGetValues (widget, XmNuserData, &entry, 0);
+  XtVaGetValues (widget, XmNuserData, &entry, (XtPointer) 0);
   if (!entry || !(BM_IsAlias(entry) || BM_IsUrl(entry)))
     return;
   XFE_Progress(context, BM_GetAddress(entry));
@@ -618,7 +618,7 @@ fe_bm_cmd(Widget widget, XtPointer closure, XtPointer call_data)
   MWContext* bm_context = (MWContext*) closure;
   XtPointer userdata = 0;
   BM_CommandType cmd;
-  XtVaGetValues(widget, XmNuserData, &userdata, 0);
+  XtVaGetValues(widget, XmNuserData, &userdata, (XtPointer) 0);
   cmd = (BM_CommandType) userdata;
   BM_ObeyCommand(bm_context, cmd);
 }
@@ -683,7 +683,7 @@ fe_make_what_dialog (MWContext *bm_context)
   str = XmStringCreate("", XmFONTLIST_DEFAULT_TAG);
 
   XtVaGetValues(CONTEXT_WIDGET(bm_context), XtNvisual, &v,
-		XtNcolormap, &cmap, XtNdepth, &depth, 0);
+		XtNcolormap, &cmap, XtNdepth, &depth, (XtPointer) 0);
 
   ac = 0;
   XtSetArg (av[ac], XmNvisual, v); ac++;
@@ -722,7 +722,7 @@ fe_make_what_dialog (MWContext *bm_context)
 			     XmVaRADIOBUTTON, NULL, NULL, NULL, NULL,
 			     XmVaRADIOBUTTON, NULL, NULL, NULL, NULL,
 			     NULL);
-  XtVaGetValues(d->whatradiobox, XmNnumChildren, &nk, XmNchildren, &k, 0);
+  XtVaGetValues(d->whatradiobox, XmNnumChildren, &nk, XmNchildren, &k, (XtPointer) 0);
   XP_ASSERT(nk == 2);
   d->whatdoall = k[0];
   d->whatdoselected = k[1];
@@ -998,7 +998,7 @@ fe_make_bmpopup(MWContext* bm_context)
 		(bm_context->type != MWContextAddressBook));
 
   XtVaGetValues (parent, XtNvisual, &v, XtNcolormap, &cmap,
-                 XtNdepth, &depth, 0);
+                 XtNdepth, &depth, (XtPointer) 0);
 
   ac = 0;
   XtSetArg (av[ac], XmNvisual, v); ac++;
@@ -1113,7 +1113,7 @@ fe_MakeBookmarkWidgets(Widget shell, MWContext *context)
 		XmNtopAttachment, XmATTACH_FORM,
 		XmNleftAttachment, XmATTACH_FORM,
 		XmNrightAttachment, XmATTACH_FORM,
-		0);
+		(XtPointer) 0);
 
 
   XtVaSetValues(d->outline,
@@ -1122,15 +1122,15 @@ fe_MakeBookmarkWidgets(Widget shell, MWContext *context)
 		XmNbottomAttachment, XmATTACH_FORM,
 		XmNleftAttachment, XmATTACH_FORM,
 		XmNrightAttachment, XmATTACH_FORM,
-		0);
+		(XtPointer) 0);
 
   XtManageChild(d->outline);
   XtManageChild (menubar);
   XtManageChild (mainw);
 
   data->menubar = menubar;
-  XtVaSetValues (shell, XmNinitialFocus, mainw, 0);
-  XtVaSetValues (mainw, XmNinitialFocus, d->outline, 0);
+  XtVaSetValues (shell, XmNinitialFocus, mainw, (XtPointer) 0);
+  XtVaSetValues (mainw, XmNinitialFocus, d->outline, (XtPointer) 0);
 
   fe_HackTranslations (context, shell);
 
@@ -1158,7 +1158,7 @@ fe_make_edititem_dialog(MWContext* bm_context)
   Cardinal depth = 0;
 
   XtVaGetValues(CONTEXT_WIDGET(bm_context), XtNvisual, &v,
-		XtNcolormap, &cmap, XtNdepth, &depth, 0);
+		XtNcolormap, &cmap, XtNdepth, &depth, (XtPointer) 0);
 
   ac = 0;
   XtSetArg (av[ac], XmNvisual, v); ac++;
@@ -1229,7 +1229,7 @@ fe_make_edititem_dialog(MWContext* bm_context)
 		XmNtopAttachment, XmATTACH_FORM,
 		XmNleftAttachment, XmATTACH_FORM,
 		XmNrightAttachment, XmATTACH_FORM,
-		0);
+		(XtPointer) 0);
   if (bm_context->type == MWContextAddressBook) {
     XtVaSetValues(nickname_label,
 		  XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -1239,7 +1239,7 @@ fe_make_edititem_dialog(MWContext* bm_context)
 		  XmNleftAttachment, XmATTACH_FORM,
 		  XmNrightAttachment, XmATTACH_WIDGET,
 		  XmNrightWidget, d->nickname,
-		  0);
+		  (XtPointer) 0);
    }
   XtVaSetValues(name_label,
 		XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -1249,7 +1249,7 @@ fe_make_edititem_dialog(MWContext* bm_context)
 		XmNleftAttachment, XmATTACH_FORM,
 		XmNrightAttachment, XmATTACH_WIDGET,
 		XmNrightWidget, d->name,
-		0);
+		(XtPointer) 0);
   XtVaSetValues(d->locationlabel,
 		XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		XmNtopWidget, d->location,
@@ -1258,7 +1258,7 @@ fe_make_edititem_dialog(MWContext* bm_context)
 		XmNleftAttachment, XmATTACH_FORM,
 		XmNrightAttachment, XmATTACH_WIDGET,
 		XmNrightWidget, d->location,
-		0);
+		(XtPointer) 0);
   XtVaSetValues(description_label,
 		XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		XmNtopWidget, d->description,
@@ -1267,7 +1267,7 @@ fe_make_edititem_dialog(MWContext* bm_context)
 		XmNleftAttachment, XmATTACH_FORM,
 		XmNrightAttachment, XmATTACH_WIDGET,
 		XmNrightWidget, d->description,
-		0);
+		(XtPointer) 0);
   if (bm_context->type != MWContextAddressBook) {
     XtVaSetValues(d->lastvisitedlabel,
 		XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
@@ -1277,7 +1277,7 @@ fe_make_edititem_dialog(MWContext* bm_context)
 		XmNleftAttachment, XmATTACH_FORM,
 		XmNrightAttachment, XmATTACH_WIDGET,
 		XmNrightWidget, d->lastvisited,
-		0);
+		(XtPointer) 0);
     XtVaSetValues(addedon_label,
 		XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		XmNtopWidget, d->addedon,
@@ -1286,7 +1286,7 @@ fe_make_edititem_dialog(MWContext* bm_context)
 		XmNleftAttachment, XmATTACH_FORM,
 		XmNrightAttachment, XmATTACH_WIDGET,
 		XmNrightWidget, d->addedon,
-		0);
+		(XtPointer) 0);
   }
   ac = 0;
   kids[ac++] = d->title;
@@ -1306,7 +1306,7 @@ fe_make_edititem_dialog(MWContext* bm_context)
 		XmNleftAttachment, XmATTACH_NONE,
 		XmNrightAttachment, XmATTACH_FORM,
 		XmNbottomAttachment, XmATTACH_NONE,
-		0);
+		(XtPointer) 0);
   for (i=2 ; i<ac ; i++) {
     XtVaSetValues(kids[i],
 		  XmNtopAttachment, XmATTACH_WIDGET,
@@ -1315,7 +1315,7 @@ fe_make_edititem_dialog(MWContext* bm_context)
 		  XmNleftWidget, kids[i-1],
 		  XmNrightAttachment, XmATTACH_FORM,
 		  XmNbottomAttachment, XmATTACH_NONE,
-		  0);
+		  (XtPointer) 0);
   }
   XtVaSetValues(d->aliaslabel,
 		XmNtopAttachment, XmATTACH_WIDGET,
@@ -1324,14 +1324,14 @@ fe_make_edititem_dialog(MWContext* bm_context)
 		XmNbottomAttachment, XmATTACH_FORM,
 		XmNrightAttachment, XmATTACH_WIDGET,
 		XmNrightWidget, d->aliasbutton,
-		0);
+		(XtPointer) 0);
   XtVaSetValues(d->aliasbutton,
 		XmNtopAttachment, XmATTACH_WIDGET,
 		XmNtopWidget, kids[ac-1],
 		XmNleftAttachment, XmATTACH_NONE,
 		XmNbottomAttachment, XmATTACH_FORM,
 		XmNrightAttachment, XmATTACH_FORM,
-		0);
+		(XtPointer) 0);
 
   if (bm_context->type == MWContextAddressBook)
     fe_attach_field_to_labels(d->nickname, nickname_label, 
@@ -1600,7 +1600,7 @@ fe_add_bookmark_menu_items (MWContext *context, Widget menu,
   Cardinal depth = 0;
 
   XtVaGetValues (CONTEXT_WIDGET (context), XtNvisual, &v,
-		 XtNcolormap, &cmap, XtNdepth, &depth, 0);
+		 XtNcolormap, &cmap, XtNdepth, &depth, (XtPointer) 0);
 
   while (entry)
     {
@@ -1677,12 +1677,12 @@ fe_bm_fillin_menu(Widget widget, XtPointer closure, XtPointer call_data)
   MWContext* bm_context = main_bm_context; /* ### */
   BM_Entry* entry = 0;
   Widget menu = 0;
-  XtVaGetValues(widget, XmNuserData, &entry, XmNsubMenuId, &menu, 0);
+  XtVaGetValues(widget, XmNuserData, &entry, XmNsubMenuId, &menu, (XtPointer) 0);
   if (entry) {
     XP_ASSERT(BM_IsHeader(entry));
     fe_add_bookmark_menu_items(context, menu, bm_context,
 			       BM_GetChildren(entry));
-    XtVaSetValues(widget, XmNuserData, NULL, 0);
+    XtVaSetValues(widget, XmNuserData, NULL, (XtPointer) 0);
   }
 }
 
@@ -1698,11 +1698,11 @@ fe_DestroyWidgetTree(Widget *widgets, int n)
     if (n <= 0) return;
 
     for (i = n-1; i >= 0; i--) {
-	XtVaGetValues (widgets[i], XmNsubMenuId, &submenu, 0);
+	XtVaGetValues (widgets[i], XmNsubMenuId, &submenu, (XtPointer) 0);
 	XtDestroyWidget (widgets[i]);
 	if (submenu) {
 	    XtVaGetValues (widgets[i], XmNchildren, &morekids,
-				XmNnumChildren, &nmorekids, 0);
+				XmNnumChildren, &nmorekids, (XtPointer) 0);
 	    fe_DestroyWidgetTree (morekids, nmorekids);
 	}
     }
@@ -1728,7 +1728,7 @@ fe_GenerateBookmarkMenu (MWContext *context)
 
   XtUnrealizeWidget (menu);
 
-  XtVaGetValues (menu, XmNchildren, &kids, XmNnumChildren, &nkids, 0);
+  XtVaGetValues (menu, XmNchildren, &kids, XmNnumChildren, &nkids, (XtPointer) 0);
 
   /* The first 2 kids are std: addBookmark & gotoBookmarkHtml
    *
@@ -1898,13 +1898,13 @@ BMFE_EditItem(MWContext* bm_context, BM_Entry* entry )
     str = BM_GetNickName(entry);
     fe_SetTextField(d->nickname, str ? str : "");
     if (BM_IsHeader(entry)) {
-      XtVaSetValues(d->locationlabel, XmNsensitive, False, 0);
-      XtVaSetValues(d->location, XmNsensitive, False, XmNvalue, "", 0);
+      XtVaSetValues(d->locationlabel, XmNsensitive, False, (XtPointer) 0);
+      XtVaSetValues(d->location, XmNsensitive, False, XmNvalue, "", (XtPointer) 0);
     }
     else {
-      XtVaSetValues(d->locationlabel, XmNsensitive, True, 0);
+      XtVaSetValues(d->locationlabel, XmNsensitive, True, (XtPointer) 0);
       str = BM_GetAddress(entry);
-      XtVaSetValues(d->location, XmNsensitive, True, 0);
+      XtVaSetValues(d->location, XmNsensitive, True, (XtPointer) 0);
       fe_SetTextField(d->location, str?str:"");
     }
     str = BM_GetName(entry);
@@ -1914,9 +1914,9 @@ BMFE_EditItem(MWContext* bm_context, BM_Entry* entry )
     fe_SetString(d->aliaslabel, XmNlabelString,
 			BM_PrettyAliasCount(bm_context, entry));
     if (BM_CountAliases(bm_context, entry) > 0)
-      XtVaSetValues(d->aliasbutton, XmNsensitive, True, 0);
+      XtVaSetValues(d->aliasbutton, XmNsensitive, True, (XtPointer) 0);
     else
-      XtVaSetValues(d->aliasbutton, XmNsensitive, False, 0);
+      XtVaSetValues(d->aliasbutton, XmNsensitive, False, (XtPointer) 0);
   }
   else  /* MWContextBookmarks */
   if (BM_IsUrl(entry)) {
@@ -1924,37 +1924,37 @@ BMFE_EditItem(MWContext* bm_context, BM_Entry* entry )
     fe_SetTextField(d->name, str?str:"");
     str = BM_GetAddress(entry);
     fe_SetTextField(d->location, str?str:"");
-    XtVaSetValues(d->location, XmNsensitive, True, 0);
-    XtVaSetValues(d->locationlabel, XmNsensitive, True, 0);
+    XtVaSetValues(d->location, XmNsensitive, True, (XtPointer) 0);
+    XtVaSetValues(d->locationlabel, XmNsensitive, True, (XtPointer) 0);
     str =  BM_GetDescription(entry);
     fe_SetTextField(d->description, str?str:"");
     tmp = BM_PrettyLastVisitedDate(entry);
     if (!tmp || !*tmp) tmp = " ";
     fe_SetString(d->lastvisited, XmNlabelString, tmp);
-    XtVaSetValues(d->lastvisited, XmNsensitive, True, 0);
-    XtVaSetValues(d->lastvisitedlabel, XmNsensitive, True, 0);
+    XtVaSetValues(d->lastvisited, XmNsensitive, True, (XtPointer) 0);
+    XtVaSetValues(d->lastvisitedlabel, XmNsensitive, True, (XtPointer) 0);
     fe_SetString(d->addedon, XmNlabelString, BM_PrettyAddedOnDate(entry));
     fe_SetString(d->aliaslabel, XmNlabelString,
 			BM_PrettyAliasCount(bm_context, entry));
     if (BM_CountAliases(bm_context, entry) > 0)
-      XtVaSetValues(d->aliasbutton, XmNsensitive, True, 0);
+      XtVaSetValues(d->aliasbutton, XmNsensitive, True, (XtPointer) 0);
     else
-      XtVaSetValues(d->aliasbutton, XmNsensitive, False, 0);
+      XtVaSetValues(d->aliasbutton, XmNsensitive, False, (XtPointer) 0);
   }
   else if (BM_IsHeader(entry)) {
     str = BM_GetName(entry);
     fe_SetTextField(d->name, str?str:"");
-    XtVaSetValues(d->location, XmNvalue, "", 0);
-    XtVaSetValues(d->location, XmNsensitive, False, 0);
-    XtVaSetValues(d->locationlabel, XmNsensitive, False, 0);
+    XtVaSetValues(d->location, XmNvalue, "", (XtPointer) 0);
+    XtVaSetValues(d->location, XmNsensitive, False, (XtPointer) 0);
+    XtVaSetValues(d->locationlabel, XmNsensitive, False, (XtPointer) 0);
     str =  BM_GetDescription(entry);
     fe_SetTextField(d->description, str?str:"");
     fe_SetString(d->lastvisited, XmNlabelString, " ");
-    XtVaSetValues(d->lastvisited, XmNsensitive, False, 0);
-    XtVaSetValues(d->lastvisitedlabel, XmNsensitive, False, 0);
+    XtVaSetValues(d->lastvisited, XmNsensitive, False, (XtPointer) 0);
+    XtVaSetValues(d->lastvisitedlabel, XmNsensitive, False, (XtPointer) 0);
     fe_SetString(d->addedon, XmNlabelString, BM_PrettyAddedOnDate(entry));
     fe_SetString(d->aliaslabel, XmNlabelString, "" );
-    XtVaSetValues(d->aliasbutton, XmNsensitive, False, 0);
+    XtVaSetValues(d->aliasbutton, XmNsensitive, False, (XtPointer) 0);
   }
 }
 
@@ -1966,9 +1966,9 @@ BMFE_EntryGoingAway(MWContext* bm_context, BM_Entry* entry)
   if (d->entry == entry) {
     d->entry = NULL;
     if (d->editshell) {
-      XtVaSetValues(d->name, XmNvalue, "", 0);
-      XtVaSetValues(d->location, XmNvalue, "", 0);
-      XtVaSetValues(d->description, XmNvalue, "", 0);
+      XtVaSetValues(d->name, XmNvalue, "", (XtPointer) 0);
+      XtVaSetValues(d->location, XmNvalue, "", (XtPointer) 0);
+      XtVaSetValues(d->description, XmNvalue, "", (XtPointer) 0);
       if (d->lastvisited) fe_SetString(d->lastvisited, XmNlabelString, " ");
       if (d->addedon) fe_SetString(d->addedon, XmNlabelString, " ");
     }
@@ -2029,13 +2029,13 @@ fe_find_setvalues(MWContext* bm_context, BM_FindInfo* findInfo)
   fe_bookmark_data* d = BM_DATA(bm_context);
   fe_SetTextField(d->findtext, findInfo->textToFind);
   if (d->findnicknameT) {
-    XtVaSetValues(d->findnicknameT, XmNset, findInfo->checkNickname, 0);
+    XtVaSetValues(d->findnicknameT, XmNset, findInfo->checkNickname, (XtPointer) 0);
   }
-  XtVaSetValues(d->findnameT, XmNset, findInfo->checkName, 0);
-  XtVaSetValues(d->findlocationT, XmNset, findInfo->checkLocation, 0);
-  XtVaSetValues(d->finddescriptionT, XmNset, findInfo->checkDescription, 0);
-  XtVaSetValues(d->findcaseT, XmNset, findInfo->matchCase, 0);
-  XtVaSetValues(d->findwordT, XmNset, findInfo->matchWholeWord, 0);
+  XtVaSetValues(d->findnameT, XmNset, findInfo->checkName, (XtPointer) 0);
+  XtVaSetValues(d->findlocationT, XmNset, findInfo->checkLocation, (XtPointer) 0);
+  XtVaSetValues(d->finddescriptionT, XmNset, findInfo->checkDescription, (XtPointer) 0);
+  XtVaSetValues(d->findcaseT, XmNset, findInfo->matchCase, (XtPointer) 0);
+  XtVaSetValues(d->findwordT, XmNset, findInfo->matchWholeWord, (XtPointer) 0);
 }
 
 static void
@@ -2046,13 +2046,13 @@ fe_find_getvalues(MWContext* bm_context, BM_FindInfo* findInfo)
   XP_FREE(findInfo->textToFind);
   findInfo->textToFind = fe_GetTextField(d->findtext);
   if (d->findnicknameT) {
-    XtVaGetValues(d->findnicknameT, XmNset, &findInfo->checkNickname, 0);
+    XtVaGetValues(d->findnicknameT, XmNset, &findInfo->checkNickname, (XtPointer) 0);
   }
-  XtVaGetValues(d->findnameT, XmNset, &findInfo->checkName, 0);
-  XtVaGetValues(d->findlocationT, XmNset, &findInfo->checkLocation, 0);
-  XtVaGetValues(d->finddescriptionT, XmNset, &findInfo->checkDescription, 0);
-  XtVaGetValues(d->findcaseT, XmNset, &findInfo->matchCase, 0);
-  XtVaGetValues(d->findwordT, XmNset, &findInfo->matchWholeWord, 0);
+  XtVaGetValues(d->findnameT, XmNset, &findInfo->checkName, (XtPointer) 0);
+  XtVaGetValues(d->findlocationT, XmNset, &findInfo->checkLocation, (XtPointer) 0);
+  XtVaGetValues(d->finddescriptionT, XmNset, &findInfo->checkDescription, (XtPointer) 0);
+  XtVaGetValues(d->findcaseT, XmNset, &findInfo->matchCase, (XtPointer) 0);
+  XtVaGetValues(d->findwordT, XmNset, &findInfo->matchWholeWord, (XtPointer) 0);
 }
 
 static void
@@ -2076,7 +2076,7 @@ fe_bmfind_cb(Widget widget, XtPointer closure, XtPointer call_data)
   if (cb->reason == XmCR_OK) {
     /* Update FindInfo */
     BM_FindInfo* findinfo;
-    XtVaGetValues(d->findshell, XmNuserData, &findinfo, 0);
+    XtVaGetValues(d->findshell, XmNuserData, &findinfo, (XtPointer) 0);
     fe_find_getvalues(bm_context, findinfo);
     XtUnmanageChild(d->findshell);
     BM_DoFindBookmark(bm_context, findinfo);
@@ -2084,7 +2084,7 @@ fe_bmfind_cb(Widget widget, XtPointer closure, XtPointer call_data)
   else if (cb->reason == XmCR_APPLY) {
     /* Clear */
     BM_FindInfo* findinfo;
-    XtVaGetValues(d->findshell, XmNuserData, &findinfo, 0);
+    XtVaGetValues(d->findshell, XmNuserData, &findinfo, (XtPointer) 0);
     if (findinfo->textToFind)
       findinfo->textToFind[0] = '\0';
     fe_SetTextField(d->findtext, findinfo->textToFind);
@@ -2117,7 +2117,7 @@ fe_make_find_dialog (MWContext *bm_context, BM_FindInfo* findInfo)
   Widget kids[20];
 
   XtVaGetValues (mainw, XtNvisual, &v, XtNcolormap, &cmap,
-		 XtNdepth, &depth, 0);
+		 XtNdepth, &depth, (XtPointer) 0);
   ac = 0;
   XtSetArg (av[ac], XmNvisual, v); ac++;
   XtSetArg (av[ac], XmNdepth, depth); ac++;
@@ -2157,9 +2157,9 @@ fe_make_find_dialog (MWContext *bm_context, BM_FindInfo* findInfo)
   lookinlabel = XmCreateLabelGadget(form, "lookinLabel", av, ac);
   XP_ASSERT(findlabel->core.width > 0 && lookinlabel->core.width > 0);
   if (findlabel->core.width < lookinlabel->core.width)
-    XtVaSetValues (findlabel, XmNwidth, lookinlabel->core.width, 0);
+    XtVaSetValues (findlabel, XmNwidth, lookinlabel->core.width, (XtPointer) 0);
   else
-    XtVaSetValues (lookinlabel, XmNwidth, findlabel->core.width, 0);
+    XtVaSetValues (lookinlabel, XmNwidth, findlabel->core.width, (XtPointer) 0);
 
 
   ac = 0;
@@ -2179,54 +2179,54 @@ fe_make_find_dialog (MWContext *bm_context, BM_FindInfo* findInfo)
 
   /* Attachments */
   XtVaSetValues(findlabel, XmNleftAttachment, XmATTACH_FORM,
-  			XmNtopAttachment, XmATTACH_FORM, 0);
+			XmNtopAttachment, XmATTACH_FORM, (XtPointer) 0);
 
   XtVaSetValues(findtext, XmNleftAttachment, XmATTACH_WIDGET,
 			XmNleftWidget, findlabel,
   			XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 			XmNtopWidget, findlabel,
-			XmNrightAttachment, XmATTACH_FORM, 0);
+			XmNrightAttachment, XmATTACH_FORM, (XtPointer) 0);
 
   XtVaSetValues(lookinlabel, XmNleftAttachment, XmATTACH_FORM,
   			XmNtopAttachment, XmATTACH_WIDGET,
-  			XmNtopWidget, findtext, 0);
+			XmNtopWidget, findtext, (XtPointer) 0);
 
   if (nicknameT) {
     XtVaSetValues(nicknameT, XmNleftAttachment, XmATTACH_WIDGET,
 		  XmNleftWidget, lookinlabel,
 		  XmNtopAttachment, XmATTACH_WIDGET,
-		  XmNtopWidget, findtext, 0);
+		  XmNtopWidget, findtext, (XtPointer) 0);
   }    
 
   XtVaSetValues(nameT, XmNleftAttachment, XmATTACH_WIDGET,
 			XmNleftWidget, nicknameT ? nicknameT : lookinlabel,
 			XmNtopAttachment, XmATTACH_WIDGET,
-			XmNtopWidget, findtext, 0);
+			XmNtopWidget, findtext, (XtPointer) 0);
 
   XtVaSetValues(locationT, XmNleftAttachment, XmATTACH_WIDGET,
 			XmNleftWidget, nameT,
 			XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
-			XmNtopWidget, nameT, 0);
+			XmNtopWidget, nameT, (XtPointer) 0);
 
   XtVaSetValues(descriptionT, XmNleftAttachment, XmATTACH_WIDGET,
 			XmNleftWidget, locationT,
 			XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
-			XmNtopWidget, nicknameT ? nicknameT : nameT, 0);
+			XmNtopWidget, nicknameT ? nicknameT : nameT, (XtPointer) 0);
 
   XtVaSetValues(caseT, XmNleftAttachment, XmATTACH_WIDGET,
 			XmNleftWidget, lookinlabel,
 			XmNtopAttachment, XmATTACH_WIDGET,
-			XmNtopWidget, nicknameT ? nicknameT : nameT, 0);
+			XmNtopWidget, nicknameT ? nicknameT : nameT, (XtPointer) 0);
 
   XtVaSetValues(wordT, XmNleftAttachment, XmATTACH_WIDGET,
 			XmNleftWidget, lookinlabel,
 			XmNtopAttachment, XmATTACH_WIDGET,
-			XmNtopWidget, caseT, 0);
+			XmNtopWidget, caseT, (XtPointer) 0);
 
   XtVaSetValues(helplabel, XmNleftAttachment, XmATTACH_FORM,
   			XmNrightAttachment, XmATTACH_FORM,
 			XmNtopAttachment, XmATTACH_WIDGET,
-			XmNtopWidget, wordT, 0);
+			XmNtopWidget, wordT, (XtPointer) 0);
 
   ac = 0;
   kids[ac++] = findlabel;
@@ -2252,7 +2252,7 @@ fe_make_find_dialog (MWContext *bm_context, BM_FindInfo* findInfo)
   d->findcaseT = caseT;
   d->findwordT = wordT;
 
-  XtVaSetValues (dialog, XmNinitialFocus, findtext, 0);
+  XtVaSetValues (dialog, XmNinitialFocus, findtext, (XtPointer) 0);
 }
 
 
@@ -2297,17 +2297,17 @@ fe_bmpopup_menu_action (Widget widget, XEvent *event, String *cav,
   XmMenuPosition (popup, (XButtonPressedEvent *) event);
 
   /* Sensitize the popup menu */
-  XtVaGetValues(popup, XmNchildren, &buttons, XmNnumChildren, &nbuttons, 0);
+  XtVaGetValues(popup, XmNchildren, &buttons, XmNnumChildren, &nbuttons, (XtPointer) 0);
   for (i=0 ; i<nbuttons ; i++) {
     Widget item = buttons[i];
     if (XmIsPushButton(item) || XmIsPushButtonGadget(item)) {
       XtPointer value;
       BM_CommandType cmd;
-      XtVaGetValues(item, XmNuserData, &value, 0);
+      XtVaGetValues(item, XmNuserData, &value, (XtPointer) 0);
       cmd = (BM_CommandType) value;
       if (cmd != BM_Cmd_Invalid) {
         XP_Bool enable = BM_FindCommandStatus(bm_context, cmd);
-        XtVaSetValues(item, XmNsensitive, enable, 0);
+        XtVaSetValues(item, XmNsensitive, enable, (XtPointer) 0);
       }
     }
   }

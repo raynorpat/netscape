@@ -323,6 +323,7 @@ struct PRThreadStr {
     char* errstr;                       /* Per-thread error string */
 
     PR_CONTEXT_TYPE context;
+    int contextRestored;                /* Set before restoring a context */
 
 #ifdef HW_THREADS
 #if defined(XP_PC) && defined(_WIN32)

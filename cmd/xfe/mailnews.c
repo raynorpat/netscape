@@ -115,7 +115,7 @@ fe_MoveCopy_to_folder_cb (Widget widget, XtPointer closure, XtPointer call_data)
     int index;
     Boolean doingMove = CONTEXT_DATA (context)->doingMove;
 
-    XtVaGetValues(widget, XmNuserData, &index, 0);
+    XtVaGetValues(widget, XmNuserData, &index, (XtPointer) 0);
     switch (index) {
 	case FOLDER_FILE_INDEX :	/* to file */
 	    if (doingMove)
@@ -171,7 +171,7 @@ fe_addto_folder_menu (MWContext *context, Widget menu,
     XmString xmstr;
 
     XtVaGetValues (CONTEXT_WIDGET (context), XtNvisual, &v,
-			XtNcolormap, &cmap, XtNdepth, &depth, 0);
+			XtNcolormap, &cmap, XtNdepth, &depth, (XtPointer) 0);
 
 
     while (!done) {
@@ -244,13 +244,13 @@ fe_make_folder_menu(MWContext *context, Widget menu,
   Cardinal depth;
   Visual *v;
 
-  XtVaGetValues (menu, XmNsubMenuId, &foldermenu, 0);
+  XtVaGetValues (menu, XmNsubMenuId, &foldermenu, (XtPointer) 0);
 
   if (!foldermenu) {
     /* First time we are using the folder menu. Create it. */
     parent = CONTEXT_DATA(context)->widget;
     XtVaGetValues(parent, XtNvisual, &v, XtNcolormap, &cmap,
-			XtNdepth, &depth, 0);
+			XtNdepth, &depth, (XtPointer) 0);
     ac = 0;
     XtSetArg(av[ac], XmNvisual, v); ac++;
     XtSetArg(av[ac], XmNcolormap, cmap); ac++;
@@ -259,10 +259,10 @@ fe_make_folder_menu(MWContext *context, Widget menu,
 					"popup", av, ac);
 
     /* Connect the popup menu and the cascade */
-    XtVaSetValues (menu, XmNsubMenuId, foldermenu, 0);
+    XtVaSetValues (menu, XmNsubMenuId, foldermenu, (XtPointer) 0);
   }
 
-  XtVaGetValues (foldermenu, XmNchildren, &kids, XmNnumChildren, &nkids, 0);
+  XtVaGetValues (foldermenu, XmNchildren, &kids, XmNnumChildren, &nkids, (XtPointer) 0);
   /* Destroy all children */
   if (nkids > 0) {
     XtUnmanageChildren (kids, nkids);
@@ -286,19 +286,19 @@ FE_UpdateFolderMenus(MWContext *context, MSG_FolderLine *lines, int numlines)
 
     if (menu == NULL) return;
 
-    XtVaGetValues (menu, XmNsubMenuId, &submenu, 0);
+    XtVaGetValues (menu, XmNsubMenuId, &submenu, (XtPointer) 0);
 
     fe_make_folder_menu(context, menu, fe_MoveCopy_to_folder_cb,
 				lines, numlines);
 
     if (submenu == 0) {
 	/* First time. Setup the copy selected menu item too. */
-	XtVaGetValues (menu, XmNsubMenuId, &submenu, 0);
+	XtVaGetValues (menu, XmNsubMenuId, &submenu, (XtPointer) 0);
 	XtAddCallback (menu, XmNcascadingCallback, fe_decipher_MoveCopy_cb,
 				context);
 	CONTEXT_DATA (context)->foldermenu = submenu;
 	menu = CONTEXT_DATA (context)->copy_selected_to_folder;
-	XtVaSetValues (menu, XmNsubMenuId, submenu, 0);
+	XtVaSetValues (menu, XmNsubMenuId, submenu, (XtPointer) 0);
 	XtAddCallback (menu, XmNcascadingCallback, fe_decipher_MoveCopy_cb,
 				context);
     }
@@ -1176,7 +1176,7 @@ fe_newshost_cb(Widget widget, XtPointer closure, XtPointer call_data)
 	portStr = fe_StringTrim(portStr);
 	if (portStr && *portStr)
 	  port = atoi(portStr);
-	XtVaGetValues(newsdata->openNewsHost_secure, XmNset, &secure_p, 0);
+	XtVaGetValues(newsdata->openNewsHost_secure, XmNset, &secure_p, (XtPointer) 0);
 	if (*host)
 	  host_and_port = PR_smprintf( "%s://%s%s%s",
 					(secure_p?"snews":"news"),
@@ -1224,7 +1224,7 @@ fe_make_openNewsHost_dialog (MWContext *context)
   Cardinal depth = 0;
 
   XtVaGetValues(CONTEXT_WIDGET(context), XtNvisual, &v,
-		XtNcolormap, &cmap, XtNdepth, &depth, 0);
+		XtNcolormap, &cmap, XtNdepth, &depth, (XtPointer) 0);
 
   ac = 0;
   XtSetArg (av[ac], XmNvisual, v); ac++;
@@ -1264,14 +1264,14 @@ fe_make_openNewsHost_dialog (MWContext *context)
 		XmNleftAttachment, XmATTACH_FORM,
 		XmNrightAttachment, XmATTACH_NONE,
 		XmNbottomAttachment, XmATTACH_NONE,
-		0);
+		(XtPointer) 0);
   XtVaSetValues(hostText,
 		XmNtopAttachment, XmATTACH_FORM,
 		XmNleftAttachment, XmATTACH_WIDGET,
 		XmNleftWidget, hostLabel,
 		XmNrightAttachment, XmATTACH_NONE,
 		XmNbottomAttachment, XmATTACH_NONE,
-		0);
+		(XtPointer) 0);
   XtVaSetValues(portLabel,
 		XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET,
 		XmNtopWidget, hostText,
@@ -1280,14 +1280,14 @@ fe_make_openNewsHost_dialog (MWContext *context)
 		XmNrightAttachment, XmATTACH_NONE,
 		XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET,
 		XmNbottomWidget, hostText,
-		0);
+		(XtPointer) 0);
   XtVaSetValues(portText,
 		XmNtopAttachment, XmATTACH_FORM,
 		XmNleftAttachment, XmATTACH_WIDGET,
 		XmNleftWidget, portLabel,
 		XmNrightAttachment, XmATTACH_FORM,
 		XmNbottomAttachment, XmATTACH_NONE,
-		0);
+		(XtPointer) 0);
   XtVaSetValues(secure,
 		XmNtopAttachment, XmATTACH_WIDGET,
 		XmNtopWidget, hostLabel,
@@ -1295,10 +1295,10 @@ fe_make_openNewsHost_dialog (MWContext *context)
 		XmNleftWidget, hostLabel,
 		XmNrightAttachment, XmATTACH_NONE,
 		XmNbottomAttachment, XmATTACH_NONE,
-		0);
+		(XtPointer) 0);
 
   if (hostLabel->core.height < hostText->core.height)
-    XtVaSetValues(hostLabel, XmNheight, hostText->core.height, 0);
+    XtVaSetValues(hostLabel, XmNheight, hostText->core.height, (XtPointer) 0);
 
   newsdata->openNewsHost_shell = shell;
   newsdata->openNewsHost_host = hostText;
@@ -1642,7 +1642,7 @@ void fe_msg_sensitize_widget(Widget widget, XtPointer closure,
 		 XmNlabelString, xmstring,
 		 XmNsensitive, selectable_p,
 		 XmNset, (selected_p == MSG_Checked),
-		 0);
+		 (XtPointer) 0);
   XmStringFree (xmstring);
 }
 
@@ -1653,9 +1653,9 @@ void fe_MsgSensitizeSubmenu(Widget widget, XtPointer closure,
   Widget *buttons = 0, menu = 0;
   Cardinal nbuttons = 0;
   int i;
-  XtVaGetValues (widget, XmNsubMenuId, &menu, 0);
+  XtVaGetValues (widget, XmNsubMenuId, &menu, (XtPointer) 0);
   if (!menu) return;
-  XtVaGetValues (menu, XmNchildren, &buttons, XmNnumChildren, &nbuttons, 0);
+  XtVaGetValues (menu, XmNchildren, &buttons, XmNnumChildren, &nbuttons, (XtPointer) 0);
   for (i = 0; i < nbuttons; i++)
     {
       Widget item = buttons[i];
@@ -1673,7 +1673,7 @@ fe_MsgSensitizeChildren(Widget widget, XtPointer closure, XtPointer call_data)
   Widget *buttons = 0, menu = 0;
   Cardinal nbuttons = 0;
   int i;
-  XtVaGetValues (widget, XmNchildren, &buttons, XmNnumChildren, &nbuttons, 0);
+  XtVaGetValues (widget, XmNchildren, &buttons, XmNnumChildren, &nbuttons, (XtPointer) 0);
   for (i = 0; i < nbuttons; i++)
     {
       Widget item = buttons[i];
@@ -1683,7 +1683,7 @@ fe_MsgSensitizeChildren(Widget widget, XtPointer closure, XtPointer call_data)
 	fe_msg_sensitize_widget(item, closure, call_data);
 
       if (XmIsCascadeButtonGadget(item)) {
-	XtVaGetValues (widget, XmNsubMenuId, &menu, 0);
+	XtVaGetValues (widget, XmNsubMenuId, &menu, (XtPointer) 0);
 	if (menu) fe_MsgSensitizeChildren(menu, closure, call_data);
       }
     }
@@ -1696,7 +1696,7 @@ void fe_MsgSensitizeMenubar(Widget widget, XtPointer closure,
   Widget *buttons = 0;
   Cardinal nbuttons = 0;
   int i;
-  XtVaGetValues (widget, XmNchildren, &buttons, XmNnumChildren, &nbuttons, 0);
+  XtVaGetValues (widget, XmNchildren, &buttons, XmNnumChildren, &nbuttons, (XtPointer) 0);
   for (i = 0; i < nbuttons; i++)
       fe_MsgSensitizeSubmenu(buttons[i], closure, call_data);
 }
@@ -1708,11 +1708,11 @@ fe_sensitize_all_text_widgets (Widget widget, XP_Bool sensitive_p)
   Widget *kids = 0;
   Cardinal nkids = 0;
   int i;
-  XtVaGetValues (widget, XmNchildren, &kids, XmNnumChildren, &nkids, 0);
+  XtVaGetValues (widget, XmNchildren, &kids, XmNnumChildren, &nkids, (XtPointer) 0);
   for (i = 0; i < nkids; i++)
     {
       if (XmIsTextField(kids[i]) || XmIsText(kids[i]))
-	XtVaSetValues(kids[i], XmNsensitive, sensitive_p, 0);
+	XtVaSetValues(kids[i], XmNsensitive, sensitive_p, (XtPointer) 0);
       else
 	fe_sensitize_all_text_widgets (kids[i], sensitive_p);
     }
@@ -1736,9 +1736,9 @@ fe_hack_security_advisor_button(MWContext *context, Widget button)
 					(sending_encrypted_p == MSG_Checked),
 					(sending_signed_p == MSG_Checked));
 
-  XtVaGetValues (button, XmNlabelPixmap, &old_icon, 0);
+  XtVaGetValues (button, XmNlabelPixmap, &old_icon, (XtPointer) 0);
   if (icon != old_icon)
-    XtVaSetValues(button, XmNlabelPixmap, icon, 0);
+    XtVaSetValues(button, XmNlabelPixmap, icon, (XtPointer) 0);
 }
 
 void
@@ -1764,7 +1764,7 @@ FE_UpdateToolbar (MWContext *context)
     return;
 
   toolbar = CONTEXT_DATA (context)->toolbar;
-  XtVaGetValues (toolbar, XmNchildren, &buttons, XmNnumChildren, &nbuttons, 0);
+  XtVaGetValues (toolbar, XmNchildren, &buttons, XmNnumChildren, &nbuttons, (XtPointer) 0);
   for (i = 0; i < nbuttons; i++)
     {
       Widget button = buttons[i];
@@ -1786,9 +1786,9 @@ FE_UpdateToolbar (MWContext *context)
       if (command == MSG_SecurityAdvisor)
 	fe_hack_security_advisor_button(context, button);
 
-      XtVaGetValues (button, XmNsensitive, &was_selectable_p, 0);
+      XtVaGetValues (button, XmNsensitive, &was_selectable_p, (XtPointer) 0);
       if (was_selectable_p != selectable_p)
-	XtVaSetValues (button, XmNsensitive, selectable_p, 0);
+	XtVaSetValues (button, XmNsensitive, selectable_p, (XtPointer) 0);
 
       /* Make the sensitivity of the text widgets be the same as that of
 	 the Send button. */
@@ -1823,7 +1823,7 @@ FE_UpdateToolbar (MWContext *context)
 	 make the abort button be sensitive. */
       if (text_sensitivity != 1 && CONTEXT_DATA(context)->abort_button)
 	XtVaSetValues(CONTEXT_DATA(context)->abort_button,
-		      XmNsensitive, True, 0);
+		      XmNsensitive, True, (XtPointer) 0);
       else
 	/* Otherwise, set the abort button in the normal way (don't assume
 	   it should be insensitive, though it probably will be.) */
@@ -2120,7 +2120,7 @@ fe_mailNewsPopup_action (Widget widget, XEvent *event, String *iav, Cardinal *ia
 
 	parent = CONTEXT_WIDGET(context);
 	XtVaGetValues (parent, XtNvisual, &v, XtNcolormap, &cmap,
-       		          XtNdepth, &depth, 0);
+		          XtNdepth, &depth, (XtPointer) 0);
 
 	ac = 0;
 	XtSetArg (av[ac], XmNvisual, v); ac++;
@@ -2223,7 +2223,7 @@ fe_mailNewsPopup_action (Widget widget, XEvent *event, String *iav, Cardinal *ia
       for (j = 0; j < nfe_popup_link; j++)
 	{
 	  item = XmCreatePushButtonGadget (menu, fe_popup_link[j].name,av,ac);
-	  XtVaGetValues (item, XmNlabelString, &xmstring, 0);
+	  XtVaGetValues (item, XmNlabelString, &xmstring, (XtPointer) 0);
 	  if (j == 0)
 	    {
 	      if (fe_url_under_mouse)
@@ -2242,7 +2242,7 @@ fe_mailNewsPopup_action (Widget widget, XEvent *event, String *iav, Cardinal *ia
 
 		  xmstring2 = XmStringCreateLtoR(buf,XmFONTLIST_DEFAULT_TAG);
 		  xmstring3 = XmStringConcat (xmstring, xmstring2);
-		  XtVaSetValues (item, XmNlabelString, xmstring3, 0);
+		  XtVaSetValues (item, XmNlabelString, xmstring3, (XtPointer) 0);
 		  XmStringFree (xmstring2);
 		  XmStringFree (xmstring3);
 		}
@@ -2250,7 +2250,7 @@ fe_mailNewsPopup_action (Widget widget, XEvent *event, String *iav, Cardinal *ia
 	  else
 	    {
 	      xmstring2 = XmStringConcat (padding, xmstring);
-	      XtVaSetValues (item, XmNlabelString, xmstring2, 0);
+	      XtVaSetValues (item, XmNlabelString, xmstring2, (XtPointer) 0);
 	      XmStringFree (xmstring2);
 	    }
 	  XmStringFree (xmstring);
@@ -2259,7 +2259,7 @@ fe_mailNewsPopup_action (Widget widget, XEvent *event, String *iav, Cardinal *ia
 	  XtAddCallback (item, XmNactivateCallback, fe_popup_link[j].callback,
 			 context);
 	  if (! fe_url_under_mouse)
-	    XtVaSetValues (item, XmNsensitive, False, 0);
+	    XtVaSetValues (item, XmNsensitive, False, (XtPointer) 0);
 
 	  if (fe_last_popup_item &&
 	      !strcmp (fe_last_popup_item, fe_popup_link[j].name))
@@ -2275,7 +2275,7 @@ fe_mailNewsPopup_action (Widget widget, XEvent *event, String *iav, Cardinal *ia
       for (j = 0; j < nfe_popup_image; j++)
 	{
 	  item = XmCreatePushButtonGadget (menu, fe_popup_image[j].name,av,ac);
-	  XtVaGetValues (item, XmNlabelString, &xmstring, 0);
+	  XtVaGetValues (item, XmNlabelString, &xmstring, (XtPointer) 0);
 	  if (j == 0)
 	    {
 	      if (fe_image_under_mouse)
@@ -2294,7 +2294,7 @@ fe_mailNewsPopup_action (Widget widget, XEvent *event, String *iav, Cardinal *ia
 
 		  xmstring2 = XmStringCreateLtoR(buf,XmFONTLIST_DEFAULT_TAG);
 		  xmstring3 = XmStringConcat (xmstring, xmstring2);
-		  XtVaSetValues (item, XmNlabelString, xmstring3, 0);
+		  XtVaSetValues (item, XmNlabelString, xmstring3, (XtPointer) 0);
 		  XmStringFree (xmstring2);
 		  XmStringFree (xmstring3);
 		}
@@ -2302,7 +2302,7 @@ fe_mailNewsPopup_action (Widget widget, XEvent *event, String *iav, Cardinal *ia
 	  else
 	    {
 	      xmstring2 = XmStringConcat (padding, xmstring);
-	      XtVaSetValues (item, XmNlabelString, xmstring2, 0);
+	      XtVaSetValues (item, XmNlabelString, xmstring2, (XtPointer) 0);
 	      XmStringFree (xmstring2);
 	    }
 	  XmStringFree (xmstring);
@@ -2311,7 +2311,7 @@ fe_mailNewsPopup_action (Widget widget, XEvent *event, String *iav, Cardinal *ia
 	  XtAddCallback (item, XmNactivateCallback, fe_popup_image[j].callback,
 			 context);
 	  if (! fe_image_under_mouse)
-	    XtVaSetValues (item, XmNsensitive, False, 0);
+	    XtVaSetValues (item, XmNsensitive, False, (XtPointer) 0);
 
 	  if (fe_last_popup_item &&
 	      !strcmp (fe_last_popup_item, fe_popup_image[j].name))
@@ -2322,7 +2322,7 @@ fe_mailNewsPopup_action (Widget widget, XEvent *event, String *iav, Cardinal *ia
   }
  	XmStringFree(padding);
 	if (last)
-	    XtVaSetValues (menu, XmNmenuHistory, last, 0);
+	    XtVaSetValues (menu, XmNmenuHistory, last, (XtPointer) 0);
 	XtManageChildren(kids, i);
     }
 
@@ -2420,7 +2420,7 @@ fe_set_compose_wrap_state(MWContext *context, XP_Bool wrap_p)
   XtVaGetValues(text,
 		XmNwordWrap,	     &old_wrap,
 		XmNscrollHorizontal, &old_scroll,
-		0);
+		(XtPointer) 0);
 
   new_wrap   = wrap_p;
   new_scroll = !wrap_p;
@@ -2446,13 +2446,13 @@ fe_set_compose_wrap_state(MWContext *context, XP_Bool wrap_p)
 		   XmNvalue, &body,
 		   XmNcursorPosition, &cursor,
 		   XmNfontList, &font_list,
-		   0);
+		   (XtPointer) 0);
     XtVaGetValues (parent,
 		   XmNtopAttachment, &top,	XmNtopWidget, &topw,
 		   XmNbottomAttachment, &bot,	XmNbottomWidget, &botw,
 		   XmNleftAttachment, &left,	XmNleftWidget, &leftw,
 		   XmNrightAttachment, &right,	XmNrightWidget, &rightw,
-		   0);
+		   (XtPointer) 0);
 
     XtUnmanageChild(parent);
     XtDestroyWidget(parent);
@@ -2487,13 +2487,13 @@ fe_set_compose_wrap_state(MWContext *context, XP_Bool wrap_p)
 		   XmNbottomAttachment, bot,   XmNbottomWidget, botw,
 		   XmNleftAttachment,   left,  XmNleftWidget,   leftw,
 		   XmNrightAttachment,  right, XmNrightWidget,  rightw,
-		   0);
+		   (XtPointer) 0);
     XtVaSetValues (text,
 		   XmNfontList, font_list,
 		   XmNvalue, (body ? body : ""),
 		   XmNcursorPosition, cursor,
 		   XmNwordWrap, new_wrap,
-		   0);
+		   (XtPointer) 0);
     if (body) free(body);
 
     /* Put this callback back so that the "you haven't typed anything do
@@ -2507,7 +2507,7 @@ fe_set_compose_wrap_state(MWContext *context, XP_Bool wrap_p)
     XtManageChild(text);
 
     /* just in case it didn't take... */
-    XtVaSetValues (text, XmNcursorPosition, cursor, 0);
+    XtVaSetValues (text, XmNcursorPosition, cursor, (XtPointer) 0);
 
     /* Move focus back there. */
     XmProcessTraversal (text, XmTRAVERSE_CURRENT);

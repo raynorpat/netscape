@@ -13,6 +13,7 @@
 #include "images.h"
 #include "forms.h"
 #include "merrors.h"
+#include "downloads.h"
 #include "np.h"
 #include <nspr/prglobal.h>
 #include <stdio.h>
@@ -133,12 +134,15 @@ int WFE_Init(void)
     NET_RegisterContentTypeConverter(INTERNAL_PARSER, FO_QUOTE_MESSAGE, &parser_data, PA_BeginParseMDL);
     NET_RegisterContentTypeConverter(TEXT_PLAIN, FO_QUOTE_MESSAGE, NULL, NET_PlainTextConverter);
     NPL_Init();
+    WFE_DownloadInit();
+    NET_RegisterContentTypeConverter(UNKNOWN_CONTENT_TYPE, FO_PRESENT, NULL, fe_MakeSaveAsStream);
     return 1;
 }
 
 void WFE_Shutdown(void)
 {
     unsigned int index;
+    WFE_DownloadShutdown();
     IL_Shutdown();
     NET_ShutdownNetLib();
     WFE_PlatformShutdown();
@@ -247,7 +251,7 @@ XP_Bool FE_PromptUsernameAndPassword(MWContext *context, const char *message, ch
 void FE_SetProgressBarPercent(MWContext *context, int32 percent) { }
 void FE_GraphProgressInit(MWContext *context, URL_Struct *url, int32 length) { }
 void FE_GraphProgressDestroy(MWContext *context, URL_Struct *url, int32 length, int32 total) { }
-void FE_GraphProgress(MWContext *context, URL_Struct *url, int32 received, int32 delta, int32 length) { }
+void FE_GraphProgress(MWContext *context, URL_Struct *url, int32 received, int32 delta, int32 length) { WFE_DownloadProgress(context, url, received, length); }
 XP_Bool FE_UseFancyFTP(MWContext *context) { return TRUE; }
 XP_Bool FE_UseFancyNewsgroupListing(MWContext *context) { return TRUE; }
 int FE_FileSortMethod(MWContext *context) { return SORT_BY_NAME; }

@@ -10,6 +10,7 @@ add_executable(netscape-win32 WIN32
  "${PROJECT_SOURCE_DIR}/cmd/winfe/mailsettings.c"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/images.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/forms.cpp"
+ "${PROJECT_SOURCE_DIR}/cmd/winfe/downloads.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/netscape.rc"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/cmdparse.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/genedit.cpp")
@@ -58,4 +59,8 @@ if(BUILD_TESTING)
   "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_frames.py"
   --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/browser-frames-test")
  set_tests_properties(windows_browser_frames PROPERTIES TIMEOUT 60)
+ add_test(NAME windows_downloads COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_downloads.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/downloads-test")
+ set_tests_properties(windows_downloads PROPERTIES TIMEOUT 60)
 endif()

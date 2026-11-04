@@ -32,9 +32,9 @@ Files: `cmd/winfe/main.cpp`, `frontend.c`, `frontend.h`; `cmake/tests/check_wind
 
 Files: focused `cmd/winfe/downloads.cpp`/`.h`, native menu/callback glue, independent binary/error/cancel fixtures and CMake tests.
 
-- [ ] Trace original save-stream/picker contracts and establish a failing binary fixture.
-- [ ] Implement native destination selection, explicit binary stream ownership, progress, cancellation and error handling.
-- [ ] Verify successful bytes, failure/partial cleanup and cancellation; review and commit.
+- [x] Trace original save-stream/picker contracts and establish a failing binary fixture.
+- [x] Implement native destination selection, explicit binary stream ownership, progress, cancellation and error handling.
+- [x] Verify successful bytes, failure/partial cleanup and cancellation; review and commit.
 
 ## 3. History and bookmark UI
 
@@ -47,3 +47,5 @@ Files: focused `cmd/winfe/downloads.cpp`/`.h`, native menu/callback glue, indepe
 Starting commit: `b8e0a42`. Existing eight native CTests passed in Release and Debug; native ZIP/install and Linux build checks are recorded in `cmake/windows.md`.
 
 Frame contexts: complete. Nine CTests passed in both Win32 Release and Debug, including split-response target transfer after the original child is destroyed. The Linux browser rebuilt with the descriptor-query API. Review findings on URL ownership, per-request watches, resize scheduling and retained select state were addressed.
+
+Saving/downloads: complete. Ten CTests passed in Release and Debug; Linux rebuilt after current-response header metadata and identity encoding handling. Actual identity truncation and redirect failures were reproduced before fixes. Destination creation/final rename errors, cancellation, browser closure and exact output bytes passed independent fixture checks. Mid-write disk exhaustion remains an inspected limit.

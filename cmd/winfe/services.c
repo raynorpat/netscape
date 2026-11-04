@@ -1,5 +1,6 @@
 /* Optional user-interface services for the 3.02 browser frontend. */
 #include "frontend.h"
+#include "downloads.h"
 #include "mailsettings.h"
 #include "bkmks.h"
 #include "msgcom.h"
@@ -190,10 +191,7 @@ int FE_PromptForFileName(MWContext *context, const char *prompt,
                          XP_Bool directories, ReadFileNameCallbackFunction fn,
                          void *closure)
 {
-    (void)prompt; (void)path; (void)must_exist;
-    (void)directories; (void)fn; (void)closure;
-    WFE_Unsupported(context, "File selection dialog");
-    return -1;                  /* On error the callback must not run. */
+    return WFE_DownloadPromptForFileName(context, prompt, path, must_exist, directories, fn, closure);
 }
 
 int FE_PromptForNewsHost(MWContext *context, const char *prompt,

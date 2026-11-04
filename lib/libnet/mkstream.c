@@ -181,7 +181,8 @@ NET_StreamBuilder  (FO_Present_Types format_out,
 		if (format_out == FO_PRESENT &&
 			strcasecomp (URL_s->content_encoding, ENCODING_7BIT) &&
 			strcasecomp (URL_s->content_encoding, ENCODING_8BIT) &&
-			strcasecomp (URL_s->content_encoding, ENCODING_BINARY))
+			strcasecomp (URL_s->content_encoding, ENCODING_BINARY) &&
+            strcasecomp (URL_s->content_encoding, "identity"))
 		  {
 			char *msg = (char *) XP_ALLOC (strlen (URL_s->content_encoding)
 										   + 100);

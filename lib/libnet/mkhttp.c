@@ -1795,6 +1795,10 @@ net_parse_first_http_line (ActiveEntry *ce)
         return(0); /* not ready to process */
       }
 
+    /* Keep the full header chain, but identify this response for consumers
+     * which must not use content metadata from an earlier redirect. */
+    CE_URL_S->all_headers.response_start = CE_URL_S->all_headers.empty_index;
+
 	if(cd->connection->prev_cache && CD_RECEIVING_HTTP1 == FALSE)
  	  {
 		/* got a non HTTP/1.0 or above response from

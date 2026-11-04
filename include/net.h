@@ -149,6 +149,7 @@ typedef struct _NET_AllHeaders {
     char **value;               /* The value portion of each HTTP header */
     uint32 empty_index;         /* pointer to the next free slot */
     uint32 max_index;           /* maximum no of free slots allocated */
+    uint32 response_start;      /* first header of the latest HTTP response */
 } NET_AllHeaders;
 
 

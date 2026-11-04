@@ -36,6 +36,7 @@ static void invalid_parameter(const wchar_t *expression, const wchar_t *function
 #include "images.h"
 #include "forms.h"
 #include "shist.h"
+#include "downloads.h"
 
 class BrowserFrame;
 static bool smoke_mode = false;
@@ -66,6 +67,7 @@ protected:
     afx_msg void OnHScroll(UINT code, UINT position, CScrollBar *bar);
     afx_msg BOOL OnMouseWheel(UINT flags, short delta, CPoint point);
     afx_msg void OnLButtonUp(UINT flags, CPoint point);
+    afx_msg void OnContextMenu(CWnd *window, CPoint point);
     DECLARE_MESSAGE_MAP()
 };
 
@@ -100,6 +102,7 @@ protected:
     afx_msg void OnSize(UINT type, int width, int height);
     afx_msg void OnTimer(UINT_PTR timer);
     afx_msg void OnOpen();
+    afx_msg void OnSavePage();
     afx_msg void OnGo();
     afx_msg void OnStop();
     afx_msg void OnReload();
@@ -137,6 +140,7 @@ BEGIN_MESSAGE_MAP(BrowserFrame, CFrameWnd)
  ON_WM_CLOSE()
  ON_WM_DESTROY()
  ON_COMMAND(ID_BROWSER_OPEN, OnOpen)
+ ON_COMMAND(ID_BROWSER_SAVE, OnSavePage)
  ON_COMMAND(ID_NAV_GO, OnGo)
  ON_COMMAND(ID_NAV_STOP, OnStop)
  ON_COMMAND(ID_NAV_RELOAD, OnReload)
@@ -169,6 +173,7 @@ BEGIN_MESSAGE_MAP(BrowserView, CWnd)
  ON_WM_HSCROLL()
  ON_WM_MOUSEWHEEL()
  ON_WM_LBUTTONUP()
+ ON_WM_CONTEXTMENU()
 END_MESSAGE_MAP()
 
 static BrowserFrame *frame_for(MWContext *context)
@@ -310,6 +315,7 @@ void BrowserFrame::OnTimer(UINT_PTR timer)
 }
 void BrowserFrame::OnGo() { CString text; address.GetWindowText(text); if (mode == 1) { MSG_MailDirectoryChanged(&context); RefreshMailLists(); } else if (mode == 2) { if (!text.IsEmpty() && WFE_SetMailPreference("news", text)) { WFE_ApplyMailPreferences(); MSG_NewsHostChanged(&context, text); RefreshMailLists(); } } else if (!text.IsEmpty()) Navigate(text); }
 void BrowserFrame::OnOpen() { CFileDialog dialog(TRUE, "html", nullptr, OFN_FILEMUSTEXIST, "Documents|*.html;*.htm;*.txt|All files|*.*||", this); if (dialog.DoModal() == IDOK) Navigate(dialog.GetPathName()); }
+void BrowserFrame::OnSavePage() { WFE_SavePage(&context, nullptr); }
 void BrowserFrame::OnStop() { XP_InterruptContext(&context); }
 void BrowserFrame::OnReload() { if (!current_url.empty()) Navigate(current_url.c_str(), false); }
 void BrowserFrame::OnBack() { if (history_position > 0) { --history_position; Navigate(history[history_position].c_str(), false); } }
@@ -553,6 +559,27 @@ void BrowserView::OnLButtonUp(UINT, CPoint point)
             WFE_NavigateTarget(&frame->context, target.c_str(), (const char *)anchor->target);
         }
     }
+}
+void BrowserView::OnContextMenu(CWnd *, CPoint point)
+{
+    if (point.x == -1 && point.y == -1) { point = CPoint(8,8); ClientToScreen(&point); }
+    CPoint document = point; ScreenToClient(&document);
+    LO_Element *element = LO_XYToElement(&frame->context, document.x + scroll_x, document.y + scroll_y);
+    std::string link, image;
+    if (element && element->type == LO_TEXT && element->lo_text.anchor_href && element->lo_text.anchor_href->anchor)
+        link = (const char *)element->lo_text.anchor_href->anchor;
+    else if (element && element->type == LO_IMAGE) {
+        if (element->lo_image.anchor_href && element->lo_image.anchor_href->anchor) link = (const char *)element->lo_image.anchor_href->anchor;
+        if (element->lo_image.image_url) image = (const char *)element->lo_image.image_url;
+    }
+    CMenu menu; menu.CreatePopupMenu();
+    menu.AppendMenu(MF_STRING, ID_BROWSER_SAVE, "Save page as...");
+    if (!link.empty()) menu.AppendMenu(MF_STRING, ID_BROWSER_SAVE_LINK, "Save link as...");
+    if (!image.empty()) menu.AppendMenu(MF_STRING, ID_BROWSER_SAVE_IMAGE, "Save image as...");
+    UINT command = menu.TrackPopupMenu(TPM_RETURNCMD | TPM_RIGHTBUTTON, point.x, point.y, this);
+    if (command == ID_BROWSER_SAVE) WFE_SavePage(&frame->context, nullptr);
+    else if (command == ID_BROWSER_SAVE_LINK) WFE_SaveLink(&frame->context, link.c_str(), nullptr);
+    else if (command == ID_BROWSER_SAVE_IMAGE) WFE_SaveLink(&frame->context, image.c_str(), nullptr);
 }
 
 static HFONT text_font(LO_TextAttr *attribute)
@@ -1234,7 +1261,7 @@ class NetscapeApplication : public CWinApp {
 public:
     BOOL InitInstance() override {
         CWinApp::InitInstance();
-        INITCOMMONCONTROLSEX controls = {sizeof(controls), ICC_LISTVIEW_CLASSES};
+        INITCOMMONCONTROLSEX controls = {sizeof(controls), ICC_LISTVIEW_CLASSES | ICC_PROGRESS_CLASS | ICC_TREEVIEW_CLASSES};
         InitCommonControlsEx(&controls);
         SetRegistryKey("NetscapeLegacy");
         CStringList arguments;
@@ -1244,7 +1271,7 @@ public:
         POSITION position = arguments.GetHeadPosition();
         CString first = position ? arguments.GetNext(position) : "about:";
         smoke_mode = first == "--smoke-test" || first == "--mailnews-smoke" || first == "--composer-delivery-smoke"
-            || first == "--images-smoke" || first == "--forms-smoke" || first == "--frames-smoke";
+            || first == "--images-smoke" || first == "--forms-smoke" || first == "--frames-smoke" || first == "--downloads-smoke";
         if (smoke_mode) {
             SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
 #ifdef _DEBUG
@@ -1263,6 +1290,12 @@ public:
             } else if (first == "--images-smoke") m_nExitCode = WFE_RunImageSmoke(report, url);
             else if (first == "--forms-smoke") m_nExitCode = WFE_RunFormsSmoke(report, url);
             else if (first == "--frames-smoke") m_nExitCode = WFE_RunFramesSmoke(report, url);
+            else if (first == "--downloads-smoke") {
+                CString directory = position ? arguments.GetNext(position) : "";
+                MWContext *source = WFE_NewWindow(nullptr);
+                m_nExitCode = WFE_DownloadSmoke(source, report, url, directory);
+                WFE_CloseWindow(source);
+            }
             else m_nExitCode = WFE_RunSmokeTest(report, url.IsEmpty() ? nullptr : (const char *)url);
             WFE_Shutdown();
             backend_initialized = false;

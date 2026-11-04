@@ -67,7 +67,7 @@ GET, POST and image click coordinates against captured loopback requests.
 File upload/multipart behavior, progressive/animated image timing, and full
 keyboard traversal through offscreen controls remain unverified.
 
-Plugins, bookmark and history dialogs, downloads, printing, Java, Mocha
+Plugins, bookmark and history dialogs, printing, Java, Mocha
 and SSL/security integration remain incomplete. Back/Forward currently reloads
 the URL rather than restoring a complete session-history entry. Text and
 password prompts use native dialogs.
@@ -82,6 +82,23 @@ dragging and broader interrupted-load cases remain outside current coverage.
 All nine native CTests passed in Release and Debug after frame integration; the
 Linux browser also rebuilt with the portable descriptor-query addition.
 
+Saving uses File > Save page as (Ctrl+S), or the document context menu for pages,
+links and images. Unknown binary responses use the native save picker. Each
+transfer has its own progress/cancel window and continues if its source browser
+closes. Bytes go to a unique file beside the destination and replace it only
+after stream, status, length and filesystem checks succeed. Cancel/error cleanup
+failures are reported with the retained temporary path.
+
+Download fixtures verify binary/source bytes, redirects including final responses
+without a length, empty files, identity-encoded truncation, concurrent transfers,
+sanitized filenames, browser closure, locked destinations and invalid parent
+paths. The write-failure fixture exercises file creation failure; mid-write disk
+exhaustion was inspected rather than fault-injected. Save Page declines POST
+responses to avoid silently resending forms. Known renderable attachment forcing,
+transformed/chunked response support and large-file guarantees remain limited.
+All ten native tests passed in Release and Debug; the Linux browser rebuilt after
+the shared response-header and identity-encoding changes.
+
 To install or package the Release build:
 
 ```powershell
@@ -92,7 +109,7 @@ cpack --config out/windows-frontend/CPackConfig.cmake -G ZIP -C Release -B out/p
 The Windows archive is named `netscape-legacy-3.02-Windows-x86.zip` and contains
 `bin/netscape.exe` and the documentation/licenses. It still requires the matching
 shared Visual C++ and MFC runtime. Installation and ZIP generation were verified;
-the installed executable passed the image/form fixtures. The nine-test native suite includes the frame fixture; verification is recorded
+the installed executable passed the image/form fixtures. The ten-test native suite includes frame and download fixtures; verification is recorded
 with the existing browser/mail checks. The shared layout/XBM fixes also passed a Linux
 browser rebuild.
 

@@ -40,6 +40,18 @@ extern int MK_ACCESS_COOKIES_SET_IT;
 
 PRIVATE XP_List * net_auth_list = NULL;
 PRIVATE XP_List * net_proxy_auth_list = NULL;
+PRIVATE char * auth_header = NULL;
+
+PRIVATE void
+net_free_auth_text(char *text)
+{
+    if(text)
+      {
+        volatile char *p = text;
+        while(*p) *p++ = 0;
+        XP_FREE(text);
+      }
+}
 
 PRIVATE Bool cookies_changed = FALSE;
 
@@ -159,10 +171,7 @@ NET_BuildAuthString(MWContext * context, URL_Struct *URL_s)
 #endif
 	else
 	  {
-	  	static char * auth_header = 0;
-		
-		if(auth_header)
-			XP_FREE(auth_header);
+		net_free_auth_text(auth_header);
 		auth_header = PR_smprintf("Authorization: Basic %s"CRLF, auth_s->auth_string);
 		return(auth_header);
 	  }
@@ -194,12 +203,12 @@ net_ScanForHostnameRealmMatch(char * address, char * realm)
 PRIVATE void
 net_free_auth_struct(net_AuthStruct *auth)
 {
-    FREE(auth->path);
-    FREE(auth->proxy_addr);
-    FREE(auth->username);
-    FREE(auth->password);
-    FREE(auth->auth_string);
-    FREE(auth->realm);
+    net_free_auth_text(auth->path);
+    net_free_auth_text(auth->proxy_addr);
+    net_free_auth_text(auth->username);
+    net_free_auth_text(auth->password);
+    net_free_auth_text(auth->auth_string);
+    net_free_auth_text(auth->realm);
     FREE(auth);
 }
 
@@ -207,17 +216,16 @@ net_free_auth_struct(net_AuthStruct *auth)
 PUBLIC void
 NET_RemoveAllAuthorizations()
 {
-    XP_List * authList = net_auth_list;
-	net_AuthStruct * victim;
-
-	if(XP_ListIsEmpty(authList)) /* XP_ListIsEmpty handles null list */
-		return;
-
-    while((victim = (net_AuthStruct *) XP_ListNextObject(authList)) != 0)
-	{
-		net_free_auth_struct(victim);
-		authList = net_auth_list;
-	}
+    net_AuthStruct *victim;
+    if(net_auth_list)
+      {
+        while((victim = (net_AuthStruct *)XP_ListRemoveTopObject(net_auth_list)) != NULL)
+            net_free_auth_struct(victim);
+        XP_ListDestroy(net_auth_list);
+        net_auth_list = NULL;
+      }
+    net_free_auth_text(auth_header);
+    auth_header = NULL;
 }
 
 PRIVATE void
@@ -453,10 +461,14 @@ NET_AskForAuthString(MWContext *context,
 		  	*colon = '\0';
         XP_FREEIF(password);
 		  	password = XP_STRDUP(colon+1);
+			/* URL userinfo is escaped; Basic authentication uses the bytes
+			 * entered by the user, with a single unescape operation. */
+			if(password) NET_UnEscape(password);
 		  }
 		
     XP_FREEIF(username);
 		username = XP_STRDUP(host);
+		if(username) NET_UnEscape(username);
 
 	  }
 

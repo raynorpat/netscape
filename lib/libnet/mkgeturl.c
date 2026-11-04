@@ -1215,6 +1215,8 @@ NET_ShutdownNetLib(void)
     /* free any memory in the protocol modules
      */
     NET_CleanupHTTP();
+    /* Authentication remains available to live windows until shutdown. */
+    NET_RemoveAllAuthorizations();
     NET_CleanupGopher();
     NET_CleanupFTP();
 

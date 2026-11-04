@@ -176,6 +176,7 @@ typedef struct _FTPConData {
     Bool    pasv_mode;            /* using pasv mode? */
     Bool    is_directory;         /* is the url a directory? */
     Bool    retr_already_failed;  /* did RETR fail? */
+    Bool    confirming_upload;    /* waiting for the final STOR reply */
     char   *data_buf;             /* unprocessed data from the socket */
     int32   data_buf_size;        /* size of the unprocesed data */
 
@@ -331,6 +332,14 @@ net_ftp_response (ActiveEntry *ce)
 
 	if(status == 0)
 	  {
+		/* EOF is not confirmation that a completed upload was accepted. */
+		if(cd->confirming_upload)
+		  {
+			ce->URL_s->error_msg = NET_ExplainErrorDetails(
+				MK_COULD_NOT_PUT_FILE, ce->URL_s->post_data ? ce->URL_s->post_data : "",
+				"Server closed the connection before confirming the upload");
+			return(MK_COULD_NOT_PUT_FILE);
+		  }
 		/* this shouldn't really happen, but...
 		 */
      	cd->next_state = cd->next_state_after_response;
@@ -421,6 +430,18 @@ net_ftp_response (ActiveEntry *ce)
 
      if(cd->cont_response == -1)  /* all done with this response? */
        {
+         ce->URL_s->server_status = result_code;
+         if(cd->confirming_upload)
+           {
+             cd->confirming_upload = FALSE;
+             if(result_code/100 != 2)
+               {
+                 ce->URL_s->error_msg = NET_ExplainErrorDetails(
+                     MK_COULD_NOT_PUT_FILE, ce->URL_s->post_data ? ce->URL_s->post_data : "",
+                     cd->return_msg ? cd->return_msg : "Upload rejected");
+                 return(MK_COULD_NOT_PUT_FILE);
+               }
+           }
      	 cd->next_state = cd->next_state_after_response;
      	 cd->pause_for_read = FALSE; /* don't pause */
        }
@@ -1703,6 +1724,8 @@ net_begin_put(ActiveEntry * ce)
 		path = NET_ParseURL(ce->URL_s->address, GET_PATH_PART);
 		if(!path)
 			return(MK_OUT_OF_MEMORY);
+		/* PUT addresses are escaped URLs; STOR needs the native filename. */
+		NET_UnEscape(path);
 		filename = XP_STRRCHR(path, '/');
 	  }
 
@@ -1875,6 +1898,7 @@ net_do_put(ActiveEntry * ce)
        	 * connections properly
        	 */
        	cd->next_state = FTP_WAIT_FOR_RESPONSE;
+		cd->confirming_upload = TRUE;
 
 		if(cd->file_to_post)
 		  {
@@ -1930,9 +1954,11 @@ net_do_put(ActiveEntry * ce)
                      	ce->bytes_received,
                      	ce->status,
                      	ce->URL_s->content_length);
-    	FE_SetProgressBarPercent(ce->window_id,
-                             	(ce->bytes_received*100)
-                               		/ce->URL_s->content_length);
+        /* Direct PUT callers can have an unknown or zero length. Avoid both
+         * division by zero and overflow of the signed 32-bit byte counter. */
+        FE_SetProgressBarPercent(ce->window_id,
+            ce->URL_s->content_length > 0 ?
+            (int32)(100.0 * ce->bytes_received / ce->URL_s->content_length) : 0);
 	  }
 
 	return(ce->status);
@@ -3314,6 +3340,7 @@ NET_FTPLoad (ActiveEntry * ce)
 
         /* copy the username */
         StrAllocCopy(cd->username, username);
+        NET_UnEscape(cd->username);
 
 		/* set it back so we can use it later
 		 */
@@ -4024,6 +4051,7 @@ NET_ProcessFTP(ActiveEntry * ce)
               {
                 cd->cc->prev_cache = NO;
                 cd->next_state = FTP_CONTROL_CONNECT;
+				cd->confirming_upload = FALSE;
 				cd->pasv_mode = TRUE;  /* until we learn otherwise */
             	cd->pause_for_read = FALSE;
                 ce->status = 0;  /* keep going */

@@ -107,8 +107,6 @@ else()
  set_target_properties(netscape_java_njs PROPERTIES EXCLUDE_FROM_ALL TRUE)
 endif()
 add_custom_target(netscape_sun_java DEPENDS ${NETSCAPE_JAVA_LIBRARIES} netscape_java_vm netscape_javah netscape_javap netscape_java_constants netscape_java_classes netscape_javac netscape_javadoc)
-install(TARGETS netscape_java_vm netscape_javah netscape_javap RUNTIME DESTINATION bin)
-install(FILES "${java_class_archive}" DESTINATION lib/netscape)
 
 foreach(tool javac javadoc)
  set(launcher "${PROJECT_BINARY_DIR}/bin/${tool}")

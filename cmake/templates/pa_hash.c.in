@@ -1,0 +1,17 @@
+/* CMake wrapper for the generated HTML tag perfect-hash table. */
+#include "pa_parse.h"
+#include "pa_hash_table.h"
+
+intn
+pa_tokenize_tag(char *str)
+{
+    const struct pa_GeneratedTag *tag;
+    if (str == NULL) return P_UNKNOWN;
+    tag = pa_LookupGeneratedTag(str, strlen(str));
+    if (tag != NULL) return tag->id;
+#ifdef DEBUG_jwz
+    /* Preserve the branch's intentional STYLE-to-TITLE alias. */
+    if (!strcmp(str, "style")) return P_TITLE;
+#endif
+    return P_UNKNOWN;
+}

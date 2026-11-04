@@ -12,7 +12,7 @@ cmake -S . -B out/java -DNETSCAPE_BUILD_BROWSER=OFF \
 cmake --build out/java --target netscape_sun_java --parallel
 ```
 
-To integrate the source runtime with the browser, use `-DNETSCAPE_ENABLE_JAVA=ON -DNETSCAPE_JAVA_PROVIDER=SOURCE`. The source provider is the default when browser Java is enabled. The prior prebuilt-archive mode remains available with `-DNETSCAPE_JAVA_PROVIDER=IMPORTED -DNETSCAPE_JAVA_ROOT=/path/to/legacy/dist`.
+To integrate the source runtime with the browser, use `-DNETSCAPE_ENABLE_JAVA=ON -DNETSCAPE_JAVA_PROVIDER=SOURCE`. The source provider is the default when browser Java is enabled. Installation uses private binaries under `libexec/netscape/`, class data under the configured library directory, and public `netscape-java`, `netscape-javah` and `netscape-javap` launchers. The Java compiler/javadoc launchers are installed only when a compiler archive is available; see [installation and packaging](README.md#installation-and-packages). The prior prebuilt-archive mode remains available with `-DNETSCAPE_JAVA_PROVIDER=IMPORTED -DNETSCAPE_JAVA_ROOT=/path/to/legacy/dist`.
 
 The source runtime retains vintage ABI assumptions. Its JRI argument bridge now handles array-based `va_list` types using explicit ownership and `va_copy`/`va_end`. The complete `netscape_sun_java` aggregate, including the VM executable, compiles and links on x64 GCC 15. The Java-enabled browser with Mocha also compiles and links. Java execution has not been verified; remaining pointer-width warnings mean this is not a certified x64 JVM port.
 

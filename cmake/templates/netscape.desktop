@@ -1,0 +1,18 @@
+[Desktop Entry]
+Type=Application
+Name=Netscape Navigator
+Comment=Legacy browser, mail and news client
+Exec=netscape %u
+Icon=web-browser
+Terminal=false
+Categories=Network;WebBrowser;Email;News;
+MimeType=text/html;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/mailto;x-scheme-handler/news;
+Actions=Mail;News;
+
+[Desktop Action Mail]
+Name=Mail
+Exec=netscape mailbox:
+
+[Desktop Action News]
+Name=News
+Exec=netscape news:

@@ -1,6 +1,6 @@
 # Netscape source tree
 
-This repository contains a legacy Netscape browser source tree. It includes the browser front end, shared libraries, Java and JavaScript components, networking support, security code, localization files, and build configuration.
+This repository contains a legacy Netscape source tree. Its single XFE executable includes the browser, mail and news clients. It includes the browser front end, shared libraries, Java and JavaScript components, networking support, security code, localization files, and build configuration.
 
 The top-level `Makefile` includes `config/config.mk` and builds the source directories listed there. Its primary browser targets include `netscape-export` and `netscape-export.pure`. This is a historical build system: it expects a compatible Unix-like environment and the project’s original toolchain and configuration. A modern compiler or operating system may not be compatible without additional work.
 
@@ -28,7 +28,16 @@ cmake -S . -B out/cmake -DCMAKE_BUILD_TYPE=Release
 cmake --build out/cmake --parallel
 ```
 
-The browser requires Linux, Python 3, POSIX text utilities, and zlib/X11/Motif development libraries. Java and Mocha default to disabled. See the CMake guide for library-only builds, dependency prefixes, Sun Java source targets and imported-runtime mode, and verification limits.
+The browser requires Linux, Python 3, Perl, gperf, POSIX text utilities, and zlib/X11/Motif development libraries. Java and Mocha default to disabled. See the CMake guide for library-only builds, dependency prefixes, Sun Java source targets and imported-runtime mode, and verification limits.
+
+Install or package the build with:
+
+```sh
+cmake --install out/cmake --prefix /your/prefix
+cpack --config out/cmake/CPackConfig.cmake -G TGZ -B out/packages
+```
+
+The installed `netscape` launcher opens the browser; `netscape mailbox:` and `netscape news:` open mail and news. See the CMake guide for the relocatable layout, Java tools, optional policy data and other package formats.
 
 ## Historical context
 

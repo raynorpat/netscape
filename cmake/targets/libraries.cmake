@@ -46,3 +46,5 @@ if(NOT NETSCAPE_ENABLE_SECURITY)
   set_target_properties(netscape_${component} PROPERTIES EXCLUDE_FROM_ALL TRUE)
  endforeach()
 endif()
+
+include(NetscapeResources)

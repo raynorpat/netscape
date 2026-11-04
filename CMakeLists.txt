@@ -22,3 +22,6 @@ endif()
 if(NETSCAPE_BUILD_BROWSER)
   include(cmake/targets/browser.cmake)
 endif()
+
+include(NetscapeInstall)
+include(NetscapePackaging)

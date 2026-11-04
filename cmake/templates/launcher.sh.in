@@ -1,0 +1,24 @@
+#!/bin/sh
+# Resolve installed paths relative to this launcher, including relocated archives.
+bin_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd) || exit 1
+private_dir="$bin_dir/@NETSCAPE_PRIVATE_FROM_BIN@"
+data_dir="$bin_dir/@NETSCAPE_DATA_FROM_BIN@"
+java_dir="$bin_dir/@NETSCAPE_JAVA_FROM_BIN@"
+MOZILLA_HOME=${MOZILLA_HOME:-"$data_dir"}
+export MOZILLA_HOME
+if [ -f "$data_dir/XKeysymDB" ] && [ -z "${XKEYSYMDB:-}" ]; then
+    XKEYSYMDB="$data_dir/XKeysymDB"
+    export XKEYSYMDB
+fi
+XFILESEARCHPATH="$data_dir/%N.ad${XFILESEARCHPATH:+:$XFILESEARCHPATH}"
+export XFILESEARCHPATH
+if [ -f "$java_dir/@NETSCAPE_JAVA_ARCHIVE_NAME@" ]; then
+    CLASSPATH="$java_dir/@NETSCAPE_JAVA_ARCHIVE_NAME@${CLASSPATH:+:$CLASSPATH}"
+    export CLASSPATH
+fi
+case '@NETSCAPE_LAUNCH_MODE@' in
+    java) exec "$private_dir/java" -classpath "${CLASSPATH:-}" "$@" ;;
+    javah|javap) exec "$private_dir/@NETSCAPE_LAUNCH_MODE@" -classpath "${CLASSPATH:-}" "$@" ;;
+    javac|javadoc) exec "$private_dir/java" -classpath "$java_dir/javac.zip" -ms8m 'sun.tools.@NETSCAPE_LAUNCH_MODE@.Main' "$@" ;;
+    *) exec "$private_dir/netscape-export" "$@" ;;
+esac

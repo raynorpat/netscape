@@ -1,0 +1,67 @@
+include_guard(GLOBAL)
+find_program(NETSCAPE_GPERF NAMES gperf REQUIRED)
+set(resource_generator "${PROJECT_SOURCE_DIR}/cmake/modules/resources.py")
+set(parser_output "${NETSCAPE_GENERATED}/parser")
+add_custom_command(OUTPUT "${parser_output}/pa_hash.c" "${parser_output}/pa_hash_table.h" "${parser_output}/pa_hash.rmap"
+ COMMAND ${Python3_EXECUTABLE} "${resource_generator}" parser "${PROJECT_SOURCE_DIR}/lib/libparse" "${parser_output}" "${NETSCAPE_GPERF}" "${PROJECT_SOURCE_DIR}/cmake/templates/pa_hash.c.in"
+ DEPENDS "${resource_generator}" "${PROJECT_SOURCE_DIR}/lib/libparse/pa_tags.h" "${PROJECT_SOURCE_DIR}/cmake/templates/pa_hash.c.in" VERBATIM)
+add_custom_target(netscape_parser_tables DEPENDS "${parser_output}/pa_hash.c" "${parser_output}/pa_hash_table.h" "${parser_output}/pa_hash.rmap")
+configure_file("${PROJECT_SOURCE_DIR}/lib/libparse/pa_mdl.c" "${parser_output}/pa_mdl.c" COPYONLY)
+target_sources(netscape_parse PRIVATE "${parser_output}/pa_hash.c" "${parser_output}/pa_mdl.c")
+add_dependencies(netscape_parse netscape_parser_tables)
+
+function(netscape_xfe_resources)
+ set(stage "${NETSCAPE_GENERATED}/resources")
+ set(localized "${stage}/l10n/us/xp")
+ file(GLOB inputs CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/l10n/us/xp/*.html" "${PROJECT_SOURCE_DIR}/l10n/us/xp/*.msg")
+ set(outputs)
+ foreach(input IN LISTS inputs)
+  get_filename_component(name "${input}" NAME_WE)
+  get_filename_component(filename "${input}" NAME)
+  if(name STREQUAL "about-all")
+   continue()
+  endif()
+  list(APPEND outputs "${localized}/${name}.h" "${localized}/${filename}")
+ endforeach()
+ list(REMOVE_DUPLICATES outputs)
+ add_custom_command(OUTPUT ${outputs}
+  COMMAND ${Python3_EXECUTABLE} "${resource_generator}" localized "${PROJECT_SOURCE_DIR}/l10n/us/xp" "${localized}"
+  DEPENDS "${resource_generator}" ${inputs} VERBATIM)
+ set(assets hype.au photo.jpg rsalogo.gif biglogo.gif javalogo.gif qt_logo.gif)
+ foreach(asset IN LISTS assets)
+  get_filename_component(name "${asset}" NAME_WE)
+  get_filename_component(extension "${asset}" LAST_EXT)
+  string(SUBSTRING "${extension}" 1 -1 extension)
+  set(header "${stage}/lib/xp/${name}.h")
+  add_custom_command(OUTPUT "${header}"
+   COMMAND ${Python3_EXECUTABLE} "${resource_generator}" binary "${PROJECT_SOURCE_DIR}/lib/xp/${asset}" "${header}" "${name}_${extension}"
+   DEPENDS "${resource_generator}" "${PROJECT_SOURCE_DIR}/lib/xp/${asset}" VERBATIM)
+  list(APPEND outputs "${header}")
+ endforeach()
+ add_custom_target(netscape_xfe_resources DEPENDS ${outputs})
+ # Preserve relative include paths while preventing checked-in headers from
+ # shadowing the generated l10n and binary assets.
+ configure_file("${PROJECT_SOURCE_DIR}/cmd/xfe/icons.c" "${stage}/cmd/xfe/icons.c" COPYONLY)
+ list(REMOVE_ITEM NETSCAPE_XFE_SOURCES "${PROJECT_SOURCE_DIR}/cmd/xfe/icons.c")
+ list(APPEND NETSCAPE_XFE_SOURCES "${stage}/cmd/xfe/icons.c")
+ set(NETSCAPE_XFE_SOURCES "${NETSCAPE_XFE_SOURCES}" PARENT_SCOPE)
+ set(NETSCAPE_RESOURCE_SOURCES "${outputs}" PARENT_SCOPE)
+ set(NETSCAPE_LOCALIZED_DIR "${localized}" PARENT_SCOPE)
+endfunction()
+
+find_package(Perl REQUIRED)
+set(security_output "${NETSCAPE_GENERATED}/security-resources")
+set(security_inputs)
+foreach(name secprefs.html convhtml.sh convhtml convwrc convquot mkxpstrs.pl)
+ list(APPEND security_inputs "${PROJECT_SOURCE_DIR}/security/lib/nav/${name}")
+endforeach()
+add_custom_command(OUTPUT "${security_output}/secprefs.h" "${security_output}/secprefs.rc" "${security_output}/allxpstr.ins" "${NETSCAPE_GENERATED}/include/allxpstr.h"
+ COMMAND ${Python3_EXECUTABLE} "${resource_generator}" security "${PROJECT_SOURCE_DIR}" "${security_output}" "${PERL_EXECUTABLE}"
+ DEPENDS "${resource_generator}" ${security_inputs} "${PROJECT_SOURCE_DIR}/include/allxpstr.h" VERBATIM)
+add_custom_target(netscape_security_resources DEPENDS "${security_output}/secprefs.h" "${NETSCAPE_GENERATED}/include/allxpstr.h")
+target_include_directories(netscape_platform BEFORE INTERFACE "${NETSCAPE_GENERATED}/include")
+add_dependencies(netscape_platform netscape_security_resources)
+foreach(name advisor pwdlgs)
+ configure_file("${PROJECT_SOURCE_DIR}/security/lib/nav/${name}.c" "${security_output}/${name}.c" COPYONLY)
+ target_sources(netscape_secnav PRIVATE "${security_output}/${name}.c")
+endforeach()

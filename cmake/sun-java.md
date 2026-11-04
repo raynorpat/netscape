@@ -14,7 +14,7 @@ cmake --build out/java --target netscape_sun_java --parallel
 
 To integrate the source runtime with the browser, use `-DNETSCAPE_ENABLE_JAVA=ON -DNETSCAPE_JAVA_PROVIDER=SOURCE`. The source provider is the default when browser Java is enabled. The prior prebuilt-archive mode remains available with `-DNETSCAPE_JAVA_PROVIDER=IMPORTED -DNETSCAPE_JAVA_ROOT=/path/to/legacy/dist`.
 
-The source runtime retains vintage ABI assumptions. On x64 GCC 15, its `jrijdk.c` fails on assignments to array-based `va_list` values. The CMake target graph configures on x64, but the full VM and Java-enabled browser have not been built successfully. A compatible vintage 32-bit toolchain is recommended; it has not been verified here. Adding targets does not constitute an x64 JVM port.
+The source runtime retains vintage ABI assumptions. Its JRI argument bridge now handles array-based `va_list` types using explicit ownership and `va_copy`/`va_end`. The complete `netscape_sun_java` aggregate, including the VM executable, compiles and links on x64 GCC 15. Java execution and the Java-enabled browser have not been verified; remaining pointer-width warnings mean this is not a certified x64 JVM port.
 
 ## Targets
 
@@ -60,4 +60,10 @@ Compilation follows the original runtime/compiler package lists. Python packages
 
 ## Verification
 
-On Linux x86_64 with GCC 15, CMake configured the source target graph and successfully built opcode generation, `javah`, `javap`, the constant generator/Java constants, Linux platform, AWT, multimedia, interpreter-entry, applet and networking archives. A small standalone console adapter supplies javap's verifier diagnostics without linking the full VM. The full VM build stopped at the existing `va_list` incompatibilities in `runtime/jrijdk.c`. Java execution, bootstrap class compilation and native-interface regeneration remain unverified.
+On Linux x86_64 with GCC 15, CMake configured the source target graph and successfully built opcode generation, `javah`, `javap`, the constant generator/Java constants, Linux platform, AWT, multimedia, interpreter-entry, applet and networking archives. A small standalone console adapter supplies javap's verifier diagnostics without linking the full VM. After the JRI `va_list` ownership fix, the runtime archive and complete `netscape_sun_java` aggregate also compiled and linked. A focused regression extracts the production JRI marshaler and constructor/instance/static wrappers, with VM lookup stubbed; it passes under address and undefined-behavior sanitizers. It covers register/stack overflow arguments, promoted primitive arguments, references, repeated `V` calls, and lookup/marshalling failures while preserving the caller cursor.
+
+```sh
+python3 sun-java/tests/test_jri_varargs.py --sanitize
+```
+
+Java execution, bootstrap class compilation and native-interface regeneration remain unverified.

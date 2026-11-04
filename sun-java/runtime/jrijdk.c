@@ -20,6 +20,7 @@
 #include "java_lang_ThreadGroup.h"
 #include "java_lang_ClassLoader.h"
 #include "jio.h"
+#include "jri_va_compat.h"
 #include "utf.h"
 #if defined(NETSCAPE) && defined(XP_UNIX)
 #include "prmon.h"
@@ -473,7 +474,7 @@ jri_GetMethodBlock(ExecEnv* ee, ClassClass* cb, jint methodID,
 #endif
 
 typedef union JRI_PushArgsType {
-	va_list		v;
+	va_list*	v;
 	JRIValue*	a;
 } JRI_PushArgsType;
 
@@ -488,7 +489,7 @@ jri_PushArgumentsVararg(ExecEnv* ee, char* method_name, char* method_signature,
     bool_t shortFloats = FALSE;
     char *p;
     Java8 tdub;
-	va_list args = a.v;
+	/* The entry point owns this list and calls va_end after invocation. */
 
     for (p = method_signature + 1; *p != SIGNATURE_ENDFUNC; p++) {
 		switch (*p) {
@@ -496,18 +497,20 @@ jri_PushArgumentsVararg(ExecEnv* ee, char* method_name, char* method_signature,
 		  case SIGNATURE_SHORT:
 		  case SIGNATURE_BYTE:
 		  case SIGNATURE_CHAR:
+			(current_frame->optop++)->i = va_arg(*a.v, int);
+			break;
 		  case SIGNATURE_INT:
-			(current_frame->optop++)->i = va_arg(args, long);
+			(current_frame->optop++)->i = va_arg(*a.v, jint);
 			break;
 		  case SIGNATURE_FLOAT:
 			if (shortFloats) 
-				(current_frame->optop++)->i = va_arg(args, long);
+				(current_frame->optop++)->i = va_arg(*a.v, jint);
 			else 
-				(current_frame->optop++)->f = (float)va_arg(args, double);
+				(current_frame->optop++)->f = (float)va_arg(*a.v, double);
 			break;
 		  case SIGNATURE_CLASS:
 		  {
-			  jref ref = va_arg(args, jref);	/* don't put va_arg in the macro */
+			  jref ref = va_arg(*a.v, jref);	/* don't put va_arg in the macro */
 			  (current_frame->optop++)->h = JRIEnv_deref(EE2NaEnv(ee), ref);
 		  }
 		  while (*p != SIGNATURE_ENDCLASS) p++;
@@ -517,16 +520,16 @@ jri_PushArgumentsVararg(ExecEnv* ee, char* method_name, char* method_signature,
 			if (*p == SIGNATURE_CLASS) 
 	        { while (*p != SIGNATURE_ENDCLASS) p++; } 
 			{
-				jref ref = va_arg(args, jref);	/* don't put va_arg in the macro */
+				jref ref = va_arg(*a.v, jref);	/* don't put va_arg in the macro */
 				(current_frame->optop++)->p = (void*)JRIEnv_deref(EE2NaEnv(ee), ref);
 			}
 			break;
 		  case SIGNATURE_LONG:
-			SET_INT64(tdub, current_frame->optop, va_arg(args, int64_t));
+			SET_INT64(tdub, current_frame->optop, va_arg(*a.v, int64_t));
 			current_frame->optop += 2;
 			break;
 		  case SIGNATURE_DOUBLE:
-			SET_DOUBLE(tdub, current_frame->optop, va_arg(args, double));
+			SET_DOUBLE(tdub, current_frame->optop, va_arg(*a.v, double));
 			current_frame->optop += 2;
 			break;
 		  default:
@@ -1138,10 +1141,15 @@ jri_NewObjectA(JRIEnv* env, jint op, struct java_lang_Class* clazz, jint methodI
 static JavaObject* JRI_CALLBACK
 jri_NewObjectV(JRIEnv* env, jint op, struct java_lang_Class* clazz, jint methodID, va_list args)
 {
-	JRI_PushArgsType a;
-	a.v = args;
-	return jri_Construct(env, clazz, methodID,
-						 (JRI_PushArguments_t)jri_PushArgumentsVararg, a);
+    JavaObject* result;
+    va_list copy;
+    JRI_PushArgsType a;
+    JRI_VA_COPY(copy, args);
+    a.v = &copy;
+    result = jri_Construct(env, clazz, methodID,
+                         (JRI_PushArguments_t)jri_PushArgumentsVararg, a);
+    va_end(copy);
+    return result;
 }
 
 static JavaObject* JRI_CALLBACK
@@ -1151,7 +1159,7 @@ jri_NewObject(JRIEnv* env, jint op, struct java_lang_Class* clazz, jint methodID
     va_list args;
 	JRI_PushArgsType a;
     va_start(args, methodID);
-	a.v = args;
+	a.v = &args;
 	result = jri_Construct(env, clazz, methodID,
 						   (JRI_PushArguments_t)jri_PushArgumentsVararg, a);
     va_end(args);
@@ -1431,7 +1439,7 @@ jri_CallMethod##suffix(JRIEnv* env, jint op, JavaObject* obj,		 \
 	JRI_PushArgsType a;													 \
 																		 \
 	va_start(args, methodID);											 \
-	a.v = args;															 \
+	a.v = &args;															 \
 	result = jri_Invoke(ee, obj, methodID,								 \
 						(JRI_PushArguments_t)jri_PushArgumentsVararg, a, \
 						FALSE, FALSE).unionType;						 \
@@ -1445,12 +1453,15 @@ jri_CallMethod##suffix##V(JRIEnv* env, jint op, JavaObject* obj,	 \
 {																		 \
 	ExecEnv* ee = NaEnv2EE(env);										 \
 	ResultType result;													 \
+	va_list copy;													 \
 	JRI_PushArgsType a;													 \
-	a.v = args;															 \
+	JRI_VA_COPY(copy, args);															 \
+	a.v = &copy;															 \
 																		 \
 	result = jri_Invoke(ee, obj, methodID,								 \
 						(JRI_PushArguments_t)jri_PushArgumentsVararg, a, \
 						FALSE, FALSE).unionType;						 \
+	va_end(copy);														 \
 	return result;														 \
 }																		 \
 																		 \
@@ -1488,7 +1499,7 @@ jri_CallStaticMethod##suffix(JRIEnv* env, jint op, struct java_lang_Class* clazz
 	va_list args;															\
 	JRI_PushArgsType a;														\
 	va_start(args, methodID);												\
-	a.v = args;																\
+	a.v = &args;																\
 	result = jri_Invoke(ee, clazz, methodID,								\
 						(JRI_PushArguments_t)jri_PushArgumentsVararg, a,	\
 						TRUE, FALSE).unionType;								\
@@ -1502,11 +1513,14 @@ jri_CallStaticMethod##suffix##V(JRIEnv* env, jint op, struct java_lang_Class* cl
 {																			\
 	ExecEnv* ee = NaEnv2EE(env);											\
 	ResultType result;														\
+	va_list copy;														\
 	JRI_PushArgsType a;														\
-	a.v = args;																\
+	JRI_VA_COPY(copy, args);																\
+	a.v = &copy;																\
 	result = jri_Invoke(ee, clazz, methodID,								\
 						(JRI_PushArguments_t)jri_PushArgumentsVararg, a,	\
 						TRUE, FALSE).unionType;								\
+	va_end(copy);															\
 	return result;															\
 }																			\
 																			\

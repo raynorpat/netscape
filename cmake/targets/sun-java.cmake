@@ -4,7 +4,7 @@ set(NETSCAPE_JAVA_CLASSPATH "" CACHE STRING "Classpath for explicit legacy javah
 set(NETSCAPE_JAVA_BOOTSTRAP_COMMAND "" CACHE STRING "Semicolon-separated vintage javac command for rebuilding Java classes")
 option(NETSCAPE_REBUILD_JAVA_CLASSES "Rebuild the Java class archive using a configured vintage compiler" OFF)
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
- message(WARNING "The sun-java source runtime has not been ported or verified for x64. Use a compatible 32-bit toolchain for the vintage JVM.")
+ message(WARNING "The sun-java runtime retains vintage pointer-width assumptions. x64 compilation is supported experimentally; Java execution remains unverified.")
 endif()
 # Stage native source and the checked-in generated headers/stubs together.
 # Their quoted relative includes must not select stale files in the checkout.

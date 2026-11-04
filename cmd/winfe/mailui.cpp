@@ -26,7 +26,7 @@ static bool mail_image(CImageList &images, CWnd *owner, UINT resource, bool head
     output.StretchBlt(0, 0, size, size, &input, inset, inset,
                       bitmap.bmWidth - inset * 2, bitmap.bmHeight - inset * 2, SRCCOPY);
     input.SelectObject(old_input); output.SelectObject(old_output);
-    return images.Add(&scaled, ClassicUI::Face) >= 0;
+    return images.Add(&scaled, ClassicUI::ArtworkKey) >= 0;
 }
 
 BEGIN_MESSAGE_MAP(MailPaneDivider, CWnd)
@@ -50,8 +50,8 @@ bool MailPaneDivider::Create(MailPaneUI *ui, CWnd *owner, bool direction, UINT i
 void MailPaneDivider::OnPaint()
 {
     CPaintDC dc(this); CRect area; GetClientRect(area);
-    dc.FillSolidRect(area, ClassicUI::Face);
-    dc.Draw3dRect(area, RGB(255,255,255), RGB(128,128,128));
+    dc.FillSolidRect(area, ClassicUI::Face());
+    dc.DrawEdge(area,EDGE_RAISED,BF_RECT);
 }
 
 BOOL MailPaneDivider::OnEraseBkgnd(CDC *) { return TRUE; }

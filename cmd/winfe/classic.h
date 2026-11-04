@@ -5,7 +5,9 @@
 #include <memory>
 
 namespace ClassicUI {
-    const COLORREF Face = RGB(192,192,192);
+    inline COLORREF Face() { return ::GetSysColor(COLOR_BTNFACE); }
+    /* The original bitmap transparency key is independent of the OS palette. */
+    const COLORREF ArtworkKey = RGB(192,192,192);
     int Scale(CWnd *window, int value);
     CFont *Font(CWnd *window);
     void Apply(CWnd *window);

@@ -5,6 +5,7 @@ and bitmap inspection use the Python standard library; no public site is used.
 """
 
 import argparse
+import ctypes
 import base64
 from contextlib import contextmanager
 import http.server
@@ -100,6 +101,13 @@ def check_bitmap(path, dpi=96):
     if len(data) < offset + stride * abs(height):
         raise RuntimeError("Chrome capture is missing bitmap scanlines")
     pixel_bytes = bits // 8
+    face = ctypes.windll.user32.GetSysColor(15)  # COLOR_BTNFACE
+    face_bgr = bytes(((face >> 16) & 255, (face >> 8) & 255, face & 255))
+    x, y = width - 100, 10
+    row = y if height < 0 else height - 1 - y
+    pixel = offset + row * stride + x * pixel_bytes
+    if data[pixel:pixel + 3] != face_bgr:
+        raise RuntimeError('Toolbar background does not use the native Windows face color')
     if dpi < 48 or dpi > 384:
         raise RuntimeError("Chrome capture has an unsupported UI DPI")
     # Sample only the interior icon area of the disabled Back button. The
@@ -114,7 +122,7 @@ def check_bitmap(path, dpi=96):
         row = y if height < 0 else height - 1 - y
         for x in range(left, right):
             pixel = offset + row * stride + x * pixel_bytes
-            if any(abs(channel - 192) > 12 for channel in data[pixel:pixel + 3]):
+            if any(abs(channel - background) > 12 for channel, background in zip(data[pixel:pixel + 3], face_bgr)):
                 ink += 1
     if ink < 4:
         raise RuntimeError("Chrome capture is missing the disabled Back button artwork")

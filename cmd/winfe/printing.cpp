@@ -582,7 +582,7 @@ protected:
     }
     void draw_preview(CDC &dc) {
         CRect client;GetClientRect(client);dc.FillSolidRect(client,RGB(112,112,112));
-        dc.FillSolidRect(0,0,client.Width(),48,ClassicUI::Face);
+        dc.FillSolidRect(0,0,client.Width(),48,ClassicUI::Face());
         int w=pages.geometry.width,h=pages.geometry.height;
         double scale=zoom?96.0/2540.0:(std::min)((client.Width()-40.0)/w,(client.Height()-78.0)/h);
         int pw=(std::max)(1,(int)(w*scale)),ph=(std::max)(1,(int)(h*scale));

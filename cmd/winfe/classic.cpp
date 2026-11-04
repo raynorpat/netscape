@@ -29,7 +29,6 @@ CFont *ClassicUI::Font(CWnd *window)
 
 static BOOL CALLBACK classic_child(HWND window, LPARAM font)
 {
-    SetWindowTheme(window, L"", L"");
     SendMessage(window, WM_SETFONT, (WPARAM)font, TRUE);
     return TRUE;
 }
@@ -44,11 +43,10 @@ void ClassicUI::Apply(CWnd *window)
 
 HBRUSH ClassicUI::ControlColor(CDC *dc, CWnd *, UINT type)
 {
-    static CBrush face(Face), white(RGB(255,255,255));
     bool paper = type == CTLCOLOR_EDIT || type == CTLCOLOR_LISTBOX;
-    dc->SetTextColor(RGB(0,0,0));
-    dc->SetBkColor(paper ? RGB(255,255,255) : Face);
-    return (HBRUSH)(paper ? white.GetSafeHandle() : face.GetSafeHandle());
+    dc->SetTextColor(GetSysColor(paper ? COLOR_WINDOWTEXT : COLOR_BTNTEXT));
+    dc->SetBkColor(GetSysColor(paper ? COLOR_WINDOW : COLOR_BTNFACE));
+    return GetSysColorBrush(paper ? COLOR_WINDOW : COLOR_BTNFACE);
 }
 
 void ClassicButton::SetBitmapResource(UINT resource)
@@ -65,12 +63,9 @@ void ClassicButton::DrawItem(LPDRAWITEMSTRUCT item)
     CRect area(item->rcItem), inside(area);
     bool down = (item->itemState & ODS_SELECTED) != 0;
     bool disabled = (item->itemState & ODS_DISABLED) != 0;
-    dc.FillSolidRect(area, ClassicUI::Face);
-    dc.Draw3dRect(area, down ? RGB(64,64,64) : RGB(255,255,255), RGB(0,0,0));
-    inside.DeflateRect(1,1);
-    dc.Draw3dRect(inside, down ? RGB(128,128,128) : ClassicUI::Face,
-                  down ? ClassicUI::Face : RGB(128,128,128));
-    inside.DeflateRect(2,1);
+    dc.FillSolidRect(area, ClassicUI::Face());
+    dc.DrawFrameControl(area,DFC_BUTTON,DFCS_BUTTONPUSH | (down?DFCS_PUSHED:0) | (disabled?DFCS_INACTIVE:0));
+    inside.DeflateRect(3,2);
     if (down) inside.OffsetRect(1,1);
     if (artwork.GetSafeHandle() && presentation!=1) {
         CBitmap *image = disabled && disabled_artwork.GetSafeHandle() ? &disabled_artwork : &artwork;
@@ -79,7 +74,7 @@ void ClassicButton::DrawItem(LPDRAWITEMSTRUCT item)
         int x = inside.CenterPoint().x - size / 2, y = presentation==0 ? inside.CenterPoint().y-size/2 : inside.top + ClassicUI::Scale(this, 1);
         CDC memory; memory.CreateCompatibleDC(&dc);
         CBitmap *old = memory.SelectObject(image);
-        TransparentBlt(dc, x,y,size,size,memory,0,0,bitmap.bmWidth,bitmap.bmHeight,ClassicUI::Face);
+        TransparentBlt(dc, x,y,size,size,memory,0,0,bitmap.bmWidth,bitmap.bmHeight,ClassicUI::ArtworkKey);
         memory.SelectObject(old);
         inside.top = y + size + ClassicUI::Scale(this, 1);
     }
@@ -88,10 +83,10 @@ void ClassicButton::DrawItem(LPDRAWITEMSTRUCT item)
     dc.SetBkMode(TRANSPARENT);
     if (disabled && presentation!=0) {
         CRect shadow(inside); shadow.OffsetRect(1,1);
-        dc.SetTextColor(RGB(255,255,255));
+        dc.SetTextColor(GetSysColor(COLOR_3DHIGHLIGHT));
         dc.DrawText(caption, shadow, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
     }
-    dc.SetTextColor(disabled ? RGB(128,128,128) : RGB(0,0,0));
+    dc.SetTextColor(GetSysColor(disabled ? COLOR_GRAYTEXT : COLOR_BTNTEXT));
     if(presentation!=0) dc.DrawText(caption, inside, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
     if (item->itemState & ODS_FOCUS) { CRect focus(area); focus.DeflateRect(3,3); dc.DrawFocusRect(focus); }
     dc.SelectObject(old_font); dc.Detach();
@@ -110,7 +105,7 @@ BOOL ClassicDialog::OnInitDialog()
 }
 BOOL ClassicDialog::OnEraseBkgnd(CDC *dc)
 {
-    CRect area;GetClientRect(area);dc->FillSolidRect(area,ClassicUI::Face);return TRUE;
+    CRect area;GetClientRect(area);dc->FillSolidRect(area,ClassicUI::Face());return TRUE;
 }
 HBRUSH ClassicDialog::OnCtlColor(CDC *dc,CWnd *window,UINT type) { return ClassicUI::ControlColor(dc,window,type); }
 

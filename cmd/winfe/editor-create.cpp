@@ -173,7 +173,7 @@ protected:
         if(heading.IsEmpty()) {MessageBox("Enter a title for the new page.","PageWizard",MB_OK|MB_ICONEXCLAMATION);title.SetFocus();return;}
         result=wizard_html((const char *)heading,(const char *)text,background,layout.GetCurSel());EndDialog(IDOK);
     }
-    afx_msg BOOL OnEraseBkgnd(CDC *dc) {CRect r;GetClientRect(r);dc->FillSolidRect(r,ClassicUI::Face);return TRUE;}
+    afx_msg BOOL OnEraseBkgnd(CDC *dc) {CRect r;GetClientRect(r);dc->FillSolidRect(r,ClassicUI::Face());return TRUE;}
     afx_msg HBRUSH OnCtlColor(CDC *dc,CWnd *window,UINT type) {return ClassicUI::ControlColor(dc,window,type);}
     DECLARE_MESSAGE_MAP()
 };

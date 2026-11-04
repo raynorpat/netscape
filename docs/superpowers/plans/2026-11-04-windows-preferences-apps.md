@@ -23,13 +23,13 @@ standing commit-per-item request authorize implementation in this checkout.
 
 ## Task 2: Supporting applications
 
-- [ ] Add failing native Apps-page and child-process fixtures for View Source,
+- [x] Add failing native Apps-page and child-process fixtures for View Source,
   Telnet/TN3270 and the temporary directory, including Cancel/failed-save cases.
-- [ ] Persist validated executable paths and an existing writable temporary
+- [x] Persist validated executable paths and an existing writable temporary
   directory. Blank executable settings retain built-in behavior/unconfigured
   terminal feedback. Use CreateProcess with explicit application and quoted
   argv, never a shell command template.
-- [ ] Retrieve source using checked binary download completion before launch;
+- [x] Retrieve source using checked binary download completion before launch;
   preserve POST safeguards, source bytes and failed/canceled-transfer behavior.
   Route remote-host callbacks to configured terminal programs with distinct
   host/port arguments and optional username. Apply temp directory transactionally.
@@ -67,11 +67,30 @@ a fresh raw GET after a colored internal source view; a cached presentation
 can otherwise stall the legacy source-copy stream. Final full configurations
 will run after the requested shared gray-color item.
 
-## Task 3: Consistent classic gray (user follow-up)
+## Task 3: Native Windows palette (user correction)
 
-- [ ] Add native pixel assertions for tab panels, dialog margins and standard
-  button faces; preserve white edit/list surfaces and custom color swatches.
-- [ ] Make shared classic styling render native UI face colors as #C0C0C0
-  locally, including print/capture paths, without changing desktop system colors.
-- [ ] Check keyboard/mouse behavior and native captures, run complete standard
-  and Gold Debug/Release suites, refresh packages and commit separately.
+The user superseded the fixed #C0C0C0 request with native Windows colors to
+match the Gold release and reduce the contrast with window borders. The pending
+pixel-remapping implementation was removed before commit.
+
+- [x] Reproduce the toolbar mismatch with a COLOR_BTNFACE pixel regression.
+- [x] Use live system face/text/brush colors, native bevels and native control
+  theming across shared browser, Mail/News, message composer, Gold and utilities.
+- [x] Keep the original bitmap transparency key independent of the UI color;
+  preserve document colors. Replace fixed-gray preference assertions with
+  native palette checks.
+- [x] Verify standard and Gold native captures/workflows, update docs and commit.
+
+Task 3 verification: the toolbar regression failed against the fixed-gray build.
+The standard Debug chrome, Mail/News layouts, message composition and Preferences
+fixtures then passed 5/5 (34.50s) after the native-palette change.
+Gold Debug editor, workflows and Preferences passed 3/3 (9.71s), with native
+Preferences captures reviewed. Final full suites follow the icon update.
+
+## Task 4: Original Gold icons (user follow-up)
+
+- [ ] Compare current assets with the original Gold 3.02 executable resources.
+- [ ] Replace mismatched toolbar and window icons with mechanically extracted
+  resources, retaining provenance, original pixels and explicit transparency.
+- [ ] Verify native captures and complete standard/Gold Debug/Release suites,
+  refresh packages and commit the artwork separately.

@@ -205,7 +205,7 @@ BOOL ClassicChrome::PreTranslateMessage(MSG *message)
     }
     return CWnd::PreTranslateMessage(message);
 }
-BOOL ClassicChrome::OnEraseBkgnd(CDC *dc) { CRect area;GetClientRect(area);dc->FillSolidRect(area,ClassicUI::Face);return TRUE; }
+BOOL ClassicChrome::OnEraseBkgnd(CDC *dc) { CRect area;GetClientRect(area);dc->FillSolidRect(area,ClassicUI::Face());return TRUE; }
 HBRUSH ClassicChrome::OnCtlColor(CDC *dc,CWnd *window,UINT type) { return ClassicUI::ControlColor(dc,window,type); }
 
 BEGIN_MESSAGE_MAP(ClassicStatusBar,CStatusBar)
@@ -214,16 +214,16 @@ BEGIN_MESSAGE_MAP(ClassicStatusBar,CStatusBar)
 END_MESSAGE_MAP()
 void ClassicStatusBar::OnPaint()
 {
-    CPaintDC dc(this); CRect area;GetClientRect(area);dc.FillSolidRect(area,ClassicUI::Face);
-    CFont *old=dc.SelectObject(ClassicUI::Font(this));dc.SetBkMode(TRANSPARENT);dc.SetTextColor(RGB(0,0,0));
+    CPaintDC dc(this); CRect area;GetClientRect(area);dc.FillSolidRect(area,ClassicUI::Face());
+    CFont *old=dc.SelectObject(ClassicUI::Font(this));dc.SetBkMode(TRANSPARENT);dc.SetTextColor(GetSysColor(COLOR_BTNTEXT));
     for(int i=0;i<GetStatusBarCtrl().GetParts(0,nullptr);++i) {
-        CRect pane;GetItemRect(i,pane);dc.Draw3dRect(pane,RGB(128,128,128),RGB(255,255,255));pane.DeflateRect(3,2);
-        if(i==2) { if(busy) { pane.right=pane.left+(pane.Width()*(progress>0 ? progress : 25))/100;dc.FillSolidRect(pane,RGB(0,0,128)); } }
+        CRect pane;GetItemRect(i,pane);dc.DrawEdge(pane,EDGE_SUNKEN,BF_RECT);pane.DeflateRect(3,2);
+        if(i==2) { if(busy) { pane.right=pane.left+(pane.Width()*(progress>0 ? progress : 25))/100;dc.FillSolidRect(pane,GetSysColor(COLOR_HIGHLIGHT)); } }
         else if(i==0 || i==3) {
             CBitmap icon;icon.LoadBitmap(i==0 ? IDB_CLASSIC_HOME : IDB_CLASSIC_GETMAIL);
             BITMAP data;icon.GetBitmap(&data);CDC memory;memory.CreateCompatibleDC(&dc);
             CBitmap *saved=memory.SelectObject(&icon);int size=ClassicUI::Scale(this,12);
-            TransparentBlt(dc,pane.left,pane.CenterPoint().y-size/2,size,size,memory,0,0,data.bmWidth,data.bmHeight,ClassicUI::Face);
+            TransparentBlt(dc,pane.left,pane.CenterPoint().y-size/2,size,size,memory,0,0,data.bmWidth,data.bmHeight,ClassicUI::ArtworkKey);
             memory.SelectObject(saved);
         } else { CString text;GetPaneText(i,text);dc.DrawText(text,pane,DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS); }
     }
@@ -241,7 +241,7 @@ BEGIN_MESSAGE_MAP(ClassicLogo,CStatic)
 END_MESSAGE_MAP()
 void ClassicLogo::OnPaint()
 {
-    CPaintDC dc(this);CRect area;GetClientRect(area);dc.FillSolidRect(area,ClassicUI::Face);
+    CPaintDC dc(this);CRect area;GetClientRect(area);dc.FillSolidRect(area,ClassicUI::Face());
     if(!bitmap.GetSafeHandle()) return;
     BITMAP data;bitmap.GetBitmap(&data);CDC memory;memory.CreateCompatibleDC(&dc);
     CBitmap *old=memory.SelectObject(&bitmap);dc.SetStretchBltMode(COLORONCOLOR);

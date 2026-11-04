@@ -194,7 +194,7 @@ protected:
         return CDialog::OnCommand(command, control);
     }
     afx_msg BOOL OnEraseBkgnd(CDC *dc) {
-        CRect area; GetClientRect(area); dc->FillSolidRect(area, ClassicUI::Face); return TRUE;
+        CRect area; GetClientRect(area); dc->FillSolidRect(area, ClassicUI::Face()); return TRUE;
     }
     afx_msg HBRUSH OnCtlColor(CDC *dc, CWnd *window, UINT type) {
         return ClassicUI::ControlColor(dc, window, type);

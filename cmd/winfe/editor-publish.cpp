@@ -397,7 +397,7 @@ static LRESULT CALLBACK dialog_proc(HWND window, UINT message, WPARAM wparam, LP
     }
     if (message == WM_ERASEBKGND) {
         RECT rect; GetClientRect(window, &rect);
-        CDC::FromHandle((HDC)wparam)->FillSolidRect(&rect, ClassicUI::Face); return TRUE;
+        CDC::FromHandle((HDC)wparam)->FillSolidRect(&rect, ClassicUI::Face()); return TRUE;
     }
     if (message == WM_CTLCOLORSTATIC || message == WM_CTLCOLORBTN || message == WM_CTLCOLOREDIT) {
         UINT type = message == WM_CTLCOLOREDIT ? CTLCOLOR_EDIT :

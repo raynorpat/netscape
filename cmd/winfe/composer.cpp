@@ -282,10 +282,10 @@ void ComposerFrame::Arrange()
 BOOL ComposerFrame::OnEraseBkgnd(CDC *dc)
 {
     CRect area; GetClientRect(&area);
-    dc->FillSolidRect(area, RGB(192,192,192));
+    dc->FillSolidRect(area, ClassicUI::Face());
     int y = ClassicUI::Scale(this, 45);
-    dc->FillSolidRect(0, y, area.Width(), 1, RGB(128,128,128));
-    dc->FillSolidRect(0, y + 1, area.Width(), 1, RGB(255,255,255));
+    dc->FillSolidRect(0, y, area.Width(), 1, GetSysColor(COLOR_3DSHADOW));
+    dc->FillSolidRect(0, y + 1, area.Width(), 1, GetSysColor(COLOR_3DHIGHLIGHT));
     return TRUE;
 }
 

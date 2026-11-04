@@ -104,7 +104,7 @@ public:
         /* DrawState's color-to-mono conversion treats the gray sprite background
          * as ink. Build its mask explicitly: face and white highlight pixels
          * are transparent; the remaining pixels form the embossed glyph. */
-        COLORREF old_background=source.SetBkColor(ClassicUI::Face);
+        COLORREF old_background=source.SetBkColor(ClassicUI::ArtworkKey);
         mask.BitBlt(0,0,20,18,&source,0,0,SRCCOPY);
         source.SetBkColor(RGB(255,255,255));
         mask.BitBlt(0,0,20,18,&source,0,0,SRCPAINT);
@@ -114,16 +114,15 @@ public:
     void DrawItem(LPDRAWITEMSTRUCT item) override {
         CDC dc;dc.Attach(item->hDC);CRect area(item->rcItem),inside(area);
         bool down=(item->itemState&ODS_SELECTED)!=0,disabled=(item->itemState&ODS_DISABLED)!=0;
-        dc.FillSolidRect(area,ClassicUI::Face);
-        dc.Draw3dRect(area,down ? RGB(128,128,128) : RGB(255,255,255),down ? RGB(255,255,255) : RGB(128,128,128));
+        dc.FillSolidRect(area,ClassicUI::Face());
+        dc.DrawFrameControl(area,DFC_BUTTON,DFCS_BUTTONPUSH | (down?DFCS_PUSHED:0) | (disabled?DFCS_INACTIVE:0));
         inside.DeflateRect(1,1);
-        dc.Draw3dRect(inside,down ? RGB(64,64,64) : ClassicUI::Face,down ? ClassicUI::Face : RGB(64,64,64));
         if(artwork.GetSafeHandle()) {
             int width=ClassicUI::Scale(this,20),height=ClassicUI::Scale(this,18);
             int x=area.CenterPoint().x-width/2+(down ? 1 : 0),y=area.CenterPoint().y-height/2+(down ? 1 : 0);
             if(disabled && disabled_mask.GetSafeHandle()) dc.DrawState(CPoint(x,y),CSize(width,height),&disabled_mask,DST_BITMAP|DSS_DISABLED);
             else {CDC memory;memory.CreateCompatibleDC(&dc);CBitmap *old=memory.SelectObject(&artwork);
-                dc.StretchBlt(x,y,width,height,&memory,0,0,20,18,SRCCOPY);memory.SelectObject(old);}
+                TransparentBlt(dc,x,y,width,height,memory,0,0,20,18,ClassicUI::ArtworkKey);memory.SelectObject(old);}
         }
         if(item->itemState&ODS_FOCUS) {inside.DeflateRect(2,2);dc.DrawFocusRect(inside);}
         dc.Detach();
@@ -238,14 +237,14 @@ protected:
     }
     BOOL PreTranslateMessage(MSG *message) override {tips.RelayEvent(message);return CWnd::PreTranslateMessage(message);}
     afx_msg BOOL OnEraseBkgnd(CDC *dc) {
-        CRect area;GetClientRect(area);dc->FillSolidRect(area,ClassicUI::Face);
+        CRect area;GetClientRect(area);dc->FillSolidRect(area,ClassicUI::Face());
         int y=0;
         const int order[]={0,2,1};
         for(int index=0;index<3;index++) if(visible[order[index]]) {
             int row=order[index];
-            dc->FillSolidRect(0,y,area.Width(),1,RGB(255,255,255));
+            dc->FillSolidRect(0,y,area.Width(),1,GetSysColor(COLOR_3DHIGHLIGHT));
             y+=ClassicUI::Scale(this,row==1 ? 38 : 33);
-            dc->FillSolidRect(0,y-1,area.Width(),1,RGB(128,128,128));
+            dc->FillSolidRect(0,y-1,area.Width(),1,GetSysColor(COLOR_3DSHADOW));
         }
         dc->FillSolidRect(0,area.bottom-4,area.Width(),1,RGB(255,0,0));
         dc->FillSolidRect(0,area.bottom-2,area.Width(),1,RGB(0,128,128));

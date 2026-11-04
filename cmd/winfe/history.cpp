@@ -126,7 +126,7 @@ protected:
     }
     afx_msg BOOL OnEraseBkgnd(CDC *dc) {
         CRect area; GetClientRect(&area);
-        dc->FillSolidRect(area, RGB(192,192,192));
+        dc->FillSolidRect(area, ClassicUI::Face());
         return TRUE;
     }
     afx_msg HBRUSH OnCtlColor(CDC *dc, CWnd *window, UINT type) {

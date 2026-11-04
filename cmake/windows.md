@@ -737,3 +737,19 @@ actual arguments, source bytes, encoded-invalid logins, 245-character directory
 paths, truncation/cancellation, failed launch, POST protection, browser closure,
 temp-directory switching and restart persistence/fallback. Third-party terminal
 and source-viewer applications have not been exercised.
+
+## Native Windows palette
+
+Browser, Mail, News, message composition, Gold editing and utility/preferences
+windows use the current Windows button-face color. Custom toolbar buttons,
+status panes and dividers use system bevels, shadows, highlights and text colors.
+Native control theming is no longer suppressed. Dialog brushes come directly
+from Windows rather than caching a fixed gray brush. Download progress uses its
+native default colors.
+
+The original toolbar bitmaps keep their fixed transparency key independently
+of the current UI color, including the Gold editor strips and disabled masks.
+Document/reader colors and user-selected swatches remain document content;
+Windows-owned title bars and common dialogs keep their native appearance.
+Pixel regressions compare toolbar and preference margins with COLOR_BTNFACE,
+while existing interaction fixtures cover controls and artwork.

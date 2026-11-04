@@ -120,8 +120,6 @@ int DownloadFrame::OnCreate(LPCREATESTRUCT create)
     CFont *font = ClassicUI::Font(this);
     address.SetFont(font); filename.SetFont(font); status.SetFont(font); cancel.SetFont(font);
     ClassicUI::Apply(this);
-    progress.SetBarColor(RGB(0,0,128));
-    progress.SetBkColor(RGB(192,192,192));
     progress.SetRange32(0, 1000);
     CRect area(0, 0, ClassicUI::Scale(this, 550), ClassicUI::Scale(this, 126));
     AdjustWindowRectEx(&area, GetStyle(), FALSE, GetExStyle());
@@ -153,7 +151,7 @@ void DownloadFrame::OnSize(UINT type, int width, int height)
 BOOL DownloadFrame::OnEraseBkgnd(CDC *dc)
 {
     CRect area; GetClientRect(&area);
-    dc->FillSolidRect(area, RGB(192,192,192));
+    dc->FillSolidRect(area, ClassicUI::Face());
     return TRUE;
 }
 

@@ -233,7 +233,7 @@ void BookmarksFrame::Arrange()
 BOOL BookmarksFrame::OnEraseBkgnd(CDC *dc)
 {
     CRect area; GetClientRect(&area);
-    dc->FillSolidRect(area, RGB(192,192,192));
+    dc->FillSolidRect(area, ClassicUI::Face());
     return TRUE;
 }
 

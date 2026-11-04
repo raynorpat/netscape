@@ -281,7 +281,7 @@ protected:
         }
         return CPropertyPage::OnCommand(command,control);
     }
-    afx_msg BOOL OnEraseBkgnd(CDC *dc) {CRect r;GetClientRect(r);dc->FillSolidRect(r,ClassicUI::Face);return TRUE;}
+    afx_msg BOOL OnEraseBkgnd(CDC *dc) {CRect r;GetClientRect(r);dc->FillSolidRect(r,ClassicUI::Face());return TRUE;}
     afx_msg HBRUSH OnCtlColor(CDC *dc,CWnd *window,UINT type) {return ClassicUI::ControlColor(dc,window,type);}
     DECLARE_MESSAGE_MAP()
 };

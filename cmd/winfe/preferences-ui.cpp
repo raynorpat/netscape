@@ -182,7 +182,7 @@ BOOL PreferencesPage::OnNotify(WPARAM w,LPARAM l,LRESULT *result) {
     return CDialog::OnNotify(w,l,result);
 }
 void PreferencesPage::OnCancel() { owner->SendMessage(WM_COMMAND,IDCANCEL); }
-BOOL PreferencesPage::OnEraseBkgnd(CDC *dc) { CRect r;GetClientRect(r);dc->FillSolidRect(r,ClassicUI::Face);return TRUE; }
+BOOL PreferencesPage::OnEraseBkgnd(CDC *dc) { CRect r;GetClientRect(r);dc->FillSolidRect(r,ClassicUI::Face());return TRUE; }
 HBRUSH PreferencesPage::OnCtlColor(CDC *dc,CWnd *window,UINT type) {
     int id=window->GetDlgCtrlID();
     if(number==2 && id>=IDC_PREF_SWATCH_BG && id<=IDC_PREF_SWATCH_VISITED)

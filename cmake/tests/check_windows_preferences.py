@@ -1,5 +1,6 @@
 """Verify the native Preferences dialog, transactional store and real UI effects."""
 import argparse
+import ctypes
 import base64
 from contextlib import contextmanager
 import http.server
@@ -107,14 +108,20 @@ def run(executable, output):
         if not any(r["path"] == "/dot.gif" for r in fixture.requests):
             raise RuntimeError("Preferences image settings bypassed actual image fetching")
     data, offset, width, height, stride, size = pixels(snapshot)
+    face = ctypes.windll.user32.GetSysColor(15)  # COLOR_BTNFACE
+    face_bgr = bytes(((face >> 16) & 255, (face >> 8) & 255, face & 255))
+    for x, y in [(10, 430), (480, 430)]:
+        pixel = data[offset + y * stride + x * size:offset + y * stride + x * size + 3]
+        if pixel != face_bgr:
+            raise RuntimeError('Preferences margin does not match the native Windows face color')
     gray = dark = 0
     for y in range(height):
         for x in range(width):
             pixel = data[offset + y * stride + x * size:offset + y * stride + x * size + 3]
-            gray += pixel == bytes((192, 192, 192))
+            gray += pixel == face_bgr
             dark += max(pixel) < 100
     if gray < width * height // 3 or dark < 500:
-        raise RuntimeError("Preferences capture lacks the classic controls/text/gray surface")
+        raise RuntimeError("Preferences capture lacks native controls/text/system-color surfaces")
     data, offset, width, height, stride, size = pixels(Path(str(snapshot) + ".page.bmp"))
     beige = sum(data[i:i + 3] == bytes((200, 230, 242))
                 for y in range(height) for i in range(offset + y * stride, offset + y * stride + width * size, size))

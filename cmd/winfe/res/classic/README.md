@@ -13,3 +13,8 @@ silhouette. The native toolbar scales the source artwork to its display size.
 Mail list folders use `GFolder.gif`; message envelopes use `HMsg.gif` with the
 original `HURead.gif` unread marker. Composition adds `CQuote.gif` and
 `CAddress.gif`. These are original 3.02 source assets.
+
+News uses `MMsgPst.gif`, `MMsgPstR.gif`, `MMsgPstF.gif`, `MMarkT.gif` and
+`MMarkA.gif` for posting/replying and marking threads/groups read. Server,
+group and subscription cells use `HHost.gif`, `HGroup.gif`, `HSub.gif` and
+`HUSub.gif`; native tree guides and expansion glyphs are drawn separately.

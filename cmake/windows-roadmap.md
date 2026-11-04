@@ -32,6 +32,7 @@ engines are separate porting tasks.
 | Implemented | History | Back/Forward and Reload use SHIST; a native history list and visited-pages view expose the core data. Fixtures cover form/scroll restoration, frame traversal, forward truncation, POST cancellation, persisted dates and malformed/expired records. |
 | Implemented | Bookmarks | Add page and a native tree manager support folders, editing, opening and deletion through the original BM APIs. Fixtures check escaped and long names/URLs, ordering, cross-process persistence and failed-save retry. Import/export, search, drag/drop and richer organization remain future work. |
 | Implemented | Classic mail/news UI | Own menus and ten-button toolbar, folder/message lists above a full-width reader, draggable dividers, original icons, sorting, Previous/Next, header modes, selected-message caption and mailbox status. Populated MIME captures, scrolling and narrow layouts are covered. Print remains disabled. |
+| Implemented | Classic News UI | Separate twelve-button post/mail/reply toolbar and menus; expandable server/group tree with subscription controls, unread counts and original artwork; taller lists and gray empty reader. Native gestures, composition routing, mark-thread/group and article-load view retention use loopback coverage. |
 | Implemented | Classic composer UI | Reference menus, five-button toolbar/logo, compact recipient/attachment rows, fixed-width editor and segmented status. Advanced headers, drafts, Send Later and attachments are retained. Quote and active SMTP/NNTP Stop/retry are covered; Address remains disabled. |
 | 3 | Charset/text | The frontend defaults to Latin-1 and draws/measures through ANSI GDI. A subset of single-byte conversion tables uses Windows code pages; this does not establish correct multilingual rendering. Verify document charset changes, MIME headers, fonts, conversion failure, selection, and copy. |
 | 4 | Plugins | The plugin archive and `NPL_Init` are present, but discovery registers no descriptors, loading returns NULL, and embed streaming fails. Native module loading, NPAPI callbacks, embedded-window lifetime, and a controlled test plugin are separate work. |
@@ -71,5 +72,5 @@ rejects x64. Keep x64 as a separate port with pointer/ABI tests.
 Use independent configure/build probes for each newly enabled archive, followed
 by runtime tests for its actual behavior. The checked-in Windows CTest setup covers core, socket, local/HTTP frontend,
 mail/news, images, forms, frames, downloads, history, bookmarks, classic chrome and
-mail pane layout and composition. These fixtures
+mail/news pane layouts and composition. These fixtures
 do not establish optional engine or plugin runtime support.

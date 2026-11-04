@@ -27,6 +27,20 @@ static const ChromeCommand mail_tools[] = {
     {ID_BROWSER_PRINT,"Print",IDB_CLASSIC_PRINT,"Native printing is not yet available"},
     {ID_NAV_STOP,"Stop",IDB_CLASSIC_STOP,"Stop loading"}
 };
+static const ChromeCommand news_tools[] = {
+    {ID_CLIENT_POST,"To:News",IDB_CLASSIC_POST,"Post a new article"},
+    {ID_NEWS_MAIL_NEW,"To:Mail",IDB_CLASSIC_COMPOSE,"Compose a mail message"},
+    {ID_NEWS_REPLY_POST,"Re:News",IDB_CLASSIC_POST_REPLY,"Reply to the newsgroup"},
+    {ID_MESSAGE_REPLY,"Re:Mail",IDB_CLASSIC_REPLY,"Reply to the sender by mail"},
+    {ID_NEWS_REPLY_BOTH,"Re:All",IDB_CLASSIC_POST_BOTH,"Reply by news and mail"},
+    {ID_MESSAGE_FORWARD,"Forward",IDB_CLASSIC_FORWARDMSG,"Forward this article by mail"},
+    {ID_MESSAGE_PREVIOUS,"Previous",IDB_CLASSIC_PREVIOUS,"Previous unread article"},
+    {ID_MESSAGE_NEXT,"Next",IDB_CLASSIC_NEXT,"Next unread article"},
+    {ID_NEWS_MARK_THREAD,"Thread",IDB_CLASSIC_MARK_THREAD,"Mark this thread read"},
+    {ID_NEWS_MARK_GROUP,"Group",IDB_CLASSIC_MARK_GROUP,"Mark this group read"},
+    {ID_BROWSER_PRINT,"Print",IDB_CLASSIC_PRINT,"Native printing is not yet available"},
+    {ID_NAV_STOP,"Stop",IDB_CLASSIC_STOP,"Stop loading"}
+};
 static const char *directory_labels[] = {"What's New?","What's Cool?","Destinations","Net Search","People","Software"};
 
 BEGIN_MESSAGE_MAP(ClassicChrome, CWnd)
@@ -41,13 +55,11 @@ bool ClassicChrome::Create(CWnd *owner, CGenericEdit *address, ClassicButton *go
     if (!CreateEx(0, AfxRegisterWndClass(0,LoadCursor(nullptr,IDC_ARROW),nullptr), "Navigation toolbar",
                    WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, CRect(0,0,1,1),owner,ID_CLASSIC_CHROME)) return false;
     tips.Create(this, TTS_ALWAYSTIP); tips.Activate(TRUE);
-    const ChromeCommand *commands = mode ? mail_tools : browser_tools;
-    size_t count = mode ? _countof(mail_tools) : _countof(browser_tools);
+    const ChromeCommand *commands = mode==2 ? news_tools : mode ? mail_tools : browser_tools;
+    size_t count = mode==2 ? _countof(news_tools) : mode ? _countof(mail_tools) : _countof(browser_tools);
     for (size_t i=0; i<count; ++i) {
         std::unique_ptr<ClassicButton> button(new ClassicButton);
-        UINT id = mode == 2 && commands[i].id == ID_CLIENT_COMPOSE ? ID_CLIENT_POST : commands[i].id;
-        const char *caption=mode==2 && commands[i].id==ID_CLIENT_COMPOSE ? "To:News" : mode==2 && commands[i].id==ID_MESSAGE_GET ? "Get More" : commands[i].label;
-        if (!button->Create(caption,WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_OWNERDRAW,CRect(0,0,1,1),this,id)) return false;
+        if (!button->Create(commands[i].label,WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_OWNERDRAW,CRect(0,0,1,1),this,commands[i].id)) return false;
         button->SetBitmapResource(commands[i].bitmap);
         tips.AddTool(button.get(),commands[i].tip);
         buttons.push_back(std::move(button));
@@ -80,7 +92,7 @@ bool ClassicChrome::Create(CWnd *owner, CGenericEdit *address, ClassicButton *go
 int ClassicChrome::Arrange(int width)
 {
     auto s = [this](int n){ return ClassicUI::Scale(this,n); };
-    int y=s(3), button_width=s(44), button_height=s(mode ? 42 : 38);
+    int y=s(3), button_width=s(mode==2 ? 50 : 44), button_height=s(mode ? 42 : 38);
     int columns=(std::max)(1,(width-s(mode ? 48 : 8))/button_width);
     for (size_t i=0;i<buttons.size();++i) {
         buttons[i]->ShowWindow(toolbar_visible ? SW_SHOW : SW_HIDE);

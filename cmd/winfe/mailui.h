@@ -36,6 +36,9 @@ public:
     void FitColumns();
     int FolderImage(unsigned long flags) const;
     int MessageImage(unsigned long flags) const;
+    void DrawNewsFolder(NMLVCUSTOMDRAW *draw, LRESULT *result);
+    bool NewsExpansionHit(int row, CPoint point) const;
+    int SubscriptionImage(unsigned long flags) const;
     void SetDividers(int folder_width, int top_height);
     CRect FolderBounds() const { return folder_bounds; }
     CRect MessageBounds() const { return message_bounds; }
@@ -49,6 +52,7 @@ private:
     MailPaneDivider folder_divider, reader_divider;
     CRect folder_bounds, message_bounds, reader_bounds;
     int folder_width = 170, top_height = -1, top = 0, footer = 0;
-    bool arranged = false;
+    bool arranged = false, news_mode = false;
+    CFont unread_font;
 };
 #endif

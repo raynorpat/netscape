@@ -107,8 +107,8 @@ bool MailPaneUI::Attach(CWnd *frame, CListCtrl *folder_list, CListCtrl *message_
     if (owner || !frame || !frame->GetSafeHwnd() || !folder_list
         || !folder_list->GetSafeHwnd() || !message_list || !message_list->GetSafeHwnd()
         || !view || !view->GetSafeHwnd()) return false;
-    owner = frame; folders = folder_list; messages = message_list; reader = view;
-    folder_width = ClassicUI::Scale(owner, 170);
+    owner = frame; folders = folder_list; messages = message_list; reader = view; news_mode = news;
+    folder_width = news ? -1 : ClassicUI::Scale(owner, 170);
     int size = ClassicUI::Scale(owner, 16);
     if (!folder_images.Create(size, size, ILC_COLOR24 | ILC_MASK, 2, 1)
         || !message_images.Create(size, size, ILC_COLOR24 | ILC_MASK, 3, 1)
@@ -119,23 +119,26 @@ bool MailPaneUI::Attach(CWnd *frame, CListCtrl *folder_list, CListCtrl *message_
         || !mail_image(message_images, owner, 544)
         || !folder_divider.Create(this, owner, true, FolderDividerID)
         || !reader_divider.Create(this, owner, false, ReaderDividerID)) return false;
+    if(news && (!mail_image(folder_images,owner,550) || !mail_image(folder_images,owner,551)
+        || !mail_image(folder_images,owner,552) || !mail_image(folder_images,owner,553))) return false;
     folders->SetImageList(&folder_images, LVSIL_SMALL);
     messages->SetImageList(&message_images, LVSIL_SMALL);
-    folders->SetExtendedStyle(folders->GetExtendedStyle() | LVS_EX_FULLROWSELECT);
+    folders->SetExtendedStyle(folders->GetExtendedStyle() | LVS_EX_FULLROWSELECT | LVS_EX_SUBITEMIMAGES);
     messages->SetExtendedStyle(messages->GetExtendedStyle()
                               | LVS_EX_FULLROWSELECT | LVS_EX_SUBITEMIMAGES);
     folders->SetBkColor(RGB(255,255,255)); folders->SetTextBkColor(RGB(255,255,255));
     messages->SetBkColor(RGB(255,255,255)); messages->SetTextBkColor(RGB(255,255,255));
     while (folders->DeleteColumn(0)) {}
     while (messages->DeleteColumn(0)) {}
-    folders->InsertColumn(0, news ? "Newsgroup" : "Mail Folder");
-    folders->InsertColumn(1, "Unread", LVCFMT_RIGHT);
-    folders->InsertColumn(2, "Total", LVCFMT_RIGHT);
+    folders->InsertColumn(0, news ? "News Server" : "Mail Folder");
+    folders->InsertColumn(1, news ? "" : "Unread", news ? LVCFMT_CENTER : LVCFMT_RIGHT);
+    folders->InsertColumn(2, news ? "Unread" : "Total", LVCFMT_RIGHT);
     messages->InsertColumn(0, "Sender");
     messages->InsertColumn(1, "", LVCFMT_CENTER);
     messages->InsertColumn(2, "Subject");
-    messages->InsertColumn(3, "Date");
+    if(!news) messages->InsertColumn(3, "Date");
     ClassicUI::Apply(folders); ClassicUI::Apply(messages);
+    LOGFONT font;ClassicUI::Font(owner)->GetLogFont(&font);font.lfWeight=FW_BOLD;unread_font.CreateFontIndirect(&font);
     return true;
 }
 
@@ -158,8 +161,9 @@ void MailPaneUI::Arrange(int toolbar_bottom, int status_height)
     }
     int pane_min = ClassicUI::Scale(owner, 70);
     if (body_space < pane_min * 2) pane_min = body_space / 2;
+    if(folder_width==-1 && width>0) folder_width=width/2;
     if (top_height == -1 && height > 0)
-        top_height = mail_clamp(MulDiv(height, 22, 100),
+        top_height = news_mode ? MulDiv(body_space,75,100) : mail_clamp(MulDiv(height, 22, 100),
                                ClassicUI::Scale(owner, 70), ClassicUI::Scale(owner, 140));
     int folder_size = mail_clamp(folder_width, folder_min, list_space - message_min);
     int list_height = mail_clamp(top_height, pane_min, body_space - pane_min);
@@ -179,29 +183,31 @@ void MailPaneUI::FitColumns()
     if (!folders || !folders->GetSafeHwnd() || !messages || !messages->GetSafeHwnd()) return;
     CRect area; folders->GetClientRect(area);
     int width = area.Width();
-    int unread = ClassicUI::Scale(owner, 46), total = ClassicUI::Scale(owner, 38);
+    int unread = ClassicUI::Scale(owner, news_mode ? 22 : 46), total = ClassicUI::Scale(owner, news_mode ? 54 : 38);
     int label_min = ClassicUI::Scale(owner, 60);
     if (width < label_min + unread + total) {
         int numeric = width > label_min ? width - label_min : 0;
-        unread = MulDiv(numeric, 46, 84); total = numeric - unread;
+        unread = MulDiv(numeric, news_mode ? 22 : 46, news_mode ? 76 : 84); total = numeric - unread;
     }
     folders->SetColumnWidth(0, width - unread - total);
     folders->SetColumnWidth(1, unread); folders->SetColumnWidth(2, total);
     messages->GetClientRect(area); width = area.Width();
     int sender = ClassicUI::Scale(owner, 100), status = ClassicUI::Scale(owner, 20);
-    int date = ClassicUI::Scale(owner, 70), subject_min = ClassicUI::Scale(owner, 70);
+    int date = news_mode ? 0 : ClassicUI::Scale(owner, 70), subject_min = ClassicUI::Scale(owner, 70);
     int nominal = sender + status + date + subject_min;
     if (width < nominal) {
-        sender = MulDiv(width, 100, 260); status = MulDiv(width, 20, 260);
-        date = MulDiv(width, 70, 260);
+        sender = MulDiv(width, 100, news_mode ? 190 : 260); status = MulDiv(width, 20, news_mode ? 190 : 260);
+        date = news_mode ? 0 : MulDiv(width, 70, 260);
     }
     messages->SetColumnWidth(0, sender); messages->SetColumnWidth(1, status);
     messages->SetColumnWidth(2, width - sender - status - date);
-    messages->SetColumnWidth(3, date);
+    if(!news_mode) messages->SetColumnWidth(3, date);
 }
 
 int MailPaneUI::FolderImage(unsigned long flags) const
 {
+    if(news_mode && (flags&MSG_FOLDER_FLAG_NEWS_HOST)) return 2;
+    if(news_mode && (flags&MSG_FOLDER_FLAG_NEWSGROUP) && !(flags&MSG_FOLDER_FLAG_DIRECTORY)) return 3;
     return (flags & MSG_FOLDER_FLAG_SELECTED)
         || ((flags & MSG_FOLDER_FLAG_DIRECTORY) && !(flags & MSG_FOLDER_FLAG_ELIDED)) ? 1 : 0;
 }
@@ -228,4 +234,49 @@ void MailPaneUI::DragDivider(bool vertical, CPoint point, int offset)
         top_height = height < 0 ? 0 : height;
     }
     Arrange(top, footer);
+}
+
+int MailPaneUI::SubscriptionImage(unsigned long flags) const
+{
+    return flags&MSG_FOLDER_FLAG_DIRECTORY ? I_IMAGENONE : flags&MSG_FOLDER_FLAG_SUBSCRIBED ? 4 : 5;
+}
+
+bool MailPaneUI::NewsExpansionHit(int row,CPoint point) const
+{
+    if(!news_mode || row<0) return false;
+    DWORD_PTR data=folders->GetItemData(row);
+    int left=ClassicUI::Scale(owner,5+int(data>>16)*14);
+    return (data&MSG_FOLDER_FLAG_DIRECTORY) && point.x>=left && point.x<left+ClassicUI::Scale(owner,10);
+}
+
+void MailPaneUI::DrawNewsFolder(NMLVCUSTOMDRAW *draw,LRESULT *result)
+{
+    *result=CDRF_DODEFAULT;if(!news_mode) return;
+    if(draw->nmcd.dwDrawStage==CDDS_PREPAINT) { *result=CDRF_NOTIFYITEMDRAW;return; }
+    if(draw->nmcd.dwDrawStage==CDDS_ITEMPREPAINT) { *result=CDRF_NOTIFYSUBITEMDRAW;return; }
+    if(draw->nmcd.dwDrawStage!=(CDDS_ITEMPREPAINT|CDDS_SUBITEM) || draw->iSubItem) return;
+    int row=(int)draw->nmcd.dwItemSpec;DWORD_PTR data=folders->GetItemData(row);
+    unsigned flags=(unsigned)(data&0xffff);int depth=(int)(data>>16);
+    CRect area;folders->GetSubItemRect(row,0,LVIR_BOUNDS,area);area.right=folders->GetColumnWidth(0);
+    CDC *dc=CDC::FromHandle(draw->nmcd.hdc);int saved=dc->SaveDC();dc->IntersectClipRect(area);
+    bool selected=(folders->GetItemState(row,LVIS_SELECTED)&LVIS_SELECTED)!=0;
+    dc->FillSolidRect(area,selected?GetSysColor(COLOR_HIGHLIGHT):RGB(255,255,255));
+    dc->SetTextColor(selected?GetSysColor(COLOR_HIGHLIGHTTEXT):RGB(0,0,0));dc->SetBkMode(TRANSPARENT);
+    auto scale=[this](int n){return ClassicUI::Scale(owner,n);};
+    int x=area.left+scale(5+depth*14),middle=area.CenterPoint().y;
+    CPen guide(PS_DOT,1,selected?RGB(255,255,255):RGB(128,128,128));dc->SelectObject(&guide);
+    if(depth) { dc->MoveTo(x+scale(4),area.top);dc->LineTo(x+scale(4),middle);dc->LineTo(x+scale(13),middle); }
+    if(flags&MSG_FOLDER_FLAG_DIRECTORY) {
+        CRect glyph(x,middle-scale(4),x+scale(9),middle+scale(5));dc->FillSolidRect(glyph,RGB(255,255,255));
+        dc->Draw3dRect(glyph,RGB(128,128,128),RGB(128,128,128));
+        dc->FillSolidRect(x+scale(2),middle,scale(5),1,RGB(0,0,0));
+        if(flags&MSG_FOLDER_FLAG_ELIDED) dc->FillSolidRect(x+scale(4),middle-scale(2),1,scale(5),RGB(0,0,0));
+    }
+    int image=FolderImage(flags);folder_images.Draw(dc,image,CPoint(x+scale(13),middle-scale(8)),ILD_TRANSPARENT);
+    CRect label=area;label.left=x+scale(32);
+    bool unread=!(flags&MSG_FOLDER_FLAG_DIRECTORY)&&folders->GetItemText(row,2)!="0";
+    dc->SelectObject(unread?&unread_font:ClassicUI::Font(owner));
+    CString text=folders->GetItemText(row,0);dc->DrawText(text,label,DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS|DT_NOPREFIX);
+    if(selected&&folders->GetFocus()==folders) { CRect focus=area;focus.DeflateRect(1,1);dc->DrawFocusRect(focus); }
+    dc->RestoreDC(saved);*result=CDRF_SKIPDEFAULT;
 }

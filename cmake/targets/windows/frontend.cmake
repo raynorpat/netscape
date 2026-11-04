@@ -98,3 +98,10 @@ if(BUILD_TESTING)
   --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/composition-ui-test" --mode compose)
  set_tests_properties(windows_composition_ui PROPERTIES TIMEOUT 60)
 endif()
+
+if(BUILD_TESTING)
+ add_test(NAME windows_news_layout COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_news_ui.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/news-layout-test")
+ set_tests_properties(windows_news_layout PROPERTIES TIMEOUT 65)
+endif()

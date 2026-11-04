@@ -231,6 +231,39 @@ checks actual captured GDI pixels for folder artwork and borderless headers.
 The new layout fixture and existing mail/news delivery tests passed in Win32
 Release and Debug on 2026-11-04.
 
+News also follows its separate supplied reference. Its twelve-button toolbar
+contains To:News, To:Mail, Re:News, Re:Mail, Re:All, Forward, Previous, Next,
+Thread, Group, Print and Stop. Re:All posts and mails the reply; Thread and
+Group mark the selected thread or group read. Previous/Next use unread-article
+navigation. Get More remains available from File/F5. Its own menus and keyboard
+shortcuts distinguish posting from mail composition.
+
+The News Server list has expandable tree guides, host/group artwork,
+subscription marks and unread counts (??? when unknown). Click a subscription
+cell or press Space on a selected group to toggle it; use the expansion glyph
+or Left/Right on a directory row to fold/unfold it. Options selects subscribed
+or all newsgroups. Existing subscriptions use the flat subscribed view; a new
+host with no subscriptions initially exposes its full hierarchy. Completed
+requests preserve an explicitly chosen view and its article selection.
+
+News starts with a taller upper band and wider server list, plus a full-width
+gray reader when no article is selected. Loaded articles retain normal MIME
+rendering. The article list has Sender, status and Subject columns. Both pane
+dividers remain draggable. Directory rows do not report message counts, and
+double-clicking a leaf group cannot invoke directory expansion.
+
+`windows_news_layout` uses a local NNTP server with the three reference group
+names. It checks the real server tree, mouse/keyboard subscription and expansion
+gestures, empty/selected command states, post/mail/reply headers, mark-thread
+and mark-group commands, view retention after article loading, narrow resizing
+and divider clamps. It also captures empty and populated native windows and
+checks the gray empty-reader pixels. No articles are posted by this fixture.
+The final sixteen-test suite passed in Win32 Release and Debug with MSVC 19.51
+on 2026-11-04. Actual empty and populated News captures were inspected at 96 DPI,
+including original toolbar artwork and the Netscape logo.
+The refreshed Release installation passed the same News fixture from a path
+containing spaces, including actual NNTP discovery and composition routing.
+
 The composer now follows the supplied Message Composition reference: its own
 File/Edit/View/Options/Window menus, Send/Quote/Attach/Address/Stop toolbar,
 right-hand logo, compact Mail To/Cc/Subject/Attachment rows, a fixed-width body

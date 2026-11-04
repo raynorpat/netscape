@@ -9,6 +9,9 @@ ROOT = Path(__file__).resolve().parents[2]
 ICONS = ROOT / "cmd/xfe/icons"
 OUTPUT = ROOT / "cmd/winfe/res/classic"
 SOURCES = {
+    "post": "MMsgPst", "post-reply": "MMsgPstR", "post-both": "MMsgPstF",
+    "mark-thread": "MMarkT", "mark-group": "MMarkA",
+    "news-host": "HHost", "news-group": "HGroup", "subscribed": "HSub", "unsubscribed": "HUSub",
     "quote": "CQuote", "address": "CAddress",
     "folder": "GFolder", "folder-open": "GFolder",
     "message-read": "HMsg", "message-unread": "HMsg", "message-flag": "HMarked",

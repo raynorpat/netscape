@@ -48,8 +48,8 @@ frontend and OFF otherwise. It may be explicitly enabled for a native Win32
 core-only build. It requires the native Windows core and is mutually exclusive
 with `NETSCAPE_ENABLE_SECURITY`, which still selects the historical SSL/S-MIME
 implementation. The new selection defines `NETSCAPE_USE_BEARSSL`; it preserves
-`NO_SSL`, which controls legacy interfaces. This dependency task does not change
-frontend network behavior.
+`NO_SSL`, which controls legacy interfaces. The native frontend uses the separate Netscape TLS adapter for HTTPS;
+upstream files remain unchanged.
 
 `netscape_bearssl` is a static archive of the unmodified upstream `src/**/*.c`
 files. It has its own includes and does not inherit Netscape's platform macros.
@@ -63,7 +63,7 @@ These are upstream build scripts/configurations, documentation configuration,
 command-line tools, tests, samples and the T0 generator. Generated C sources in
 `src/` are retained, so the C# generator is unnecessary. No upstream `src/`
 platform file is excluded or modified. Only the static C library and the
-Netscape dependency smoke test are built; upstream tools/tests are not built.
+Netscape adapter/transport tests are built; upstream tools/tests are not built.
 
 For the supported frontend configuration:
 
@@ -82,3 +82,20 @@ cmake --build out/bearssl-disabled --config Release --parallel
 
 Use an installed compatible Visual Studio generator if needed. These commands
 select native x86; they do not claim a supported Linux TLS runtime.
+
+
+The Runtime install includes `share/doc/netscape/BearSSL-provenance.md` and
+`share/doc/netscape/licenses/BearSSL-MIT.txt`. Netscape links the static library;
+no OpenSSL DLL or fixture executable is part of the installed TLS backend.
+See [native browser policy and verification](../../cmake/windows.md#native-browser-https-bearssl)
+for the enabled protocols, suites, trust settings and tested platform.
+
+
+The adapter adds a presented-chain Extended Key Usage purpose guard outside
+upstream code. Absent EKU or serverAuth/anyExtendedKeyUsage is permitted;
+unrelated-only EKU is rejected with appended error category 16. Underlying
+validation failures retain precedence, so critical EKU remains unsupported even
+for serverAuth. A fixed 65,536-byte presented-certificate buffer is reused per
+live TLS context, adding 64 KiB per context and imposing that per-certificate cap.
+Configured trust anchor records are not reparsed by the presented-chain guard.
+The guard changes no upstream files and supplies no independent PKIX acceptance.

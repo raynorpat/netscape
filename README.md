@@ -39,6 +39,11 @@ separate `out/windows-gold` build directory. Native print/preview, Editor
 Preferences, independent templates, an offline wizard and HTTP/FTP publishing
 are available. Debug/Release regression and installed-workflow checks are
 recorded in the Windows guide.
+
+Native Win32 HTTPS uses a pinned BearSSL backend and an executable-relative,
+updateable Mozilla CA bundle. TLS 1.2 is the default; older TLS requires an
+explicit compatibility preference. See the Windows guide for trust settings,
+certificate-purpose limits and the final verification matrix.
 See [cmake/windows.md](cmake/windows.md) for MSVC build commands, runtime tests,
 the recovered 1998 Windows frontend source, and remaining integration work.
 

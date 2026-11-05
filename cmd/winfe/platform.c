@@ -691,7 +691,11 @@ void WFE_PollNetworking(void)
 #ifdef NETSCAPE_USE_BEARSSL
         if (secure) {
             if (wants & NET_TLS_WANT_READ) FD_SET(socket,&reads);
-            if (wants & NET_TLS_WANT_WRITE) FD_SET(socket,&writes);
+            /* Once authenticated, a logical writer may have another body stage
+             * ready even when TLS has no queued record. Handshakes use wants. */
+            if ((wants & NET_TLS_WANT_WRITE) ||
+                (tls_info.authenticated && (watch->flags & WFE_CONNECT)))
+                FD_SET(socket,&writes);
         } else
 #endif
         {

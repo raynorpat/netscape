@@ -404,6 +404,12 @@ bm_NewAddress(const char* name, const char* address)
     return add_struct;
 }
 
+PUBLIC BM_Entry*
+BM_NewAddress(const char* name, const char* address)
+{
+  return bm_NewAddress(name, address);
+}
+
 /* creates a new separator bookmarks entry */
 static BM_Entry*
 bm_NewSeparator(void)
@@ -417,11 +423,18 @@ bm_NewAlias(BM_Entry* original)
 {
   BM_Entry* alias;
   alias = bm_NewEntry(BM_TYPE_ALIAS);
+  if (!alias) return NULL;
   alias->d.alias.original = original;
   BM_SETFLAG(original, BM_ATTR_HASALIASES);
   return alias;
 }
 
+
+PUBLIC BM_Entry*
+BM_NewAlias(BM_Entry* original)
+{
+  return original ? bm_NewAlias(original) : NULL;
+}
 
 /* gets the top node of the bmlist */
 BM_Entry*
@@ -6117,7 +6130,9 @@ char*
 BM_GetFullAddress(MWContext* context, BM_Entry* entry)
 {
   char* result = NULL;
+  bm_ClearMarkEverywhere(context);
   bm_append_address_string(context, entry, &result);
+  bm_ClearMarkEverywhere(context);
   return result;
 }
 

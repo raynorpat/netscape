@@ -6,6 +6,7 @@
 #include "mailsettings.h"
 #include "bkmks.h"
 #include "bookmarks.h"
+#include "addressbook.h"
 #include "msgcom.h"
 #include "mime.h"
 #include "libi18n.h"
@@ -221,9 +222,7 @@ void FE_RememberPopPassword(MWContext *context, const char *password)
 
 MWContext *FE_GetAddressBook(MWContext *context, XP_Bool viewnow)
 {
-    /* Composition performs optional lookups without asking to open this UI. */
-    if (viewnow) WFE_Unsupported(context, "Address book");
-    return NULL;
+    return WFE_AddressBookContext(viewnow);
 }
 
 const char *FE_GetFolderDirectory(MWContext *context)
@@ -332,11 +331,13 @@ void BMFE_RefreshCells(MWContext *context, int32 first, int32 last, XP_Bool now)
 {
     (void)first; (void)last; (void)now;
     WFE_BookmarksChanged(context);
+    WFE_AddressBookChanged(context);
 }
 
 void BMFE_SyncDisplay(MWContext *context)
 {
     WFE_BookmarksChanged(context);
+    WFE_AddressBookChanged(context);
 }
 
 void BMFE_MeasureEntry(MWContext *context, BM_Entry *entry,
@@ -350,18 +351,21 @@ void BMFE_MeasureEntry(MWContext *context, BM_Entry *entry,
 
 void BMFE_OpenBookmarksWindow(MWContext *context)
 {
-    WFE_BookmarksShow(context);
+    if(context && context->type==MWContextAddressBook) WFE_AddressBookShow();
+    else WFE_BookmarksShow(context);
 }
 
 void BMFE_EditItem(MWContext *context, BM_Entry *entry)
 {
-    WFE_BookmarksEdit(context, entry);
+    if(context && context->type==MWContextAddressBook) WFE_AddressBookEdit(context,entry);
+    else WFE_BookmarksEdit(context, entry);
 }
 
 void BMFE_EntryGoingAway(MWContext *context, BM_Entry *entry)
 {
     (void)entry;
     WFE_BookmarksChanged(context);
+    WFE_AddressBookChanged(context);
 }
 
 void BMFE_GotoBookmark(MWContext *context, const char *url)
@@ -385,6 +389,7 @@ void BMFE_ScrollIntoView(MWContext *context, BM_Entry *entry)
 void BMFE_BookmarkMenuInvalid(MWContext *context)
 {
     WFE_BookmarksChanged(context);
+    WFE_AddressBookChanged(context);
 }
 
 void BMFE_UpdateWhatsChanged(MWContext *context, const char *url,

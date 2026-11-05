@@ -296,6 +296,11 @@ extern void* BM_GetFEData(MWContext* context);
 extern BM_Entry* BM_NewUrl(const char* name, const char* address,
 						   const char* content_type, BM_Date last_visit);
 
+/* Create an unattached address-book entry; ownership follows BM_NewUrl. */
+extern BM_Entry* BM_NewAddress(const char* name, const char* address);
+/* Create an unattached alias to an existing entry (used for list members). */
+extern BM_Entry* BM_NewAlias(BM_Entry* original);
+
 /* Create a new header. */
 extern BM_Entry* BM_NewHeader(const char* name);
 

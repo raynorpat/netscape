@@ -1341,7 +1341,7 @@
               "original_flags": 0,
               "original_id": 34322,
               "command": "ID_MENU_ADD_ADDRESS",
-              "disabled": true
+              "disabled": false
             },
             {
               "label": "",
@@ -2455,7 +2455,7 @@
               "original_flags": 128,
               "original_id": 34322,
               "command": "ID_MENU_ADD_ADDRESS",
-              "disabled": true
+              "disabled": false
             }
           ]
         },
@@ -3319,7 +3319,7 @@
     {
       "label": "&Address Book",
       "command": "ID_MENU_ADDRESS_BOOK",
-      "disabled": true
+      "disabled": false
     },
     {
       "label": "&Bookmarks\tCtrl+B",

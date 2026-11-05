@@ -29,6 +29,7 @@ add_executable(netscape-win32 WIN32
  "${PROJECT_SOURCE_DIR}/cmd/winfe/downloads.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/history.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/bookmarks.cpp"
+ "${PROJECT_SOURCE_DIR}/cmd/winfe/addressbook.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/netscape.rc"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/cmdparse.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/genedit.cpp")
@@ -162,6 +163,10 @@ if(BUILD_TESTING)
   "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_mail_welcome.py"
   --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/mail-welcome-test")
  set_tests_properties(windows_mail_welcome PROPERTIES TIMEOUT 100)
+ add_test(NAME windows_addressbook COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_addressbook.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/addressbook-test")
+ set_tests_properties(windows_addressbook PROPERTIES TIMEOUT 100)
  add_test(NAME windows_composition_ui COMMAND "${Python3_EXECUTABLE}"
   "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_mail_ui.py"
   --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/composition-ui-test" --mode compose)

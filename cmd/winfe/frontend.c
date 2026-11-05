@@ -3,6 +3,7 @@
 #include "frontend.h"
 #include "preferences.h"
 #include "applications.h"
+#include "addressbook.h"
 #ifdef EDITOR
 #include "editor.h"
 #include "edt.h"
@@ -175,6 +176,7 @@ void WFE_Shutdown(void)
 {
     unsigned int index;
     WFE_BookmarksShutdown();
+    WFE_AddressBookShutdown();
     WFE_DownloadShutdown();
     IL_Shutdown();
     NET_ShutdownNetLib();

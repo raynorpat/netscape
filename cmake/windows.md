@@ -854,3 +854,31 @@ Final composition geometry/quotation and real mail/news delivery checks passed
 2/2 in each configuration: Gold Debug/Release (35.80s/35.80s), standard
 Debug/Release (36.06s/35.24s). Native full-window composer captures were inspected.
 All four configurations were rebuilt after the toolbar change.
+
+## Native address book
+
+Window > Address Book opens a native tree with File/Edit/Item menus. Mail/News
+Add to Address Book invokes the selected sender's properties. The original BM
+engine owns contacts, nicknames, mailing-list aliases, undo records and the
+profile's `address.htm`, independently of `bookmark.htm`. Optional composition
+lookups initialize the address context without displaying it. Window closure
+retains that process-lifetime context, as required by the core ContextList.
+
+Add User, Add List, Properties, Delete, Undo/Redo, Save and Compose Message are
+connected. Mailing-list members use BM aliases to root contacts, preserving
+people and nicknames on restart. Properties validate header line breaks, single
+addresses and nickname uniqueness before applying edits; Cancel preserves
+existing values. Cut/copy/paste remain disabled pending address-block clipboard
+integration. Core edit callbacks are coalesced/deferred past active mutations;
+ordinary selection avoids opening a properties dialog. Independent full-address
+queries clear temporary BM traversal marks. Failed reads block default saves;
+checked BM saves preserve disk data and permit retry. The address window refuses
+to close while its modal properties form is active.
+
+Original Gold inspection established the title/tree, File/Edit/Item structure
+and compact Select Addresses dialog with To/Cc/Bcc and OK. Native properties
+and every workflow have not been established as pixel-identical to the original.
+Gold Debug targeted checks pass 7/7 for address book, bookmarks, chrome,
+Mail/News/composition and delivery. The extended address fixture also passes
+failed-read preservation (1.52s), quoted HTML, restart persistence, independent
+bookmarks, list expansion, Cancel, deferred sender editing and failed save/retry.

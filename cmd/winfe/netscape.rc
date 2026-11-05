@@ -2,6 +2,7 @@
 #include "resource.h"
 #include "menu_resource.h"
 #include "composer_resource.h"
+#include "addressbook.rc"
 #ifdef EDITOR
 #include "editor_resource.h"
 #endif

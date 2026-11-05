@@ -44,6 +44,7 @@ static void invalid_parameter(const wchar_t *expression, const wchar_t *function
 #include "downloads.h"
 #include "history.h"
 #include "bookmarks.h"
+#include "addressbook.h"
 #include "chrome.h"
 #include "mailui.h"
 #include "find.h"
@@ -402,7 +403,7 @@ void WFE_PopulateWindowMenu(CMenu *menu,CWnd *owner)
     menu->AppendMenu(MF_STRING,ID_CLIENT_MAIL,"Netscape &Mail");
     menu->AppendMenu(MF_STRING,ID_CLIENT_NEWS,"Netscape &News");
     menu->AppendMenu(MF_SEPARATOR);
-    menu->AppendMenu(MF_STRING|MF_GRAYED,ID_MENU_ADDRESS_BOOK,"&Address Book");
+    menu->AppendMenu(MF_STRING,ID_MENU_ADDRESS_BOOK,"&Address Book");
     bool editor_owner=false;
     for(auto frame:browser_windows) if(frame->GetSafeHwnd()==owner->GetSafeHwnd()) editor_owner=frame->editing;
     menu->AppendMenu(MF_STRING,editor_owner?ID_WINDOW_BOOKMARKS:ID_BOOKMARKS_SHOW,"&Bookmarks\tCtrl+B");
@@ -424,6 +425,7 @@ void WFE_PopulateWindowMenu(CMenu *menu,CWnd *owner)
 }
 bool WFE_WindowCommand(CWnd *owner,UINT command)
 {
+    if(command==ID_MENU_ADDRESS_BOOK) {WFE_AddressBookShow();return true;}
     if(command>=48000 && command<48200 && owner) {
         auto list=window_menu_entries.find(owner->GetSafeHwnd());size_t index=command-48000;
         if(list!=window_menu_entries.end() && index<list->second.size()) {
@@ -452,7 +454,7 @@ bool WFE_WindowCommand(CWnd *owner,UINT command)
 bool WFE_WindowUpdateCommand(CWnd *owner,CCmdUI *command)
 {
     UINT id=command->m_nID;
-    if(id==ID_MENU_ADDRESS_BOOK) {command->Enable(FALSE);return true;}
+    if(id==ID_MENU_ADDRESS_BOOK) {command->Enable(TRUE);return true;}
     if((id>=48000&&id<48200) || id==ID_CLIENT_MAIL || id==ID_CLIENT_NEWS ||
        id==ID_BOOKMARKS_SHOW || id==ID_WINDOW_BOOKMARKS || id==ID_BROWSER_HISTORY || id==ID_BROWSER_NEW) {
         command->Enable(TRUE);return true;
@@ -743,6 +745,7 @@ void BrowserFrame::OnUpdateViewBar(CCmdUI *command)
 
 struct NativeMessageCommand { UINT id;MSG_CommandType action;int modes; };
 static const NativeMessageCommand original_message_commands[]={
+    {ID_MENU_ADD_ADDRESS,MSG_EditAddress,3},
     {ID_MENU_NEW_FOLDER,MSG_NewFolder,1},{ID_MENU_ADD_FOLDER,MSG_OpenFolder,1},
     {ID_MENU_NEXT_MESSAGE,MSG_NextMessage,3},{ID_MENU_PREVIOUS_MESSAGE,MSG_PreviousMessage,3},
     {ID_MENU_SAVE_MESSAGE,MSG_SaveMessagesAs,3},{ID_MENU_EMPTY_TRASH,MSG_EmptyTrash,1},
@@ -2753,6 +2756,7 @@ static bool ui_drag(CWnd *owner,int id,CPoint target)
 #include "menu-smoke.inc"
 #include "messaging-geometry-smoke.inc"
 #include "mail-welcome-smoke.inc"
+#include "addressbook-smoke.inc"
 #ifdef EDITOR
 #include "editor-smoke.inc"
 #endif
@@ -3181,8 +3185,8 @@ public:
         POSITION position = arguments.GetHeadPosition();
         bool explicit_command=position!=nullptr;
         CString first = position ? arguments.GetNext(position) : "about:";
-        smoke_mode = first == "--applications-smoke" || first == "--applications-reopen-smoke" || first == "--background-smoke" || first == "--background-reopen-smoke" || first == "--dividers-smoke" || first == "--links-smoke" || first == "--interaction-smoke" || first == "--printing-smoke" || first == "--smoke-test" || first == "--mailnews-smoke" || first == "--composer-delivery-smoke"
-            || first == "--images-smoke" || first == "--forms-smoke" || first == "--frames-smoke" || first == "--downloads-smoke" || first == "--history-smoke" || first == "--history-reopen-smoke" || first == "--bookmarks-smoke" || first == "--chrome-smoke" || first == "--ui-gallery" || first == "--preferences-ui-smoke" || first == "--preferences-reopen-smoke" || first == "--news-ui-smoke" || first == "--mail-ui-smoke" || first == "--compose-ui-smoke" || first == "--mail-welcome-smoke"
+        smoke_mode = first == "--addressbook-read-error-smoke" || first == "--applications-smoke" || first == "--applications-reopen-smoke" || first == "--background-smoke" || first == "--background-reopen-smoke" || first == "--dividers-smoke" || first == "--links-smoke" || first == "--interaction-smoke" || first == "--printing-smoke" || first == "--smoke-test" || first == "--mailnews-smoke" || first == "--composer-delivery-smoke"
+            || first == "--images-smoke" || first == "--forms-smoke" || first == "--frames-smoke" || first == "--downloads-smoke" || first == "--history-smoke" || first == "--history-reopen-smoke" || first == "--bookmarks-smoke" || first == "--chrome-smoke" || first == "--ui-gallery" || first == "--preferences-ui-smoke" || first == "--preferences-reopen-smoke" || first == "--news-ui-smoke" || first == "--mail-ui-smoke" || first == "--compose-ui-smoke" || first == "--mail-welcome-smoke" || first == "--addressbook-smoke" || first == "--addressbook-reopen-smoke"
 #ifdef EDITOR
             || first == "--editor-smoke"
             || first == "--editor-workflows-smoke" || first == "--editor-publish-smoke"
@@ -3220,6 +3224,7 @@ public:
             else if(first=="--preferences-ui-smoke"||first=="--preferences-reopen-smoke") { CString page=position?arguments.GetNext(position):"";m_nExitCode=WFE_RunPreferencesSmoke(report,url,page,first=="--preferences-reopen-smoke"); }
             else if(first=="--news-ui-smoke") { CString server=position?arguments.GetNext(position):"";m_nExitCode=WFE_RunNewsUISmoke(report,url,server); }
             else if(first=="--mail-ui-smoke") { m_nExitCode=WFE_RunMailUISmoke(report,url); }
+            else if(first=="--addressbook-smoke"||first=="--addressbook-reopen-smoke"||first=="--addressbook-read-error-smoke") { m_nExitCode=WFE_RunAddressBookSmoke(report,url,first=="--addressbook-read-error-smoke"?2:first=="--addressbook-reopen-smoke"); }
             else if(first=="--mail-welcome-smoke") { CString target=position?arguments.GetNext(position):"";m_nExitCode=WFE_RunMailWelcomeSmoke(report,url,target); }
             else if(first=="--compose-ui-smoke") {
                 WFE_SetMailPreference("email","preview@example.invalid");WFE_ApplyMailPreferences();

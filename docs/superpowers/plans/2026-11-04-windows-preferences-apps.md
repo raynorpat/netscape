@@ -33,7 +33,7 @@ standing commit-per-item request authorize implementation in this checkout.
   preserve POST safeguards, source bytes and failed/canceled-transfer behavior.
   Route remote-host callbacks to configured terminal programs with distinct
   host/port arguments and optional username. Apply temp directory transactionally.
-- [ ] Test actual argv/source bytes using a controlled child executable, run
+- [x] Test actual argv/source bytes using a controlled child executable, run
   full standard and Gold Debug/Release suites, review native captures, update
   docs/packages and commit.
 
@@ -89,8 +89,41 @@ Preferences captures reviewed. Final full suites follow the icon update.
 
 ## Task 4: Original Gold icons (user follow-up)
 
-- [ ] Compare current assets with the original Gold 3.02 executable resources.
-- [ ] Replace mismatched toolbar and window icons with mechanically extracted
+- [x] Compare current assets with the original Gold 3.02 executable resources.
+- [x] Replace mismatched toolbar and window icons with mechanically extracted
   resources, retaining provenance, original pixels and explicit transparency.
-- [ ] Verify native captures and complete standard/Gold Debug/Release suites,
+- [x] Verify native captures and complete standard/Gold Debug/Release suites,
   refresh packages and commit the artwork separately.
+
+Task 4 regression evidence: the new resource-payload check failed against the
+previous executable's generic browser icon. After replacement it verifies 81
+compiled bitmap/icon resources. The development generator verifies the hashes
+of the retained original resource inputs and reproduces output assets byte-for-byte.
+Browser cells retain 20x18 dimensions; Mail/News/composition retain 20x20,
+instead of squeezing every glyph into 16x16. Native disabled masks and original
+small/large application icons are used. Source inputs and extraction provenance
+are retained, and provenance is included in both installed editions.
+
+The read-only review found two P2 mappings: message rows use bitmap 703, not
+the status-mail strip; bitmap 1204 contains three 24x12 states, not four 18x12
+cells. Both are corrected in the generator. The populated original Mail capture
+and exact cell boundaries supplied the comparison evidence. Final resource and
+Mail/News/status captures are rerun after these asset corrections.
+
+
+Final verification (Win32, native GUI fixtures serial):
+
+| Edition | Debug full suite | Release full suite |
+| --- | --- | --- |
+| Standard | 24/24, 128.73s | 24/24, 100.88s |
+| Gold | 27/27, 111.69s | 27/27, 118.52s |
+
+After the last reviewed bitmap corrections, the five affected resource/chrome/
+Mail/News/composition checks passed again: standard Debug 28.25s, Gold Debug
+27.31s, standard Release 24.10s and Gold Release 28.24s. Source-cell regressions
+reproduce the old wrong dimensions; final checks validate the original 703
+pixels and each complete 24x12 status cell. The compiled-resource check validates
+82 bindings, and the generator reproduces 95 assets from 32 hashed inputs.
+Final Gold browser and populated Mail captures were reviewed. Both Release ZIPs
+are refreshed and checked for archive integrity, tested executable hashes and
+included artwork provenance before the artwork commit.

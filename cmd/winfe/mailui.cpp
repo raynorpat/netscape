@@ -23,8 +23,12 @@ static bool mail_image(CImageList &images, CWnd *owner, UINT resource, bool head
     CBitmap *old_input = input.SelectObject(&source);
     CBitmap *old_output = output.SelectObject(&scaled);
     output.SetStretchBltMode(COLORONCOLOR);
-    output.StretchBlt(0, 0, size, size, &input, inset, inset,
-                      bitmap.bmWidth - inset * 2, bitmap.bmHeight - inset * 2, SRCCOPY);
+    output.FillSolidRect(0,0,size,size,ClassicUI::ArtworkKey);
+    int width=bitmap.bmWidth-inset*2,height=bitmap.bmHeight-inset*2;
+    int drawn_width=width>=height?size:MulDiv(size,width,height);
+    int drawn_height=height>=width?size:MulDiv(size,height,width);
+    output.StretchBlt((size-drawn_width)/2,(size-drawn_height)/2,drawn_width,drawn_height,
+        &input,inset,inset,width,height,SRCCOPY);
     input.SelectObject(old_input); output.SelectObject(old_output);
     return images.Add(&scaled, ClassicUI::ArtworkKey) >= 0;
 }

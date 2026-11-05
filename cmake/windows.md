@@ -753,3 +753,29 @@ Document/reader colors and user-selected swatches remain document content;
 Windows-owned title bars and common dialogs keep their native appearance.
 Pixel regressions compare toolbar and preference margins with COLOR_BTNFACE,
 while existing interaction fixtures cover controls and artwork.
+
+## Original Gold icons
+
+Shared browser, Mail/News and message-composition toolbars now use cropped
+cells from the actual Windows Gold 3.02 executable, including Gold's Edit pen.
+Original large/small logos, status switchers, folders, envelopes and News glyphs
+replace the X11 artwork. Navigator, Mail, News, composition and Bookmarks load
+their own original small and large window icons; Gold Editor retains its
+original pen icon. Artwork proportions and transparency are preserved, and
+native embossed masks supply disabled states against the Windows palette.
+
+Original resource inputs, SHA256 hashes and the reproducible development
+generator are retained; see [artwork provenance](../cmd/winfe/res/classic/README.md).
+The `windows_original_artwork` test compares the actual executable's bitmap and
+icon payloads with the checked-in assets using Windows resource APIs. It needs
+only Python's standard library. Regeneration additionally needs Pillow.
+
+
+Native palette/Gold artwork verification on 2026-11-04: the full standard
+suite passed 24/24 in Win32 Debug and Release; Gold passed 27/27 in both.
+Following the review's message/status cell corrections, all five affected
+resource/chrome/Mail/News/composition tests passed again in each configuration.
+The final resource check verifies 82 compiled bitmap/icon payloads and compares
+message/status cells directly with original Gold pixels. All 95 generated
+assets reproduce byte-for-byte from 32 hashed original inputs. Native Gold
+browser, Mail, News, composition and Preferences captures were reviewed.

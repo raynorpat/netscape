@@ -10,6 +10,14 @@ Source installer: https://netscape.retropc.se/3/g32e302.exe . Installer SHA256: 
 
 Original RT_GROUP_ICON 101 SHA256: `1fdd6e659a323aa21a89db1d5fb12604361c5959949ce56fa65f08fd93e2efb7`. Reconstructed `editor.ico` SHA256: `7fecd437e8d3e296b0e621a48e1f201440fd4d0799d51f138b492e6b62963361`.
 
+Navigator, Mail, News, message composition and Bookmarks now also use original
+Gold groups 2, 221, 224, 225 and 231, respectively. Their unchanged RT_ICON
+payloads and original group directories are retained under
+`../classic/source-gold/`. `generate_windows_toolbar.py` reconstructs the ICO
+containers and verifies source hashes. Both large and small images are loaded
+explicitly, replacing the shared Communicator icon and missing small icons.
+See [the shared artwork provenance](../classic/README.md) for toolbar sources.
+
 `about.html` adapts the native frontend's shared About page to identify the Gold
 edition. It is not an extracted original HTML payload.
 

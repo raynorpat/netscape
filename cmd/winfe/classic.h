@@ -11,6 +11,7 @@ namespace ClassicUI {
     int Scale(CWnd *window, int value);
     CFont *Font(CWnd *window);
     void Apply(CWnd *window);
+    void SetWindowIcon(CWnd *window,UINT resource);
     HBRUSH ControlColor(CDC *dc, CWnd *window, UINT type);
 }
 
@@ -20,7 +21,7 @@ public:
     void SetPresentation(int style) { presentation=style; if(GetSafeHwnd()) Invalidate(); }
     void DrawItem(LPDRAWITEMSTRUCT item) override;
 private:
-    CBitmap artwork, disabled_artwork;
+    CBitmap artwork, disabled_artwork, disabled_mask;
     int presentation = 2;
 };
 

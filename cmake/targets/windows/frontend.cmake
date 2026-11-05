@@ -56,6 +56,8 @@ install(FILES "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/LICENSE"
  DESTINATION share/doc/netscape/licenses RENAME WinFE-NPL-1.0 COMPONENT Runtime)
 install(FILES "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/README.md"
  DESTINATION share/doc/netscape RENAME Windows-source-provenance.md COMPONENT Runtime)
+install(FILES "${PROJECT_SOURCE_DIR}/cmd/winfe/res/classic/README.md"
+ DESTINATION share/doc/netscape RENAME Windows-artwork-provenance.md COMPONENT Runtime)
 if(NETSCAPE_BUILD_WINDOWS_EDITOR)
  install(FILES "${PROJECT_SOURCE_DIR}/cmd/winfe/res/gold/README.md"
   DESTINATION share/doc/netscape RENAME Gold-resource-provenance.md COMPONENT Runtime)
@@ -69,6 +71,9 @@ if(BUILD_TESTING)
  set_tests_properties(windows_frontend_local PROPERTIES TIMEOUT 25
   ENVIRONMENT "NETSCAPE_PROFILE_DIR=${PROJECT_BINARY_DIR}/frontend-local-profile")
  find_package(Python3 REQUIRED COMPONENTS Interpreter)
+ add_test(NAME windows_original_artwork COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_artwork.py"
+  --executable "$<TARGET_FILE:netscape-win32>")
  add_test(NAME windows_frontend_http COMMAND "${Python3_EXECUTABLE}"
   "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_frontend.py"
   --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/frontend-http"

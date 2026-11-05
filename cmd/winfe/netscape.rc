@@ -1,12 +1,20 @@
 #include <windows.h>
 #include "resource.h"
 #include "menu_resource.h"
+#include "composer_resource.h"
 #ifdef EDITOR
 #include "editor_resource.h"
 #endif
 #define RESOURCE_STR
 #include "allxpstr.rc"
-IDR_MAIN ICON "res/netscape.ico"
+IDR_MAIN ICON "res/gold/browser.ico"
+IDR_MAIL ICON "res/gold/mail.ico"
+IDR_NEWS ICON "res/gold/news.ico"
+IDR_COMPOSER_MENU ICON "res/gold/compose.ico"
+IDI_BOOKMARKS ICON "res/gold/bookmarks.ico"
+IDB_CLASSIC_LOGO_SMALL BITMAP "res/classic/logo-small.bmp"
+IDB_CLASSIC_STATUS_APPS BITMAP "res/classic/status-apps.bmp"
+IDB_CLASSIC_STATUS_MAIL BITMAP "res/classic/status-mail.bmp"
 #ifdef EDITOR
 #include "res/gold-browser-menu.rc"
 #else

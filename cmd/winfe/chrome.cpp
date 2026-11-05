@@ -78,7 +78,7 @@ bool ClassicChrome::Create(CWnd *owner, CGenericEdit *address, ClassicButton *go
     if (!go->Create(mode == 2 ? "Connect" : "Refresh",WS_CHILD|WS_TABSTOP|BS_OWNERDRAW,CRect(0,0,1,1),this,ID_NAV_GO)) return false;
     if (mode) go->ShowWindow(SW_SHOW);
     if (!logo.Create("Netscape",WS_CHILD|WS_VISIBLE,CRect(0,0,30,30),this)) return false;
-    logo.bitmap.LoadBitmap(IDB_CLASSIC_LOGO);
+    logo.bitmap.LoadBitmap(mode?IDB_CLASSIC_LOGO_SMALL:IDB_CLASSIC_LOGO);
     size_t shortcut_count = mode ? 3 : 6;
     const char *mail_labels[] = {"All Messages","Unread","Account..."};
     const UINT mail_ids[] = {ID_MESSAGE_SHOW_ALL,ID_MESSAGE_SHOW_UNREAD,ID_MAIL_SETTINGS};
@@ -220,10 +220,11 @@ void ClassicStatusBar::OnPaint()
         CRect pane;GetItemRect(i,pane);dc.DrawEdge(pane,EDGE_SUNKEN,BF_RECT);pane.DeflateRect(3,2);
         if(i==2) { if(busy) { pane.right=pane.left+(pane.Width()*(progress>0 ? progress : 25))/100;dc.FillSolidRect(pane,GetSysColor(COLOR_HIGHLIGHT)); } }
         else if(i==0 || i==3) {
-            CBitmap icon;icon.LoadBitmap(i==0 ? IDB_CLASSIC_HOME : IDB_CLASSIC_GETMAIL);
+            CBitmap icon;icon.LoadBitmap(i==0 ? IDB_CLASSIC_STATUS_APPS : IDB_CLASSIC_STATUS_MAIL);
             BITMAP data;icon.GetBitmap(&data);CDC memory;memory.CreateCompatibleDC(&dc);
-            CBitmap *saved=memory.SelectObject(&icon);int size=ClassicUI::Scale(this,12);
-            TransparentBlt(dc,pane.left,pane.CenterPoint().y-size/2,size,size,memory,0,0,data.bmWidth,data.bmHeight,ClassicUI::ArtworkKey);
+            CBitmap *saved=memory.SelectObject(&icon);
+            int width=ClassicUI::Scale(this,data.bmWidth),height=ClassicUI::Scale(this,data.bmHeight);
+            TransparentBlt(dc,pane.left,pane.CenterPoint().y-height/2,width,height,memory,0,0,data.bmWidth,data.bmHeight,ClassicUI::ArtworkKey);
             memory.SelectObject(saved);
         } else { CString text;GetPaneText(i,text);dc.DrawText(text,pane,DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS); }
     }
@@ -231,7 +232,7 @@ void ClassicStatusBar::OnPaint()
 }
 void ClassicStatusBar::OnLButtonUp(UINT flags,CPoint point)
 {
-    CRect pane;GetItemRect(0,pane);if(pane.PtInRect(point)) GetParent()->SendMessage(WM_COMMAND,ID_NAV_HOME);
+    CRect pane;GetItemRect(0,pane);if(pane.PtInRect(point)) GetParent()->SendMessage(WM_COMMAND,point.x<pane.CenterPoint().x?ID_NAV_HOME:ID_CLIENT_MAIL);
     GetItemRect(3,pane);if(pane.PtInRect(point)) GetParent()->SendMessage(WM_COMMAND,ID_CLIENT_MAIL);
     CStatusBar::OnLButtonUp(flags,point);
 }

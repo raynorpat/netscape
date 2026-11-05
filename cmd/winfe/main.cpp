@@ -533,7 +533,7 @@ int BrowserFrame::OnCreate(LPCREATESTRUCT create)
                        CRect(0,40,800,600), this, 112)) return -1;
     if (!status.Create(this) || !status.SetIndicators(indicators, 4)) return -1;
     status.SetFont(ClassicUI::Font(this));
-    status.SetPaneInfo(0, ID_STATUS_NAVIGATOR, SBPS_NORMAL, ClassicUI::Scale(this, 20));
+    status.SetPaneInfo(0, ID_STATUS_NAVIGATOR, SBPS_NORMAL, ClassicUI::Scale(this, 40));
     status.SetPaneInfo(1, ID_SEPARATOR, SBPS_STRETCH, 0);
     status.SetPaneInfo(2, ID_STATUS_PROGRESS, SBPS_NORMAL, ClassicUI::Scale(this, 80));
     status.SetPaneInfo(3, ID_STATUS_MAIL, SBPS_NORMAL, ClassicUI::Scale(this, 28));
@@ -1943,7 +1943,7 @@ extern "C" MWContext *WFE_NewWindow(const char *address)
 {
     BrowserFrame *frame = new BrowserFrame;
     if (!frame->Create(nullptr, "Netscape 3.02", WS_OVERLAPPEDWINDOW, CRect(80,80,1100,800), nullptr, MAKEINTRESOURCE(IDR_MAIN))) return nullptr;
-    frame->SetIcon(AfxGetApp()->LoadIcon(IDR_MAIN), TRUE);
+    ClassicUI::SetWindowIcon(frame,IDR_MAIN);
     frame->LoadAccelTable(MAKEINTRESOURCE(IDR_MAIN));
     fit_reference_window(frame,1105,765);
     browser_windows.push_back(frame);
@@ -1967,8 +1967,8 @@ static MWContext *new_editor_window(const char *address,bool copy)
     }
     BrowserFrame *frame=new BrowserFrame;frame->editing=true;frame->new_document_copy=copy;
     if(!frame->Create(nullptr,"Netscape Editor - [file:///Untitled]",WS_OVERLAPPEDWINDOW,CRect(80,80,1185,845),nullptr,MAKEINTRESOURCE(IDR_EDITOR))) return nullptr;
-    frame->SetIcon(AfxGetApp()->LoadIcon(IDR_EDITOR),TRUE);
-    frame->SetIcon(AfxGetApp()->LoadIcon(IDR_EDITOR),FALSE);frame->LoadAccelTable(MAKEINTRESOURCE(IDR_EDITOR_ACCEL));
+    ClassicUI::SetWindowIcon(frame,IDR_EDITOR);
+    frame->LoadAccelTable(MAKEINTRESOURCE(IDR_EDITOR_ACCEL));
     fit_reference_window(frame,1105,765);browser_windows.push_back(frame);WFE_RegisterNativeWindow(&frame->context,frame->GetSafeHwnd());
     if(!smoke_mode) frame->ShowWindow(SW_SHOW);
     frame->Navigate(address&&*address?address:"about:editfilenew");return &frame->context;
@@ -1997,7 +1997,7 @@ extern "C" MWContext *WFE_NewMailWindow(int is_news, const char *server)
     frame->mode = mode;
     if (!frame->Create(nullptr, is_news ? "Netscape News" : "Netscape Mail", WS_OVERLAPPEDWINDOW,
                        CRect(70,70,870,670), nullptr, MAKEINTRESOURCE(is_news?IDR_NEWS:IDR_MAIL))) return nullptr;
-    frame->SetIcon(AfxGetApp()->LoadIcon(IDR_MAIN), TRUE);
+    ClassicUI::SetWindowIcon(frame,is_news?IDR_NEWS:IDR_MAIL);
     frame->LoadAccelTable(MAKEINTRESOURCE(is_news?IDR_NEWS_ACCEL:IDR_MAIL_ACCEL));
     fit_reference_window(frame,805,605);
     browser_windows.push_back(frame);

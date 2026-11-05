@@ -195,7 +195,7 @@ int ComposerFrame::OnCreate(LPCREATESTRUCT create)
     address.SetBitmapResource(IDB_CLASSIC_ADDRESS);
     stop.SetBitmapResource(IDB_CLASSIC_STOP);
     if (!logo.Create("Netscape", WS_CHILD | WS_VISIBLE, CRect(0,0,0,0), this, IDC_COMPOSE_LOGO)) return -1;
-    logo.bitmap.LoadBitmap(IDB_CLASSIC_LOGO);
+    logo.bitmap.LoadBitmap(IDB_CLASSIC_LOGO_SMALL);
     for (int i = 0; i < header_count; ++i) {
         if (!labels[i].Create(header_names[i], WS_CHILD | WS_VISIBLE,
                                CRect(0,0,0,0), this)) return -1;
@@ -213,7 +213,7 @@ int ComposerFrame::OnCreate(LPCREATESTRUCT create)
     UINT indicators[] = {ID_STATUS_NAVIGATOR, ID_SEPARATOR, ID_STATUS_PROGRESS, ID_STATUS_MAIL};
     if (!status.Create(this) || !status.SetIndicators(indicators, _countof(indicators))) return -1;
     status.SetDlgCtrlID(IDC_COMPOSE_STATUS);
-    status.SetPaneInfo(0, ID_STATUS_NAVIGATOR, SBPS_NORMAL, ClassicUI::Scale(this, 20));
+    status.SetPaneInfo(0, ID_STATUS_NAVIGATOR, SBPS_NORMAL, ClassicUI::Scale(this, 40));
     status.SetPaneInfo(1, ID_SEPARATOR, SBPS_STRETCH, 0);
     status.SetPaneInfo(2, ID_STATUS_PROGRESS, SBPS_NORMAL, ClassicUI::Scale(this, 80));
     status.SetPaneInfo(3, ID_STATUS_MAIL, SBPS_NORMAL, ClassicUI::Scale(this, 22));
@@ -794,6 +794,7 @@ extern "C" MWContext *FE_MakeMessageCompositionContext(MWContext *)
     CRect bounds(90,70,624,1023);
     if (!frame->Create(nullptr, "Netscape - [Message Composition]", WS_OVERLAPPEDWINDOW,
                         bounds, nullptr, MAKEINTRESOURCE(IDR_COMPOSER_MENU))) return nullptr;
+    ClassicUI::SetWindowIcon(frame,IDR_COMPOSER_MENU);
     MONITORINFO monitor = {}; monitor.cbSize = sizeof(monitor);
     CRect work;
     if (GetMonitorInfo(MonitorFromWindow(frame->GetSafeHwnd(), MONITOR_DEFAULTTONEAREST), &monitor))

@@ -448,6 +448,7 @@ extern "C" void WFE_BookmarksShow(MWContext *source)
         BookmarksFrame *frame = new BookmarksFrame;
         if (!frame->Create(nullptr, "Bookmarks", WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
                            CRect(120,120,780,580))) return;
+        ClassicUI::SetWindowIcon(frame,IDI_BOOKMARKS);
         bookmarks_window = frame;
     }
     bookmarks_window->ShowWindow(SW_SHOWNORMAL);

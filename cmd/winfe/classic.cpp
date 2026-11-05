@@ -41,6 +41,15 @@ void ClassicUI::Apply(CWnd *window)
     EnumChildWindows(window->GetSafeHwnd(), classic_child, (LPARAM)font);
 }
 
+void ClassicUI::SetWindowIcon(CWnd *window,UINT resource)
+{
+    for(int icon_size_index=0;icon_size_index<2;++icon_size_index) {
+        HICON icon=(HICON)LoadImage(AfxGetInstanceHandle(),MAKEINTRESOURCE(resource),IMAGE_ICON,
+            GetSystemMetrics(icon_size_index?SM_CXSMICON:SM_CXICON),GetSystemMetrics(icon_size_index?SM_CYSMICON:SM_CYICON),LR_SHARED);
+        if(icon) window->SetIcon(icon,icon_size_index?FALSE:TRUE);
+    }
+}
+
 HBRUSH ClassicUI::ControlColor(CDC *dc, CWnd *, UINT type)
 {
     bool paper = type == CTLCOLOR_EDIT || type == CTLCOLOR_LISTBOX;
@@ -54,6 +63,19 @@ void ClassicButton::SetBitmapResource(UINT resource)
     artwork.DeleteObject();
     artwork.LoadBitmap(resource);
     disabled_artwork.DeleteObject(); disabled_artwork.LoadBitmap(resource+100);
+    disabled_mask.DeleteObject();
+    if(artwork.GetSafeHandle()) {
+        BITMAP bitmap;artwork.GetBitmap(&bitmap);
+        CDC source,mask;source.CreateCompatibleDC(nullptr);mask.CreateCompatibleDC(nullptr);
+        if(disabled_mask.CreateBitmap(bitmap.bmWidth,bitmap.bmHeight,1,1,nullptr)) {
+            CBitmap *old_source=source.SelectObject(&artwork),*old_mask=mask.SelectObject(&disabled_mask);
+            COLORREF old_background=source.SetBkColor(ClassicUI::ArtworkKey);
+            mask.BitBlt(0,0,bitmap.bmWidth,bitmap.bmHeight,&source,0,0,SRCCOPY);
+            source.SetBkColor(RGB(255,255,255));
+            mask.BitBlt(0,0,bitmap.bmWidth,bitmap.bmHeight,&source,0,0,SRCPAINT);
+            source.SetBkColor(old_background);source.SelectObject(old_source);mask.SelectObject(old_mask);
+        }
+    }
     if (GetSafeHwnd()) Invalidate();
 }
 
@@ -70,13 +92,14 @@ void ClassicButton::DrawItem(LPDRAWITEMSTRUCT item)
     if (artwork.GetSafeHandle() && presentation!=1) {
         CBitmap *image = disabled && disabled_artwork.GetSafeHandle() ? &disabled_artwork : &artwork;
         BITMAP bitmap; image->GetBitmap(&bitmap);
-        int size = ClassicUI::Scale(this, 16);
-        int x = inside.CenterPoint().x - size / 2, y = presentation==0 ? inside.CenterPoint().y-size/2 : inside.top + ClassicUI::Scale(this, 1);
+        int width=ClassicUI::Scale(this,bitmap.bmWidth),height=ClassicUI::Scale(this,bitmap.bmHeight);
+        int x = inside.CenterPoint().x - width / 2, y = presentation==0 ? inside.CenterPoint().y-height/2 : inside.top + ClassicUI::Scale(this, 1);
         CDC memory; memory.CreateCompatibleDC(&dc);
         CBitmap *old = memory.SelectObject(image);
-        TransparentBlt(dc, x,y,size,size,memory,0,0,bitmap.bmWidth,bitmap.bmHeight,ClassicUI::ArtworkKey);
+        if(disabled && disabled_mask.GetSafeHandle()) dc.DrawState(CPoint(x,y),CSize(width,height),&disabled_mask,DST_BITMAP|DSS_DISABLED);
+        else TransparentBlt(dc,x,y,width,height,memory,0,0,bitmap.bmWidth,bitmap.bmHeight,ClassicUI::ArtworkKey);
         memory.SelectObject(old);
-        inside.top = y + size + ClassicUI::Scale(this, 1);
+        inside.top = y + height + ClassicUI::Scale(this, 1);
     }
     CString caption; GetWindowText(caption);
     CFont *old_font = dc.SelectObject(ClassicUI::Font(this));

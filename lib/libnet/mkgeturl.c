@@ -587,6 +587,15 @@ net_CallExitRoutine(Net_GetUrlExitFunc *exit_routine,
 		FE_SetRefreshURLTimer(window_id, URL_s->refresh, URL_s->refresh_url);
 #endif /* MOZILLA_CLIENT */
 
+#ifdef NETSCAPE_USE_BEARSSL
+    /* Historical cache entries carry legacy security fields, but do not prove
+     * that this request authenticated a live connection. */
+    if (!URL_s->tls_info.authenticated || URL_s->tls_info.error || status<0) {
+        URL_s->security_on=0;
+        FREE_AND_CLEAR(URL_s->key_cipher);
+    }
+#endif
+
     if (URL_s->pre_exit_fn)
 	  {
 		Net_GetUrlExitFunc *per = URL_s->pre_exit_fn;
@@ -1301,6 +1310,7 @@ NET_GetURL (URL_Struct *URL_s,
     if (URL_s) {
         XP_MEMSET(&URL_s->tls_info,0,sizeof URL_s->tls_info);
         URL_s->security_on=0;
+        FREE_AND_CLEAR(URL_s->key_cipher);
     }
 #endif
 #ifdef MOZILLA_CLIENT

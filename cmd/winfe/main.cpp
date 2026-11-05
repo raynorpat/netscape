@@ -65,6 +65,9 @@ extern "C" {
 #undef DBTYPE
 #include "xp_file.h"
 void GH_CollectGarbage(void);
+#ifdef NETSCAPE_USE_BEARSSL
+extern int MK_UNABLE_TO_CONNECT_TO_PROXY;
+#endif
 }
 
 class BrowserFrame;
@@ -74,11 +77,8 @@ static bool smoke_mode = false;
 static NETTLSInfo tls_smoke_info;
 static MWContext *tls_smoke_context;
 static unsigned tls_smoke_completed;
-extern "C" void WFE_TLSRequestComplete(MWContext *context, const NETTLSInfo *info)
-{
-    if (info && context==tls_smoke_context) tls_smoke_info=*info;
-    ++tls_smoke_completed;
-}
+static std::string tls_smoke_key_cipher;
+static bool tls_smoke_certificate_null;
 #endif
 static bool automatic_images = true;
 static std::string smoke_error;
@@ -161,6 +161,10 @@ public:
     bool force_images = false;
     int load_status = 0;
     std::string current_url;
+#ifdef NETSCAPE_USE_BEARSSL
+    NETTLSInfo document_tls = {};
+    std::string connection_details, connection_error;
+#endif
     void Navigate(const char *url, bool remember = true);
     MWContext *FocusedDocument();
     void RefreshMailLists();
@@ -636,7 +640,11 @@ void BrowserFrame::OnTimer(UINT_PTR timer)
             status.busy = loading;
             if (!loading) {
                 if(mode) MailCaptionStatus();
-                else status.SetPaneText(1,load_status >= 0 ? "Document: Done" : load_status == MK_INTERRUPTED ? "Document: Stopped" : "Document: Error");
+                else status.SetPaneText(1,
+#ifdef NETSCAPE_USE_BEARSSL
+                    !connection_error.empty() ? connection_error.c_str() :
+#endif
+                    load_status >= 0 ? "Document: Done" : load_status == MK_INTERRUPTED ? "Document: Stopped" : "Document: Error");
             }
             status.Invalidate();
         }
@@ -850,6 +858,9 @@ void BrowserFrame::OnMenuCommand(UINT command)
     } else if(command==ID_MENU_DOCUMENT_INFO||command==ID_MENU_FRAME_INFO) {
         CString title;document->GetWindowText(title);
         std::string text="Title: "+std::string(title)+"\nLocation: "+document->current_url+"\nCharacter set: Western (Latin-1)";
+#ifdef NETSCAPE_USE_BEARSSL
+        text+="\nConnection: "+document->connection_details;
+#endif
         WFE_Message(&context,text.c_str(),0);
     } else if(command==ID_MENU_MAIL_DOCUMENT) {
         std::string target="mailto:?body=";char *escaped=NET_Escape(current_url.c_str(),URL_XALPHAS);
@@ -1603,11 +1614,86 @@ extern "C" void FE_RaiseWindow(MWContext *context)
         SetForegroundWindow(found->second);
     }
 }
+#ifdef NETSCAPE_USE_BEARSSL
+static const char *tls_error_message(NETTLSError error)
+{
+    switch(error) {
+    case NET_TLS_ERROR_HOSTNAME: return "HTTPS certificate hostname does not match this site.";
+    case NET_TLS_ERROR_CERT_DATE: return "HTTPS certificate has expired or is not yet valid.";
+    case NET_TLS_ERROR_CERT_UNTRUSTED: return "HTTPS certificate issuer is not trusted.";
+    case NET_TLS_ERROR_CERT_MALFORMED: return "HTTPS certificate is malformed or unsupported.";
+    case NET_TLS_ERROR_CA_BUNDLE: return "HTTPS CA bundle configuration error.";
+    case NET_TLS_ERROR_PROTOCOL: return "HTTPS protocol or cipher negotiation failed.";
+    case NET_TLS_ERROR_HANDSHAKE: return "HTTPS handshake failed or timed out.";
+    case NET_TLS_ERROR_TRUNCATED: return "HTTPS transfer was truncated before a clean completion.";
+    case NET_TLS_ERROR_CANCELED: return "HTTPS transfer was canceled.";
+    case NET_TLS_ERROR_IDENTITY: return "HTTPS requires an ASCII DNS hostname; IP literals are unsupported.";
+    case NET_TLS_ERROR_ENTROPY: return "HTTPS could not obtain secure random data.";
+    case NET_TLS_ERROR_TIME: return "HTTPS could not obtain the current time for certificate validation.";
+    case NET_TLS_ERROR_MEMORY: return "HTTPS could not allocate connection memory.";
+    case NET_TLS_ERROR_IO: return "HTTPS connection input or output failed.";
+    default: return "HTTPS connection setup failed.";
+    }
+}
+static std::string tls_connection_details(const NETTLSInfo &info)
+{
+    const char *cipher=nullptr;
+    switch(info.cipher_suite) {
+    case 0xCCA8: cipher="TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256";break;
+    case 0xCCA9: cipher="TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256";break;
+    case 0xC02F: cipher="TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256";break;
+    case 0xC02B: cipher="TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256";break;
+    case 0xC030: cipher="TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384";break;
+    case 0xC02C: cipher="TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384";break;
+    case 0xC013: cipher="TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA";break;
+    case 0xC009: cipher="TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA";break;
+    }
+    char text[128];
+    const char *version=info.version==0x0303 ? "TLS 1.2" : info.version==0x0302 ? "TLS 1.1" : info.version==0x0301 ? "TLS 1.0" : "Unknown TLS version";
+    sprintf(text,"Authenticated connection: %s; cipher 0x%04X",version,info.cipher_suite);
+    return std::string(text)+(cipher ? std::string("\n")+cipher : "");
+}
+extern "C" void WFE_TLSRequestComplete(MWContext *context, const URL_Struct *url, int status)
+{
+    if (!url) return;
+    if (context==tls_smoke_context) {
+        tls_smoke_info=url->tls_info;
+        tls_smoke_key_cipher=url->key_cipher ? url->key_cipher : "";
+        tls_smoke_certificate_null=url->certificate==nullptr;
+    }
+    ++tls_smoke_completed;
+    BrowserFrame *frame=frame_for(context);
+    if (!frame) return;
+    frame->document_tls=url->tls_info;
+    frame->connection_details="No authenticated live connection for this document.";
+    frame->connection_error.clear();
+    if (url->tls_info.error) {
+        /* A rejected CONNECT response is a proxy error, before TLS starts. */
+        if (status==MK_UNABLE_TO_CONNECT_TO_PROXY)
+            frame->connection_error=url->error_msg ? url->error_msg : "Unable to connect to HTTPS proxy.";
+        else frame->connection_error=tls_error_message(url->tls_info.error);
+        if (url->tls_info.error==NET_TLS_ERROR_CA_BUNDLE && *WFE_TLSError())
+            frame->connection_error+=" "+std::string(WFE_TLSError());
+    } else if (status<0)
+        frame->connection_error=url->error_msg ? url->error_msg : "Document load failed.";
+    if (status<0 || url->tls_info.error) frame->document_tls.authenticated=0;
+    else if (url->tls_info.authenticated) frame->connection_details=tls_connection_details(url->tls_info);
+    if (!frame->connection_error.empty()) {
+        frame->connection_details+="\n"+frame->connection_error;
+        WFE_Status(context,frame->connection_error.c_str());
+    }
+}
+#endif
 extern "C" void WFE_BeginLoad(MWContext *context, const char *url)
 {
     BrowserFrame *frame = frame_for(context);
     if (!frame || !url) return;
     frame->view.CancelInput();
+#ifdef NETSCAPE_USE_BEARSSL
+    frame->document_tls=NETTLSInfo();
+    frame->connection_details="No authenticated live connection for this document.";
+    frame->connection_error.clear();
+#endif
     if(frame->current_url!=url) frame->force_images=false;
     frame->document_preferences=WFE_GeneralPreferences();WFE_ImageInitContext(context);
     if(frame->mode) {frame->current_url=url;return;}

@@ -10,6 +10,7 @@ import shutil
 import socket
 import socketserver
 import ssl
+import struct
 import subprocess
 import threading
 import time
@@ -34,6 +35,15 @@ class Server(http.server.ThreadingHTTPServer):
     def get_request(self):
         conn, address = super().get_request()
         conn.settimeout(12)
+        if self.mode == 'reset':
+            conn.setsockopt(socket.SOL_SOCKET,socket.SO_LINGER,struct.pack('hh',1,0))
+            conn.close()
+            raise OSError('intentional abortive TCP close')
+        if self.mode == 'protocol':
+            conn.recv(4096)
+            conn.sendall(b'\x16\x03\x03\x00\x2a\x02\x00\x00\x26\x03\x04'+bytes(32)+b'\x00\xc0\x2f\x00')
+            conn.close()
+            raise OSError('intentional unsupported ServerHello version')
         if self.mode == 'timeout':
             time.sleep(11)
             conn.close()
@@ -102,6 +112,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             return
         body, kind = (DOWNLOAD, 'application/octet-stream') if path == '/download' else (GIF, 'image/gif') if path == '/image.gif' else (BODY, 'text/html')
+        if path == '/frames':
+            body = ('<html><head><title>TLS browser fixture</title></head><frameset cols="50%,50%"><frame name="plain" src="'+self.server.plain_url+'"><frame name="secure" src="/index"></frameset></html>').encode()
         if path.startswith('/policy-'):
             body = b'<html><head><title>TLS browser fixture</title></head><body><h1>Policy snapshot</h1><p>Active transfer remains valid through policy Save.</p></body></html>'
         self.send_response(200)
@@ -279,11 +291,98 @@ def policy(args, output):
     assert not peer.errors,peer.errors
     print(f'All {count} policy TLS cases passed')
 
+def errors(args, output):
+    """Assert displayed document state from independent native network results."""
+    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    ctx.minimum_version = ctx.maximum_version = ssl.TLSVersion.TLSv1_2
+    ctx.set_ciphers('ECDHE-RSA-AES128-GCM-SHA256')
+    ctx.load_cert_chain(output/'browser-leaf.pem',output/'browser-leaf.key')
+    def peer(context):
+        server = Server(('127.0.0.1',0),Handler)
+        server.ctx=context;server.mode='';server.requests=[];server.connections=[]
+        server.records=[];server.transports=[];server.errors=[];server.image_cookies=[]
+        return server
+    server, plain = peer(ctx), peer(None)
+    server.plain_url=f'http://localhost:{plain.server_port}/index'
+    proxy=Proxy(('127.0.0.1',0),Relay)
+    proxy.target=server.server_port;proxy.requests=[];proxy.reject=False
+    proxy.tail=b'';proxy.headers=b'';proxy.errors=[]
+    count=0
+    with running(server), running(plain), running(proxy):
+        def run(case, error=0, phrase='TLS 1.2', ca='browser-root.pem', path='/index',
+                scenario='ui', host='localhost', proxied=False, url=None, profile_ca=None):
+            nonlocal count
+            if args.case and args.case!=case: return
+            profile=output/('profile-'+case);profile.mkdir(exist_ok=True)
+            if profile_ca is not None:
+                (profile/'browser.ini').write_text('[General]\nca_bundle='+profile_ca+'\n')
+                ca='-'
+            env=os.environ.copy();env['NETSCAPE_PROFILE_DIR']=str(profile)
+            report=output/(case+'.txt');report.unlink(missing_ok=True)
+            command=[str(args.executable.resolve()),'--tls-smoke-test',str(report),
+                url or f'https://{host}:{server.server_port}{path}',ca,
+                f'127.0.0.1:{proxy.server_address[1]}' if proxied else '-',scenario]
+            before=len(server.requests)
+            result=subprocess.run(command,env=env,cwd=output,capture_output=True,text=True,timeout=35)
+            fields=dict(line.split('=',1) for line in report.read_text().splitlines() if '=' in line) if report.exists() else {}
+            assert result.returncode==0 and fields.get('completed')=='1', (case,result.returncode,fields,result.stderr)
+            assert fields.get('display_error')==str(error), (case,'wrong displayed category',fields)
+            assert phrase.lower() in fields.get('document_info','').lower(), (case,'missing diagnostic',fields)
+            assert 'invalid-ca-override' not in fields.get('document_info',''), (case,fields)
+            if url is not None:
+                assert int(fields['status'])<0 and fields.get('display_authenticated')=='0' and fields.get('tls_error')=='0', (case,fields)
+            if scenario=='ui-cache' or scenario.startswith('ui-history:'):
+                assert fields.get('rendered')=='1', (case,fields)
+            if error:
+                assert fields.get('display_authenticated')=='0' and 'Authenticated connection' not in fields['document_info'], (case,fields)
+                if error not in (14,15): assert len(server.requests)==before, (case,'request leaked before authentication',server.requests[before:])
+            if scenario.startswith('ui-') or scenario=='cancel':
+                assert fields.get('scenario_ok')=='1', (case,fields,result.stderr)
+            if scenario=='ui' and not error and url is None:
+                assert fields.get('display_authenticated')=='1' and 'ECDHE_RSA_WITH_AES_128_GCM_SHA256' in fields['document_info'], (case,fields)
+                assert fields.get('certificate_null')=='1' and 'TLS 1.2' in fields.get('key_cipher',''), (case,fields)
+            assert fields.get('capture_ok')=='1', (case,fields)
+            count+=1;print('PASS',case,flush=True)
+        run('authenticated-details')
+        run('unknown-root',11,'not trusted',ca='wrong.pem')
+        run('wrong-hostname',9,'hostname',host='wrong.test',proxied=True)
+        ctx.load_cert_chain(output/'browser-expired.pem',output/'browser-leaf.key')
+        run('invalid-date',10,'expired')
+        ctx.load_cert_chain(output/'browser-leaf.pem',output/'browser-leaf.key')
+        run('missing-ca',13,'Cannot open CA bundle',ca='missing.pem')
+        (output/'malformed.pem').write_text('not a certificate bundle')
+        run('malformed-ca',13,'Incomplete or trailing CA bundle',ca='malformed.pem')
+        run('invalid-persisted-ca',13,'CA bundle configuration',profile_ca='relative.pem')
+        server.mode='protocol'
+        run('protocol-failure',7,'protocol')
+        server.mode='timeout'
+        run('handshake-failure',8,'handshake')
+        server.mode=''
+        run('truncated-transfer',14,'truncated',path='/truncated')
+        run('canceled-transfer',0,'TLS 1.2',path='/cancel',scenario='cancel')
+        run('redirect-final-location',0,'Location: http://localhost:',path='/redirect-http',scenario='ui-redirect')
+        run('https-to-http',0,'No authenticated',scenario=f'ui-http:{plain.server_port}')
+        run('https-to-failed-https',0,'No authenticated',scenario='ui-fail')
+        run('history-no-stale-auth',0,'No authenticated',scenario=f'ui-history:{plain.server_port}')
+        run('cache-no-live-claim',0,'No authenticated',scenario='ui-cache')
+        run('window-isolation',0,'TLS 1.2',scenario=f'ui-windows:{plain.server_port}')
+        run('frame-isolation',0,'TLS 1.2',scenario=f'ui-frames:{plain.server_port}',path='/frames')
+        run('pre-attachment-failure-preserved',0,'Netscape is unable to locate the server:',url='https://localhost:25/unreachable')
+        run('dns-failure-preserved',0,'Netscape is unable to locate the server:',url='https://netscape-tls-fixture.invalid/index')
+        plain.mode='reset'
+        run('tcp-reset-preserved',0,'A network error occurred while Netscape',url=f'http://localhost:{plain.server_port}/reset')
+        plain.mode=''
+        proxy.reject=True
+        run('proxy-failure-preserved',8,'proxy',proxied=True)
+    assert not (server.errors or plain.errors or proxy.errors), (server.errors,plain.errors,proxy.errors)
+    print(f'All {count} displayed TLS error cases passed')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--executable', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--mode', choices=['browser','policy'], default='browser')
+    parser.add_argument('--mode', choices=['browser','policy','errors'], default='browser')
     parser.add_argument('--red', action='store_true')
     parser.add_argument('--case', default='')
     args = parser.parse_args()
@@ -305,6 +404,14 @@ def main():
     (output/'browser-root.pem').write_bytes(root.public_bytes(serialization.Encoding.PEM))
     (output/'browser-leaf.pem').write_bytes(leaf.public_bytes(serialization.Encoding.PEM))
     (output/'browser-leaf.key').write_bytes(leaf_key.private_bytes(serialization.Encoding.PEM,serialization.PrivateFormat.PKCS8,serialization.NoEncryption()))
+    expired = (x509.CertificateBuilder().subject_name(name).issuer_name(name).public_key(leaf_key.public_key())
+        .serial_number(x509.random_serial_number()).not_valid_before(dt.datetime(2010,1,1,tzinfo=dt.timezone.utc))
+        .not_valid_after(dt.datetime(2011,1,1,tzinfo=dt.timezone.utc))
+        .add_extension(x509.SubjectAlternativeName([x509.DNSName('localhost')]),False)
+        .add_extension(x509.BasicConstraints(False,None),True).sign(root_key,hashes.SHA256()))
+    (output/'browser-expired.pem').write_bytes(expired.public_bytes(serialization.Encoding.PEM))
+    if args.mode == 'errors':
+        return errors(args, output)
     if args.mode == 'policy':
         return policy(args, output)
     ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER); ctx.minimum_version = ctx.maximum_version = ssl.TLSVersion.TLSv1_2

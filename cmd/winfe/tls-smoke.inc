@@ -34,6 +34,50 @@ static std::string tls_smoke_hash(const char *path)
     if (algorithm) BCryptCloseAlgorithmProvider(algorithm,0);
     fclose(file);return result;
 }
+/* Exercise the actual native Document Info command and capture its MessageBox. */
+static std::string tls_smoke_dialog_path;
+static bool tls_smoke_dialog_captured;
+static ULONGLONG tls_smoke_dialog_deadline;
+static BOOL CALLBACK tls_smoke_capture_dialog(HWND window, LPARAM)
+{
+    char name[32];GetClassNameA(window,name,sizeof name);
+    if (!strcmp(name,"#32770") && IsWindowVisible(window)) {
+        tls_smoke_dialog_captured=chrome_capture(CWnd::FromHandle(window),tls_smoke_dialog_path.c_str(),true);
+        /* Closing the test-owned informational box uses its native close
+         * behavior; do not assume a particular dialog button identifier. */
+        PostMessage(window,WM_CLOSE,0,0);
+        return FALSE;
+    }
+    return TRUE;
+}
+static void CALLBACK tls_smoke_dialog_timer(HWND, UINT, UINT_PTR, DWORD)
+{
+    if (GetTickCount64()>=tls_smoke_dialog_deadline) {
+        fputs("TLS smoke Document Info capture watchdog expired.\n",stderr);
+        ExitProcess(5);
+    }
+    EnumThreadWindows(GetCurrentThreadId(),tls_smoke_capture_dialog,0);
+}
+static bool tls_smoke_capture(BrowserFrame *frame,const char *report)
+{
+    frame->ShowWindow(SW_SHOWNOACTIVATE);frame->UpdateWindow();
+    /* Showing a hidden smoke window can schedule a cache/resize navigation. */
+    frame->KillTimer(2);
+    bool captured=chrome_capture(frame,(std::string(report)+".window.bmp").c_str(),true);
+    tls_smoke_dialog_path=std::string(report)+".info.bmp";tls_smoke_dialog_captured=false;
+    tls_smoke_dialog_deadline=GetTickCount64()+3000;
+    UINT_PTR timer=SetTimer(nullptr,0,100,tls_smoke_dialog_timer);
+    if (!timer) return false;
+    smoke_mode=false;
+    frame->SendMessage(WM_COMMAND,ID_MENU_DOCUMENT_INFO);
+    smoke_mode=true;KillTimer(nullptr,timer);
+    return captured && tls_smoke_dialog_captured;
+}
+static std::string tls_smoke_single_line(std::string text)
+{
+    for(char &c:text) if(c=='\n' || c=='\r') c=' ';
+    return text;
+}
 static int WFE_RunTLSSmoke(const char *report, const char *url, const char *bundle,
                            const char *proxy, const char *scenario)
 {
@@ -79,6 +123,7 @@ static int WFE_RunTLSSmoke(const char *report, const char *url, const char *bund
         FE_GetURL(&frame->context,request);
     } else frame->Navigate(url);
     bool scenario_ok=true;
+    bool cancel_diagnostic=false;
     NETTLSInfo first_info={};
     bool policy=scenario && !strncmp(scenario,"policy-",7);
     if (policy && !strcmp(scenario,"policy-active")) {
@@ -92,9 +137,11 @@ static int WFE_RunTLSSmoke(const char *report, const char *url, const char *bund
         while (GetTickCount64()<deadline) mail_smoke_pump();
         NET_InterruptWindow(&frame->context);
         bool canceled=tls_smoke_info.error==NET_TLS_ERROR_CANCELED;
+        cancel_diagnostic=frame->document_tls.error==NET_TLS_ERROR_CANCELED &&
+            !frame->document_tls.authenticated && frame->connection_error.find("canceled")!=std::string::npos;
         std::string next=url;next.resize(next.rfind('/'));next+="/index";
         frame->Navigate(next.c_str());browser_smoke_wait(frame);
-        scenario_ok=canceled && frame->completed && frame->load_status>=0;
+        scenario_ok=canceled && cancel_diagnostic && frame->completed && frame->load_status>=0;
     } else if (scenario && !strncmp(scenario,"mixed:",6)) {
         BrowserFrame *other=frame_for(WFE_NewWindow(nullptr));
         BrowserFrame *plain=frame_for(WFE_NewWindow(nullptr));
@@ -105,6 +152,53 @@ static int WFE_RunTLSSmoke(const char *report, const char *url, const char *bund
                     frame->load_status>=0 && other->load_status>=0 && plain->load_status>=0;
         other->SendMessage(WM_CLOSE);plain->SendMessage(WM_CLOSE);
     } else browser_smoke_wait(frame);
+    if (scenario && !strncmp(scenario,"ui-",3)) {
+        first_info=frame->document_tls;
+        bool first=frame->completed && frame->load_status>=0 && first_info.authenticated;
+        if (!strncmp(scenario,"ui-http:",8) || !strncmp(scenario,"ui-history:",11)) {
+            const char *port=strchr(scenario,':')+1;
+            frame->Navigate((std::string("http://localhost:")+port+"/index").c_str());
+            bool cleared=!frame->document_tls.authenticated;
+            browser_smoke_wait(frame);
+            scenario_ok=first && cleared && !frame->document_tls.authenticated && frame->load_status>=0;
+            if (!strncmp(scenario,"ui-history:",11)) {
+                frame->SendMessage(WM_COMMAND,ID_NAV_BACK);browser_smoke_wait(frame);
+                scenario_ok=scenario_ok && frame->load_status>=0 && !frame->document_tls.authenticated;
+            }
+        } else if (!strcmp(scenario,"ui-fail")) {
+            frame->Navigate("https://localhost:25/unreachable");browser_smoke_wait(frame);
+            scenario_ok=first && frame->completed && frame->load_status<0 && !frame->document_tls.authenticated;
+        } else if (!strcmp(scenario,"ui-cache")) {
+            URL_Struct *cached=NET_CreateURLStruct(url,NET_DONT_RELOAD);
+            cached->use_local_copy=TRUE;FE_GetURL(&frame->context,cached);browser_smoke_wait(frame);
+            scenario_ok=first && frame->load_status>=0 && !frame->document_tls.authenticated;
+        } else if (!strncmp(scenario,"ui-windows:",11)) {
+            BrowserFrame *other=frame_for(WFE_NewWindow(nullptr));
+            other->Navigate((std::string("http://localhost:")+(scenario+11)+"/index").c_str());
+            browser_smoke_wait(other);
+            scenario_ok=first && !other->document_tls.authenticated && frame->document_tls.authenticated &&
+                frame->document_tls.cipher_suite==0xC02F && other->load_status>=0;
+            other->Navigate("https://localhost:25/unreachable");browser_smoke_wait(other);
+            scenario_ok=scenario_ok && !other->document_tls.authenticated && other->load_status<0 && frame->document_tls.authenticated;
+            other->SendMessage(WM_CLOSE);
+        } else if (!strncmp(scenario,"ui-frames:",10)) {
+            BrowserFrame *plain=named_frame(&frame->context,"plain"), *secure=named_frame(&frame->context,"secure");
+            /* Initial child layout may reload from cache. Authenticate a
+             * distinct child document and ensure its result stays local. */
+            if (secure) {
+                std::string next=url;next.resize(next.find('/',next.find("://")+3));
+                secure->Navigate((next+"/index?frame-live").c_str());secure->KillTimer(2);
+                browser_smoke_wait(secure);
+            }
+            scenario_ok=first && plain && secure && !plain->document_tls.authenticated &&
+                secure->document_tls.authenticated && frame->document_tls.authenticated;
+            if (plain) {
+                frame->last_document=&plain->context;frame->address.SetFocus();
+                frame->SendMessage(WM_COMMAND,ID_MENU_FRAME_INFO);
+                scenario_ok=scenario_ok && smoke_error.find("No authenticated")!=std::string::npos;
+            }
+        }
+    }
     if (scenario && !strcmp(scenario,"scheme")) {
         bool first=frame->completed && frame->load_status>=0;
         std::string plain=url;plain.replace(0,5,"http");
@@ -156,6 +250,15 @@ static int WFE_RunTLSSmoke(const char *report, const char *url, const char *bund
         download_ok=id && snapshot.state==WFE_DOWNLOAD_COMPLETE;
         hash=tls_smoke_hash(destination.c_str());
     }
+    frame->SendMessage(WM_COMMAND,ID_MENU_DOCUMENT_INFO);
+    std::string document_info=tls_smoke_single_line(smoke_error);
+    int display_authenticated=frame->document_tls.authenticated;
+    int display_error=(int)frame->document_tls.error;
+    std::string key_cipher=tls_smoke_key_cipher;
+    bool certificate_null=tls_smoke_certificate_null;
+    bool capture_ok=true;
+    if (scenario && (!strncmp(scenario,"ui",2) || !strcmp(scenario,"cancel")))
+        capture_ok=tls_smoke_capture(frame,report);
     bool responsive=tls_smoke_ticks>0 && IsWindow(frame->GetSafeHwnd());
     if (timer) KillTimer(nullptr,timer);
     unsigned requests=tls_smoke_completed;
@@ -169,6 +272,8 @@ static int WFE_RunTLSSmoke(const char *report, const char *url, const char *bund
     fprintf(file,"first_authenticated=%d\nfirst_version=%u\ncompleted=%d\nstatus=%d\ntls_authenticated=%d\ntls_version=%u\ntls_cipher=%u\ntls_error=%d\nbody_sha256=%s\nrequests_completed=%u\nui_responsive=%d\ntitle=%s\nrendered=%d\ndownload_ok=%d\nscenario_ok=%d\nimages_rendered=%u\nsecurity_on=%d\nrefresh_present=%d\nproxy_cookie=%d\norigin_cookie=%d\n",
         first_info.authenticated,first_info.version,completed,status,info.authenticated,info.version,info.cipher_suite,(int)info.error,
         hash.c_str(),requests,responsive,(const char *)title,!text.empty(),download_ok,scenario_ok,images,tls_smoke_security_on,tls_smoke_refresh,proxy_cookie,origin_cookie);
+    fprintf(file,"display_authenticated=%d\ndisplay_error=%d\ndocument_info=%s\nkey_cipher=%s\ncertificate_null=%d\ncancel_diagnostic=%d\ncapture_ok=%d\n",
+        display_authenticated,display_error,document_info.c_str(),key_cipher.c_str(),certificate_null,cancel_diagnostic,capture_ok);
     fclose(file);
     return completed && responsive && download_ok ? 0 : 4;
 }

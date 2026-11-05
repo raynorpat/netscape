@@ -8,8 +8,8 @@
 extern "C" {
 #endif
 #ifdef NETSCAPE_USE_BEARSSL
-/* Called with a value snapshot before the request URL is freed. */
-void WFE_TLSRequestComplete(MWContext *, const NETTLSInfo *);
+/* Called for document loads before URL destruction; copy borrowed data here. */
+void WFE_TLSRequestComplete(MWContext *, const URL_Struct *, int);
 int WFE_TLSInit(void);
 void WFE_TLSShutdown(void);
 int WFE_TLSConfigure(const char *bundle, int allow_legacy, char *error, size_t error_size);

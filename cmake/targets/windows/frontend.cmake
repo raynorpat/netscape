@@ -210,3 +210,11 @@ if(BUILD_TESTING AND NETSCAPE_ENABLE_BEARSSL_HTTPS)
   --mode policy)
  set_tests_properties(windows_tls_policy PROPERTIES TIMEOUT 150)
 endif()
+
+if(BUILD_TESTING AND NETSCAPE_ENABLE_BEARSSL_HTTPS)
+ add_test(NAME windows_tls_errors COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_tls.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/tls-errors"
+  --mode errors)
+ set_tests_properties(windows_tls_errors PROPERTIES TIMEOUT 150)
+endif()

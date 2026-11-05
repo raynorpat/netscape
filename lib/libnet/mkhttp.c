@@ -346,7 +346,13 @@ PRIVATE void net_http_tls_info(ActiveEntry *ce)
         NETTLS_SocketInfo(cd->connection->sock,&info)) {
         if (!info.error) info.error=ce->URL_s->tls_info.error;
         ce->URL_s->tls_info=info;
-        ce->URL_s->security_on=info.authenticated;
+        ce->URL_s->security_on=info.authenticated && !info.error;
+        if (ce->URL_s->security_on) {
+            char cipher[64];
+            XP_SPRINTF(cipher,"TLS 1.%u, cipher 0x%04X",
+                       (unsigned)(info.version-0x0301),(unsigned)info.cipher_suite);
+            StrAllocCopy(ce->URL_s->key_cipher,cipher);
+        } else FREE_AND_CLEAR(ce->URL_s->key_cipher);
     }
 }
 PRIVATE int net_http_tls_attach(ActiveEntry *ce)

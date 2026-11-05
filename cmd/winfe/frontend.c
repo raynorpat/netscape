@@ -118,16 +118,23 @@ static void url_complete(URL_Struct *url, int status, MWContext *context)
     if (status == MK_CHANGING_CONTEXT) { WFE_Complete(context, 0); return; }
     if (status < 0 && url->error_msg) WFE_Status(context, url->error_msg);
 #ifdef NETSCAPE_USE_BEARSSL
-    WFE_TLSRequestComplete(context,&url->tls_info);
+    WFE_TLSRequestComplete(context,url,status);
 #endif
     WFE_Complete(context, status);
+    NET_FreeURLStruct(url);
+}
+static void source_complete(URL_Struct *url, int status, MWContext *context)
+{
+    if (status == MK_CHANGING_CONTEXT) { WFE_Complete(context,0); return; }
+    if (status < 0 && url->error_msg) WFE_Status(context,url->error_msg);
+    WFE_Complete(context,status);
     NET_FreeURLStruct(url);
 }
 void WFE_ViewSource(MWContext *context,const char *address)
 {
     if(WFE_ExternalSource(context,address)) return;
     URL_Struct *url=NET_CreateURLStruct(address,NET_DONT_RELOAD);
-    if(url) NET_GetURL(url,FO_VIEW_SOURCE,context,url_complete);
+    if(url) NET_GetURL(url,FO_VIEW_SOURCE,context,source_complete);
 }
 
 int WFE_Init(void)

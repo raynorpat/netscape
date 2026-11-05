@@ -113,6 +113,10 @@ int WFE_PlatformInit(void)
     FE_UserNewsRC = wfe_profile;
     FE_DownloadDir = wfe_profile;
     wfe_initialized = 1;
+#ifdef NETSCAPE_USE_BEARSSL
+    /* CA failure disables HTTPS only. Preferences initialize after platform. */
+    (void)WFE_TLSInit();
+#endif
     return 1;
 }
 
@@ -669,6 +673,11 @@ void WFE_PollNetworking(void)
         struct timeval timeout = { 0, 0 };
         SOCKET socket = (SOCKET)pending[index].fd;
         int ready;
+#ifdef NETSCAPE_USE_BEARSSL
+        NETTLSInfo tls_info;
+        int secure=NETTLS_SocketInfo((NETTLSSocket)socket,&tls_info);
+        unsigned wants=secure ? NETTLS_SocketWants((NETTLSSocket)socket) : 0;
+#endif
         for (watch = wfe_watches; watch && watch->serial != pending[index].serial; watch = watch->next) ;
         if (!watch || (watch->flags & WFE_ALWAYS)) continue;
         if (watch->flags & WFE_FILE) {
@@ -679,12 +688,31 @@ void WFE_PollNetworking(void)
             if (job->socket == watch->descriptor && job->context == watch->context && !job->delivered) break;
         if (job || socket == INVALID_SOCKET) continue;
         FD_ZERO(&reads); FD_ZERO(&writes); FD_ZERO(&errors);
-        if (watch->flags & WFE_READ) FD_SET(socket, &reads);
-        if (watch->flags & WFE_CONNECT) FD_SET(socket, &writes);
+#ifdef NETSCAPE_USE_BEARSSL
+        if (secure) {
+            if (wants & NET_TLS_WANT_READ) FD_SET(socket,&reads);
+            /* Once authenticated, a logical writer may have another body stage
+             * ready even when TLS has no queued record. Handshakes use wants. */
+            if ((wants & NET_TLS_WANT_WRITE) ||
+                (tls_info.authenticated && (watch->flags & WFE_CONNECT)))
+                FD_SET(socket,&writes);
+        } else
+#endif
+        {
+            if (watch->flags & WFE_READ) FD_SET(socket, &reads);
+            if (watch->flags & WFE_CONNECT) FD_SET(socket, &writes);
+        }
         FD_SET(socket, &errors);
         ready = select(0, &reads, &writes, &errors, &timeout);
+#ifdef NETSCAPE_USE_BEARSSL
+        if (secure && ((wants & NET_TLS_WANT_LOCAL) || tls_info.error ||
+            (!tls_info.authenticated && GetTickCount()-watch->last_poll>=1000))) ready=1;
+#endif
         if (ready > 0 || ((watch->flags & WFE_CONNECT) && GetTickCount() - watch->last_poll >= 1000)) {
             watch->last_poll = GetTickCount();
+#ifdef NETSCAPE_USE_BEARSSL
+            if (secure) NETTLS_SocketPump((NETTLSSocket)socket);
+#endif
             NET_ProcessNet((NETSOCK)socket, NET_SOCKET_FD);
         }
     }
@@ -705,6 +733,9 @@ void WFE_PlatformShutdown(void)
         free(wfe_watches);
         wfe_watches = next;
     }
+#ifdef NETSCAPE_USE_BEARSSL
+    WFE_TLSShutdown();
+#endif
     if (wfe_initialized) WSACleanup();
     wfe_initialized = 0;
 }

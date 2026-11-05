@@ -8,6 +8,11 @@
             __LINE__, #test, WSAGetLastError()); return 1; \
 } } while (0)
 
+#ifdef NETSCAPE_USE_BEARSSL
+extern int WFE_TLSInit(void);
+extern void WFE_TLSShutdown(void);
+#endif
+
 int main(void)
 {
     WSADATA winsock;
@@ -19,6 +24,10 @@ int main(void)
     u_long nonblocking = 1;
     char buffer[4];
     CHECK(WSAStartup(MAKEWORD(1, 1), &winsock) == 0);
+#ifdef NETSCAPE_USE_BEARSSL
+    /* Native pass-through remains available even if no CA store is installed. */
+    (void)WFE_TLSInit();
+#endif
     listener = NETSOCKET(AF_INET, SOCK_STREAM, 0);
     CHECK(listener != SOCKET_INVALID);
     memset(&address, 0, sizeof(address));
@@ -47,6 +56,9 @@ int main(void)
     CHECK(NETCLOSE(server) == 0);
     CHECK(NETCLOSE(client) == 0);
     CHECK(NETCLOSE(listener) == 0);
+#ifdef NETSCAPE_USE_BEARSSL
+    WFE_TLSShutdown();
+#endif
     CHECK(WSACleanup() == 0);
     puts("Win32 NO_SSL socket loopback passed");
     return 0;

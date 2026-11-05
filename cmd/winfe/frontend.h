@@ -7,6 +7,16 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#ifdef NETSCAPE_USE_BEARSSL
+/* Called for document loads before URL destruction; copy borrowed data here. */
+void WFE_TLSRequestComplete(MWContext *, const URL_Struct *, int);
+int WFE_TLSInit(void);
+void WFE_TLSShutdown(void);
+int WFE_TLSConfigure(const char *bundle, int allow_legacy, char *error, size_t error_size);
+void WFE_TLSSetLegacy(int allow_legacy);
+/* Borrowed diagnostic, valid until the next TLS configure/init/shutdown. */
+const char *WFE_TLSError(void);
+#endif
 int WFE_Init(void);
 void WFE_Shutdown(void);
 void WFE_InitContext(MWContext *context, void *window);

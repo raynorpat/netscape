@@ -34,6 +34,14 @@ add_executable(netscape-win32 WIN32
  "${PROJECT_SOURCE_DIR}/cmd/winfe/netscape.rc"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/cmdparse.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/genedit.cpp")
+if(NETSCAPE_ENABLE_BEARSSL_HTTPS)
+ target_sources(netscape-win32 PRIVATE "${PROJECT_SOURCE_DIR}/cmd/winfe/tls-platform.c")
+ target_link_libraries(netscape-win32 PRIVATE netscape_tls bcrypt)
+ add_custom_command(TARGET netscape-win32 POST_BUILD
+  COMMAND "${CMAKE_COMMAND}" -E make_directory "$<TARGET_FILE_DIR:netscape-win32>/../share/netscape/ca"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${PROJECT_SOURCE_DIR}/security/ca/cacert.pem"
+   "$<TARGET_FILE_DIR:netscape-win32>/../share/netscape/ca/cacert.pem")
+endif()
 if(NETSCAPE_BUILD_WINDOWS_EDITOR)
  target_sources(netscape-win32 PRIVATE
   "${PROJECT_SOURCE_DIR}/cmd/winfe/editor-platform.cpp"
@@ -203,4 +211,44 @@ if(BUILD_TESTING)
   --executable "$<TARGET_FILE:netscape-win32>" --probe "$<TARGET_FILE:netscape_windows_application_probe>"
   --output "${PROJECT_BINARY_DIR}/applications-test")
  set_tests_properties(windows_supporting_applications PROPERTIES TIMEOUT 230)
+endif()
+
+if(BUILD_TESTING AND NETSCAPE_ENABLE_BEARSSL_HTTPS)
+ add_test(NAME windows_browser_tls COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_tls.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/tls-browser"
+  --mode browser)
+ set_tests_properties(windows_browser_tls PROPERTIES TIMEOUT 150)
+endif()
+
+if(BUILD_TESTING AND NETSCAPE_ENABLE_BEARSSL_HTTPS)
+ add_test(NAME windows_tls_policy COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_tls.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/tls-policy"
+  --mode policy)
+ set_tests_properties(windows_tls_policy PROPERTIES TIMEOUT 150)
+endif()
+
+if(BUILD_TESTING AND NETSCAPE_ENABLE_BEARSSL_HTTPS)
+ add_test(NAME windows_tls_errors COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_tls.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/tls-errors"
+  --mode errors)
+ set_tests_properties(windows_tls_errors PROPERTIES TIMEOUT 150)
+endif()
+
+if(BUILD_TESTING AND NETSCAPE_ENABLE_BEARSSL_HTTPS)
+ # Install the current configuration before exercising its relocatable Runtime.
+ add_test(NAME windows_tls_installed COMMAND "${CMAKE_COMMAND}"
+  "-DBUILD_DIR=${PROJECT_BINARY_DIR}" "-DCONFIG=$<CONFIG>"
+  "-DPYTHON=${Python3_EXECUTABLE}"
+  "-DCHECKER=${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_tls.py"
+  -P "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_tls_installed.cmake")
+ set_tests_properties(windows_tls_installed PROPERTIES TIMEOUT 180 RUN_SERIAL TRUE)
+elseif(BUILD_TESTING)
+ add_test(NAME windows_tls_disabled COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_tls.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/tls-disabled"
+  --mode disabled)
+ set_tests_properties(windows_tls_disabled PROPERTIES TIMEOUT 45 RUN_SERIAL TRUE)
 endif()

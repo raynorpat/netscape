@@ -587,6 +587,15 @@ net_CallExitRoutine(Net_GetUrlExitFunc *exit_routine,
 		FE_SetRefreshURLTimer(window_id, URL_s->refresh, URL_s->refresh_url);
 #endif /* MOZILLA_CLIENT */
 
+#ifdef NETSCAPE_USE_BEARSSL
+    /* Historical cache entries carry legacy security fields, but do not prove
+     * that this request authenticated a live connection. */
+    if (!URL_s->tls_info.authenticated || URL_s->tls_info.error || status<0) {
+        URL_s->security_on=0;
+        FREE_AND_CLEAR(URL_s->key_cipher);
+    }
+#endif
+
     if (URL_s->pre_exit_fn)
 	  {
 		Net_GetUrlExitFunc *per = URL_s->pre_exit_fn;
@@ -1294,6 +1303,16 @@ NET_GetURL (URL_Struct *URL_s,
 	LIBNET_LOCK();
 
 	XP_ASSERT (URL_s && URL_s->address);
+#ifdef NETSCAPE_USE_BEARSSL
+    /* Redirects reuse URL_s, but begin here only after the previous transport's
+     * cleanup. Retain its diagnostic through close, then start a fresh hop even
+     * if this destination fails before a protocol socket can be attached. */
+    if (URL_s) {
+        XP_MEMSET(&URL_s->tls_info,0,sizeof URL_s->tls_info);
+        URL_s->security_on=0;
+        FREE_AND_CLEAR(URL_s->key_cipher);
+    }
+#endif
 #ifdef MOZILLA_CLIENT
 	if ( URL_s->mailto_post && warn_on_mailto_post) {
 		confirmstring = NULL;
@@ -2167,7 +2186,12 @@ redo_load_switch:   /* come here on file/ftp retry */
             break;
 
         case SECURE_HTTP_TYPE_URL:
-#ifdef NADA_VERSION
+#if defined(NO_SSL) && !defined(NETSCAPE_USE_BEARSSL)
+            status = this_entry->status = MK_UNABLE_TO_CONNECT;
+            StrAllocCopy(this_entry->URL_s->error_msg,
+                         "HTTPS is unavailable in this build.");
+            break;
+#elif defined(NADA_VERSION) && !defined(NETSCAPE_USE_BEARSSL)
 			/* change the url to point to our page that
 			 * says security doesn't work in this version
 			 */

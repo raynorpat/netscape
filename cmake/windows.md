@@ -2,7 +2,7 @@
 
 This port builds the native Win32 core libraries and an optional MFC browser
 frontend adapted to the 3.02 backend interfaces. The initial frontend supports
-HTML layout, GIF/JPEG/XBM images, native HTML forms, local files, HTTP navigation,
+HTML layout, GIF/JPEG/XBM images, native HTML forms, local files, HTTP/HTTPS navigation,
 frames, history, bookmarks, saving/downloads, scrolling and links, plus native mail/news folder lists, message lists, a reader, and composer windows. Remaining
 browser features are tracked in [windows-roadmap.md](windows-roadmap.md).
 An optional Gold configuration adds the original HTML editing engine and a
@@ -69,8 +69,9 @@ GET, POST and image click coordinates against captured loopback requests.
 File upload/multipart behavior, progressive/animated image timing, and full
 keyboard traversal through offscreen controls remain unverified.
 
-Plugins, printing, Java, Mocha and SSL/security integration
-remain incomplete. Text and password prompts use native dialogs.
+Plugins, Java, Mocha and historical SSL/S-MIME integration
+remain incomplete. Native browser HTTPS is described below. Text and password
+prompts use native dialogs.
 
 Framesets use native child document windows with independent contexts, scrolling,
 images and forms. Named links and form targets, nested frames, `_parent` and
@@ -597,7 +598,8 @@ tests, which exercise:
 These tests do not establish that all backend functions work. Building static
 archives alone does not resolve their frontend dependencies. The optional MFC
 frontend resolves those interfaces for its supported browser paths; there is
-no native Java, SSL/S-MIME or Mocha runtime verification.
+no native Java, historical SSL/S-MIME or Mocha runtime verification. Native
+BearSSL browser HTTPS has a separate verification matrix below.
 Legacy compiler warnings remain, including code paths requiring a later runtime
 audit.
 
@@ -931,3 +933,123 @@ composition and loopback delivery checks also pass in all four configurations.
 Both installed Release editions also pass the complete address-book/picker
 fixture from installation paths containing spaces, including saved MIME drafts
 and failed-read recovery. Native picker and composition captures were inspected.
+
+
+## Native browser HTTPS (BearSSL)
+
+The native x86 frontend defaults `NETSCAPE_ENABLE_BEARSSL_HTTPS` to `ON`.
+It is mutually exclusive with `NETSCAPE_ENABLE_SECURITY` (the historical
+SSL/S-MIME backend). Mail POP/SMTP/NNTP remains plaintext. This integration
+has been exercised on Windows; no Linux TLS runtime support is established.
+
+Build prerequisites are CMake 3.20 or newer, Visual Studio's desktop C++
+workload with matching x86 MFC libraries and a Windows SDK, and Python 3.
+Verification used CMake 4.4.4, Visual Studio 18 2026, MSVC 19.51 and Windows
+SDK 10.0.26100 on a Windows 11 IoT Enterprise LTSC 10.0.26100 x64 host.
+Select a CMake release that supports the installed VS generator.
+The native TLS fixtures additionally require Python `ssl`, `cryptography`, and
+an OpenSSL CLI capable of real TLS 1.0/1.1 server/client handshakes. The
+`tls_engine_prerequisites` test fails visibly if that capability is unavailable;
+a skipped/failed legacy fixture is not evidence of compatibility support.
+The executed environment was Python 3.13.9, cryptography 46.0.3, Python OpenSSL
+3.0.18 and Git for Windows' OpenSSL CLI 3.5.6. Fixture OpenSSL is neither linked
+nor installed with Netscape.
+
+```powershell
+cmake -S . -B out/bearssl-win32 -G "Visual Studio 18 2026" -A Win32 -DNETSCAPE_BUILD_WINDOWS_FRONTEND=ON -DNETSCAPE_ENABLE_BEARSSL_HTTPS=ON -DNETSCAPE_TLS_FIXTURE_OPENSSL=C:/Users/raynorpat/AppData/Local/Programs/Git/mingw64/bin/openssl.exe
+cmake --build out/bearssl-win32 --config Release --parallel 8
+ctest --test-dir out/bearssl-win32 -C Release --output-on-failure
+cmake --build out/bearssl-win32 --config Debug --parallel 8
+ctest --test-dir out/bearssl-win32 -C Debug --output-on-failure
+cmake --install out/bearssl-win32 --config Release --prefix "out/bearssl installed 100%"
+python cmake/tests/check_windows_tls.py --executable "out/bearssl installed 100%/bin/netscape.exe" --output out/bearssl-win32/tls-installed-manual --mode installed
+```
+
+Run native UI tests sequentially; simultaneous suites compete for windows and
+clipboard state. `windows_browser_tls` retains its original name and covers real
+HTTPS document/image rendering, POSTs, downloads, redirects, CONNECT, reuse,
+cancellation and transfer failures. `windows_tls_policy` covers persisted
+preferences and live connection policy; `windows_tls_errors` checks native
+Document/Frame Info and failure presentation. `windows_tls_installed` installs
+the selected configuration under its build directory and checks the Runtime
+package from an unrelated working directory. It mutates only relocated copies.
+Its checks cover packaged roots/notices, spaces and percent signs, startup CA
+selection with omitted/`-` smoke arguments, explicit override replacement,
+missing/malformed default and override, no source/CWD fallback, and continued
+HTTP with broken trust configuration. Native captures are stored beside reports.
+An explicitly disabled frontend instead registers `windows_tls_disabled`, which
+uses the existing smoke CLI to prove HTTPS fails before even opening a TCP
+connection while HTTP still renders.
+
+General Preferences > Security has an unchecked-by-default obsolete-TLS
+compatibility checkbox and a CA bundle field. The profile's `browser.ini` stores
+`[General] allow_legacy_tls=1` only for explicit compatibility and `ca_bundle`
+as an absolute local filename. Relative, missing, malformed and unsupported CA
+files disable HTTPS; there is no certificate bypass or silent fallback. A blank
+CA field loads `../share/netscape/ca/cacert.pem` relative to `bin/netscape.exe`,
+never the working or source directory. Overrides replace the complete root set.
+Paths use the native ANSI/MAX_PATH APIs; Unicode/long-path support is not claimed.
+CA file selection/content changes take effect after restarting Netscape. Saving
+the protocol preference affects new connections immediately, retires idle reused
+connections and lets already active transfers finish under their old policy.
+Cancel or failed preference writes retain the active settings.
+
+The default permits TLS 1.2 with ephemeral ECDHE RSA/ECDSA authentication and
+ChaCha20-Poly1305, AES-128-GCM or AES-256-GCM. Compatibility permits TLS 1.0
+through 1.2 and additionally ECDHE RSA/ECDSA AES-128-CBC-SHA. Neither mode permits
+SSL 2/3, RC4, DES, 3DES, NULL, export or static-RSA suites. There is no automatic
+downgrade retry, session resumption or renegotiation. TLS 1.3, client certificates,
+IP-literal identities and non-ASCII hostnames are unsupported. ASCII DNS names
+use SNI and certificate chain, hostname and UTC validity checks. Entropy comes
+from Windows BCryptGenRandom; entropy, certificate and TLS failures close the
+request. No session keys or production HTTP payloads are logged by this adapter.
+Document/Frame Info reports the actual request's negotiated version/cipher;
+cache/history content without live evidence does not claim authentication.
+
+Certificate purpose is also checked on every certificate presented by the peer,
+including intermediates and any presented root. Absent Extended Key Usage (EKU)
+is unrestricted; a present EKU must include serverAuth or anyExtendedKeyUsage.
+Mixed server/client use is allowed, while clientAuth-only, codeSigning-only or
+other unrelated-only EKU is rejected before application data. Configured trust
+anchor records are not reparsed as presented certificates. Purpose rejection is
+appended category `NET_TLS_ERROR_CERT_PURPOSE = 16`; values 0 through 15 retain
+their numbering. Native Document/Frame Info reports that the certificate purpose
+does not permit server authentication.
+
+The adapter uses a fixed 65,536-byte buffer per live TLS context, reused for each
+presented certificate. This adds 64 KiB per context and limits each presented
+certificate to 65,536 DER bytes. Malformed or oversized certificates fail closed.
+The existing BearSSL minimal validator still decides signature, trust, name,
+time, Basic Constraints, Key Usage and critical-extension validity; its errors
+always take precedence. In particular, critical EKU remains unsupported: even a
+valid critical serverAuth EKU is rejected by the underlying validator. The
+purpose inspection is an adapter guard, not a replacement PKIX implementation.
+
+No revocation checking (OCSP/CRL), automatic intermediate download, background
+CA updater or Windows certificate-store import is provided. The Mozilla-derived
+PEM list does not reproduce Firefox's additional root restrictions. HTTPS fetch
+success does not establish modern HTML/JavaScript rendering compatibility.
+
+BearSSL is pinned at `7bea48e5e850ab4cafbe68d3765cdaba13a86d6f`, with unmodified
+upstream files; its import archive SHA-256 is
+`ed397832b1613582737d9c1ce01c1af74ad6a9e9c52a341e24433987cda0f372`.
+See [dependency provenance](../third_party/bearssl/README.md).
+The shipped curl/Mozilla bundle is dated 2026-10-20, has 118 roots, and SHA-256
+`796f1389bfea13c0ed78f663b765baaff54a508e5483786bd6ece73c5e3e3cbe`.
+See [CA provenance and parser limits](../security/ca/README.md). To update it,
+review a dated CA Extract bundle and checksum, replace the complete PEM, update
+its date/count/hash provenance and the installed checker's expected hash/count,
+rebuild/reinstall and rerun the trust, browser,
+policy, error and installed tests. Restart running browsers to load replacement
+roots. For a private replacement, set the absolute CA path and restart instead.
+Runtime packages retain BearSSL MIT/provenance, Mozilla MPL/provenance and WinFE
+NPL/source provenance notices under `share/doc/netscape`.
+
+The dated [verification report](../docs/superpowers/reports/2026-11-04-bearssl-https-verification.md)
+records the final commands and results after the independently reviewed purpose
+fix: complete standard Release and Debug suites each passed 118/118; separate
+Gold editor/network/HTTPS passed 17/17; explicit TLS-off passed 24/24; installed
+runtime checks passed 13/13 plus notices/provenance. Public TLS 1.2 fetches and
+native rendering observations are recorded separately, including an origin
+denial. All final checks ran on 2026-11-04 EST. Historical verification paragraphs
+elsewhere in this guide refer to earlier stages, not the current TLS matrix.

@@ -13,6 +13,7 @@
 #define _NET_PROTO_H_
 
 #include "xp_core.h"
+#include "net_tls_types.h"
 #include "ntypes.h"
 #include "shistele.h"
 #include "xp_sock.h"  /* for NETSOCK etc... */
@@ -278,6 +279,9 @@ struct URL_Struct_ {
     Net_GetUrlExitFunc *pre_exit_fn;	  /* If set, called just before the
 											 exit routine that was passed
 											 in to NET_GetURL. */
+
+	/* Transport status contains no legacy certificate/backend object. */
+	NETTLSInfo tls_info;
 
 	/* Security information */
     int     security_on;				  /* is security on? */

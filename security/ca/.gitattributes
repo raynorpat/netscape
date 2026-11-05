@@ -1,0 +1,2 @@
+# Preserve the published CA Extract checksum on every checkout.
+cacert.pem -text

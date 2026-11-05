@@ -2187,7 +2187,9 @@ redo_load_switch:   /* come here on file/ftp retry */
 
         case SECURE_HTTP_TYPE_URL:
 #if defined(NO_SSL) && !defined(NETSCAPE_USE_BEARSSL)
-            status = MK_UNABLE_TO_CONNECT;
+            status = this_entry->status = MK_UNABLE_TO_CONNECT;
+            StrAllocCopy(this_entry->URL_s->error_msg,
+                         "HTTPS is unavailable in this build.");
             break;
 #elif defined(NADA_VERSION) && !defined(NETSCAPE_USE_BEARSSL)
 			/* change the url to point to our page that

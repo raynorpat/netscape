@@ -23,3 +23,8 @@ install(FILES "${PROJECT_SOURCE_DIR}/security/ca/README.md"
  DESTINATION share/doc/netscape RENAME CA-bundle-provenance.md COMPONENT Runtime)
 install(FILES "${PROJECT_SOURCE_DIR}/security/ca/LICENSE-MPL-2.0.txt"
  DESTINATION share/doc/netscape COMPONENT Runtime)
+
+install(FILES "${PROJECT_SOURCE_DIR}/third_party/bearssl/README.md"
+ DESTINATION share/doc/netscape RENAME BearSSL-provenance.md COMPONENT Runtime)
+install(FILES "${PROJECT_SOURCE_DIR}/third_party/bearssl/upstream/LICENSE.txt"
+ DESTINATION share/doc/netscape/licenses RENAME BearSSL-MIT.txt COMPONENT Runtime)

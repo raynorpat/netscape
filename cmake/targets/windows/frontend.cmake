@@ -218,3 +218,19 @@ if(BUILD_TESTING AND NETSCAPE_ENABLE_BEARSSL_HTTPS)
   --mode errors)
  set_tests_properties(windows_tls_errors PROPERTIES TIMEOUT 150)
 endif()
+
+if(BUILD_TESTING AND NETSCAPE_ENABLE_BEARSSL_HTTPS)
+ # Install the current configuration before exercising its relocatable Runtime.
+ add_test(NAME windows_tls_installed COMMAND "${CMAKE_COMMAND}"
+  "-DBUILD_DIR=${PROJECT_BINARY_DIR}" "-DCONFIG=$<CONFIG>"
+  "-DPYTHON=${Python3_EXECUTABLE}"
+  "-DCHECKER=${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_tls.py"
+  -P "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_tls_installed.cmake")
+ set_tests_properties(windows_tls_installed PROPERTIES TIMEOUT 180 RUN_SERIAL TRUE)
+elseif(BUILD_TESTING)
+ add_test(NAME windows_tls_disabled COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_tls.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/tls-disabled"
+  --mode disabled)
+ set_tests_properties(windows_tls_disabled PROPERTIES TIMEOUT 45 RUN_SERIAL TRUE)
+endif()

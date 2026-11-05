@@ -378,15 +378,131 @@ def errors(args, output):
     print(f'All {count} displayed TLS error cases passed')
 
 
+def installed(args, output):
+    """Exercise an installed package, with all mutations confined to copies."""
+    prefix = args.executable.resolve().parent.parent
+    assert args.executable.is_file(), args.executable
+    assert not output.is_relative_to(prefix), 'test output must be outside installed prefix'
+    bundle = prefix/'share/netscape/ca/cacert.pem'
+    original = bundle.read_bytes()
+    assert hashlib.sha256(original).hexdigest() == '796f1389bfea13c0ed78f663b765baaff54a508e5483786bd6ece73c5e3e3cbe', 'installed CA provenance mismatch'
+    assert original.count(b'-----BEGIN CERTIFICATE-----') == 118
+    for notice in ('CA-bundle-provenance.md','LICENSE-MPL-2.0.txt',
+                   'BearSSL-provenance.md','licenses/BearSSL-MIT.txt',
+                   'Windows-source-provenance.md','licenses/WinFE-NPL-1.0'):
+        assert (prefix/'share/doc/netscape'/notice).is_file(), ('missing installed notice',notice)
+    assert hashlib.sha256((prefix/'share/doc/netscape/licenses/BearSSL-MIT.txt').read_bytes()).hexdigest() == '771bf18c8633ea69ec9b07d2e604c4b99b7bef41b0f5ce6385d24df4448f61ca', 'installed BearSSL license mismatch'
+    assert '7bea48e5e850ab4cafbe68d3765cdaba13a86d6f' in (prefix/'share/doc/netscape/BearSSL-provenance.md').read_text(), 'installed BearSSL pin missing'
+    print('PASS installed-bundle-and-notices',flush=True)
+    # A CWD containing a trusted fixture must never become the default trust store.
+    cwd = output/'unrelated cwd 100%';cwd.mkdir(exist_ok=True)
+    for relative in ('cacert.pem','security/ca/cacert.pem','share/netscape/ca/cacert.pem'):
+        poison=cwd/relative;poison.parent.mkdir(parents=True,exist_ok=True)
+        shutil.copy2(output/'browser-root.pem',poison)
+    ctx=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    ctx.minimum_version=ctx.maximum_version=ssl.TLSVersion.TLSv1_2
+    ctx.set_ciphers('ECDHE-RSA-AES128-GCM-SHA256')
+    ctx.load_cert_chain(output/'browser-leaf.pem',output/'browser-leaf.key')
+    peer=Server(('127.0.0.1',0),Handler)
+    peer.ctx=ctx;peer.mode='';peer.requests=[];peer.connections=[]
+    peer.records=[];peer.transports=[];peer.errors=[];peer.image_cookies=[]
+    # Copy only the Runtime package, not build-tree helpers or fixture secrets.
+    copy=output/'relocated package 100%'
+    assert copy.resolve().is_relative_to(output), 'test copy must stay inside output directory'
+    assert not copy.resolve().is_relative_to(prefix), 'test copy must be outside installed prefix'
+    shutil.copytree(prefix,copy,dirs_exist_ok=True)
+    copied_bundle=copy/'share/netscape/ca/cacert.pem'
+    executable=copy/'bin'/args.executable.name
+    count=0
+    with running(peer):
+        def run(case, error=0, override=None, omitted=False, scheme='https', exe=executable):
+            nonlocal count
+            if args.case and args.case!=case: return
+            profile=output/('profile-'+case);profile.mkdir(exist_ok=True)
+            (profile/'browser.ini').write_text('[General]\nca_bundle='+str(override or '')+'\n')
+            env=os.environ.copy();env['NETSCAPE_PROFILE_DIR']=str(profile)
+            report=output/(case+'.txt');report.unlink(missing_ok=True)
+            command=[str(exe), '--tls-smoke-test', str(report),
+                     f'{scheme}://localhost:{peer.server_port}/index']
+            if not omitted: command+=['-','-','ui']
+            before=len(peer.requests)
+            result=subprocess.run(command,env=env,cwd=cwd,capture_output=True,text=True,timeout=35)
+            fields=dict(line.split('=',1) for line in report.read_text().splitlines() if '=' in line) if report.exists() else {}
+            assert result.returncode==0 and fields.get('completed')=='1', (case,result.returncode,fields,result.stderr)
+            assert fields.get('tls_error')==str(error), (case,fields)
+            if error:
+                assert int(fields['status'])<0 and fields.get('tls_authenticated')=='0', (case,fields)
+                assert len(peer.requests)==before, (case,'HTTP before authentication',peer.requests[before:])
+            else:
+                assert int(fields['status'])>=0 and fields.get('rendered')=='1', (case,fields)
+                assert fields.get('tls_authenticated')==('1' if scheme=='https' else '0'), (case,fields)
+                if scheme=='https': assert fields.get('tls_version')=='771', (case,fields)
+            if not omitted: assert fields.get('capture_ok')=='1', (case,fields)
+            count+=1;print('PASS',case,flush=True)
+        run('shipped-default-loads',11,exe=args.executable.resolve())
+        shutil.copy2(output/'browser-root.pem',copied_bundle)
+        run('relocated-bundle-discovered')
+        run('omitted-ca-keeps-startup',omitted=True)
+        override=output/'explicit CA 100%.pem';shutil.copy2(output/'browser-root.pem',override)
+        copied_bundle.write_bytes(original)
+        run('profile-override-replaces-bundle',override=override)
+        copied_bundle.unlink()
+        run('missing-default-no-fallback',13)
+        run('override-with-missing-default',override=override)
+        copied_bundle.write_text('malformed certificate bundle')
+        run('malformed-default-no-fallback',13)
+        run('override-with-malformed-default',override=override)
+        shutil.copy2(output/'browser-root.pem',copied_bundle)
+        run('missing-override-no-fallback',13,override=output/'missing CA 100%.pem')
+        malformed=output/'malformed CA 100%.pem';malformed.write_text('not PEM')
+        run('malformed-override-no-fallback',13,override=malformed)
+        run('wrong-override-no-merge',11,override=output/'wrong.pem')
+        run('relative-override-no-fallback',13,override='cacert.pem')
+        copied_bundle.unlink()
+        peer.ctx=None
+        run('http-with-missing-default',scheme='http')
+    assert not peer.errors,peer.errors
+    assert bundle.read_bytes()==original, 'installed package was mutated'
+    print(f'All {count} installed TLS cases passed')
+
+
+def disabled(args, output):
+    """A real TLS-disabled browser must reject HTTPS without opening a peer."""
+    profile=output/'profile-disabled';profile.mkdir(exist_ok=True)
+    env=os.environ.copy();env['NETSCAPE_PROFILE_DIR']=str(profile)
+    with socket.socket() as listener:
+        listener.bind(('127.0.0.1',0));listener.listen();listener.setblocking(False)
+        report=output/'disabled-https.txt';report.unlink(missing_ok=True)
+        result=subprocess.run([str(args.executable.resolve()),'--smoke-test',str(report),
+            f'https://localhost:{listener.getsockname()[1]}/index'],env=env,cwd=output,
+            capture_output=True,text=True,timeout=20)
+        fields=dict(line.split('=',1) for line in report.read_text().splitlines() if '=' in line)
+        assert result.returncode==4 and fields.get('completed')=='1' and int(fields['status'])<0, (result.returncode,fields,result.stderr)
+        assert not select.select([listener],[],[],.2)[0], 'TLS-disabled browser connected to HTTPS peer'
+    print('PASS disabled-https-no-connection-no-plaintext',flush=True)
+    peer=Server(('127.0.0.1',0),Handler)
+    peer.ctx=None;peer.mode='';peer.requests=[];peer.connections=[];peer.records=[];peer.transports=[];peer.errors=[];peer.image_cookies=[]
+    with running(peer):
+        report=output/'disabled-http.txt';report.unlink(missing_ok=True)
+        result=subprocess.run([str(args.executable.resolve()),'--smoke-test',str(report),
+            f'http://localhost:{peer.server_port}/index'],env=env,cwd=output,capture_output=True,text=True,timeout=20)
+        fields=dict(line.split('=',1) for line in report.read_text().splitlines() if '=' in line)
+        assert fields.get('completed')=='1' and int(fields['status'])>=0 and int(fields['text_runs'])>0 and '/index' in peer.requests, (result.returncode,fields,peer.requests)
+    assert not peer.errors,peer.errors
+    print('PASS disabled-http-still-renders',flush=True)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--executable', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--mode', choices=['browser','policy','errors'], default='browser')
+    parser.add_argument('--mode', choices=['browser','policy','errors','installed','disabled'], default='browser')
     parser.add_argument('--red', action='store_true')
     parser.add_argument('--case', default='')
     args = parser.parse_args()
     output = args.output.resolve(); output.mkdir(parents=True, exist_ok=True)
+    if args.mode == 'disabled':
+        return disabled(args, output)
     tls_fixture.material(output)
     # Add localhost to the fixture leaf without changing the shared engine peer.
     from cryptography.hazmat.primitives.asymmetric import rsa
@@ -410,6 +526,8 @@ def main():
         .add_extension(x509.SubjectAlternativeName([x509.DNSName('localhost')]),False)
         .add_extension(x509.BasicConstraints(False,None),True).sign(root_key,hashes.SHA256()))
     (output/'browser-expired.pem').write_bytes(expired.public_bytes(serialization.Encoding.PEM))
+    if args.mode == 'installed':
+        return installed(args, output)
     if args.mode == 'errors':
         return errors(args, output)
     if args.mode == 'policy':

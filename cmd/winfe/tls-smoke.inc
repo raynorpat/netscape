@@ -111,14 +111,15 @@ static int WFE_RunTLSSmoke(const char *report, const char *url, const char *bund
                 !strcmp(scenario,"post-file")?"\r\n":"");
         request->post_headers=XP_STRDUP(header);
         request->post_data_size=size;
-        char *body=(char *)XP_ALLOC(size+1);
+        /* Ordinary XP_ALLOC deliberately asserts above 64K in Debug. */
+        char *body=(char *)XP_HUGE_ALLOC(size+1);
         for (unsigned i=0;i<size;i++) body[i]=(char)(i*19+7);
         body[size]=0;
         if (!strcmp(scenario,"post-file")) {
             std::string path=std::string(report)+".post";
             FILE *file=fopen(path.c_str(),"wb");
             if (file) { fwrite(body,1,size,file);fclose(file); }
-            XP_FREE(body);request->post_data=XP_STRDUP(path.c_str());request->post_data_is_file=TRUE;
+            XP_HUGE_FREE(body);request->post_data=XP_STRDUP(path.c_str());request->post_data_is_file=TRUE;
         } else request->post_data=body;
         FE_GetURL(&frame->context,request);
     } else frame->Navigate(url);

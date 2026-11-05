@@ -25,7 +25,7 @@ STRIPS = {
 SINGLE = {'folder': '701', 'folder-open': '702', 'news-host': '717', 'news-group': '718',
           'news': '718', 'subscribed': '719', 'unsubscribed': '720',
           'message-flag': '721', 'priority-header': '725', 'status-apps': '460',
-          'message-read': '703', 'message-unread': '703'}
+          'message-read': '703', 'message-unread': '703', 'location': '1239'}
 WINDOWS = {'browser': '2', 'mail': '221', 'news': '224', 'compose': '225', 'bookmarks': '231'}
 
 

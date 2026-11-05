@@ -44,7 +44,7 @@ static const MSG_CommandType header_commands[header_count] = {
 
 class ComposerStatusBar : public ClassicStatusBar {
 public:
-    void SetWindowText(const char *text) { SetPaneText(1, text ? text : ""); }
+    void SetWindowText(const char *text) { SetDocumentText(text); }
 };
 
 class ComposerFrame;

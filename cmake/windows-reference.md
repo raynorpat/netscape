@@ -40,7 +40,7 @@ association changes, external mail delivery or news posting was performed.
 
 | Area | Original observation | Port comparison / remaining work |
 | --- | --- | --- |
-| Browser | Running standard 3.02 About page; nine icon/caption toolbar buttons, Location, six directory shortcuts and nine top-level menus. | Standard nine-button toolbar and menu structure now match. The optional Gold build uses its own browser/menu resources; native printing is still absent. |
+| Browser | Running standard 3.02 About page; nine icon/caption toolbar buttons, Location, six directory shortcuts and nine top-level menus. Later comparison also used the running Gold 3.02 browser and the user's side-by-side capture. | Standard nine-button/Gold ten-button toolbars use original Windows artwork. The browser now follows the observed button grouping, Location icon/input, directory widths, logo and status-pane layout. Native printing/preview is implemented as described in windows.md; original printer-output equivalence remains unverified. |
 | Gold editor | Opened a blank original Gold editor; three icon-only toolbar bars and editor MENU 101. A physical `g` keypress produced a visible character. Sky's Unicode `type_text` injection did not enter the intended text. | Optional native EDT integration uses the same menu inventory, bitmap cells and editor icon, with a 104px toolbar area at 96 DPI and chosen 1105 x 765 outer reference size. Native editing/save fixtures pass as described below; these observations do not establish general original input, formatting, save or property-dialog equivalence. |
 | Mail | Opened Inbox containing the same two synthetic MIME messages used by our fixture; selected and read the base64 message. Ten toolbar buttons, eight menus, folder/message lists above a full-width reader. | At matching reference sizes, the port now uses the observed 303px folder column and 203px upper lists. Original list left the fixture's US-ASCII encoded-word headers literal; the port decodes them. |
 | Composer | Opened a new unsent composition. Five toolbar buttons, five menus, compact Mail To/Cc/Subject/Attachment rows and fixed-width editor. | Structure agrees. Original Address is enabled; ours is disabled pending address-book UI. Fresh original window was approximately 534 x 953 pixels; the port now uses those dimensions, constrained to the monitor work area. |
@@ -53,8 +53,25 @@ subdirectory, with accessibility text where available. `standard-menus.json`
 records the parsed original MENU resources (browser 2, Mail 221, composer 224,
 News 225).
 Window measurements are approximate outer dimensions at the observed desktop
-scale. Current Windows decorations/system colors differ from Windows 95, so
-the port retains classic gray styling while the original release now controls layout and menu differences.
+scale. The port uses current Windows colors and window decorations. Original
+Gold controls determine the chrome layout and artwork; only the browser's
+recessed Location combo uses classic control rendering with those system colors.
+
+## Browser chrome comparison
+
+The user's side-by-side capture and running Gold browser supplied these 96-DPI
+reference dimensions: toolbar buttons 49x41 at (5,3), 8px group separators before
+Edit, Reload and Stop, Location icon 17x20 at (5,52), Location combo at (78,52),
+and a 50px framed logo. Directory buttons begin at (9,75), have widths
+88/89/84/73/62/62 and are 21px high. The default chrome is 107px high. The port's
+native fixture checks these actual window bounds rather than just a button count.
+
+The status icon, progress and mail panes are 50/96/50px; the text pane stretches.
+Message/progress edges are thin, while icon areas are unframed. The complete
+unknown-mail indicator and native sizing grip are visible. Pixel checks cover
+the Location pen, arrow, recessed edge and grip; F4/Escape and native grip hit
+testing are exercised. MFC idle and menu help no longer erase the stored
+document status, including a hovered link leaving during menu tracking.
 
 ## Menu transcription and native command verification
 

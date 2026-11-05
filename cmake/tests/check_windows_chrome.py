@@ -140,6 +140,28 @@ def check_bitmap(path, dpi=96):
 def check_report(report, edition="standard"):
     text = report.read_text(encoding="utf-8", errors="replace")
     fields = dict(line.split("=", 1) for line in text.splitlines() if "=" in line)
+    def rect(name):
+        return tuple(map(int, fields[name].split(',')))
+    assert rect('button_back') == (5, 3, 54, 44), ('Gold button dimensions', rect('button_back'))
+    assert rect('button_reload')[0] == (217 if edition == 'gold' else 160), 'Reload grouping differs from original'
+    assert rect('button_stop')[0] - rect('button_find')[2] == 8, 'Missing original gap before Stop'
+    assert rect('location_icon') == (5, 52, 22, 72), 'Missing original Location icon'
+    location = rect('location_box')
+    assert location[0] == 78 and location[1] == 52 and 20 <= location[3] - location[1] <= 24, ('Original recessed location box', location)
+    assert rect('chrome_logo')[2] - rect('chrome_logo')[0] == 50, 'Original framed logo size differs'
+    assert int(fields['chrome_height']) == 107, ('Browser chrome height', fields['chrome_height'])
+    widths = [88, 89, 84, 73, 62, 62]
+    x = 9
+    for i, width in enumerate(widths):
+        assert rect('directory_' + str(i)) == (x, 75, x + width, 96), ('Original directory button', i, rect('directory_' + str(i)))
+        x += width + 2
+    assert rect('status_0')[2] - rect('status_0')[0] == 50, ('Status icon pane', rect('status_0'))
+    assert rect('status_2')[2] - rect('status_2')[0] == 96, ('Status progress pane', rect('status_2'))
+    assert rect('status_3')[2] - rect('status_3')[0] == 50, ('Status mail pane', rect('status_3'))
+    assert fields.get('status_idle_restore') == fields.get('status_menu_restore') == '1', 'MFC idle/menu updates erase document status'
+    assert fields.get('about_status') == 'Document: Done', ('Blank About document status', fields.get('about_status'))
+    assert fields.get('location_history_popup') == '1', 'F4/Escape no longer opens and closes Location history'
+    assert fields.get('status_grip_hit') == '17', 'Native status resizing grip no longer hit-tests as HTBOTTOMRIGHT'
     if fields.get("edition") != edition:
         raise RuntimeError("Chrome report edition does not match {} fixture:\n{}".format(edition, text))
     for name in ("passed", "completed", "toolbar_state", "location_enter", "history_state",
@@ -202,6 +224,23 @@ def run_smoke(executable, output, server, edition="standard"):
             raise RuntimeError("Image menu did not defer/fetch exactly once: " + repr(server.requests))
     fields = check_report(report, edition)
     width, height = check_bitmap(snapshot, int(fields.get("ui_dpi", "96")))
+    data = snapshot.read_bytes()
+    offset = struct.unpack_from('<I', data, 10)[0]
+    bitmap_width, bitmap_height, planes, bits = struct.unpack_from('<iiHH', data, 18)
+    stride = (bitmap_width * bits + 31) // 32 * 4
+    def pixel(x, y):
+        row = y if bitmap_height < 0 else bitmap_height - y - 1
+        index = offset + row * stride + x * (bits // 8)
+        return tuple(data[index:index + 3])
+    icon = [pixel(x, y) for y in range(52, 72) for x in range(5, 22)]
+    assert sum(max(p) - min(p) > 40 for p in icon) > 10, 'Original Location pen icon was not painted'
+    box = tuple(map(int, fields['location_box'].split(',')))
+    arrow = tuple(map(int, fields['location_arrow'].split(',')))
+    cx, cy = box[0] + (arrow[0] + arrow[2]) // 2, box[1] + (arrow[1] + arrow[3]) // 2
+    assert sum(max(pixel(x, y)) < 100 for y in range(cy-4, cy+5) for x in range(cx-4, cx+5)) >= 3, 'Location history arrow is not visible'
+    assert sum(max(pixel(x, y)) < 190 for y in range(52, 54) for x in range(78, 400)) > 250, 'Location field is missing its recessed edge'
+    grip = [pixel(x, y) for y in range(height-9, height-2) for x in range(width-14, width-2)]
+    assert sum(max(p) < 190 for p in grip) >= 6, 'Status sizing grip is not painted'
     (output / "chrome-capture.json").write_text(
         json.dumps({"width": width, "height": height}, indent=2) + "\n", encoding="utf-8")
 

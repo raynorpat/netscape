@@ -18,6 +18,7 @@ their hashes. The executable's original resource IDs are retained there.
 | 755, 20x20 cells | Message composition toolbar |
 | 1100 / 1000, first 48x48 / 30x30 frame | Large / small Netscape logo |
 | 460 | Navigator/Mail status switch icons |
+| 1239, 17x20 | Page/pen icon beside Location |
 | 1204, three 24x12 cells | New/normal/unknown status-mail indicators |
 | 703 | Message-list glyph (read state is also shown by row font weight) |
 | 701 / 702 | Closed / open folder |

@@ -2,6 +2,7 @@
 #include "resource.h"
 #include "preferences.h"
 #include <algorithm>
+#include <uxtheme.h>
 
 struct ChromeCommand { UINT id; const char *label; UINT bitmap; const char *tip; };
 static const ChromeCommand browser_tools[] = {
@@ -73,12 +74,17 @@ bool ClassicChrome::Create(CWnd *owner, CGenericEdit *address, ClassicButton *go
                            CRect(0,0,1,200),this,ID_LOCATION_COMBO)) return false;
     COMBOBOXINFO info = {sizeof(info)};
     if (!::GetComboBoxInfo(location.GetSafeHwnd(),&info) || !edit->SubclassWindow(info.hwndItem)) return false;
+    /* Gold's recessed input uses classic control rendering with the current
+     * Windows colors. Keep native theming on the frame and other controls. */
+    if(!mode) SetWindowTheme(location.GetSafeHwnd(),L"",L"");
     edit->SetDlgCtrlID(ID_ADDRESS);
     edit->LimitText(32767);
     if (!go->Create(mode == 2 ? "Connect" : "Refresh",WS_CHILD|WS_TABSTOP|BS_OWNERDRAW,CRect(0,0,1,1),this,ID_NAV_GO)) return false;
     if (mode) go->ShowWindow(SW_SHOW);
-    if (!logo.Create("Netscape",WS_CHILD|WS_VISIBLE,CRect(0,0,30,30),this)) return false;
+    if (!logo.Create("Netscape",WS_CHILD|WS_VISIBLE|WS_BORDER,CRect(0,0,30,30),this,ID_CHROME_LOGO)) return false;
     logo.bitmap.LoadBitmap(mode?IDB_CLASSIC_LOGO_SMALL:IDB_CLASSIC_LOGO);
+    if(!location_icon.Create("Page location",WS_CHILD,CRect(0,0,1,1),this,ID_LOCATION_ICON)) return false;
+    location_icon.bitmap.LoadBitmap(IDB_CLASSIC_LOCATION);location_icon.transparent=true;
     size_t shortcut_count = mode ? 3 : 6;
     const char *mail_labels[] = {"All Messages","Unread","Account..."};
     const UINT mail_ids[] = {ID_MESSAGE_SHOW_ALL,ID_MESSAGE_SHOW_UNREAD,ID_MAIL_SETTINGS};
@@ -98,41 +104,51 @@ int ClassicChrome::Arrange(int width)
     if(!toolbar_visible && !location_visible && !directory_visible) {ShowWindow(SW_HIDE);return 0;}
     ShowWindow(SW_SHOW);
     auto s = [this](int n){ return ClassicUI::Scale(this,n); };
-    int y=s(3), button_width=s(presentation==0 ? 30 : mode ? 42 : 48), button_height=s(presentation==0 ? 26 : presentation==1 ? 24 : 42);
-    int x=s(4), row=0, limit=(std::max)(button_width+s(4),width-s(mode?40:4));
+    bool gold_geometry=!mode&&presentation==2;
+    int y=s(3), button_width=s(presentation==0 ? 30 : mode ? 42 : 49), button_height=s(presentation==0 ? 26 : presentation==1 ? 24 : gold_geometry?41:42);
+    int x=s(gold_geometry?5:4), row=0, limit=(std::max)(button_width+s(4),width-s(mode?40:4));
     for (size_t i=0;i<buttons.size();++i) {
-        bool group=mode==2?(i==2||i==6||i==8||i==10):mode==1?(i==1||i==3||i==6||i==8):(i==3||i==8);
-        if(group && presentation==2) x+=s(mode==2?4:mode==1?8:12);
-        if(x+button_width>limit) {x=s(4);++row;}
+        UINT command=buttons[i]->GetDlgCtrlID();
+        bool group=mode==2?(i==2||i==6||i==8||i==10):mode==1?(i==1||i==3||i==6||i==8):
+            (command==ID_BROWSER_EDIT||command==ID_NAV_RELOAD||command==ID_NAV_STOP);
+        if(group && presentation==2) x+=s(mode==2?4:8);
+        if(x+button_width>limit) {x=s(gold_geometry?5:4);++row;}
         buttons[i]->ShowWindow(toolbar_visible ? SW_SHOW : SW_HIDE);
-        buttons[i]->MoveWindow(x,y+row*button_height,button_width-s(2),button_height-s(2));
+        buttons[i]->MoveWindow(x,y+row*button_height,button_width-s(gold_geometry?0:2),button_height-s(gold_geometry?0:2));
         x+=button_width;
     }
-    if (toolbar_visible) y += (row+1)*button_height+s(3);
-    int logo_top=mode ? s(3) : y, logo_size=s(mode ? 32 : 44), right=(std::max)(s(100),width-logo_size-s(5));
+    if (toolbar_visible) y += (row+1)*button_height+s(gold_geometry?8:3);
+    int logo_top=mode ? s(3) : (std::max)(0,y-s(4)), logo_size=s(mode ? 32 : 50), right=(std::max)(s(100),width-logo_size-s(mode?5:1));
     label.ShowWindow(location_visible ? SW_SHOW : SW_HIDE);
     location.ShowWindow(location_visible ? SW_SHOW : SW_HIDE);
+    location_icon.ShowWindow(location_visible&&!mode?SW_SHOW:SW_HIDE);
     go->ShowWindow(location_visible && mode ? SW_SHOW : SW_HIDE);
     if (location_visible) {
-        int label_width=s(mode ? 68 : 57), go_width=mode ? s(66) : 0;
-        label.MoveWindow(s(5),y,label_width,s(21));
-        location.MoveWindow(label_width+s(5),y,(std::max)(s(20),right-label_width-s(8)-go_width),s(180));
+        int label_width=s(mode ? 68 : 45), go_width=mode ? s(66) : 0;
+        int label_left=s(mode?5:29),location_left=s(mode?73:78);
+        location_icon.MoveWindow(s(5),y,s(17),s(20));
+        label.MoveWindow(label_left,y,label_width,s(21));
+        location.MoveWindow(location_left,y,(std::max)(s(20),right-location_left-s(mode?3:5)-go_width),s(180));
         if(mode) go->MoveWindow(right-go_width,y,go_width-s(2),s(21));
         y += s(23);
     }
-    int short_columns=(std::max)(1,(right-s(8))/s(76));
+    const int directory_widths[]={88,89,84,73,62,62};
+    int short_x=s(mode?5:9),short_y=y,short_rows=shortcuts.empty()?0:1;
     for (size_t i=0;i<shortcuts.size();++i) {
         shortcuts[i]->ShowWindow(directory_visible ? SW_SHOW : SW_HIDE);
-        shortcuts[i]->MoveWindow(s(5)+(int(i)%short_columns)*s(76),y+(int(i)/short_columns)*s(20),s(75),s(19));
+        int w=s(mode?75:directory_widths[i]);
+        if(short_x+w>right && short_x>s(mode?5:9)) {short_x=s(mode?5:9);short_y+=s(mode?20:22);++short_rows;}
+        w=(std::min)(w,(std::max)(s(20),right-short_x));
+        shortcuts[i]->MoveWindow(short_x,short_y,w,s(mode?19:21));short_x+=w+s(mode?1:2);
     }
-    if (directory_visible) y += ((int(shortcuts.size())+short_columns-1)/short_columns)*s(20);
+    if (directory_visible) y += short_rows*s(mode?20:22);
     bool show_logo=mode ? toolbar_visible : location_visible || directory_visible;
     logo.ShowWindow(show_logo ? SW_SHOW : SW_HIDE);
     if(show_logo) {
-        logo.MoveWindow(width-logo_size-s(4),logo_top,logo_size,logo_size);
+        logo.MoveWindow(width-logo_size-s(mode?4:1),logo_top,logo_size,logo_size);
         y=(std::max)(y,logo_top+logo_size);
     }
-    y+=s(3);
+    y+=s(mode?3:9);
     MoveWindow(0,0,(std::max)(1,width),y);
     Invalidate();
     return y;
@@ -205,28 +221,51 @@ BOOL ClassicChrome::PreTranslateMessage(MSG *message)
     }
     return CWnd::PreTranslateMessage(message);
 }
-BOOL ClassicChrome::OnEraseBkgnd(CDC *dc) { CRect area;GetClientRect(area);dc->FillSolidRect(area,ClassicUI::Face());return TRUE; }
+BOOL ClassicChrome::OnEraseBkgnd(CDC *dc) {
+    CRect area;GetClientRect(area);dc->FillSolidRect(area,ClassicUI::Face());
+    if(!mode&&area.Height()>=2) {
+        dc->FillSolidRect(0,area.bottom-2,area.Width(),1,GetSysColor(COLOR_3DSHADOW));
+        dc->FillSolidRect(0,area.bottom-1,area.Width(),1,GetSysColor(COLOR_3DDKSHADOW));
+    }
+    return TRUE;
+}
 HBRUSH ClassicChrome::OnCtlColor(CDC *dc,CWnd *window,UINT type) { return ClassicUI::ControlColor(dc,window,type); }
 
 BEGIN_MESSAGE_MAP(ClassicStatusBar,CStatusBar)
+ ON_MESSAGE(WM_SETTEXT,OnFrameworkText)
  ON_WM_PAINT()
  ON_WM_LBUTTONUP()
 END_MESSAGE_MAP()
+void ClassicStatusBar::SetDocumentText(const char *text)
+{ document_text=text?text:"";if(framework_text.IsEmpty()) SetPaneText(1,document_text); }
+LRESULT ClassicStatusBar::OnFrameworkText(WPARAM,LPARAM text)
+{
+    if(GetStatusBarCtrl().GetParts(0,nullptr)<2) return DefWindowProc(WM_SETTEXT,0,text);
+    const char *message=(const char*)text;
+    framework_text=message?message:"";
+    return SetPaneText(1,framework_text.IsEmpty()?document_text:framework_text)?0:-1;
+}
 void ClassicStatusBar::OnPaint()
 {
     CPaintDC dc(this); CRect area;GetClientRect(area);dc.FillSolidRect(area,ClassicUI::Face());
     CFont *old=dc.SelectObject(ClassicUI::Font(this));dc.SetBkMode(TRANSPARENT);dc.SetTextColor(GetSysColor(COLOR_BTNTEXT));
     for(int i=0;i<GetStatusBarCtrl().GetParts(0,nullptr);++i) {
-        CRect pane;GetItemRect(i,pane);dc.DrawEdge(pane,EDGE_SUNKEN,BF_RECT);pane.DeflateRect(3,2);
+        CRect pane;GetItemRect(i,pane);
+        if(i==1||i==2) dc.Draw3dRect(pane,GetSysColor(COLOR_3DSHADOW),GetSysColor(COLOR_3DHIGHLIGHT));
+        pane.DeflateRect(3,1);
         if(i==2) { if(busy) { pane.right=pane.left+(pane.Width()*(progress>0 ? progress : 25))/100;dc.FillSolidRect(pane,GetSysColor(COLOR_HIGHLIGHT)); } }
         else if(i==0 || i==3) {
-            CBitmap icon;icon.LoadBitmap(i==0 ? IDB_CLASSIC_STATUS_APPS : IDB_CLASSIC_STATUS_MAIL);
+            CBitmap icon;icon.LoadBitmap(i==0 ? IDB_CLASSIC_STATUS_APPS : IDB_CLASSIC_STATUS_MAIL_UNKNOWN);
             BITMAP data;icon.GetBitmap(&data);CDC memory;memory.CreateCompatibleDC(&dc);
             CBitmap *saved=memory.SelectObject(&icon);
             int width=ClassicUI::Scale(this,data.bmWidth),height=ClassicUI::Scale(this,data.bmHeight);
             TransparentBlt(dc,pane.left,pane.CenterPoint().y-height/2,width,height,memory,0,0,data.bmWidth,data.bmHeight,ClassicUI::ArtworkKey);
             memory.SelectObject(saved);
         } else { CString text;GetPaneText(i,text);dc.DrawText(text,pane,DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS); }
+    }
+    if((GetStyle()&SBARS_SIZEGRIP) && GetParent()&&!GetParent()->IsZoomed()) {
+        CRect grip(area.right-GetSystemMetrics(SM_CXVSCROLL),area.bottom-GetSystemMetrics(SM_CYHSCROLL),area.right,area.bottom);
+        dc.DrawFrameControl(grip,DFC_SCROLL,DFCS_SCROLLSIZEGRIP);
     }
     dc.SelectObject(old);
 }
@@ -246,6 +285,7 @@ void ClassicLogo::OnPaint()
     if(!bitmap.GetSafeHandle()) return;
     BITMAP data;bitmap.GetBitmap(&data);CDC memory;memory.CreateCompatibleDC(&dc);
     CBitmap *old=memory.SelectObject(&bitmap);dc.SetStretchBltMode(COLORONCOLOR);
-    dc.StretchBlt(0,0,area.Width(),area.Height(),&memory,0,0,data.bmWidth,data.bmHeight,SRCCOPY);
+    if(transparent) TransparentBlt(dc,0,0,area.Width(),area.Height(),memory,0,0,data.bmWidth,data.bmHeight,ClassicUI::ArtworkKey);
+    else dc.StretchBlt(0,0,area.Width(),area.Height(),&memory,0,0,data.bmWidth,data.bmHeight,SRCCOPY);
     memory.SelectObject(old);
 }

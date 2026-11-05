@@ -779,3 +779,29 @@ The final resource check verifies 82 compiled bitmap/icon payloads and compares
 message/status cells directly with original Gold pixels. All 95 generated
 assets reproduce byte-for-byte from 32 hashed original inputs. Native Gold
 browser, Mail, News, composition and Preferences captures were reviewed.
+
+## Browser chrome geometry and status
+
+The browser now follows the original Gold 3.02 control geometry at 96 DPI:
+49x41 toolbar buttons, 8px gaps before Edit/Reload/Stop, individual directory
+button widths, the original 17x20 Location icon, a recessed native history
+combo and a 50px framed logo. The default chrome occupies 107px. Narrow windows
+wrap toolbar and directory controls; location entry, F4/Escape history, keyboard
+focus and visibility toggles retain their native behavior. Dimensions scale
+through the shared UI helper; broader DPI behavior remains unverified.
+
+The browser status bar uses the original pane proportions and thin edges, the
+complete unknown-mail indicator and a visible native resizing grip. Document
+status is stored separately from temporary MFC menu help. Idle updates restore
+the saved text, and leaving a link during menu tracking cannot retain its URL
+after the menu closes. Synchronous loads also settle to Document: Done. These
+checks cover native bounds, actual captured icon/arrow/border/grip pixels,
+F4/Escape, resize hit testing, MFC idle/menu messages and link-hover cleanup.
+
+
+Browser chrome verification on 2026-11-04: standard 24/24 and Gold 27/27 passed
+in both Win32 Debug and Release after the final status/hover fix. Native chrome
+captures were reviewed against the original Gold window and supplied comparison.
+The resource check now verifies 84 compiled bitmap/icon payloads; 97 generated
+assets reproduce from 33 hashed inputs, including the original Location icon.
+Both Release ZIPs are refreshed with the tested executables and updated docs.

@@ -8,6 +8,7 @@
 class ClassicLogo : public CStatic {
 public:
     CBitmap bitmap;
+    bool transparent = false;
 protected:
     afx_msg void OnPaint();
     DECLARE_MESSAGE_MAP()
@@ -33,6 +34,7 @@ private:
     ClassicButton *go = nullptr;
     CStatic label;
     ClassicLogo logo;
+    ClassicLogo location_icon;
     CToolTipCtrl tips;
     std::vector<std::unique_ptr<ClassicButton>> buttons, shortcuts;
     afx_msg BOOL OnEraseBkgnd(CDC *dc);
@@ -46,7 +48,11 @@ class ClassicStatusBar : public CStatusBar {
 public:
     bool busy = false;
     int progress = 0;
+    void SetDocumentText(const char *text);
+    const CString &DocumentText() const { return document_text; }
 protected:
+    CString document_text, framework_text;
+    afx_msg LRESULT OnFrameworkText(WPARAM,LPARAM text);
     afx_msg void OnPaint();
     afx_msg void OnLButtonUp(UINT flags, CPoint point);
     DECLARE_MESSAGE_MAP()

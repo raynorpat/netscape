@@ -59,6 +59,12 @@ static int WFE_RunLinkSmoke(const char *report,const char *base)
     bool hand=::GetCursor()==::LoadCursor(nullptr,IDC_HAND);
     frame->view.SendMessage(WM_MOUSELEAVE);
     bool leave=frame->status.GetPaneText(1)==previous;
+    interaction_mouse(frame->view,WM_MOUSEMOVE,text);
+    frame->status.SendMessage(WM_SETTEXT,0,(LPARAM)"Temporary menu help");
+    frame->view.SendMessage(WM_MOUSELEAVE);
+    leave=leave&&frame->status.GetPaneText(1)=="Temporary menu help";
+    frame->status.SendMessage(WM_SETTEXT,0,(LPARAM)"");
+    leave=leave&&frame->status.GetPaneText(1)==previous;
     bool copy=link_popup(frame,text,"Copy Link Location");
     interaction_record(report,"copylink",interaction_clipboard(frame));
     size_t windows=browser_windows.size();

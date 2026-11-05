@@ -1,4 +1,5 @@
 #include <afxwin.h>
+#include <afxpriv.h>
 #include <afxext.h>
 #include <afxcoll.h>
 #include <afxcmn.h>
@@ -533,11 +534,11 @@ int BrowserFrame::OnCreate(LPCREATESTRUCT create)
                        CRect(0,40,800,600), this, 112)) return -1;
     if (!status.Create(this) || !status.SetIndicators(indicators, 4)) return -1;
     status.SetFont(ClassicUI::Font(this));
-    status.SetPaneInfo(0, ID_STATUS_NAVIGATOR, SBPS_NORMAL, ClassicUI::Scale(this, 40));
+    status.SetPaneInfo(0, ID_STATUS_NAVIGATOR, SBPS_NORMAL, ClassicUI::Scale(this, 44));
     status.SetPaneInfo(1, ID_SEPARATOR, SBPS_STRETCH, 0);
-    status.SetPaneInfo(2, ID_STATUS_PROGRESS, SBPS_NORMAL, ClassicUI::Scale(this, 80));
-    status.SetPaneInfo(3, ID_STATUS_MAIL, SBPS_NORMAL, ClassicUI::Scale(this, 28));
-    status.SetPaneText(0, "N"); status.SetPaneText(1, "Document: Done"); status.SetPaneText(3, "Mail");
+    status.SetPaneInfo(2, ID_STATUS_PROGRESS, SBPS_NORMAL, ClassicUI::Scale(this, 90));
+    status.SetPaneInfo(3, ID_STATUS_MAIL, SBPS_NORMAL, ClassicUI::Scale(this, 44));
+    status.SetPaneText(0, "N"); status.SetDocumentText("Document: Done"); status.SetPaneText(3, "Mail");
     if (mode) {
         DWORD style = WS_CHILD | WS_VISIBLE | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS;
         if (!folders.Create(style, CRect(0,40,260,550), this, ID_FOLDER_LIST)
@@ -613,6 +614,7 @@ void BrowserFrame::Navigate(const char *input, bool remember)
     if (address.GetSafeHwnd()) address.SetWindowText(current_url.c_str());
     chrome.Remember(current_url.c_str());
     completed = false;
+    if(!grid_parent && !mode && status.GetSafeHwnd()) {status.busy=true;status.Invalidate();}
     view.drawn_runs = 0;
     view.drawn_text.clear();
     WFE_Load(&context, current_url.c_str());
@@ -626,7 +628,7 @@ void BrowserFrame::OnTimer(UINT_PTR timer)
             status.busy = loading;
             if (!loading) {
                 if(mode) MailCaptionStatus();
-                else status.SetPaneText(1,load_status >= 0 ? "Document: Done" : load_status == MK_INTERRUPTED ? "Document: Stopped" : "Document: Error");
+                else status.SetDocumentText(load_status >= 0 ? "Document: Done" : load_status == MK_INTERRUPTED ? "Document: Stopped" : "Document: Error");
             }
             status.Invalidate();
         }
@@ -1070,7 +1072,7 @@ void BrowserFrame::MailCaptionStatus()
         text+=line.name?line.name:"";
         if(!(line.flags&MSG_FOLDER_FLAG_DIRECTORY)&&line.total>=0) { CString count;count.Format("  %d messages",line.total);text+=count; }
         if(!(line.flags&MSG_FOLDER_FLAG_DIRECTORY)&&line.unseen>=0) { CString unread;unread.Format(" (%d unread)",line.unseen);text+=unread; }
-        status.SetPaneText(1,text);
+        status.SetDocumentText(text);
     }
 }
 LRESULT BrowserFrame::OnMailChanged(WPARAM, LPARAM)
@@ -1378,7 +1380,7 @@ void BrowserView::OnMouseMove(UINT flags,CPoint point)
         ClearHover();
         if(!hit.link.empty()) {
             BrowserFrame *owner=frame;while(owner && owner->grid_parent) owner=frame_for(owner->grid_parent);
-            if(owner) hover_status=(const char *)owner->status.GetPaneText(1);
+            if(owner) hover_status=(const char *)owner->status.DocumentText();
             hovered_link=hit.link;WFE_Status(&frame->context,hovered_link.c_str());
             TRACKMOUSEEVENT track={sizeof(track),TME_LEAVE,GetSafeHwnd(),0};TrackMouseEvent(&track);
         }
@@ -1392,7 +1394,7 @@ void BrowserView::ClearHover()
 {
     if(hovered_link.empty()) return;
     BrowserFrame *owner=frame;while(owner && owner->grid_parent) owner=frame_for(owner->grid_parent);
-    if(owner && owner->status.GetSafeHwnd() && owner->status.GetPaneText(1)==hovered_link.c_str()) owner->status.SetPaneText(1,hover_status.c_str());
+    if(owner && owner->status.GetSafeHwnd() && owner->status.DocumentText()==hovered_link.c_str()) owner->status.SetDocumentText(hover_status.c_str());
     hovered_link.clear();hover_status.clear();
 }
 void BrowserView::OnMouseLeave() {ClearHover();}
@@ -1779,7 +1781,7 @@ extern "C" void WFE_Rect(MWContext *context, int32 x, int32 y, int32 width, int3
     if (fill) frame->view.drawing->FillSolidRect(area, color);
     else { CBrush brush(color); frame->view.drawing->FrameRect(area, &brush); }
 }
-extern "C" void WFE_Status(MWContext *context, const char *message) { BrowserFrame *frame = frame_for(context); while (frame && frame->grid_parent) frame = frame_for(frame->grid_parent); if (frame && frame->status.GetSafeHwnd()) frame->status.SetPaneText(1, message ? message : ""); else WFE_ComposerStatus(context, message); }
+extern "C" void WFE_Status(MWContext *context, const char *message) { BrowserFrame *frame = frame_for(context); while (frame && frame->grid_parent) frame = frame_for(frame->grid_parent); if (frame && frame->status.GetSafeHwnd()) frame->status.SetDocumentText(message ? message : ""); else WFE_ComposerStatus(context, message); }
 extern "C" void WFE_ChromeProgress(MWContext *context, int32 received, int32 length)
 {
     BrowserFrame *frame=frame_for(context);
@@ -2224,18 +2226,34 @@ static int WFE_RunChromeSmoke(const char *report,const char *url,const char *sna
     std::string full_capture=std::string(snapshot)+".window.bmp";
     chrome_capture(frame,full_capture.c_str(),true);
     bool dropdown=(frame->chrome.location.GetStyle()&CBS_DROPDOWN)!=0;
+    frame->chrome.location.SendMessage(WM_KEYDOWN,VK_F4,0);
+    bool history_popup=frame->chrome.location.GetDroppedState()!=FALSE;
+    frame->chrome.location.SendMessage(WM_KEYDOWN,VK_ESCAPE,0);
+    history_popup=history_popup&&frame->chrome.location.GetDroppedState()==FALSE;
+    CRect status_bounds;frame->status.GetWindowRect(status_bounds);
+    LRESULT grip_hit=frame->status.SendMessage(WM_NCHITTEST,0,MAKELPARAM(status_bounds.right-2,status_bounds.bottom-2));
     BrowserFrame *about=frame_for(WFE_NewWindow("about:"));
-    bool about_page=false;
+    bool about_page=false;CString about_status;
     if(about) {
         chrome_client_size(about,655,410);about->ShowWindow(SW_SHOWNOACTIVATE);browser_smoke_wait(about);
         std::string text=frame_text(about);
         about_page=text.find("Netscape Navigator")!=std::string::npos&&text.find("3.02")!=std::string::npos&&about->view.drawn_images.size()==1&&WFE_AboutOutstanding()==0;
+        about_status=about->status.GetPaneText(1);
 #ifdef EDITOR
         about_page=about_page&&text.find("3.02Gold")!=std::string::npos;
 #endif
         chrome_capture(about,(std::string(snapshot)+".about.bmp").c_str(),true);
         about->SendMessage(WM_CLOSE);
     }
+    CString document_status=frame->status.GetPaneText(1);
+    frame->status.SendMessage(WM_SETTEXT,0,(LPARAM)"");
+    bool idle_status=frame->status.GetPaneText(1)==document_status;
+    frame->SendMessage(WM_SETMESSAGESTRING,AFX_IDS_IDLEMESSAGE,0);
+    idle_status=idle_status&&frame->status.GetPaneText(1)==document_status;
+    frame->status.SendMessage(WM_SETTEXT,0,(LPARAM)"Native menu help fixture");
+    bool menu_status=frame->status.GetPaneText(1)=="Native menu help fixture";
+    frame->status.SendMessage(WM_SETTEXT,0,(LPARAM)"");
+    menu_status=menu_status&&frame->status.GetPaneText(1)==document_status;
     bool passed=complete&&state&&find&&location&&history&&toggles&&narrow&&capture&&about_page;
     FILE *file=fopen(report,"wb");
     if(file) {
@@ -2247,6 +2265,26 @@ static int WFE_RunChromeSmoke(const char *report,const char *url,const char *sna
         fprintf(file,"passed=%d\ncompleted=%d\ntoolbar_state=%d\nlocation_enter=%d\nhistory_state=%d\nfind_text=%d\nview_toggles=%d\nnarrow_layout=%d\nlocation_dropdown=%d\ntoolbar_labels=%s\nmenu_labels=%s\ntoolbar_count=%u\ndirectory_count=6\nstatus_panes=4\nnarrow_client=%d,%d\nnarrow_view=%d,%d,%d,%d\ncapture=%d\nabout_page=%d\n",
             passed,complete,state,location,history,find,toggles,narrow,dropdown,(const char*)labels,(const char*)menu_labels,
             (unsigned)frame->chrome.ButtonCount(),client.Width(),client.Height(),view.left,view.top,view.right,view.bottom,capture,about_page);
+        fprintf(file,"status_idle_restore=%d\nstatus_menu_restore=%d\nabout_status=%s\nlocation_history_popup=%d\nstatus_grip_hit=%ld\n",idle_status,menu_status,(const char*)about_status,history_popup,(long)grip_hit);
+        auto bounds=[&](const char *name,CWnd *window,CWnd *parent) {
+            CRect rect(0,0,0,0);if(window&&window->GetSafeHwnd()) {window->GetWindowRect(rect);parent->ScreenToClient(rect);}
+            fprintf(file,"%s=%d,%d,%d,%d\n",name,rect.left,rect.top,rect.right,rect.bottom);
+        };
+        bounds("button_back",frame->chrome.Button(ID_NAV_BACK),&frame->chrome);
+        bounds("button_home",frame->chrome.Button(ID_NAV_HOME),&frame->chrome);
+        bounds("button_edit",frame->chrome.Button(ID_BROWSER_EDIT),&frame->chrome);
+        bounds("button_reload",frame->chrome.Button(ID_NAV_RELOAD),&frame->chrome);
+        bounds("button_find",frame->chrome.Button(ID_BROWSER_FIND),&frame->chrome);
+        bounds("button_stop",frame->chrome.Button(ID_NAV_STOP),&frame->chrome);
+        bounds("location_box",&frame->chrome.location,&frame->chrome);
+        bounds("location_icon",frame->chrome.GetDlgItem(ID_LOCATION_ICON),&frame->chrome);
+        bounds("chrome_logo",frame->chrome.GetDlgItem(ID_CHROME_LOGO),&frame->chrome);
+        for(int i=0;i<6;++i) {char name[32];sprintf_s(name,"directory_%d",i);bounds(name,frame->chrome.GetDlgItem(ID_DIRECTORY_FIRST+i),&frame->chrome);}
+        CRect chrome_area;frame->chrome.GetClientRect(chrome_area);
+        fprintf(file,"chrome_height=%d\n",chrome_area.Height());
+        for(int i=0;i<4;++i) {CRect pane;frame->status.GetItemRect(i,pane);fprintf(file,"status_%d=%d,%d,%d,%d\n",i,pane.left,pane.top,pane.right,pane.bottom);}
+        COMBOBOXINFO combo={sizeof(combo)};GetComboBoxInfo(frame->chrome.location.GetSafeHwnd(),&combo);
+        fprintf(file,"location_arrow=%ld,%ld,%ld,%ld\n",combo.rcButton.left,combo.rcButton.top,combo.rcButton.right,combo.rcButton.bottom);
         fclose(file);
     } else passed=false;
     passed=original_image_menu_smoke(frame,report,url)&&passed;

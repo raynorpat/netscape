@@ -70,6 +70,16 @@ void GH_CollectGarbage(void);
 class BrowserFrame;
 static bool original_browser_menu_smoke(BrowserFrame *,const char *,const char *);
 static bool smoke_mode = false;
+#ifdef NETSCAPE_USE_BEARSSL
+static NETTLSInfo tls_smoke_info;
+static MWContext *tls_smoke_context;
+static unsigned tls_smoke_completed;
+extern "C" void WFE_TLSRequestComplete(MWContext *context, const NETTLSInfo *info)
+{
+    if (info && context==tls_smoke_context) tls_smoke_info=*info;
+    ++tls_smoke_completed;
+}
+#endif
 static bool automatic_images = true;
 static std::string smoke_error;
 static std::vector<BrowserFrame *> browser_windows;
@@ -3101,6 +3111,9 @@ static int WFE_RunWorkflowSmoke(const char *report,const char *url,const char *d
 #include "background-smoke.inc"
 
 #include "applications-smoke.inc"
+#ifdef NETSCAPE_USE_BEARSSL
+#include "tls-smoke.inc"
+#endif
 
 class NetscapeApplication : public CWinApp {
 public:
@@ -3123,7 +3136,7 @@ public:
         POSITION position = arguments.GetHeadPosition();
         bool explicit_command=position!=nullptr;
         CString first = position ? arguments.GetNext(position) : "about:";
-        smoke_mode = first == "--applications-smoke" || first == "--applications-reopen-smoke" || first == "--background-smoke" || first == "--background-reopen-smoke" || first == "--dividers-smoke" || first == "--links-smoke" || first == "--interaction-smoke" || first == "--printing-smoke" || first == "--smoke-test" || first == "--mailnews-smoke" || first == "--composer-delivery-smoke"
+        smoke_mode = first == "--tls-smoke-test" || first == "--applications-smoke" || first == "--applications-reopen-smoke" || first == "--background-smoke" || first == "--background-reopen-smoke" || first == "--dividers-smoke" || first == "--links-smoke" || first == "--interaction-smoke" || first == "--printing-smoke" || first == "--smoke-test" || first == "--mailnews-smoke" || first == "--composer-delivery-smoke"
             || first == "--images-smoke" || first == "--forms-smoke" || first == "--frames-smoke" || first == "--downloads-smoke" || first == "--history-smoke" || first == "--history-reopen-smoke" || first == "--bookmarks-smoke" || first == "--chrome-smoke" || first == "--ui-gallery" || first == "--preferences-ui-smoke" || first == "--preferences-reopen-smoke" || first == "--news-ui-smoke" || first == "--mail-ui-smoke" || first == "--compose-ui-smoke"
 #ifdef EDITOR
             || first == "--editor-smoke"
@@ -3152,6 +3165,14 @@ public:
                 m_nExitCode=WFE_RunWorkflowSmoke(report,url,destination);
             }
             else
+#endif
+#ifdef NETSCAPE_USE_BEARSSL
+            if(first=="--tls-smoke-test") {
+                CString bundle=position?arguments.GetNext(position):"";
+                CString proxy=position?arguments.GetNext(position):"";
+                CString scenario=position?arguments.GetNext(position):"";
+                m_nExitCode=WFE_RunTLSSmoke(report,url,bundle,proxy,scenario);
+            } else
 #endif
             if(first=="--applications-smoke" || first=="--applications-reopen-smoke") {CString program=position?arguments.GetNext(position):"",temporary=position?arguments.GetNext(position):"";m_nExitCode=WFE_RunApplicationsSmoke(report,url,program,temporary,first=="--applications-reopen-smoke");}
             else if(first=="--background-smoke" || first=="--background-reopen-smoke") {CString image=position?arguments.GetNext(position):"";m_nExitCode=WFE_RunBackgroundSmoke(report,url,image,first=="--background-reopen-smoke");}

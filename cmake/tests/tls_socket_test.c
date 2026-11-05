@@ -44,6 +44,14 @@ int main(int argc, char **argv)
     before=received; CHECK(NETTLS_SocketWrite(7,"GET",3)==-1 && last_error==11);
     CHECK(received==before); CHECK(NETTLS_SocketWants(7)&NET_TLS_WANT_WRITE);
     CHECK(!NETTLS_CanReuse(7,"fixture.test",443)); /* no handshake */
+    CHECK(NETTLS_SocketProgress(7)==0);
+    CHECK(NETTLS_SocketProgress(777)==0);
+    /* A buffered CONNECT tail is owned by the registry, and bounded failures
+     * retain a secure marker: no native application I/O can follow. */
+    CHECK(NETTLS_SocketPrefix(7,"tail",4));
+    CHECK(!NETTLS_SocketPrefix(7,"x",32769));
+    CHECK(NETTLS_SocketInfo(7,&info) && info.error==NET_TLS_ERROR_ARGUMENT);
+    before=received;CHECK(NETTLS_SocketRead(7,&b,1)==-1 && received==before);
     CHECK(NETTLS_SocketClose(7)==0 && closed==1);
     CHECK(!NETTLS_SocketInfo(7,&info));
     CHECK(NETTLS_Attach(7,"fixture.test",443)); /* numeric descriptor reused */

@@ -39,6 +39,7 @@ static int peer_test(char **argv)
         NETTLS_SocketClose(socket);WFE_TLSShutdown();WSACleanup();return 0;
     }
     CHECK(r==1 && info.authenticated && info.version==0x0303);
+    CHECK(NETTLS_SocketProgress(socket)>0);
     CHECK(NETTLS_CanReuse(socket,"FiXtUrE.TeSt",port));
     CHECK(!NETTLS_CanReuse(socket,"other.test",port) && !NETTLS_CanReuse(socket,host,port+1));
     if(atoi(argv[4])!=1) {

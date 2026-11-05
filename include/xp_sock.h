@@ -276,6 +276,27 @@ extern int socket(int domain, int type, int protocol);
 
 #endif /* XP_MAC */
 
+#if defined(XP_WIN) && defined(NETSCAPE_USE_BEARSSL)
+/* Keep native TCP setup; only stream I/O and lifecycle pass the TLS registry. */
+#include "net_tls_socket.h"
+#undef NETCLOSE
+#undef NETREAD
+#undef NETWRITE
+#undef SOCKET_READ
+#undef SOCKET_WRITE
+#undef XP_SOCK_READ
+#undef XP_SOCK_WRITE
+#undef XP_SOCK_CLOSE
+#define NETCLOSE(s) NETTLS_SocketClose((NETTLSSocket)(s))
+#define NETREAD(s,b,l) NETTLS_SocketRead((NETTLSSocket)(s),(b),(l))
+#define NETWRITE(s,b,l) NETTLS_SocketWrite((NETTLSSocket)(s),(b),(l))
+#define SOCKET_READ(s,b,l) NETREAD(s,b,l)
+#define SOCKET_WRITE(s,b,l) NETWRITE(s,b,l)
+#define XP_SOCK_READ(s,b,l) NETREAD(s,b,l)
+#define XP_SOCK_WRITE(s,b,l) NETWRITE(s,b,l)
+#define XP_SOCK_CLOSE(s) NETCLOSE(s)
+#endif
+
 #endif /* __XP_SOCK_h_ */
 
 

@@ -86,6 +86,9 @@ PRIVATE IdentifyMeEnum http_identification_method = DoNotIdentifyMe;
 typedef enum {
 	HTTP_START_CONNECT,
 	HTTP_FINISH_CONNECT,
+#ifdef NETSCAPE_USE_BEARSSL
+    HTTP_TLS_HANDSHAKE,
+#endif
 	HTTP_SEND_SSL_PROXY_REQUEST,
 	HTTP_BEGIN_UPLOAD_FILE,
 	HTTP_SEND_REQUEST,
@@ -118,6 +121,16 @@ typedef struct _HTTPConnection {
  */
 typedef struct _HTTPConData {
     StatesEnum  next_state;       /* the next state or action to be taken */
+#ifdef NETSCAPE_USE_BEARSSL
+    time_t tls_started;
+    uint64_t tls_progress;
+    char *request_buffer;
+    int32 request_size, request_offset;
+    int tls_post_stage;
+    int32 tls_post_offset, tls_post_size;
+    XP_File tls_post_file;
+    char tls_post_buffer[2048];
+#endif
     char *      proxy_server;     /* name of proxy server if any */
 	char *		proxy_conf;       /* proxy config ptr from proxy autoconfig */
     char *      line_buffer;      /* temporary string storage */
@@ -308,6 +321,83 @@ net_check_for_company_hostname(ActiveEntry *ce)
 	return(-1);
 }
 
+#ifdef NETSCAPE_USE_BEARSSL
+/* Parse the origin, never the proxy endpoint, for verification and reuse. */
+PRIVATE int net_http_tls_origin(URL_Struct *url, char **host, unsigned short *port)
+{
+    char *colon, *end;
+    long value;
+    *host=NET_ParseURL(url->address, GET_HOST_PART);
+    *port=DEF_HTTPS_PORT;
+    if (!*host) return 0;
+    colon=XP_STRRCHR(*host, ':');
+    if (colon) {
+        value=strtol(colon+1,&end,10);
+        if (!colon[1] || *end || value<1 || value>65535) { FREE_AND_CLEAR(*host);return 0; }
+        *port=(unsigned short)value;*colon=0;
+    }
+    return 1;
+}
+PRIVATE void net_http_tls_info(ActiveEntry *ce)
+{
+    HTTPConData *cd=(HTTPConData *)ce->con_data;
+    NETTLSInfo info;
+    if (cd->connection && cd->connection->sock!=SOCKET_INVALID &&
+        NETTLS_SocketInfo(cd->connection->sock,&info)) {
+        if (!info.error) info.error=ce->URL_s->tls_info.error;
+        ce->URL_s->tls_info=info;
+        ce->URL_s->security_on=info.authenticated;
+    }
+}
+PRIVATE int net_http_tls_attach(ActiveEntry *ce)
+{
+    HTTPConData *cd=(HTTPConData *)ce->con_data;
+    char *host=NULL;
+    unsigned short port;
+    int ok=net_http_tls_origin(ce->URL_s,&host,&port);
+    if (ok) ok=NETTLS_Attach(cd->connection->sock,host,port);
+    FREEIF(host);
+    net_http_tls_info(ce);
+    if (!ok) {
+        if (!ce->URL_s->tls_info.error) ce->URL_s->tls_info.error=NET_TLS_ERROR_IDENTITY;
+        return MK_UNABLE_TO_CONNECT;
+    }
+    cd->tls_started=time(NULL);
+    cd->tls_progress=NETTLS_SocketProgress(cd->connection->sock);
+    cd->next_state=HTTP_TLS_HANDSHAKE;
+    return 0;
+}
+PRIVATE int net_http_tls_reuse(HTTPConnection *connection, URL_Struct *url)
+{
+    char *host=NULL;
+    unsigned short port;
+    int ok=net_http_tls_origin(url,&host,&port);
+    if (ok) ok=NETTLS_CanReuse(connection->sock,host,port);
+    FREEIF(host);return ok;
+}
+/* A request is retained across would-block/short writes; each turn is bounded. */
+PRIVATE int net_http_write_request(ActiveEntry *ce)
+{
+    HTTPConData *cd=(HTTPConData *)ce->con_data;
+    int n=NETWRITE(cd->connection->sock,cd->request_buffer+cd->request_offset,
+                   cd->request_size-cd->request_offset);
+    if (n<0) {
+        if (SOCKET_ERRNO!=XP_ERRNO_EWOULDBLOCK) return MK_TCP_WRITE_ERROR;
+    } else cd->request_offset+=n;
+    if (cd->request_offset<cd->request_size) {
+        FE_SetConnectSelect(ce->window_id,cd->connection->sock);
+        ce->con_sock=cd->connection->sock;
+        cd->pause_for_read=TRUE;
+        return 0;
+    }
+    FREE_AND_CLEAR(cd->request_buffer);
+    cd->request_size=cd->request_offset=0;
+    FE_ClearConnectSelect(ce->window_id,cd->connection->sock);
+    ce->con_sock=SOCKET_INVALID;
+    return 1;
+}
+#endif
+
 /* begins the connect process
  *
  * returns the TCP status code
@@ -325,7 +415,7 @@ net_start_http_connect(ActiveEntry * ce)
 
 		if(CD_PROXY_SERVER)
 		  {
-#ifndef NO_SSL /* added by jwz */
+#if !defined(NO_SSL) || defined(NETSCAPE_USE_BEARSSL)
 			CD_USE_SSL_PROXY = TRUE;
 			CD_SSL_PROXY_SETUP_DONE = FALSE;
 #endif /* NO_SSL -- added by jwz */
@@ -445,7 +535,7 @@ net_start_http_connect(ActiveEntry * ce)
 
     if(CE_STATUS == MK_CONNECTED)
       {
-#ifndef NO_SSL /* added by jwz */
+#if !defined(NO_SSL) || defined(NETSCAPE_USE_BEARSSL)
 		if(CD_USE_SSL_PROXY)
             CD_NEXT_STATE = HTTP_SEND_SSL_PROXY_REQUEST;
 		else
@@ -455,6 +545,12 @@ net_start_http_connect(ActiveEntry * ce)
 		else
             CD_NEXT_STATE = HTTP_SEND_REQUEST;
         TRACEMSG(("Connected to HTTP server on sock #%d",cd->connection->sock));
+#ifdef NETSCAPE_USE_BEARSSL
+        if (ce->protocol==SECURE_HTTP_TYPE_URL && !CD_USE_SSL_PROXY) {
+            int tls_status=net_http_tls_attach(ce);
+            if (tls_status<0) return tls_status;
+        }
+#endif
         FE_SetReadSelect(CE_WINDOW_ID, cd->connection->sock);
       }
     else
@@ -573,7 +669,7 @@ net_finish_http_connect(ActiveEntry * ce)
         CE_CON_SOCK = SOCKET_INVALID;  /* reset the socket so we don't select on it  */
 		/* set this so mkgeturl can select on it */
 		CE_SOCK = cd->connection->sock;
-#ifndef NO_SSL /* added by jwz */
+#if !defined(NO_SSL) || defined(NETSCAPE_USE_BEARSSL)
 		if(CD_USE_SSL_PROXY)
             CD_NEXT_STATE = HTTP_SEND_SSL_PROXY_REQUEST;
 		else
@@ -582,6 +678,12 @@ net_finish_http_connect(ActiveEntry * ce)
 			CD_NEXT_STATE = HTTP_BEGIN_UPLOAD_FILE;
 		else
             CD_NEXT_STATE = HTTP_SEND_REQUEST;
+#ifdef NETSCAPE_USE_BEARSSL
+        if (ce->protocol==SECURE_HTTP_TYPE_URL && !CD_USE_SSL_PROXY) {
+            int tls_status=net_http_tls_attach(ce);
+            if (tls_status<0) return tls_status;
+        }
+#endif
         FE_SetReadSelect(CE_WINDOW_ID, cd->connection->sock);
         TRACEMSG(("Connected to HTTP server on sock #%d",cd->connection->sock));
 
@@ -608,10 +710,16 @@ PRIVATE int
 net_send_ssl_proxy_request (ActiveEntry *ce)
 {
     HTTPConData * cd = (HTTPConData *)ce->con_data;
-	char *host = NET_ParseURL(CE_URL_S->address, GET_HOST_PART);
+	char *host = NULL;
 	char *command=0;
 	char *auth = NULL;
 
+#ifdef NETSCAPE_USE_BEARSSL
+    int result;
+    if (cd->request_buffer) goto send_proxy;
+#endif
+    host=NET_ParseURL(CE_URL_S->address,GET_HOST_PART);
+    if (!host) return MK_OUT_OF_MEMORY;
     StrAllocCopy(command, "CONNECT ");
 	StrAllocCat(command, host);
 
@@ -622,7 +730,11 @@ net_send_ssl_proxy_request (ActiveEntry *ce)
 		StrAllocCat(command, small_buf);
 	  }
 
+#ifdef NETSCAPE_USE_BEARSSL
+	StrAllocCat(command, " HTTP/1.0\r\n");
+#else
 	StrAllocCat(command, " HTTP/1.0\n");
+#endif
     
 	/*
 	 * Check if proxy is requiring authorization.
@@ -657,9 +769,17 @@ net_send_ssl_proxy_request (ActiveEntry *ce)
 
 	TRACEMSG(("Tx: %s", command));
 
+#ifdef NETSCAPE_USE_BEARSSL
+    cd->request_buffer=command;cd->request_size=XP_STRLEN(command);
+    FREEIF(host);
+send_proxy:
+    result=net_http_write_request(ce);
+    if (result<=0) return result;
+    CE_STATUS=0;
+#else
     CE_STATUS = NET_HTTPNetWrite(cd->connection->sock, command, XP_STRLEN(command));
-
-	FREE(command);
+    FREE(command);
+#endif
 
 	CD_PAUSE_FOR_READ = TRUE;
 
@@ -1238,6 +1358,9 @@ net_send_http_request (ActiveEntry *ce)
 #endif /* MOZILLA_CLIENT */
 	}
 	
+#ifdef NETSCAPE_USE_BEARSSL
+    if (cd->request_buffer) goto send_request;
+#endif
     /* zero out associated mime fields in URL structure
 	 *
  	 * all except content_length since that may be passed in
@@ -1265,6 +1388,14 @@ net_send_http_request (ActiveEntry *ce)
 
     TRACEMSG(("Sending HTTP Request:\n---------------------------------"));
 
+#ifdef NETSCAPE_USE_BEARSSL
+    if (cd->connection->secure) {
+        cd->request_buffer=command;cd->request_size=command_size;
+send_request:
+        CE_STATUS=net_http_write_request(ce);
+        if (CE_STATUS<=0) return CE_STATUS;
+    } else
+#endif
     CE_STATUS = (int) NET_BlockingWrite(cd->connection->sock, command, command_size);
 
 #if defined(JAVA)
@@ -1276,6 +1407,9 @@ net_send_http_request (ActiveEntry *ce)
 	  }
 #endif /* DEBUG */
 #endif /* JAVA */
+#ifdef NETSCAPE_USE_BEARSSL
+    if (!cd->connection->secure)
+#endif
     XP_FREE (command);  /* freeing the request */
 
 	if (CE_STATUS < 0) 
@@ -1304,9 +1438,14 @@ net_send_http_request (ActiveEntry *ce)
         FE_ClearReadSelect(CE_WINDOW_ID, cd->connection->sock);
         FE_SetConnectSelect(CE_WINDOW_ID, cd->connection->sock);
 #ifdef XP_WIN
+#ifdef NETSCAPE_USE_BEARSSL
+        if (!cd->connection->secure)
+#endif
+        {
 		cd->calling_netlib_all_the_time = TRUE;
         net_call_all_the_time_count++;
 		FE_SetCallNetlibAllTheTime(CE_WINDOW_ID);
+        }
 #endif /* XP_WIN */
 		CE_CON_SOCK = cd->connection->sock;
     	CD_NEXT_STATE = HTTP_SEND_POST_DATA;
@@ -1344,6 +1483,53 @@ net_send_http_request (ActiveEntry *ce)
 
 } /* end of net_send_http_request */
 
+#ifdef NETSCAPE_USE_BEARSSL
+/* HTTPS bodies must yield just like headers. The legacy shared producer uses
+ * blocking loops for memory bodies and file headers, so keep these offsets in
+ * the request and leave the other transports' historical behavior untouched. */
+PRIVATE int net_http_tls_post(ActiveEntry *ce)
+{
+    HTTPConData *cd=(HTTPConData *)ce->con_data;
+    const char *data;
+    int32 size;
+    int n;
+    if (cd->tls_post_stage==0) {
+        data=ce->URL_s->post_headers;
+        size=data ? XP_STRLEN(data) : 0;
+    } else if (cd->tls_post_stage==1) {
+        data=CRLF;size=ce->URL_s->post_data_is_file ? 0 : 2;
+    } else if (ce->URL_s->post_data_is_file) {
+        if (!cd->tls_post_file) {
+            cd->tls_post_file=XP_FileOpen(ce->URL_s->post_data,xpFileToPost,XP_FILE_READ_BIN);
+            if (!cd->tls_post_file) return MK_UNABLE_TO_LOCATE_FILE;
+        }
+        if (cd->tls_post_offset==cd->tls_post_size) {
+            cd->tls_post_size=XP_FileRead(cd->tls_post_buffer,sizeof cd->tls_post_buffer,cd->tls_post_file);
+            cd->tls_post_offset=0;
+            if (cd->tls_post_size<0) return MK_TCP_WRITE_ERROR;
+            if (!cd->tls_post_size) {
+                XP_FileClose(cd->tls_post_file);cd->tls_post_file=NULL;
+                cd->tls_post_stage=0;return 0;
+            }
+        }
+        data=cd->tls_post_buffer;size=cd->tls_post_size;
+    } else {
+        data=ce->URL_s->post_data;size=ce->URL_s->post_data_size;
+        if (!data || size<0) return MK_TCP_WRITE_ERROR;
+    }
+    if (cd->tls_post_offset<size) {
+        n=NETWRITE(cd->connection->sock,data+cd->tls_post_offset,size-cd->tls_post_offset);
+        if (n<0) return SOCKET_ERRNO==XP_ERRNO_EWOULDBLOCK ? 1 : MK_TCP_WRITE_ERROR;
+        cd->tls_post_offset+=n;
+        return n>0 ? n : 1;
+    }
+    cd->tls_post_offset=0;
+    if (cd->tls_post_stage<2) { ++cd->tls_post_stage;return 1; }
+    cd->tls_post_stage=0;
+    return 0;
+}
+#endif
+
 PRIVATE int
 net_http_send_post_data (ActiveEntry *ce)
 {
@@ -1362,6 +1548,10 @@ net_http_send_post_data (ActiveEntry *ce)
     /* returns 0 on done and negative on error
      * positive if it needs to continue.
      */
+#ifdef NETSCAPE_USE_BEARSSL
+    if (cd->connection->secure) CE_STATUS=net_http_tls_post(ce);
+    else
+#endif
     CE_STATUS = NET_WritePostData(CE_WINDOW_ID, CE_URL_S,
                                   cd->connection->sock,
 								  &cd->write_post_data_data,
@@ -1468,6 +1658,12 @@ net_parse_http_mime_headers (ActiveEntry *ce)
             return(MK_USE_COPY_FROM_CACHE);
 		  }
 
+#ifdef NETSCAPE_USE_BEARSSL
+        if (CD_USE_SSL_PROXY && !CD_SSL_PROXY_SETUP_DONE) {
+            CE_URL_S->tls_info.error=NET_TLS_ERROR_HANDSHAKE;
+            return MK_UNABLE_TO_CONNECT_TO_PROXY;
+        }
+#endif
 		/* no mo data */
 #ifndef NO_SSL /* added by jwz */
 		if(CD_USE_SSL_PROXY && !CD_SSL_PROXY_SETUP_DONE)
@@ -1549,6 +1745,23 @@ net_parse_http_mime_headers (ActiveEntry *ce)
 
 		CD_PAUSE_FOR_READ = FALSE;
 
+#ifdef NETSCAPE_USE_BEARSSL
+        if (CD_USE_SSL_PROXY && !CD_SSL_PROXY_SETUP_DONE) {
+            int tls_status;
+            if (CE_URL_S->server_status!=200) {
+                CE_URL_S->tls_info.error=NET_TLS_ERROR_HANDSHAKE;
+                return MK_UNABLE_TO_CONNECT_TO_PROXY;
+            }
+            tls_status=net_http_tls_attach(ce);
+            if (tls_status<0) return tls_status;
+            if (!NETTLS_SocketPrefix(cd->connection->sock,CD_LINE_BUFFER,CD_LINE_BUFFER_SIZE)) {
+                net_http_tls_info(ce);return MK_UNABLE_TO_CONNECT;
+            }
+            FREE_AND_CLEAR(CD_LINE_BUFFER);CD_LINE_BUFFER_SIZE=0;
+            CD_SSL_PROXY_SETUP_DONE=TRUE;
+            return 0;
+        }
+#endif
 #ifndef NO_SSL /* added by jwz */
         if(CD_USE_SSL_PROXY && !CD_SSL_PROXY_SETUP_DONE)
           {
@@ -1794,6 +2007,18 @@ net_parse_first_http_line (ActiveEntry *ce)
       {
         return(0); /* not ready to process */
       }
+
+#ifdef NETSCAPE_USE_BEARSSL
+    /* A CONNECT reply is not a document. In particular, never display a proxy's
+     * plaintext error through the historical HTTP/0.9 fallback at an HTTPS URL. */
+    if (CD_USE_SSL_PROXY && !CD_SSL_PROXY_SETUP_DONE &&
+        (!line_feed || num_fields!=2 ||
+         (XP_STRCMP(server_version,"HTTP/1.0") && XP_STRCMP(server_version,"HTTP/1.1")) ||
+         CE_URL_S->server_status!=200)) {
+        CE_URL_S->tls_info.error=NET_TLS_ERROR_HANDSHAKE;
+        return MK_UNABLE_TO_CONNECT_TO_PROXY;
+    }
+#endif
 
     /* Keep the full header chain, but identify this response for consumers
      * which must not use content metadata from an earlier redirect. */
@@ -2653,6 +2878,13 @@ net_pull_http_data(ActiveEntry * ce)
       }
     else if(CE_STATUS == 0)
       {
+#ifdef NETSCAPE_USE_BEARSSL
+        if (cd->connection->secure && CD_ORIGINAL_CONTENT_LENGTH &&
+            CE_BYTES_RECEIVED<CD_ORIGINAL_CONTENT_LENGTH) {
+            CE_URL_S->tls_info.error=NET_TLS_ERROR_TRUNCATED;
+            return MK_TCP_READ_ERROR;
+        }
+#endif
 		/* transfer finished
          */
 	    TRACEMSG(("MKHTTP.c: Caught TCP EOF ending stream"));
@@ -2740,14 +2972,18 @@ NET_HTTPLoad (ActiveEntry * ce)
 #endif /* MOZILLA_CLIENT */
 	  }
   
-	if(CD_PROXY_SERVER)
+	if(CD_PROXY_SERVER
+#ifdef NETSCAPE_USE_BEARSSL
+       && ce->protocol!=SECURE_HTTP_TYPE_URL
+#endif
+      )
 	  {
 		use_host = XP_STRDUP(CD_PROXY_SERVER);
 	  }
 	else
 	  {
 		use_host = NET_ParseURL(ce->URL_s->address, GET_HOST_PART);
-#ifndef NO_SSL /* added by jwz */
+#if !defined(NO_SSL) || defined(NETSCAPE_USE_BEARSSL)
 		if(!strncasecomp(ce->URL_s->address, "https:", 6))
 			url_is_secure = TRUE;
 #endif /* NO_SSL */
@@ -2820,7 +3056,14 @@ NET_HTTPLoad (ActiveEntry * ce)
              */
             if(!XP_STRCMP(tmp_con->hostname, use_host)
                && url_is_secure == tmp_con->secure
-               && !tmp_con->busy)
+               && !tmp_con->busy
+#ifdef NETSCAPE_USE_BEARSSL
+               /* Idle cached sockets have no watch: observe queued EOF/alerts
+                * before sending another request. Scheme must match above. */
+               && (!url_is_secure || (NETTLS_SocketPump(tmp_con->sock)>=0 &&
+                                      net_http_tls_reuse(tmp_con,ce->URL_s)))
+#endif
+               )
               {
                 cd->connection = tmp_con;
                 cd->connection->sock = cd->connection->sock;
@@ -2848,9 +3091,17 @@ NET_HTTPLoad (ActiveEntry * ce)
 
     if(cd->connection)
       {
-		if(CD_USE_SSL_PROXY)
-            CD_NEXT_STATE = HTTP_SEND_SSL_PROXY_REQUEST;
-		else if(ce->URL_s->files_to_post)
+#ifdef NETSCAPE_USE_BEARSSL
+        if (url_is_secure) {
+            CD_USE_SSL_PROXY=CD_PROXY_SERVER!=NULL;
+            CD_SSL_PROXY_SETUP_DONE=TRUE;
+            net_http_tls_info(ce);
+        }
+#else
+        if (CD_USE_SSL_PROXY) CD_NEXT_STATE=HTTP_SEND_SSL_PROXY_REQUEST;
+        else
+#endif
+		if(ce->URL_s->files_to_post)
 			CD_NEXT_STATE = HTTP_BEGIN_UPLOAD_FILE;
 		else
 			CD_NEXT_STATE = HTTP_SEND_REQUEST;
@@ -2960,7 +3211,7 @@ NET_ProcessHTTP (ActiveEntry *ce)
             CE_STATUS = net_finish_http_connect(ce);
             break;
         
-#ifndef NO_SSL /* added by jwz */
+#if !defined(NO_SSL) || defined(NETSCAPE_USE_BEARSSL)
 	    case HTTP_SEND_SSL_PROXY_REQUEST:
 			/* send ssl proxy init stuff
 			 */
@@ -2973,6 +3224,24 @@ NET_ProcessHTTP (ActiveEntry *ce)
 			ce->status = net_begin_upload_file (ce);
 			break;
 
+#ifdef NETSCAPE_USE_BEARSSL
+        case HTTP_TLS_HANDSHAKE:
+            CE_STATUS=NETTLS_SocketPump(cd->connection->sock);
+            net_http_tls_info(ce);
+            if (cd->tls_progress!=NETTLS_SocketProgress(cd->connection->sock)) {
+                cd->tls_progress=NETTLS_SocketProgress(cd->connection->sock);
+                cd->tls_started=time(NULL);
+            }
+            if (CE_STATUS<0) CE_STATUS=MK_UNABLE_TO_CONNECT;
+            else if (CE_STATUS>0) {
+                CD_NEXT_STATE=ce->URL_s->files_to_post ? HTTP_BEGIN_UPLOAD_FILE : HTTP_SEND_REQUEST;
+                CE_STATUS=0;
+            } else if (time(NULL)-cd->tls_started>=10) {
+                ce->URL_s->tls_info.error=NET_TLS_ERROR_HANDSHAKE;
+                CE_STATUS=MK_CONNECTION_TIMED_OUT;
+            } else CD_PAUSE_FOR_READ=TRUE;
+            break;
+#endif
         case HTTP_SEND_REQUEST:
             /* send HTTP request */
             CE_STATUS = net_send_http_request(ce);
@@ -3007,10 +3276,23 @@ NET_ProcessHTTP (ActiveEntry *ce)
             break;
         
         case HTTP_DONE:
+#ifdef NETSCAPE_USE_BEARSSL
+            if (cd->connection->secure) {
+                NETTLS_SocketPump(cd->connection->sock);
+                net_http_tls_info(ce);
+                if (ce->URL_s->tls_info.error) {
+                    CE_STATUS=MK_TCP_READ_ERROR;CD_NEXT_STATE=HTTP_ERROR_DONE;break;
+                }
+            }
+#endif
             FE_ClearReadSelect(CE_WINDOW_ID, cd->connection->sock);
 			NET_TotalNumberOfOpenConnections--;
 
-			if(ce->URL_s->can_reuse_connection && !CD_USE_SSL_PROXY)
+			if(ce->URL_s->can_reuse_connection && !CD_USE_SSL_PROXY
+#ifdef NETSCAPE_USE_BEARSSL
+               && (!cd->connection->secure || net_http_tls_reuse(cd->connection,ce->URL_s))
+#endif
+               )
 			  {
 				cd->connection->busy = FALSE;
 			  }
@@ -3045,6 +3327,9 @@ NET_ProcessHTTP (ActiveEntry *ce)
             break;
         
         case HTTP_ERROR_DONE:
+#ifdef NETSCAPE_USE_BEARSSL
+            net_http_tls_info(ce);
+#endif
             if(cd->connection->sock != SOCKET_INVALID)
               {
 #if defined(XP_WIN) || defined(XP_UNIX)
@@ -3068,7 +3353,11 @@ NET_ProcessHTTP (ActiveEntry *ce)
 
 			if(cd->connection->prev_cache 
 				&& !cd->connection_is_valid
-				&& ce->status != MK_INTERRUPTED)
+				&& ce->status != MK_INTERRUPTED
+#ifdef NETSCAPE_USE_BEARSSL
+                && !ce->URL_s->tls_info.error
+#endif
+                )
 			  {
 				if(CD_STREAM && !cd->reuse_stream)
 				  {
@@ -3144,6 +3433,10 @@ NET_ProcessHTTP (ActiveEntry *ce)
 										CD_ORIGINAL_CONTENT_LENGTH,
 										CE_BYTES_RECEIVED);
       
+#ifdef NETSCAPE_USE_BEARSSL
+            FREEIF(cd->request_buffer);
+            if (cd->tls_post_file) XP_FileClose(cd->tls_post_file);
+#endif
             FREEIF(CD_LINE_BUFFER);
             FREEIF(CD_STREAM); /* don't forget the stream */
 			FREEIF(CD_SERVER_HEADERS);
@@ -3231,6 +3524,14 @@ MODULE_PRIVATE int
 NET_InterruptHTTP(ActiveEntry * ce)
 {
     HTTPConData * cd = (HTTPConData *)ce->con_data;
+#ifdef NETSCAPE_USE_BEARSSL
+    net_http_tls_info(ce);
+    if (cd->connection->secure) {
+        ce->URL_s->tls_info.error=NET_TLS_ERROR_CANCELED;
+        CD_NEXT_STATE=HTTP_ERROR_DONE;CE_STATUS=MK_INTERRUPTED;
+        return STATUS(NET_ProcessHTTP(ce));
+    }
+#endif
 
     /* if we are currently pulling data and the data is
 	 * Textual then truncate the file, leave notification and

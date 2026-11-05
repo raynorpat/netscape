@@ -7,9 +7,11 @@ typedef struct NETTLSEntry {
     NETTLSSocket socket;
     NETTLS *tls;
     NETTLSInfo failure;
-    uint64_t generation;
+    uint64_t generation, progress;
     unsigned short port;
     char host[254];
+    unsigned char *prefix;
+    size_t prefix_size, prefix_offset;
 } NETTLSEntry;
 static NETTLSEntry *entries;
 static NETTLSSocketOps socket_ops;
@@ -41,7 +43,7 @@ int NETTLS_SocketClose(NETTLSSocket socket)
     while (*p && (*p)->socket!=socket) p=&(*p)->next;
     if ((e=*p)!=NULL) {
         *p=e->next;
-        NETTLS_Close(e->tls); NETTLS_Destroy(e->tls); free(e);
+        NETTLS_Close(e->tls); NETTLS_Destroy(e->tls); free(e->prefix); free(e);
     }
     return socket_ops.close ? socket_ops.close(socket) : native_error(0);
 }
@@ -60,12 +62,28 @@ void NETTLS_SocketsInit(const NETTLSSocketOps *ops)
 static int socket_receive(void *arg, void *buf, size_t n)
 {
     NETTLSEntry *e=(NETTLSEntry *)arg;
-    return socket_ops.recv(e->socket,buf,n);
+    if (e->prefix_offset < e->prefix_size) {
+        size_t available=e->prefix_size-e->prefix_offset;
+        if (n>available) n=available;
+        memcpy(buf,e->prefix+e->prefix_offset,n);
+        e->prefix_offset+=n;e->progress+=n;
+        if (e->prefix_offset==e->prefix_size) {
+            free(e->prefix);e->prefix=NULL;e->prefix_offset=e->prefix_size=0;
+        }
+        return (int)n;
+    }
+    {
+        int r=socket_ops.recv(e->socket,buf,n);
+        if (r>0) e->progress+=(unsigned)r;
+        return r;
+    }
 }
 static int socket_transmit(void *arg, const void *buf, size_t n)
 {
     NETTLSEntry *e=(NETTLSEntry *)arg;
-    return socket_ops.send(e->socket,buf,n);
+    int r=socket_ops.send(e->socket,buf,n);
+    if (r>0) e->progress+=(unsigned)r;
+    return r;
 }
 int NETTLS_Attach(NETTLSSocket socket, const char *host, unsigned short port)
 {
@@ -89,6 +107,17 @@ int NETTLS_Attach(NETTLSSocket socket, const char *host, unsigned short port)
         if (NETTLS_CreateWithError(host,current_trust,legacy_policy,&io,&e->tls,&e->failure.error))
             return 1;
     }
+    native_error(0);return 0;
+}
+int NETTLS_SocketPrefix(NETTLSSocket socket, const void *buf, size_t len)
+{
+    NETTLSEntry *e=find_socket(socket);
+    if (!e || !e->tls) return 0;
+    if (!len) return 1;
+    if (!buf || len>32768 || e->prefix) e->failure.error=NET_TLS_ERROR_ARGUMENT;
+    else if (!(e->prefix=(unsigned char *)malloc(len))) e->failure.error=NET_TLS_ERROR_MEMORY;
+    else { memcpy(e->prefix,buf,len);e->prefix_size=len;return 1; }
+    NETTLS_Destroy(e->tls);e->tls=NULL;
     native_error(0);return 0;
 }
 int NETTLS_SocketRead(NETTLSSocket socket, void *buf, int len)
@@ -120,6 +149,11 @@ int NETTLS_SocketWrite(NETTLSSocket socket, const void *buf, int len)
         r=socket_ops.send(socket,buf,(size_t)len);
     }
     return r<0 ? native_error(r==-2) : r;
+}
+uint64_t NETTLS_SocketProgress(NETTLSSocket socket)
+{
+    NETTLSEntry *e=find_socket(socket);
+    return e ? e->progress : 0;
 }
 int NETTLS_SocketPump(NETTLSSocket socket)
 {

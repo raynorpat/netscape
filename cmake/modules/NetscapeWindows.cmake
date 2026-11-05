@@ -12,6 +12,7 @@ target_compile_definitions(netscape_platform INTERFACE XP_PC XP_WIN= XP_WIN32= W
  $<$<CONFIG:Debug>:DEBUG> $<$<NOT:$<CONFIG:Debug>>:NDEBUG>)
 if(NETSCAPE_ENABLE_BEARSSL_HTTPS)
  target_compile_definitions(netscape_platform INTERFACE NETSCAPE_USE_BEARSSL)
+ target_include_directories(netscape_platform INTERFACE "${PROJECT_SOURCE_DIR}/security/tls")
 endif()
 if(NETSCAPE_BUILD_WINDOWS_EDITOR)
  target_compile_definitions(netscape_platform INTERFACE EDITOR GOLD)

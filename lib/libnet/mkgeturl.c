@@ -2167,7 +2167,10 @@ redo_load_switch:   /* come here on file/ftp retry */
             break;
 
         case SECURE_HTTP_TYPE_URL:
-#ifdef NADA_VERSION
+#if defined(NO_SSL) && !defined(NETSCAPE_USE_BEARSSL)
+            status = MK_UNABLE_TO_CONNECT;
+            break;
+#elif defined(NADA_VERSION) && !defined(NETSCAPE_USE_BEARSSL)
 			/* change the url to point to our page that
 			 * says security doesn't work in this version
 			 */

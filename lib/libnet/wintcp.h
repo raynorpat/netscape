@@ -88,6 +88,20 @@
 
 #endif /* SSL stuff */
 
+#ifdef NETSCAPE_USE_BEARSSL
+#include "net_tls_socket.h"
+#undef NETCLOSE
+#undef NETREAD
+#undef NETWRITE
+#undef SOCKET_READ
+#undef SOCKET_WRITE
+#define NETCLOSE(s) NETTLS_SocketClose((NETTLSSocket)(s))
+#define NETREAD(s,b,l) NETTLS_SocketRead((NETTLSSocket)(s),(b),(l))
+#define NETWRITE(s,b,l) NETTLS_SocketWrite((NETTLSSocket)(s),(b),(l))
+#define SOCKET_READ(s,b,l) NETREAD(s,b,l)
+#define SOCKET_WRITE(s,b,l) NETWRITE(s,b,l)
+#endif
+
 #define EPIPE ECONNRESET
 
 //#define USE_BLOCKING_CONNECT

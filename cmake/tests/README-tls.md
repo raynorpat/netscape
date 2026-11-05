@@ -48,3 +48,19 @@ Native displayed-error coverage includes purpose category 16. The per-presented-
 certificate bound is 65,536 bytes, with a fixed additional 64 KiB per TLS context;
 valid critical EKU remains rejected by the underlying validator. These focused
 checks do not substitute for the final native matrix after the purpose fix.
+
+`netscape_http_tls_post_test` compiles the private HTTPS POST producer also
+included by `mkhttp.c`. The `http_tls_post_zero_error`,
+`http_tls_post_short_error`, `http_tls_post_eof` and `http_tls_post_data_eof`
+CTests use real native UCRT file streams. Invalidating a stream's OS handle
+produces zero/error or a buffered short/error read; neither may complete the
+upload or write bytes from that read. Ordinary empty and data-followed-by-EOF
+streams complete and close once. Only the transport write and error-formatting
+boundaries are replaced. These are producer tests, not injected end-to-end
+browser read failures; `windows_browser_tls` separately checks successful real
+file and memory POSTs with independent peer hashes.
+
+```powershell
+cmake --build out/bearssl-win32 --config Release --target netscape_http_tls_post_test netscape-win32
+ctest --test-dir out/bearssl-win32 -C Release -R '^(http_tls_post_.*|windows_browser_tls)$' --output-on-failure
+```

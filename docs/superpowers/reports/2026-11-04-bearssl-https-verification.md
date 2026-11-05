@@ -1,10 +1,81 @@
 # BearSSL HTTPS native verification - 2026-11-04
 
-Final validation used reviewed source commit `4a3a1a3` on Windows, after the
-certificate-purpose correction. Task 8 started at `8eb3e63`; `f3a4641` contains
-installed/off-build preflight checks and fixes, while `4a3a1a3` is the separately
-reviewed portable purpose guard. The final builds and matrices below all exited 0.
-No source changes were needed during the final run.
+The original broad validation used reviewed source commit `4a3a1a3` on Windows,
+after the certificate-purpose correction. Task 8 started at `8eb3e63`; `f3a4641`
+contains installed/off-build preflight checks and fixes, while `4a3a1a3` is the
+separately reviewed portable purpose guard. Those builds and matrices all exited
+0, with no source changes during that run. The subsequent WB-I1 upload-read
+correction and its focused verification are recorded separately below.
+
+## Post-review WB-I1 correction (this revision)
+
+This fix is based on `079acbc`, the documentation commit after the broad matrix.
+The HTTPS POST producer now checks `ferror` immediately after `XP_FileRead`
+(`fread`), before accepting either zero or a short count. It returns existing
+local-file status `MK_UNABLE_TO_OPEN_FILE` (-223), with the upload path in the
+ordinary URL-owned error message. None of a failed read's bytes are written.
+The error leaves the file owned by the existing `HTTP_ERROR_DONE`/`HTTP_FREE`
+path; successful EOF still closes once and completes normally.
+
+The private producer is included from `lib/libnet/mkhttptls.inc` by both
+`mkhttp.c` and a focused C harness. There is no public API or production fault
+hook. The harness uses real UCRT streams and invalid OS handles, including an
+already-buffered two-byte tail, with only transport writes and error formatting
+replaced. Removing the guard produces RED: zero/error returns 0 and closes;
+short/error returns 2 and writes the two bytes. Both successful EOF cases pass
+in RED. Restoring the guard produces -223 and zero writes for both error cases.
+
+On 2026-11-04, approximately 23:04-23:09 EST, final targeted builds of
+`netscape_http_tls_post_test` and `netscape-win32` exited 0 in all configurations
+below. The new four `http_tls_post_*` CTests and existing `windows_browser_tls`
+fixture were run sequentially:
+
+| Configuration | Focused result | Duration |
+| --- | --- | --- |
+| Standard Release | 5/5 CTests, including all 27 browser TLS cases | 27.25 s |
+| Standard Debug | 5/5 CTests, including all 27 browser TLS cases | 29.44 s |
+| Gold Release | 5/5 CTests, including all 27 browser TLS cases | 26.87 s |
+
+The browser fixture independently verifies the complete 262,177-byte memory and
+file POST payload hashes, and exercises rendering, requests, cancellation,
+reuse, CONNECT and failure handling. The new producer tests cover zero/error,
+short/error, empty EOF, and data followed by EOF. They assert the error/path,
+zero writes from failed reads, retained file ownership, and one eventual close.
+These are real producer read failures, not injected end-to-end browser failures;
+the surrounding error/free state machine was inspected. No broader fault
+framework or changes to the historical shared `mkutils.c` producer were added.
+
+```powershell
+cmake --build out/bearssl-win32 --config Release --target netscape_http_tls_post_test netscape-win32 --parallel 8
+cmake --build out/bearssl-win32 --config Debug --target netscape_http_tls_post_test netscape-win32 --parallel 8
+cmake --build out/bearssl-gold --config Release --target netscape_http_tls_post_test netscape-win32 --parallel 8
+ctest --test-dir out/bearssl-win32 -C Release -R '^(http_tls_post_.*|windows_browser_tls)$' --output-on-failure
+ctest --test-dir out/bearssl-win32 -C Debug -R '^(http_tls_post_.*|windows_browser_tls)$' --output-on-failure
+ctest --test-dir out/bearssl-gold -C Release -R '^(http_tls_post_.*|windows_browser_tls)$' --output-on-failure
+```
+
+The explicit `out/bearssl installed 100%` prefix was refreshed successfully with
+`cmake --install out/bearssl-win32 --config Release --prefix "out/bearssl installed 100%"`.
+Its `bin/netscape.exe` matches the tested built Release executable, SHA-256
+`ab1c650dde9e1b484d0982514fefced1067f8ad0aae1c5d18572019d79889b58`.
+Install and hash evidence are `out/bearssl-win32/final-fix-installed.log` and
+`final-fix-installed-sha256.txt`. The unchanged installed-path matrix was not
+repeated solely for this refresh.
+
+The original complete matrices below were **not rerun on this fix**. TLS-disabled
+code is unchanged. Trust, purpose, installed-path mutation and public-site
+observations retain their original source/date provenance. The final-review
+harness initially needed its Winsock error dependency linked for Debug and its
+cleanup assertion adjusted to permit UCRT `fclose` returning EOF with a retained
+stream error; both were corrected before these passing runs. Production rebuilds
+retain the existing `__volatile` macro warning.
+
+Focused logs are `out/bearssl-win32/final-fix-post-red.log`,
+`final-fix-post-release-green.log`, `final-fix-post-debug-green.log`,
+`final-fix-{release,debug}-{build,tests}.log` and
+`final-fix-{release,debug}-LastTest.log`; Gold evidence uses
+`out/bearssl-gold/final-fix-release-{build,tests}.log` and
+`final-fix-release-LastTest.log`.
 
 ## Environment and provenance
 
@@ -23,7 +94,7 @@ No source changes were needed during the final run.
   Runtime tests verify this hash/count, the full BearSSL pin, MIT license hash,
   and retained BearSSL, Mozilla MPL and WinFE notices/provenance.
 
-## Final matrix
+## Original complete matrix (source `4a3a1a3`)
 
 All commands ran from the isolated implementation worktree. Builds used
 `--parallel 8`; native UI suites ran sequentially. The final matrix ran on
@@ -46,7 +117,7 @@ completion before any TCP connection/plaintext, while ordinary HTTP still render
 The prerequisite fails visibly if real legacy TLS 1.0/1.1 fixture capability is
 missing; a missing fixture is never a full-support pass.
 
-Actual final commands:
+Actual original-matrix commands:
 
 ```powershell
 cmake --build out/bearssl-win32 --config Release --parallel 8

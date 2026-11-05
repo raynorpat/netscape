@@ -36,6 +36,7 @@ public:
     /* top is the toolbar bottom; footer is the reserved status bar height. */
     void Arrange(int top, int footer);
     void FitColumns();
+    void SortColumn(int column,bool reverse);
     int FolderImage(unsigned long flags) const;
     int MessageImage(unsigned long flags) const;
     void DrawNewsFolder(NMLVCUSTOMDRAW *draw, LRESULT *result);

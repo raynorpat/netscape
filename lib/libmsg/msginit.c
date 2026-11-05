@@ -258,7 +258,12 @@ MSG_InitializeMailContext(MWContext* context)
 	return;
   }
   context->type = MWContextMail;
+  /* The Windows outliner initially sorts the Date column. */
+#ifdef XP_WIN
+  frame->sort_key = MSG_SortByDate;
+#else
   frame->sort_key = MSG_SortByMessageNumber;
+#endif
   frame->sort_forward_p = TRUE;
   frame->thread_p = TRUE;
   frame->all_messages_visible_p = TRUE;

@@ -181,6 +181,22 @@ files, final rejection, cancel/retry, and reserved-character HTTP Basic
 credentials. FTP directory probes are checked against a server which rejects
 file paths as directories. No public server or user account was used.
 
+## Mail and News screenshot follow-up
+
+The user's Gold captures establish 41x41 toolbar buttons starting at (5,3),
+8px group gaps and 53px chrome. Mail uses a 333px folder pane; News uses 303px.
+Both upper lists are 203px high. Folder columns are 243/42/46px for Mail and
+243/16/42px for News. Sender/priority/flag/Subject are 150/16/16/150px; Date
+fills the remaining space. Its initial sort indicator now reflects the backend
+Date sort rather than an unrelated default message-number sort.
+
+The original expanded News host and article images are bitmaps 702 and 723.
+Comparison against the supplied screenshots matched all 78 and 109 ink pixels,
+respectively. Mail leaf folders retain their closed-folder image when selected.
+Mail status displays the original backend's mailbox path/wasted-space text.
+The Gold Debug artwork, messaging, empty-News, chrome, Mail/News layout and
+composition tests pass 7/7; native captures were inspected at 96 DPI.
+
 Original runtime inspection covered browser chrome/About, local mail reading,
 empty News, new composition, the seven General Preferences pages and the limited
 blank Gold editor input observation above. It did not verify

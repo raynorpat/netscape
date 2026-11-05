@@ -330,7 +330,7 @@ bitmaps. Source provenance is in `cmd/winfe/res/classic/README.md`.
 ## Original 3.02 menus and geometry
 
 The standard browser now has nine toolbar buttons. Mail/News use the observed
-303px folder width and 203px upper lists at 96 DPI; both message lists have
+333px Mail / 303px News folder widths and 203px upper lists at 96 DPI; both message lists have
 Sender, separate priority/flag cells, Subject and Date. Subscription boxes and
 header markers use the original Windows resources, with provenance beside the
 assets. Reference-sized browser and Mail/News windows are 1105 x 765 and

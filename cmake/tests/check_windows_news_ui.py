@@ -7,7 +7,7 @@ import sys
 import tempfile
 
 from check_windows_mailnews import WireHandler, fixture_server, message, DATES
-from check_windows_mail_ui import Bitmap, read_report, rectangle, require_fields
+from check_windows_mail_ui import Bitmap, read_report, rectangle, require_fields, check_messaging_reference
 
 GROUPS = ("news.announce.newusers", "news.announce.questions", "news.answers")
 TOOLBAR = "To:News|To:Mail|Re:Mail|Re:News|Re:Both|Forward|Previous|Next|Thread|Group|Print|Stop"
@@ -87,6 +87,7 @@ def run(executable, output):
         if "POST" in commands:
             raise RuntimeError("News reference fixture must never post")
     text, fields = read_report(report)
+    check_messaging_reference(report, news=True)
     require_fields(fields, {
         "toolbar_labels": TOOLBAR, "menu_labels": "File|Edit|View|Message|Go|Options|Window|Help",
         "folder_columns": "News Server|Status|Unread", "article_columns": "Sender|Status|Status|Subject|Date",

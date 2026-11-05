@@ -1013,9 +1013,7 @@ void BrowserFrame::RefreshMailLists()
     folders.DeleteAllItems(); messages.DeleteAllItems();
     MSG_FolderLine folder;
     for (int i = 0; i < 100000 && MSG_GetFolderLine(&context, i, &folder, nullptr); ++i) {
-        CString name(' ', mode==2?0:(int)folder.depth * 2);
-        if (mode!=2 && (folder.flags & MSG_FOLDER_FLAG_DIRECTORY)) name += folder.flags & MSG_FOLDER_FLAG_ELIDED ? "+ " : "- ";
-        name += folder.name ? folder.name : "";
+        CString name=folder.name?folder.name:"";
         folders.InsertItem(i, name, mail_panes.FolderImage(folder.flags));
         folders.SetItemData(i,((DWORD_PTR)folder.depth<<16)|folder.flags);
         if (!(folder.flags & MSG_FOLDER_FLAG_DIRECTORY)) {
@@ -1056,6 +1054,10 @@ void BrowserFrame::RefreshMailLists()
     folders.Invalidate(); messages.Invalidate();
     updating_lists = false;
     mail_panes.FitColumns();
+    int sort=MSG_GetToggleStatus(&context,MSG_SortByDate)==MSG_Checked?MailPaneUI::DateColumn:
+        MSG_GetToggleStatus(&context,MSG_SortBySubject)==MSG_Checked?MailPaneUI::SubjectColumn:
+        MSG_GetToggleStatus(&context,MSG_SortBySender)==MSG_Checked?MailPaneUI::SenderColumn:-1;
+    mail_panes.SortColumn(sort,MSG_GetToggleStatus(&context,MSG_SortBackward)==MSG_Checked);
     MailCaptionStatus();
 }
 void BrowserFrame::MailCaptionStatus()
@@ -1067,11 +1069,8 @@ void BrowserFrame::MailCaptionStatus()
     if(!subject.IsEmpty()) { title+=" - [";title+=subject;title+=']'; } else if(mode==2) title+=" - [news:]"; SetWindowText(title);
     int folder=folders.GetNextItem(-1,LVNI_SELECTED);MSG_FolderLine line;
     if(folder>=0 && MSG_GetFolderLine(&context,folder,&line,nullptr)) {
-        CString text;
-        if(mode==1) { text=WFE_MailDirectory();text+='\\'; }
-        text+=line.name?line.name:"";
-        if(!(line.flags&MSG_FOLDER_FLAG_DIRECTORY)&&line.total>=0) { CString count;count.Format("  %d messages",line.total);text+=count; }
-        if(!(line.flags&MSG_FOLDER_FLAG_DIRECTORY)&&line.unseen>=0) { CString unread;unread.Format(" (%d unread)",line.unseen);text+=unread; }
+        CString text=context.defaultStatus&&*context.defaultStatus?context.defaultStatus:"Document: Done";
+        if(mode==1 && (!context.defaultStatus||!*context.defaultStatus)) {text=WFE_MailDirectory();text+='\\';text+=line.name?line.name:"";}
         status.SetDocumentText(text);
     }
 }
@@ -1160,12 +1159,6 @@ void BrowserFrame::OnMessageColumn(NMHDR *header,LRESULT *result)
     if(MSG_GetToggleStatus(&context,action)==MSG_Checked) MSG_Command(&context,MSG_SortBackward);
     else MSG_Command(&context,action);
     RefreshMailLists();
-    bool reverse=MSG_GetToggleStatus(&context,MSG_SortBackward)==MSG_Checked;
-    for(int i=0;i<messages.GetHeaderCtrl()->GetItemCount();++i) {
-        HDITEM item={};item.mask=HDI_FORMAT;messages.GetHeaderCtrl()->GetItem(i,&item);
-        item.fmt&=~(HDF_SORTUP|HDF_SORTDOWN);if(i==column) item.fmt|=reverse?HDF_SORTDOWN:HDF_SORTUP;
-        messages.GetHeaderCtrl()->SetItem(i,&item);
-    }
 }
 
 static MSG_CommandType news_command(UINT command)
@@ -2735,6 +2728,7 @@ static bool ui_drag(CWnd *owner,int id,CPoint target)
     divider->SendMessage(WM_LBUTTONUP,0,MAKELPARAM(target.x,target.y));return true;
 }
 #include "menu-smoke.inc"
+#include "messaging-geometry-smoke.inc"
 #ifdef EDITOR
 #include "editor-smoke.inc"
 #endif
@@ -2784,6 +2778,7 @@ static int WFE_RunMailUISmoke(const char *report,const char *snapshot)
     bool reader_header=reader.find("user@example.invalid")!=std::string::npos;
     bool reader_body=reader.find("Hi User")!=std::string::npos&&reader.find("Just a test.")!=std::string::npos;
     frame->messages.SetFocus();
+    ui_message_geometry(frame,report);
     bool captured=chrome_capture(frame,snapshot);chrome_capture(frame,(std::string(snapshot)+".window.bmp").c_str(),true);
     bool splits=ui_drag(frame,124,CPoint(5000,folders.top+10))&&ui_drag(frame,125,CPoint(10,5000));
     CRect clamped=ui_bounds(*frame,frame->view);splits=splits&&clamped.Height()>=50&&clamped.Width()>=120;
@@ -2909,6 +2904,7 @@ static int WFE_RunNewsUISmoke(const char *report,const char *snapshot,const char
     HWND logo=::FindWindowEx(frame->chrome.GetSafeHwnd(),nullptr,nullptr,"Netscape");CRect logo_rect;
     if(logo) { ::GetWindowRect(logo,&logo_rect);frame->ScreenToClient(logo_rect); }
     bool logo_visible=logo&&::IsWindowVisible(logo);
+    ui_message_geometry(frame,report);
     bool captured=chrome_capture(frame,snapshot);chrome_capture(frame,(std::string(snapshot)+".window.bmp").c_str(),true);
     frame->SendMessage(WM_COMMAND,ID_MESSAGE_SHOW_ALL);
     if(group>=0) {

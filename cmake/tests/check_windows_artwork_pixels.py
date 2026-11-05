@@ -34,6 +34,7 @@ def check():
         ('message-read', '703', 0, 16, 16), ('message-unread', '703', 0, 16, 16),
         ('status-mail-new', '1204', 0, 24, 12), ('status-mail', '1204', 24, 24, 12),
         ('status-mail-unknown', '1204', 48, 24, 12), ('mail', '1204', 24, 24, 12),
+        ('news-host', '702', 0, 16, 16), ('news-group', '723', 0, 16, 16),
     ):
         _, _, original = bitmap(assets / 'source-gold/BITMAP' / (source + '.bmp'))
         actual_width, actual_height, actual = bitmap(assets / (name + '.bmp'))

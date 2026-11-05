@@ -22,7 +22,7 @@ their hashes. The executable's original resource IDs are retained there.
 | 1204, three 24x12 cells | New/normal/unknown status-mail indicators |
 | 703 | Message-list glyph (read state is also shown by row font weight) |
 | 701 / 702 | Closed / open folder |
-| 717 / 718 | News server / group |
+| 702 / 723 | Expanded News host folder / newsgroup article glyph |
 | 719 / 720 / 721 / 725 | Subscription boxes / message marker / priority |
 
 The generator crops cells without redrawing or recoloring artwork. Magenta

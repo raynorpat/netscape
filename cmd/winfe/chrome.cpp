@@ -104,21 +104,21 @@ int ClassicChrome::Arrange(int width)
     if(!toolbar_visible && !location_visible && !directory_visible) {ShowWindow(SW_HIDE);return 0;}
     ShowWindow(SW_SHOW);
     auto s = [this](int n){ return ClassicUI::Scale(this,n); };
-    bool gold_geometry=!mode&&presentation==2;
-    int y=s(3), button_width=s(presentation==0 ? 30 : mode ? 42 : 49), button_height=s(presentation==0 ? 26 : presentation==1 ? 24 : gold_geometry?41:42);
-    int x=s(gold_geometry?5:4), row=0, limit=(std::max)(button_width+s(4),width-s(mode?40:4));
+    bool reference_buttons=presentation==2;
+    int y=s(3), button_width=s(presentation==0 ? 30 : mode ? 41 : 49), button_height=s(presentation==0 ? 26 : presentation==1 ? 24 : 41);
+    int x=s(reference_buttons?5:4), row=0, limit=(std::max)(button_width+s(4),width-s(mode?40:4));
     for (size_t i=0;i<buttons.size();++i) {
         UINT command=buttons[i]->GetDlgCtrlID();
         bool group=mode==2?(i==2||i==6||i==8||i==10):mode==1?(i==1||i==3||i==6||i==8):
             (command==ID_BROWSER_EDIT||command==ID_NAV_RELOAD||command==ID_NAV_STOP);
-        if(group && presentation==2) x+=s(mode==2?4:8);
-        if(x+button_width>limit) {x=s(gold_geometry?5:4);++row;}
+        if(group && presentation==2) x+=s(8);
+        if(x+button_width>limit) {x=s(reference_buttons?5:4);++row;}
         buttons[i]->ShowWindow(toolbar_visible ? SW_SHOW : SW_HIDE);
-        buttons[i]->MoveWindow(x,y+row*button_height,button_width-s(gold_geometry?0:2),button_height-s(gold_geometry?0:2));
+        buttons[i]->MoveWindow(x,y+row*button_height,button_width-s(reference_buttons?0:2),button_height-s(reference_buttons?0:2));
         x+=button_width;
     }
-    if (toolbar_visible) y += (row+1)*button_height+s(gold_geometry?8:3);
-    int logo_top=mode ? s(3) : (std::max)(0,y-s(4)), logo_size=s(mode ? 32 : 50), right=(std::max)(s(100),width-logo_size-s(mode?5:1));
+    if (toolbar_visible) y += (row+1)*button_height+s(reference_buttons?(mode?6:8):3);
+    int logo_top=mode ? s(1) : (std::max)(0,y-s(4)), logo_size=s(mode ? 32 : 50), right=(std::max)(s(100),width-logo_size-s(mode?6:1));
     label.ShowWindow(location_visible ? SW_SHOW : SW_HIDE);
     location.ShowWindow(location_visible ? SW_SHOW : SW_HIDE);
     location_icon.ShowWindow(location_visible&&!mode?SW_SHOW:SW_HIDE);
@@ -145,7 +145,7 @@ int ClassicChrome::Arrange(int width)
     bool show_logo=mode ? toolbar_visible : location_visible || directory_visible;
     logo.ShowWindow(show_logo ? SW_SHOW : SW_HIDE);
     if(show_logo) {
-        logo.MoveWindow(width-logo_size-s(mode?4:1),logo_top,logo_size,logo_size);
+        logo.MoveWindow(width-logo_size-s(mode?6:1),logo_top,logo_size,logo_size);
         y=(std::max)(y,logo_top+logo_size);
     }
     y+=s(mode?3:9);

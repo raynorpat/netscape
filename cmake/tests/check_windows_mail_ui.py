@@ -194,12 +194,25 @@ def check_mail_geometry(fields, prefix=""):
             or messages[2] - messages[0] < 100 * scale
             or reader[3] - reader[1] < 80 * scale):
         raise RuntimeError(prefix + "Mail panes are too small to use")
-    if not prefix and (abs(folders[2] - folders[0] - 303 * scale) > tolerance
+    if not prefix and (abs(folders[2] - folders[0] - 333 * scale) > tolerance
                        or abs(folders[3] - folders[1] - 203 * scale) > tolerance):
         raise RuntimeError("Mail default panes differ from original 3.02")
     if prefix and client[2] > 400 * scale:
         raise RuntimeError("Mail narrow-layout check did not resize the window")
     return client, folders, messages, reader
+
+
+def check_messaging_reference(report, news=False):
+    text, fields = read_report(Path(str(report) + '.geometry'))
+    assert rectangle(fields, 'first') == (5, 3, 46, 44), ('Original Mail/News toolbar button', fields)
+    assert rectangle(fields, 'second')[0] == (46 if news else 54), 'Original toolbar group spacing'
+    assert rectangle(fields, 'last')[0] == (488 if news else 406), 'Original final toolbar button'
+    assert int(fields['chrome_height']) == 53, ('Original Mail/News chrome height', fields)
+    assert [int(fields['folder_column_' + str(i)]) for i in range(3)] == ([243, 16, 42] if news else [243, 42, 46]), 'Folder header widths differ from original'
+    widths = [int(fields['message_column_' + str(i)]) for i in range(5)]
+    assert widths[:4] == [150, 16, 16, 150], ('Original fixed Sender/Subject widths', widths)
+    assert sum(widths) == int(fields['message_client_width']), 'Date does not fill the remaining header'
+    assert fields['date_marker'] == '1', 'Initial Date sort indicator is missing'
 
 
 def check_mail_report(text, fields):
@@ -220,6 +233,7 @@ def check_mail_report(text, fields):
         raise RuntimeError("Mail folder controls lack their native artwork")
     if "Inbox" not in fields.get("status_text", ""):
         raise RuntimeError("Mail status does not identify the selected Inbox")
+    assert 'bytes wasted' in fields.get('status_text', ''), 'Original mailbox space status was overwritten'
     if "Hello!" not in fields.get("caption", ""):
         raise RuntimeError("Mail caption does not identify the selected message")
     sender = fields.get("selected_sender", "")
@@ -408,6 +422,8 @@ def run_smoke(executable, output, mode, server=None):
                        for request in server.requests)):
         raise RuntimeError("Composer Quote/Stop omitted the actual HTTP retry")
     text, fields = read_report(report)
+    if mode == 'mail':
+        check_messaging_reference(report)
     geometry = (check_mail_report(text, fields) if mode == "mail" else
                 check_compose_report(text, fields))
     capture = check_bitmap(snapshot, mode, fields, geometry)

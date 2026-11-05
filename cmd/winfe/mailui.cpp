@@ -3,6 +3,7 @@
 #include "frontend.h"
 #include "msgcom.h"
 #include "resource.h"
+#include <uxtheme.h>
 
 static int mail_clamp(int value, int low, int high)
 {
@@ -120,7 +121,7 @@ bool MailPaneUI::Attach(CWnd *frame, CListCtrl *folder_list, CListCtrl *message_
         || !folder_list->GetSafeHwnd() || !message_list || !message_list->GetSafeHwnd()
         || !view || !view->GetSafeHwnd()) return false;
     owner = frame; folders = folder_list; messages = message_list; reader = view; news_mode = news;
-    folder_width = ClassicUI::Scale(owner, 303);
+    folder_width = ClassicUI::Scale(owner, news?303:333);
     int size = ClassicUI::Scale(owner, 16);
     if (!folder_images.Create(size, size, ILC_COLOR24 | ILC_MASK, 2, 1)
         || !message_images.Create(size, size, ILC_COLOR24 | ILC_MASK, 3, 1)
@@ -151,6 +152,8 @@ bool MailPaneUI::Attach(CWnd *frame, CListCtrl *folder_list, CListCtrl *message_
     messages->InsertColumn(SubjectColumn, "Subject");
     messages->InsertColumn(DateColumn, "Date");
     ClassicUI::Apply(folders); ClassicUI::Apply(messages);
+    SetWindowTheme(folders->GetHeaderCtrl()->GetSafeHwnd(),L"",L"");
+    SetWindowTheme(messages->GetHeaderCtrl()->GetSafeHwnd(),L"",L"");
     int header_size = ClassicUI::Scale(owner, 14);
     if (!header_images.Create(header_size, header_size, ILC_COLOR24 | ILC_MASK, 3, 1)
         || !mail_image(header_images, owner, IDB_NEWS_SUBSCRIBED, true)
@@ -188,9 +191,9 @@ void MailPaneUI::Arrange(int toolbar_bottom, int status_height)
     }
     int pane_min = ClassicUI::Scale(owner, 70);
     if (body_space < pane_min * 2) pane_min = body_space / 2;
-    /* Fresh Navigator 3.02 Mail and News use the same 303 by 203 upper panes
-       at 96 DPI. Keep those dimensions on larger windows, and clamp below. */
-    if(folder_width==-1 && width>0) folder_width=ClassicUI::Scale(owner,303);
+    /* Original Mail reserves 333px for folder/count columns; News uses 303px.
+       Both keep 203px lists on larger windows and clamp below. */
+    if(folder_width==-1 && width>0) folder_width=ClassicUI::Scale(owner,news_mode?303:333);
     if (top_height == -1 && height > 0)
         top_height = ClassicUI::Scale(owner,203);
     int folder_size = mail_clamp(folder_width, folder_min, list_space - message_min);
@@ -211,34 +214,44 @@ void MailPaneUI::FitColumns()
     if (!folders || !folders->GetSafeHwnd() || !messages || !messages->GetSafeHwnd()) return;
     CRect area; folders->GetClientRect(area);
     int width = area.Width();
-    int unread = ClassicUI::Scale(owner, news_mode ? 16 : 42), total = ClassicUI::Scale(owner, news_mode ? 42 : 16);
+    int unread = ClassicUI::Scale(owner, news_mode ? 16 : 42), total = ClassicUI::Scale(owner, news_mode ? 42 : 46);
     int label_min = ClassicUI::Scale(owner, 60);
     if (width < label_min + unread + total) {
         int numeric = width > label_min ? width - label_min : 0;
-        unread = MulDiv(numeric, news_mode ? 16 : 42, 58); total = numeric - unread;
+        unread = MulDiv(numeric, news_mode ? 16 : 42, news_mode?58:88); total = numeric - unread;
     }
     folders->SetColumnWidth(0, width - unread - total);
     folders->SetColumnWidth(1, unread); folders->SetColumnWidth(2, total);
     messages->GetClientRect(area); width = area.Width();
     int sender = ClassicUI::Scale(owner, 150), status = ClassicUI::Scale(owner, 16);
-    int date = ClassicUI::Scale(owner, 160), subject_min = ClassicUI::Scale(owner, 70);
-    int nominal = sender + status * 2 + date + subject_min;
+    int subject = ClassicUI::Scale(owner, 150), date_min = ClassicUI::Scale(owner, 70);
+    int nominal = sender + status * 2 + subject + date_min;
     if (width < nominal) {
-        sender = MulDiv(width, 150, 412); status = MulDiv(width, 16, 412);
-        date = MulDiv(width, 160, 412);
+        sender = MulDiv(width, 150, 402); status = MulDiv(width, 16, 402);
+        subject = MulDiv(width, 150, 402);
     }
     messages->SetColumnWidth(SenderColumn, sender);
     messages->SetColumnWidth(PriorityColumn, status); messages->SetColumnWidth(FlagColumn, status);
-    messages->SetColumnWidth(SubjectColumn, width - sender - status * 2 - date);
-    messages->SetColumnWidth(DateColumn, date);
+    messages->SetColumnWidth(SubjectColumn, subject);
+    messages->SetColumnWidth(DateColumn, width-sender-status*2-subject);
 }
 
 int MailPaneUI::FolderImage(unsigned long flags) const
 {
-    if(news_mode && (flags&MSG_FOLDER_FLAG_NEWS_HOST)) return 2;
+    if(news_mode && (flags&MSG_FOLDER_FLAG_NEWS_HOST)) return flags&MSG_FOLDER_FLAG_ELIDED?0:2;
     if(news_mode && (flags&MSG_FOLDER_FLAG_NEWSGROUP) && !(flags&MSG_FOLDER_FLAG_DIRECTORY)) return 3;
-    return (flags & MSG_FOLDER_FLAG_SELECTED)
-        || ((flags & MSG_FOLDER_FLAG_DIRECTORY) && !(flags & MSG_FOLDER_FLAG_ELIDED)) ? 1 : 0;
+    return (flags & MSG_FOLDER_FLAG_DIRECTORY) && !(flags & MSG_FOLDER_FLAG_ELIDED) ? 1 : 0;
+}
+
+void MailPaneUI::SortColumn(int column,bool reverse)
+{
+    CHeaderCtrl *header=messages->GetHeaderCtrl();
+    for(int i=0;i<header->GetItemCount();++i) {
+        HDITEM item={};item.mask=HDI_FORMAT;header->GetItem(i,&item);
+        item.fmt&=~(HDF_SORTUP|HDF_SORTDOWN);
+        if(i==column) item.fmt|=reverse?HDF_SORTUP:HDF_SORTDOWN;
+        header->SetItem(i,&item);
+    }
 }
 
 int MailPaneUI::MessageImage(unsigned long flags) const
@@ -274,13 +287,13 @@ bool MailPaneUI::NewsExpansionHit(int row,CPoint point) const
 {
     if(!news_mode || row<0) return false;
     DWORD_PTR data=folders->GetItemData(row);
-    int left=ClassicUI::Scale(owner,5+int(data>>16)*14);
+    int left=ClassicUI::Scale(owner,4+int(data>>16)*16);
     return (data&MSG_FOLDER_FLAG_DIRECTORY) && point.x>=left && point.x<left+ClassicUI::Scale(owner,10);
 }
 
 void MailPaneUI::DrawNewsFolder(NMLVCUSTOMDRAW *draw,LRESULT *result)
 {
-    *result=CDRF_DODEFAULT;if(!news_mode) return;
+    *result=CDRF_DODEFAULT;
     if(draw->nmcd.dwDrawStage==CDDS_PREPAINT) { *result=CDRF_NOTIFYITEMDRAW;return; }
     if(draw->nmcd.dwDrawStage==CDDS_ITEMPREPAINT) { *result=CDRF_NOTIFYSUBITEMDRAW;return; }
     if(draw->nmcd.dwDrawStage!=(CDDS_ITEMPREPAINT|CDDS_SUBITEM) || draw->iSubItem) return;
@@ -289,21 +302,27 @@ void MailPaneUI::DrawNewsFolder(NMLVCUSTOMDRAW *draw,LRESULT *result)
     CRect area;folders->GetSubItemRect(row,0,LVIR_BOUNDS,area);area.right=folders->GetColumnWidth(0);
     CDC *dc=CDC::FromHandle(draw->nmcd.hdc);int saved=dc->SaveDC();dc->IntersectClipRect(area);
     bool selected=(folders->GetItemState(row,LVIS_SELECTED)&LVIS_SELECTED)!=0;
-    dc->FillSolidRect(area,selected?GetSysColor(COLOR_HIGHLIGHT):RGB(255,255,255));
-    dc->SetTextColor(selected?GetSysColor(COLOR_HIGHLIGHTTEXT):RGB(0,0,0));dc->SetBkMode(TRANSPARENT);
+    bool focused=folders->GetFocus()==folders;
+    dc->FillSolidRect(area,GetSysColor(selected?(focused?COLOR_HIGHLIGHT:COLOR_BTNFACE):COLOR_WINDOW));
+    dc->SetTextColor(GetSysColor(selected&&focused?COLOR_HIGHLIGHTTEXT:COLOR_WINDOWTEXT));dc->SetBkMode(TRANSPARENT);
     auto scale=[this](int n){return ClassicUI::Scale(owner,n);};
-    int x=area.left+scale(5+depth*14),middle=area.CenterPoint().y;
-    CPen guide(PS_DOT,1,selected?RGB(255,255,255):RGB(128,128,128));dc->SelectObject(&guide);
-    if(depth) { dc->MoveTo(x+scale(4),area.top);dc->LineTo(x+scale(4),middle);dc->LineTo(x+scale(13),middle); }
+    int x=area.left+scale(4+depth*16),middle=area.CenterPoint().y;
+    CPen guide(PS_DOT,1,GetSysColor(selected&&focused?COLOR_HIGHLIGHTTEXT:COLOR_3DSHADOW));dc->SelectObject(&guide);
+    if(depth||!news_mode) {
+        int stem=depth?x-scale(12):x+scale(4);
+        bool continues=row+1<folders->GetItemCount()&&int(folders->GetItemData(row+1)>>16)>=depth;
+        dc->MoveTo(stem,area.top);dc->LineTo(stem,continues?area.bottom:middle);
+        dc->MoveTo(stem,middle);dc->LineTo(x+scale(12),middle);
+    }
     if(flags&MSG_FOLDER_FLAG_DIRECTORY) {
         CRect glyph(x,middle-scale(4),x+scale(9),middle+scale(5));dc->FillSolidRect(glyph,RGB(255,255,255));
         dc->Draw3dRect(glyph,RGB(128,128,128),RGB(128,128,128));
         dc->FillSolidRect(x+scale(2),middle,scale(5),1,RGB(0,0,0));
         if(flags&MSG_FOLDER_FLAG_ELIDED) dc->FillSolidRect(x+scale(4),middle-scale(2),1,scale(5),RGB(0,0,0));
     }
-    int image=FolderImage(flags);folder_images.Draw(dc,image,CPoint(x+scale(13),middle-scale(8)),ILD_TRANSPARENT);
-    CRect label=area;label.left=x+scale(32);
-    bool unread=!(flags&MSG_FOLDER_FLAG_DIRECTORY)&&folders->GetItemText(row,2)!="0";
+    int image=FolderImage(flags);folder_images.Draw(dc,image,CPoint(x+scale(12),middle-scale(8)),ILD_TRANSPARENT);
+    CRect label=area;label.left=x+scale(news_mode?40:36);
+    bool unread=news_mode&&!(flags&MSG_FOLDER_FLAG_DIRECTORY)&&folders->GetItemText(row,2)!="0";
     dc->SelectObject(unread?&unread_font:ClassicUI::Font(owner));
     CString text=folders->GetItemText(row,0);dc->DrawText(text,label,DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS|DT_NOPREFIX);
     if(selected&&folders->GetFocus()==folders) { CRect focus=area;focus.DeflateRect(1,1);dc->DrawFocusRect(focus); }

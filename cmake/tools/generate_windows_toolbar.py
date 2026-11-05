@@ -22,7 +22,7 @@ STRIPS = {
     '755': (20, 20, ['send', 'quote', 'attach', 'address', None]),
     '1204': (24, 12, ['status-mail-new', 'status-mail', 'status-mail-unknown']),
 }
-SINGLE = {'folder': '701', 'folder-open': '702', 'news-host': '717', 'news-group': '718',
+SINGLE = {'folder': '701', 'folder-open': '702', 'news-host': '702', 'news-group': '723',
           'news': '718', 'subscribed': '719', 'unsubscribed': '720',
           'message-flag': '721', 'priority-header': '725', 'status-apps': '460',
           'message-read': '703', 'message-unread': '703', 'location': '1239'}

@@ -194,7 +194,7 @@ int ComposerFrame::OnCreate(LPCREATESTRUCT create)
     quote.SetBitmapResource(IDB_CLASSIC_QUOTE);
     address.SetBitmapResource(IDB_CLASSIC_ADDRESS);
     stop.SetBitmapResource(IDB_CLASSIC_STOP);
-    if (!logo.Create("Netscape", WS_CHILD | WS_VISIBLE, CRect(0,0,0,0), this, IDC_COMPOSE_LOGO)) return -1;
+    if (!logo.Create("Netscape", WS_CHILD | WS_VISIBLE | WS_BORDER, CRect(0,0,0,0), this, IDC_COMPOSE_LOGO)) return -1;
     logo.bitmap.LoadBitmap(IDB_CLASSIC_LOGO_SMALL);
     for (int i = 0; i < header_count; ++i) {
         if (!labels[i].Create(header_names[i], WS_CHILD | WS_VISIBLE,
@@ -238,12 +238,13 @@ void ComposerFrame::Arrange()
     CRect area; GetClientRect(&area);
     auto s = [this](int value) { return ClassicUI::Scale(this, value); };
     CButton *buttons[] = {&send, &quote, &attach, &address, &stop};
-    int x = s(4), y = s(3), button_width = s(44);
+    int x = s(5), y = s(3), button_width = s(41);
     for (int i = 0; i < _countof(buttons); ++i) {
-        buttons[i]->MoveWindow(x, y, button_width - s(2), s(38));
+        if(i==1||i==4) x+=s(8);
+        buttons[i]->MoveWindow(x, y, button_width, s(41));
         x += button_width;
     }
-    logo.MoveWindow((std::max)(x + s(4), area.Width() - s(43)), s(2), s(40), s(40));
+    logo.MoveWindow((std::max)(x + s(4), area.Width() - s(38)), s(1), s(32), s(32));
     y = s(49);
     /* The backend's header mask and every edit field are retained even when
        the compact front end hides advanced headers. */
@@ -1230,17 +1231,21 @@ extern "C" int WFE_ComposerUISmoke(MWContext *source, const char *report, const 
     int toolbar_ids[] = {IDC_COMPOSE_SEND, IDC_COMPOSE_QUOTE, IDC_COMPOSE_ATTACH, IDC_COMPOSE_ADDRESS, IDC_COMPOSE_STOP};
     int toolbar_count = 0;
     CRect toolbar(0,0,0,0);
+    CRect toolbar_buttons[5];
     for (int i = 0; i < 5; ++i) {
         CWnd *control = frame->GetDlgItem(toolbar_ids[i]);
         if (control && control->IsWindowVisible()) {
             CString text; control->GetWindowText(text);
             if (toolbar_count) toolbar_labels += '|'; toolbar_labels += (const char *)text;
             CRect rect = compose_control_rect(frame, toolbar_ids[i]);
+            toolbar_buttons[i]=rect;
             if (toolbar_count) toolbar.UnionRect(toolbar, rect); else toolbar = rect;
             ++toolbar_count;
         }
     }
     CRect client; frame->GetClientRect(&client);
+    CRect toolbar_logo=compose_control_rect(frame,IDC_COMPOSE_LOGO);
+    bool toolbar_logo_border=(frame->logo.GetStyle()&WS_BORDER)!=0;
     CRect full = client;
     CRect editor = compose_control_rect(frame, IDC_COMPOSE_BODY);
     CRect mail_to = compose_control_rect(frame, IDC_COMPOSE_FIRST + 2);
@@ -1311,6 +1316,8 @@ extern "C" int WFE_ComposerUISmoke(MWContext *source, const char *report, const 
         fprintf(output, "original_save_as=%d\nattachment_toggle=%d\npaste_quotation=%d\nwrap_toggle=%d\n", original_save_as, attachment_toggle, paste_quotation, wrap_toggle);
         fprintf(output, "deferred_delivery=%d\nimmediate_delivery=%d\nbody_saved=%d\n", deferred_delivery, immediate_delivery, body_saved);
         fprintf(output, "menu_labels=%s\ntoolbar_labels=%s\ntoolbar_count=%d\n", menu_labels.c_str(), toolbar_labels.c_str(), toolbar_count);
+        fprintf(output,"ui_dpi=%d\ntoolbar_logo=%d,%d,%d,%d\ntoolbar_logo_border=%d\n",ClassicUI::Scale(frame,96),toolbar_logo.left,toolbar_logo.top,toolbar_logo.right,toolbar_logo.bottom,toolbar_logo_border);
+        for(int i=0;i<5;++i) fprintf(output,"toolbar_%d=%d,%d,%d,%d\n",i,toolbar_buttons[i].left,toolbar_buttons[i].top,toolbar_buttons[i].right,toolbar_buttons[i].bottom);
         fprintf(output, "compact_headers=%d\nadvanced_headers=%d\nhidden_headers_retained=%d\n", compact, advanced, retained);
         fprintf(output, "compact_labels=%d\n", compact_labels);
         fprintf(output, "bcc_toggle=%d\ncc_toggle=%d\n", bcc_toggle, cc_toggle);

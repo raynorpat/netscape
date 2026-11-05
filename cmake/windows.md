@@ -834,3 +834,23 @@ failures have not been fault-injected.
 Mail/News and welcome verification passed the complete standard 25/25 and
 Gold 28/28 suites in both Win32 Debug and Release on 2026-11-04. These full
 runs preceded the separate composition-toolbar screenshot follow-up below.
+
+## Message Composition toolbar follow-up
+
+The supplied original composition capture uses five 41x41 buttons beginning at
+(5,3), with 8px group gaps before Quote and Stop. Their left coordinates at
+96 DPI are 5/54/95/136/185. The separate composer layout now follows those
+dimensions instead of 42x38 buttons with uniform spacing. Its framed logo is
+32x32 at top 1px/right 6px, preserving the original 30x30 bitmap inside the
+native frame. Original bitmap 755 glyphs, captions and backend enablement remain.
+Address still needs a recipient picker and remains disabled; Quote follows the
+source message and Stop follows active quotation/delivery. The fixture records
+every button and logo's actual native bounds/style, in addition to the existing
+header, narrow-window, attachment, draft and quotation checks. Expected scaled
+gaps/dimensions account for individual Windows rounding; broader DPI runtime
+comparison remains unverified.
+
+Final composition geometry/quotation and real mail/news delivery checks passed
+2/2 in each configuration: Gold Debug/Release (35.80s/35.80s), standard
+Debug/Release (36.06s/35.24s). Native full-window composer captures were inspected.
+All four configurations were rebuilt after the toolbar change.

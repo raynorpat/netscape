@@ -249,7 +249,31 @@ def check_mail_report(text, fields):
     return check_mail_geometry(fields)
 
 
+def check_compose_toolbar(fields):
+    dpi = int(fields.get("ui_dpi", "96"))
+    def scale(value):
+        return (value * dpi + 48) // 96
+    toolbar = rectangle(fields, "toolbar")
+    if dpi == 96:
+        assert toolbar == (5, 3, 226, 44), "Original composer toolbar bounds differ"
+    buttons = [rectangle(fields, "toolbar_" + str(index)) for index in range(5)]
+    assert buttons[0][:2] == (scale(5), scale(3)), buttons[0]
+    for index, button in enumerate(buttons):
+        assert (button[2] - button[0], button[3] - button[1]) == (scale(41), scale(41)), index
+        assert button[1] == scale(3), index
+        if index:
+            assert button[0] - buttons[index - 1][2] == scale(8 if index in (1, 4) else 0), index
+    assert toolbar == (buttons[0][0], buttons[0][1], buttons[-1][2], buttons[-1][3]), toolbar
+    width = client_rect(fields)[2]
+    logo = rectangle(fields, "toolbar_logo")
+    assert logo[:2] == (width - scale(38), scale(1)), logo
+    assert (logo[2] - logo[0], logo[3] - logo[1]) == (scale(32), scale(32)), logo
+    assert abs(width - logo[2] - scale(6)) <= 1, logo
+    assert fields["toolbar_logo_border"] == "1", "Original small logo needs its native frame"
+
+
 def check_compose_report(text, fields):
+    check_compose_toolbar(fields)
     require_fields(fields, {
         "passed": "1", "completed": "1", "toolbar_count": "5",
         "toolbar_labels": COMPOSE_TOOLBAR, "menu_labels": COMPOSE_MENUS,

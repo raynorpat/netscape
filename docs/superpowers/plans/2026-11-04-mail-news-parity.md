@@ -30,7 +30,7 @@ mail is never overwritten. Default folders are created only when needed.
   native tests offline while preserving the message's historical URLs.
 - [x] Run complete standard/Gold Debug/Release suites, document results and
   commit the welcome item separately.
-- [ ] Refresh and verify Release ZIPs after the composition-toolbar follow-up.
+- [x] Refresh and verify Release ZIPs after the composition-toolbar follow-up.
 
 The screenshots establish default geometry at the observed desktop scale;
 broader DPI behavior and unrelated mail features are separate verification work.
@@ -63,3 +63,12 @@ backend enablement; correct the independent composer geometry. Retain header,
 attachment, quotation/Stop and delivery behavior. Record all five native button
 bounds and logo bounds/style, reproduce the mismatch, then verify affected
 composition/delivery checks in both editions/configurations and commit separately.
+
+Composition evidence: the previous native report failed reference bounds
+(4,3,222,41 versus 5,3,226,44). Corrected native controls report all five
+reference rectangles and the framed 32px logo. Review corrected test expectations
+to respect separately rounded scaled dimensions/gaps. Geometry/quotation and
+real mail/news delivery checks pass 2/2 in Gold Debug/Release (35.80s/35.80s) and
+standard Debug/Release (36.06s/35.24s). Both final Release ZIPs pass CRC checks,
+contain the welcome provenance, and embed executables identical to the tested
+Release outputs (SHA-256 recorded in ignored out/mail-news-package-verification.json).

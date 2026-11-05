@@ -206,6 +206,12 @@ as a URL; the built-in Netscape logo is decoded locally. Native fixtures check
 rendered text, automatic selection and exact bytes, plus retry/collision/rename
 failures. See [payload provenance](../cmd/winfe/res/mailintro-provenance.md).
 
+The subsequent composition screenshot establishes the same 41x41 button
+height/width with gaps before Quote and Stop, beginning at (5,3), and a framed
+32x32 logo at top 1px/right 6px. The composer now uses that separate layout;
+the earlier 42x38 controls and stretched 40px logo differed. Original glyphs
+and captions are retained. Address remains disabled pending a recipient picker.
+
 Original runtime inspection covered browser chrome/About, local mail reading,
 empty News, new composition, the seven General Preferences pages and the limited
 blank Gold editor input observation above. It did not verify

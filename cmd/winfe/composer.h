@@ -14,6 +14,7 @@ int WFE_ComposerClose(MWContext *context);
 int WFE_ComposerSmoke(MWContext *source, const char *report, int is_news);
 /* Checks and captures the populated composition window. Never sends. */
 int WFE_ComposerUISmoke(MWContext *source, const char *report, const char *snapshot);
+int WFE_ComposerAddressSmoke(MWContext *source,const char *report,const char *snapshot);
 /* Quotes and interrupts only a loopback HTTP fixture. Never sends. */
 int WFE_ComposerQuoteSmoke(const char *report, const char *url);
 /* Sends a test message only if the configured endpoint is loopback:port. */

@@ -1,7 +1,7 @@
 static int WFE_RunAddressBookSmoke(const char *report,const char *snapshot,int reopen)
 {
     MWContext *source=WFE_NewWindow("about:blank");if(!source) return 2;
-    MWContext *addresses=FE_GetAddressBook(source,FALSE);
+    MWContext *addresses=reopen==2?WFE_AddressBookContext(FALSE):FE_GetAddressBook(source,FALSE);
     FILE *file=fopen(report,"wb");if(!file) {WFE_CloseWindow(source);return 3;}
     fprintf(file,"address_context=%d\n",addresses&&addresses->type==MWContextAddressBook);
     fclose(file);int result=1;

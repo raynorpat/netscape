@@ -883,6 +883,14 @@ bm_end_batch(MWContext* context)
   if (f->undo) UNDO_EndBatch(f->undo);
 }
 
+PUBLIC void BM_StartBatch(MWContext* context) { bm_start_batch(context); }
+PUBLIC void BM_EndBatch(MWContext* context) { bm_end_batch(context); }
+PUBLIC XP_Bool BM_ReadFailed(MWContext* context)
+{
+  CHKCONTEXT(context);
+  return GETFRAME(context)->readFailed;
+}
+
 static void 
 bm_refresh(MWContext* context, int32 first, int32 last)
 {
@@ -1210,7 +1218,7 @@ BM_SetDescription(MWContext* context, BM_Entry* entry, const char* newDesc)
 /*	BM_SetNickName returns FALSE if it reported an error to the user .
  *	It returns TRUE if everything worked fine.
  *  5-16-95 jefft
- *  Passing in NULL value removes the entry from the hash table.
+ *  Passing in NULL value clears the nickname and its hash entry with undo.
  */
 
 XP_Bool
@@ -1223,8 +1231,9 @@ BM_SetNickName(MWContext* context, BM_Entry* entry, const char* value)
 	if (!entry) return(TRUE);
 	if (!value) {
 	  /* 5-16-95 jefft -- bug#: 20808, remove entry from the hash table */
-		if (entry->nickname && *entry->nickname) {
-			XP_Remhash(f->nicknameTable, entry->nickname);
+		if (entry->nickname) {
+			if (*entry->nickname) XP_Remhash(f->nicknameTable, entry->nickname);
+			bm_CopyStringWithUndo(context, entry, &entry->nickname, NULL);
 		}
 		return(TRUE);
 	}
@@ -1241,24 +1250,24 @@ BM_SetNickName(MWContext* context, BM_Entry* entry, const char* value)
 		XP_FREE(pName);
 		return(retVal);
 	} else {
-		if (entry->nickname == NULL || value == NULL ||	XP_STRCMP(entry->nickname, value)) {
-			char* ptr;
-			for (ptr = pName ; *ptr ; ptr++) {
-				if (!isalnum(*ptr) && (*ptr != '-') && (*ptr != '_')) {
-					FE_Alert(context, XP_GetString(XP_BKMKS_INVALID_NICKNAME));
-					XP_FREE(pName);
-					return(FALSE);
-				}
-				/* convert to lowercase */
-				if (isupper(*ptr)) {
-					*ptr = (char)tolower(*ptr);
-				}
-			}
-			if (XP_Gethash(f->nicknameTable, pName, NULL)) {
-				FE_Alert(context, XP_GetString(XP_BKMKS_NICKNAME_ALREADY_EXISTS));
+		char* ptr;
+		BM_Entry* owner;
+		for (ptr = pName ; *ptr ; ptr++) {
+			if (!isalnum(*ptr) && (*ptr != '-') && (*ptr != '_')) {
+				FE_Alert(context, XP_GetString(XP_BKMKS_INVALID_NICKNAME));
 				XP_FREE(pName);
 				return(FALSE);
 			}
+			/* convert to lowercase */
+			if (isupper(*ptr)) {
+				*ptr = (char)tolower(*ptr);
+			}
+		}
+		owner = XP_Gethash(f->nicknameTable, pName, NULL);
+		if (owner && owner != entry) {
+			FE_Alert(context, XP_GetString(XP_BKMKS_NICKNAME_ALREADY_EXISTS));
+			XP_FREE(pName);
+			return(FALSE);
 		}
 		if (entry->nickname && *entry->nickname) {
 			XP_Remhash(f->nicknameTable, entry->nickname);
@@ -2958,7 +2967,7 @@ bm_TellGoingAway(MWContext* context, BM_Entry* entry, void* closure)
 											   cleared, adding undo stuff to
 											   bring it back if this entry
 											   somehow gets brought back. */
-	XP_ASSERT(entry->nickname != NULL);
+	XP_ASSERT(entry->nickname == NULL);
   }
 #ifdef DEBUG
   /* Confirm that we are not deleting any dangling aliases. */

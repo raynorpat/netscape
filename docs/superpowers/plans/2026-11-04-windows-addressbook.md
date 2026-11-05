@@ -51,12 +51,12 @@ Files: addressbook picker module/resources; composer.cpp toolbar/recipient
 integration and native smoke; Python UI checks and address-book integration test.
 Expose bool WFE_PickRecipients(owner, to, cc, bcc) for staged native edits.
 
-- [ ] Add failing native test for Address activation and To/Cc/Bcc selection.
-- [ ] Implement picker with available addresses and staged recipient rows;
+- [x] Add failing native test for Address activation and To/Cc/Bcc selection.
+- [x] Implement picker with available addresses and staged recipient rows;
   original MIME quoting/duplicate removal, explicit OK/Cancel, safe owner lifetime.
-- [ ] Enable Address only when composition can accept recipients; reveal Bcc
+- [x] Enable Address only when composition can accept recipients; reveal Bcc
   if populated, sync MSG headers, preserve body/attachments and dirty state.
-- [ ] Test empty/repeated/cancel/owner-close and actual queued/delivered MIME
+- [x] Test empty/repeated/cancel/owner-close and actual queued/delivered MIME
   through existing loopback tests. Build standard/Gold Debug/Release, run
   affected checks serially, refresh/verify release ZIPs, document and commit.
 
@@ -75,3 +75,25 @@ Expose bool WFE_PickRecipients(owner, to, cc, bcc) for staged native edits.
 - Item 1 evidence: initial native context assertion failed (address_context=0).
   Gold Debug seven targeted checks pass (66.17s); extended failed-read, retry,
   native menu and restart checks pass (1.52s). Native capture inspected.
+
+- Review added a single Properties undo batch and File > Retry Load. A strict
+  nickname-expansion regression failed before the shared BM fix: NULL removal
+  omitted its reverse undo event and left freed nicknames non-null. Clearing
+  through bm_CopyStringWithUndo fixes Undo/Redo and reload cleanup; same-entry
+  case-insensitive nickname updates are accepted. Read-only final review found
+  no additional correctness issues. Native address fixture passes (3.99s)
+  before the final full-matrix run.
+
+- Final source builds in standard/Gold Win32 Debug/Release. The address-book
+  fixture passes all four (Gold 4.09s/2.53s, standard 2.77s/2.36s), including
+  real MIME drafts; existing composition and loopback delivery pass in all four.
+- Full suites run serially: Gold 26/29 each, standard 24/26 each. Welcome and
+  News time out; Gold also has background-preferences timeouts. An isolated
+  background retry passes. Main-thread stacks block in Win32 AlphaBlend and
+  tooltip WindowFromPoint, and the previous packaged executable reproduces
+  the Welcome timeout. These are recorded limits, not claimed passing tests.
+
+- Both installed Release editions pass the address-book/picker fixture from
+  paths containing spaces. Both CPack ZIPs were refreshed; CRC, exact tested
+  executable bytes, installed executable bytes, welcome provenance and current
+  packaged Windows documentation were verified.

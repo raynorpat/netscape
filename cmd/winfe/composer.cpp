@@ -14,9 +14,12 @@
 #include "menu_resource.h"
 #include "window-menu.h"
 #include "mailsettings.h"
+#include "addressbook.h"
+#include "addressbook-resource.h"
 #include "legacy/genedit.h"
 extern "C" {
 #include "msgcom.h"
+#include "bkmks.h"
 #include "xp_file.h"
 #include "shist.h"
 void WFE_RegisterNativeWindow(MWContext *, HWND);
@@ -86,6 +89,7 @@ public:
     bool destroying = false, backend_closed = false, delivery = false;
     bool completing = false;
     bool saving = false, draft_done = false, draft_ok = false;
+    bool picking_addresses=false,close_after_picker=false;
     std::string draft_path;
     void Arrange();
     void SyncHeaders();
@@ -116,6 +120,7 @@ protected:
     afx_msg void OnRemove();
     afx_msg void OnHeaders();
     afx_msg void OnQuote();
+    afx_msg void OnAddress();
     afx_msg void OnStop();
     afx_msg void OnMailTo() { fields[2].SetFocus(); }
     afx_msg void OnCcTo() { fields[3].SetFocus(); }
@@ -152,6 +157,7 @@ BEGIN_MESSAGE_MAP(ComposerFrame, CFrameWnd)
  ON_COMMAND(IDC_COMPOSE_CANCEL, OnClose)
  ON_COMMAND(IDC_COMPOSE_HEADERS, OnHeaders)
  ON_COMMAND(IDC_COMPOSE_QUOTE, OnQuote)
+ ON_COMMAND(IDC_COMPOSE_ADDRESS, OnAddress)
  ON_COMMAND(IDC_COMPOSE_STOP, OnStop)
  ON_COMMAND(IDC_COMPOSE_MAILTO, OnMailTo)
  ON_COMMAND(IDC_COMPOSE_CC, OnCcTo)
@@ -390,8 +396,7 @@ void ComposerFrame::UpdateButtons()
     mail_to.EnableWindow(available);
     cc_to.EnableWindow(available);
     quote.EnableWindow(ready && !MSG_QuoteInProgress(&context) && command_enabled(&context, MSG_QuoteMessage));
-    /* This native front end has no address picker. */
-    address.EnableWindow(FALSE);
+    address.EnableWindow(available&&!picking_addresses);
     stop.EnableWindow(!saving && !backend_closed && (XP_IsContextStoppable(&context) || MSG_QuoteInProgress(&context)));
     status.busy = XP_IsContextBusy(&context) || MSG_QuoteInProgress(&context);
     status.Invalidate(FALSE);
@@ -416,6 +421,20 @@ void ComposerFrame::OnHeaders()
         if (enabled && checked != MSG_Checked) MSG_Command(&context, MSG_ShowAllHeaders);
     }
     Arrange();
+}
+
+void ComposerFrame::OnAddress()
+{
+    if(saving||backend_closed||picking_addresses||!context.msg_cframe||!command_enabled(&context,MSG_SendMessage)) return;
+    CString to=Header(2),cc=Header(3),bcc=Header(4);picking_addresses=true;
+    bool accepted=WFE_PickRecipients(this,to,cc,bcc);picking_addresses=false;
+    if(accepted&&!backend_closed&&context.msg_cframe&&(to!=Header(2)||cc!=Header(3)||bcc!=Header(4))) {
+        SetHeader(2,to);SetHeader(3,cc);SetHeader(4,bcc);
+        if(!bcc.IsEmpty()) displayed_headers|=MSG_BCC_HEADER_MASK;
+        dirty=true;Arrange();
+    }
+    UpdateButtons();
+    if(close_after_picker) {close_after_picker=false;PostMessage(WM_CLOSE);}
 }
 
 void ComposerFrame::OnHeaderCommand(UINT id)
@@ -596,7 +615,7 @@ void ComposerFrame::OnUpdateCommand(CCmdUI *command)
         enabled = ready;
         command->SetCheck((displayed_headers & MSG_ATTACHMENTS_HEADER_MASK) != 0);
     }
-    else if (id == IDC_COMPOSE_ADDRESS) enabled = false;
+    else if (id == IDC_COMPOSE_ADDRESS) enabled = enabled && !picking_addresses;
     else if (id == IDC_COMPOSE_STOP) enabled = !saving && !backend_closed && (XP_IsContextStoppable(&context) || MSG_QuoteInProgress(&context));
     else if (id == IDC_COMPOSE_QUOTE) enabled = ready && !MSG_QuoteInProgress(&context) && command_enabled(&context, MSG_QuoteMessage);
     else if (id == IDC_COMPOSE_LATER) enabled = ready && command_enabled(&context, MSG_SendMessageLater);
@@ -762,6 +781,7 @@ void ComposerFrame::SaveDraft()
 void ComposerFrame::OnClose()
 {
     if (destroying) return;
+    if(picking_addresses) {close_after_picker=true;WFE_CancelRecipientPicker(this);return;}
     if (!backend_closed && saving) {
         status.SetWindowText("Please wait for the draft to finish saving.");
         return;
@@ -1104,7 +1124,7 @@ static CRect compose_control_rect(ComposerFrame *frame, int id)
     return rect;
 }
 
-static bool compose_capture(ComposerFrame *frame, const char *path, bool client = true)
+static bool compose_capture(CWnd *frame, const char *path, bool client = true)
 {
     if (!path || !*path) return false;
     CRect area;
@@ -1306,7 +1326,7 @@ extern "C" int WFE_ComposerUISmoke(MWContext *source, const char *report, const 
     bool stop_idle = stop && !stop->IsWindowEnabled();
     bool passed = original_size && original_save_as && attachment_toggle && paste_quotation && wrap_toggle &&
         deferred_delivery && immediate_delivery && body_saved &&
-        titled && compact_labels && address_disabled && quote_backend && stop_idle && menu_labels == "File|Edit|View|Options|Window" &&
+        titled && compact_labels && !address_disabled && quote_backend && stop_idle && menu_labels == "File|Edit|View|Options|Window" &&
         toolbar_labels == "Send|Quote|Attach|Address|Stop" && toolbar_count == 5 &&
         compact && advanced && bcc_toggle && cc_toggle && retained && narrow_ok && parts >= 2 && captured && window_captured &&
         menu_commands[0] && menu_commands[1] && menu_commands[2];
@@ -1335,6 +1355,7 @@ extern "C" int WFE_ComposerUISmoke(MWContext *source, const char *report, const 
     return passed ? 0 : 1;
 }
 
+#include "composer-address-smoke.inc"
 static bool loopback_endpoint(const char *endpoint)
 {
     if (!endpoint) return false;

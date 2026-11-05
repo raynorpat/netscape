@@ -222,7 +222,8 @@ void FE_RememberPopPassword(MWContext *context, const char *password)
 
 MWContext *FE_GetAddressBook(MWContext *context, XP_Bool viewnow)
 {
-    return WFE_AddressBookContext(viewnow);
+    MWContext *addresses=WFE_AddressBookContext(viewnow);
+    return addresses&&!BM_ReadFailed(addresses)?addresses:NULL;
 }
 
 const char *FE_GetFolderDirectory(MWContext *context)

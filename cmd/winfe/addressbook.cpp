@@ -23,6 +23,11 @@ static AddressBookFrame *address_window;
 static const UINT WM_ADDRESS_REFRESH=WM_APP+62;
 static const UINT WM_ADDRESS_EDIT=WM_APP+63;
 static BM_Entry *pending_address_edit;
+class AddressEditBatch {
+public:
+    AddressEditBatch() {BM_StartBatch(&address_context);}
+    ~AddressEditBatch() {BM_EndBatch(&address_context);}
+};
 static void select_address(BM_Entry *entry)
 {
     BM_ClearAllSelection(&address_context,FALSE);
@@ -122,6 +127,7 @@ static bool apply_properties(BM_Entry *entry,bool fresh,const CString &name,cons
         }
         if(!error.IsEmpty()) {release_members();return false;}
     }
+    AddressEditBatch batch;
     if(!BM_SetNickName(&address_context,entry,nickname)) {
         release_members();
         error="Could not set the nickname.";return false;
@@ -165,7 +171,7 @@ class AddressBookFrame : public CFrameWnd {
 public:
     CTreeCtrl tree;CStatusBar status;bool refreshing=false,properties_open=false;
     void PostNcDestroy() override {delete this;}
-    void GetMessageString(UINT,CString &text) const override {text="Netscape";}
+    void GetMessageString(UINT,CString &text) const override {text=BM_ReadFailed(&address_context)?"Unable to load address book. Choose File > Retry Load.":"Netscape";}
     BM_Entry *Selected() {auto item=tree.GetSelectedItem();return item?(BM_Entry*)tree.GetItemData(item):nullptr;}
     void Append(BM_Entry *parent,HTREEITEM item) {
         for(auto entry=BM_GetChildren(parent);entry;entry=BM_GetNext(entry)) {
@@ -189,6 +195,7 @@ public:
         tree.SetRedraw(TRUE);tree.Invalidate();refreshing=false;
     }
     void Properties(BM_Entry *entry,bool fresh) {
+        if(BM_ReadFailed(&address_context)) {if(fresh&&entry) BM_FreeEntry(&address_context,entry);return;}
         if(entry&&BM_IsAlias(entry)) entry=BM_GetAliasOriginal(entry);
         if(!entry||entry==BM_GetRoot(&address_context)) return;
         if(properties_open) {if(fresh) BM_FreeEntry(&address_context,entry);return;}
@@ -223,16 +230,22 @@ protected:
         if(entry&&address_exists(BM_GetRoot(&address_context),entry)) {Select(entry);Properties(entry,false);}
         return 0;
     }
-    afx_msg void OnClose() {if(!properties_open&&save_addresses()) CFrameWnd::OnClose();}
+    afx_msg void OnClose() {if(!properties_open&&((BM_ReadFailed(&address_context)&&!BM_Modified(&address_context))||save_addresses())) CFrameWnd::OnClose();}
     afx_msg void OnDestroy() {WFE_UnregisterNativeWindow(&address_context);address_window=nullptr;pending_address_edit=nullptr;CFrameWnd::OnDestroy();}
     afx_msg void OnDoubleClick(NMHDR*,LRESULT *result) {Properties(Selected(),false);*result=0;}
     afx_msg void OnCommandRange(UINT command) {
         auto selected=Selected();
         if(command==IDC_AB_CLOSE) {SendMessage(WM_CLOSE);return;}
+        if(command==IDC_AB_RETRY_LOAD) {
+            bool discard=!BM_Modified(&address_context)||FE_Confirm((&address_context),"Discard unsaved address book changes and retry loading the file?");
+            if(discard) WFE_AddressBookRetryLoad(TRUE);
+            return;
+        }
+        if(BM_ReadFailed(&address_context)) return;
         if(command==IDC_AB_SAVE) {save_addresses();return;}
         if(command==IDC_AB_ADD_USER||command==IDC_AB_ADD_LIST) {Properties(command==IDC_AB_ADD_LIST?BM_NewHeader(""):BM_NewAddress("",""),true);return;}
         if(command==IDC_AB_PROPERTIES) {Properties(selected,false);return;}
-        if(command==IDC_AB_COPY||command==IDC_AB_CUT||command==IDC_AB_PASTE) return;
+        if(command==IDC_AB_COPY||command==IDC_AB_CUT||command==IDC_AB_PASTE||command==IDC_AB_SELECT_ALL) return;
         if(command==IDC_AB_COMPOSE) {
             if(selected&&selected!=BM_GetRoot(&address_context)) {
                 std::string to=full_address(selected);
@@ -248,8 +261,10 @@ protected:
     afx_msg void OnUpdate(CCmdUI *command) {
         auto selected=Selected();bool editable=selected&&selected!=BM_GetRoot(&address_context);bool enabled=true;
         if(command->m_nID==IDC_AB_PROPERTIES||command->m_nID==IDC_AB_DELETE||command->m_nID==IDC_AB_COMPOSE) enabled=editable;
-        if(command->m_nID==IDC_AB_COPY||command->m_nID==IDC_AB_CUT||command->m_nID==IDC_AB_PASTE) enabled=false;
+        if(command->m_nID==IDC_AB_COPY||command->m_nID==IDC_AB_CUT||command->m_nID==IDC_AB_PASTE||command->m_nID==IDC_AB_SELECT_ALL) enabled=false;
         if(command->m_nID==IDC_AB_UNDO||command->m_nID==IDC_AB_REDO) enabled=BM_FindCommandStatus(&address_context,command->m_nID==IDC_AB_UNDO?BM_Cmd_Undo:BM_Cmd_Redo);
+        if(command->m_nID==IDC_AB_RETRY_LOAD) enabled=BM_ReadFailed(&address_context)&&!properties_open;
+        else if(BM_ReadFailed(&address_context)&&command->m_nID!=IDC_AB_CLOSE) enabled=false;
         command->Enable(enabled);
     }
     DECLARE_MESSAGE_MAP()
@@ -264,8 +279,8 @@ BEGIN_MESSAGE_MAP(AddressBookFrame,CFrameWnd)
  ON_MESSAGE(WM_ADDRESS_REFRESH,OnRefresh)
  ON_MESSAGE(WM_ADDRESS_EDIT,OnEditRequest)
  ON_NOTIFY(NM_DBLCLK,IDC_AB_TREE,OnDoubleClick)
- ON_COMMAND_RANGE(IDC_AB_ADD_USER,IDC_AB_COMPOSE,OnCommandRange)
- ON_UPDATE_COMMAND_UI_RANGE(IDC_AB_ADD_USER,IDC_AB_COMPOSE,OnUpdate)
+ ON_COMMAND_RANGE(IDC_AB_ADD_USER,IDC_AB_RETRY_LOAD,OnCommandRange)
+ ON_UPDATE_COMMAND_UI_RANGE(IDC_AB_ADD_USER,IDC_AB_RETRY_LOAD,OnUpdate)
 END_MESSAGE_MAP()
 
 extern "C" MWContext *WFE_AddressBookContext(int view)
@@ -289,6 +304,16 @@ extern "C" void WFE_AddressBookShow(void)
     address_window->ShowWindow(SW_SHOWNORMAL);address_window->SetForegroundWindow();
 }
 extern "C" HWND WFE_AddressBookWindow(void) {return address_window?address_window->GetSafeHwnd():nullptr;}
+extern "C" int WFE_AddressBookRetryLoad(int discard_changes)
+{
+    if(!address_initialized&&!WFE_AddressBookContext(FALSE)) return 0;
+    if(!BM_ReadFailed(&address_context)) return 1;
+    if((address_window&&address_window->properties_open)||(BM_Modified(&address_context)&&!discard_changes)) return 0;
+    char *path=WH_FileName("address.htm",xpBookmarks);if(!path) return 0;
+    pending_address_edit=nullptr;BM_ReadBookmarksFromDisk(&address_context,path,nullptr);XP_FREE(path);
+    if(address_window) address_window->Refresh();
+    return !BM_ReadFailed(&address_context);
+}
 extern "C" void WFE_AddressBookChanged(MWContext *context)
 {
     if(context==&address_context&&address_window) address_window->PostMessage(WM_ADDRESS_REFRESH);

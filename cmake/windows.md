@@ -489,7 +489,7 @@ right-hand logo, compact Mail To/Cc/Subject/Attachment rows, a fixed-width body
 editor and segmented status bar. View exposes advanced recipient headers and
 newsgroups while retaining their backend values. Draft, Send Later, attachment
 removal, native editing shortcuts and Close remain available through the menus.
-Address is visibly disabled until an address book UI exists.
+Address opens the native Select Addresses dialog for To/Cc/Bcc recipients.
 
 Quote uses the original message translation path. Stop cancels that separate
 translation context, keeps the composition open and permits a retry. Explicit
@@ -502,8 +502,8 @@ The composer supports recipient headers, newsgroups, subject, plain text body,
 attachments, Send, Send Later, Save Draft and cancellation. Drafts and queued
 messages use the original MIME generator and mailbox writer. Drafts may be
 saved before entering recipients. Draft saving does not preserve the temporary
-Fcc override as a distinct composition setting. Address book UI, rich text
-editing, full subscription management and attachment viewing are not implemented.
+Fcc override as a distinct composition setting. Rich text editing, full
+subscription management and attachment viewing are not implemented.
 
 Transport uses the original plaintext POP/SMTP/NNTP engines. TLS, modern mail
 provider authentication and modern server interoperability are not provided by
@@ -843,8 +843,8 @@ The supplied original composition capture uses five 41x41 buttons beginning at
 dimensions instead of 42x38 buttons with uniform spacing. Its framed logo is
 32x32 at top 1px/right 6px, preserving the original 30x30 bitmap inside the
 native frame. Original bitmap 755 glyphs, captions and backend enablement remain.
-Address still needs a recipient picker and remains disabled; Quote follows the
-source message and Stop follows active quotation/delivery. The fixture records
+Address opens the recipient picker; Quote follows the source message and Stop
+follows active quotation/delivery. The fixture records
 every button and logo's actual native bounds/style, in addition to the existing
 header, narrow-window, attachment, draft and quotation checks. Expected scaled
 gaps/dimensions account for individual Windows rounding; broader DPI runtime
@@ -868,12 +868,17 @@ Add User, Add List, Properties, Delete, Undo/Redo, Save and Compose Message are
 connected. Mailing-list members use BM aliases to root contacts, preserving
 people and nicknames on restart. Properties validate header line breaks, single
 addresses and nickname uniqueness before applying edits; Cancel preserves
-existing values. Cut/copy/paste remain disabled pending address-block clipboard
-integration. Core edit callbacks are coalesced/deferred past active mutations;
+existing values. A complete Properties change, including large mailing-list
+replacement, is one Undo action. Nickname removal logs its inverse so contact
+Undo/Redo and reload cleanup retain a consistent lookup table. Cut/copy/paste
+and Select All remain disabled pending address-block clipboard and native
+multiple-selection integration. Core edit callbacks are coalesced/deferred past active mutations;
 ordinary selection avoids opening a properties dialog. Independent full-address
 queries clear temporary BM traversal marks. Failed reads block default saves;
-checked BM saves preserve disk data and permit retry. The address window refuses
-to close while its modal properties form is active.
+checked BM saves preserve disk data and permit retry. File > Retry Load
+recovers a failed read in the same process, confirming before discarding any
+unsaved changes. Failed reads also block recipient expansion and editing. The
+address window refuses to close while its modal properties form is active.
 
 Original Gold inspection established the title/tree, File/Edit/Item structure
 and compact Select Addresses dialog with To/Cc/Bcc and OK. Native properties
@@ -882,3 +887,47 @@ Gold Debug targeted checks pass 7/7 for address book, bookmarks, chrome,
 Mail/News/composition and delivery. The extended address fixture also passes
 failed-read preservation (1.52s), quoted HTML, restart persistence, independent
 bookmarks, list expansion, Cancel, deferred sender editing and failed save/retry.
+
+## Composer recipient picker
+
+Address opens a compact native Select Addresses dialog with the observed
+Address Book list and To/Cc/Bcc buttons followed by OK. Escape or the window
+close button cancels. Contacts and mailing lists use the original BM full-address
+and nickname expansion paths; MSG removes duplicate addresses across recipient
+fields. Dialog rows snapshot their strings so subsequent address-book changes
+cannot invalidate a stored entry pointer. Header folding is unfolded and raw
+line breaks/control bytes are rejected before recipient insertion.
+
+Recipient edits stay local until OK. Changed values update the original MSG
+headers, reveal Bcc when populated and mark the composition dirty. Cancel and
+unchanged acceptance preserve headers and dirty state; body and attachments are
+retained. Closing the composer while its picker is active cancels the dialog
+and defers owner destruction until the modal call returns.
+
+The address-book fixture drives actual native recipient buttons, exercises
+empty books, duplicate/group selection, cancellation and owner closure, then
+saves a real MIME draft. Python verifies its exact recipient sets, body and
+attachment, in addition to cross-process address persistence, 14-member list
+Undo/Redo, nickname restoration, failed-save preservation and failed-read retry.
+
+The final source builds successfully in Win32 Debug and Release for standard
+and Gold. Gold full-suite runs pass 26/29 in both configurations, including
+the new address-book/picker fixture, composition, browser chrome, bookmarks,
+mail layout and loopback messaging. Welcome, News layout and background
+preferences time out during those full runs; an isolated Debug background
+rerun passes. Native stack samples show a blocked AlphaBlend call in the
+Welcome reader and WindowFromPoint inside the News list tooltip path. The
+previous packaged executable also times out on the same Welcome fixture,
+so that failure predates this slice. Desktop inspection also timed out. These
+runs do not establish a clean full GUI suite; resolution of the desktop/Win32
+stalls remains separate from the verified address-book behavior.
+
+Standard full suites pass 24/26 in Debug (166.05s) and Release (161.33s),
+with Welcome and News layout timing out; background preferences pass in both.
+The final address-book/picker fixture passes in all four configurations:
+Gold Debug/Release 4.09s/2.53s, standard Debug/Release 2.77s/2.36s. Native
+composition and loopback delivery checks also pass in all four configurations.
+
+Both installed Release editions also pass the complete address-book/picker
+fixture from installation paths containing spaces, including saved MIME drafts
+and failed-read recovery. Native picker and composition captures were inspected.

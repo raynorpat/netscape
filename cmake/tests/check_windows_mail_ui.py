@@ -280,7 +280,7 @@ def check_compose_report(text, fields):
         "compact_headers": "1", "advanced_headers": "1", "narrow_layout": "1",
         "hidden_headers_retained": "1", "draft_command": "1",
         "attachment_command": "1", "cancel_command": "1",
-        "composition_title": "1", "address_disabled": "1",
+        "composition_title": "1", "address_disabled": "0",
         "original_save_as": "1", "attachment_toggle": "1", "paste_quotation": "1",
         "wrap_toggle": "1", "deferred_delivery": "1", "immediate_delivery": "1",
         "body_saved": "1", "original_size": "1",

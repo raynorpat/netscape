@@ -30,6 +30,7 @@ add_executable(netscape-win32 WIN32
  "${PROJECT_SOURCE_DIR}/cmd/winfe/history.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/bookmarks.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/addressbook.cpp"
+ "${PROJECT_SOURCE_DIR}/cmd/winfe/address-picker.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/netscape.rc"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/cmdparse.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/genedit.cpp")

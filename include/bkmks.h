@@ -544,6 +544,11 @@ extern const char* BM_GetFileName(MWContext* context);
 
 /* Whether the file will be written when Save is called. */
 extern XP_Bool BM_Modified(MWContext* context);
+/* A failed/incomplete load must not be saved over the original file. */
+extern XP_Bool BM_ReadFailed(MWContext* context);
+/* Group one frontend edit into the original engine's undo/update batch. */
+extern void BM_StartBatch(MWContext* context);
+extern void BM_EndBatch(MWContext* context);
 
 /* Convert a number of selections in a bm list into a block of memory that the
    user can use for cut and paste operations */

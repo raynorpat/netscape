@@ -3185,7 +3185,7 @@ public:
         POSITION position = arguments.GetHeadPosition();
         bool explicit_command=position!=nullptr;
         CString first = position ? arguments.GetNext(position) : "about:";
-        smoke_mode = first == "--addressbook-read-error-smoke" || first == "--applications-smoke" || first == "--applications-reopen-smoke" || first == "--background-smoke" || first == "--background-reopen-smoke" || first == "--dividers-smoke" || first == "--links-smoke" || first == "--interaction-smoke" || first == "--printing-smoke" || first == "--smoke-test" || first == "--mailnews-smoke" || first == "--composer-delivery-smoke"
+        smoke_mode = first == "--address-picker-smoke" || first == "--addressbook-read-error-smoke" || first == "--applications-smoke" || first == "--applications-reopen-smoke" || first == "--background-smoke" || first == "--background-reopen-smoke" || first == "--dividers-smoke" || first == "--links-smoke" || first == "--interaction-smoke" || first == "--printing-smoke" || first == "--smoke-test" || first == "--mailnews-smoke" || first == "--composer-delivery-smoke"
             || first == "--images-smoke" || first == "--forms-smoke" || first == "--frames-smoke" || first == "--downloads-smoke" || first == "--history-smoke" || first == "--history-reopen-smoke" || first == "--bookmarks-smoke" || first == "--chrome-smoke" || first == "--ui-gallery" || first == "--preferences-ui-smoke" || first == "--preferences-reopen-smoke" || first == "--news-ui-smoke" || first == "--mail-ui-smoke" || first == "--compose-ui-smoke" || first == "--mail-welcome-smoke" || first == "--addressbook-smoke" || first == "--addressbook-reopen-smoke"
 #ifdef EDITOR
             || first == "--editor-smoke"
@@ -3225,6 +3225,12 @@ public:
             else if(first=="--news-ui-smoke") { CString server=position?arguments.GetNext(position):"";m_nExitCode=WFE_RunNewsUISmoke(report,url,server); }
             else if(first=="--mail-ui-smoke") { m_nExitCode=WFE_RunMailUISmoke(report,url); }
             else if(first=="--addressbook-smoke"||first=="--addressbook-reopen-smoke"||first=="--addressbook-read-error-smoke") { m_nExitCode=WFE_RunAddressBookSmoke(report,url,first=="--addressbook-read-error-smoke"?2:first=="--addressbook-reopen-smoke"); }
+            else if(first=="--address-picker-smoke") {
+                WFE_SetMailPreference("email","picker@example.invalid");WFE_ApplyMailPreferences();
+                MWContext *source=WFE_NewWindow("about:blank");
+                m_nExitCode=source?WFE_ComposerAddressSmoke(source,report,url):2;
+                if(source) WFE_CloseWindow(source);
+            }
             else if(first=="--mail-welcome-smoke") { CString target=position?arguments.GetNext(position):"";m_nExitCode=WFE_RunMailWelcomeSmoke(report,url,target); }
             else if(first=="--compose-ui-smoke") {
                 WFE_SetMailPreference("email","preview@example.invalid");WFE_ApplyMailPreferences();

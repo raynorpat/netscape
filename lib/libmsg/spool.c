@@ -119,6 +119,9 @@ msg_open_first_unseen(URL_Struct *url, int status, MWContext *context)
 /* Makes sure the "inbox" folder exists.  If it doesn't, creates it, and
    places an introductory message in it.  Returns a folder object if the
    folder was so created; returns 0 if it failed, or already existed. */
+#ifdef WFE_OWNED_ABOUT_DATA
+extern int WFE_CreateMailIntro(const char *, const char *, const char *, int32);
+#endif
 void
 msg_EnsureInboxExists (MWContext *context)
 {
@@ -135,7 +138,9 @@ msg_EnsureInboxExists (MWContext *context)
 	  char *s;
 	  int32 L = 0;
 	  void *fe_data;
+#ifndef WFE_OWNED_ABOUT_DATA
 	  XP_File file;
+#endif
 	  char *content_type;
 	  char about_url[] = /* "mailintro" */
 		"\262\246\256\261\256\263\271\267\264";
@@ -147,6 +152,14 @@ msg_EnsureInboxExists (MWContext *context)
 	  XP_ASSERT (msg);
 	  if (!msg) return;
 
+#ifdef WFE_OWNED_ABOUT_DATA
+	  if (!WFE_CreateMailIntro(folder->data.mail.pathname,
+						   msg_GetDummyEnvelope(), msg, L))
+		{
+		  FE_Alert(context, XP_GetString(MK_MSG_CANT_CREATE_INBOX));
+		  folder = 0;
+		}
+#else
 	  file = XP_FileOpen (folder->data.mail.pathname, xpMailFolder,
 						  XP_FILE_WRITE_BIN);
 	  if (!file)
@@ -182,6 +195,7 @@ msg_EnsureInboxExists (MWContext *context)
 		}
 	  }
 		  
+#endif /* WFE_OWNED_ABOUT_DATA */
 #if defined(XP_MAC) || defined(WFE_OWNED_ABOUT_DATA)
 	  FE_FreeAboutData (fe_data, about_url);
 #endif /* XP_MAC */

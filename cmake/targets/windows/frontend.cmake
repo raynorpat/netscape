@@ -21,6 +21,7 @@ add_executable(netscape-win32 WIN32
  "${PROJECT_SOURCE_DIR}/cmd/winfe/services.c"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/composer.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/mailsettings.c"
+ "${PROJECT_SOURCE_DIR}/cmd/winfe/mailintro.c"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/preferences-settings.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/preferences-ui.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/images.cpp"
@@ -58,6 +59,8 @@ install(FILES "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/README.md"
  DESTINATION share/doc/netscape RENAME Windows-source-provenance.md COMPONENT Runtime)
 install(FILES "${PROJECT_SOURCE_DIR}/cmd/winfe/res/classic/README.md"
  DESTINATION share/doc/netscape RENAME Windows-artwork-provenance.md COMPONENT Runtime)
+install(FILES "${PROJECT_SOURCE_DIR}/cmd/winfe/res/mailintro-provenance.md"
+ DESTINATION share/doc/netscape RENAME Windows-mailintro-provenance.md COMPONENT Runtime)
 if(NETSCAPE_BUILD_WINDOWS_EDITOR)
  install(FILES "${PROJECT_SOURCE_DIR}/cmd/winfe/res/gold/README.md"
   DESTINATION share/doc/netscape RENAME Gold-resource-provenance.md COMPONENT Runtime)
@@ -155,6 +158,10 @@ if(BUILD_TESTING)
   "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_mail_ui.py"
   --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/mail-layout-test" --mode mail)
  set_tests_properties(windows_mail_layout PROPERTIES TIMEOUT 60)
+ add_test(NAME windows_mail_welcome COMMAND "${Python3_EXECUTABLE}"
+  "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_mail_welcome.py"
+  --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/mail-welcome-test")
+ set_tests_properties(windows_mail_welcome PROPERTIES TIMEOUT 100)
  add_test(NAME windows_composition_ui COMMAND "${Python3_EXECUTABLE}"
   "${PROJECT_SOURCE_DIR}/cmake/tests/check_windows_mail_ui.py"
   --executable "$<TARGET_FILE:netscape-win32>" --output "${PROJECT_BINARY_DIR}/composition-ui-test" --mode compose)

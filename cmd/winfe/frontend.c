@@ -377,6 +377,7 @@ void *FE_AboutData(const char *which, char **data, int32 *length, char **content
         *data = _strdup(blank); *length = *data ? sizeof(blank) - 1 : 0; if (*data) ++about_allocations; return *data;
     }
     if (which && !stricmp(which, "logo")) { identifier = IDR_CLASSIC_ABOUT_LOGO; *content_type = "image/gif"; }
+    else if (which && !stricmp(which, "mailintro")) { identifier = IDR_MAIL_INTRO; *content_type = "message/rfc822"; }
     else if (which && !stricmp(which, "license")) { identifier = IDR_CLASSIC_LICENSE; *content_type = "text/plain"; }
     resource = FindResourceA(module, MAKEINTRESOURCEA(identifier), RT_RCDATA);
     loaded = resource ? LoadResource(module, resource) : NULL;

@@ -94,8 +94,8 @@ int WFE_SetMailPreference(const char *key, const char *value)
 
 const char *WFE_MailDirectory(void)
 {
-    /* QUEUE_FOLDER_NAME in libmsg/msg.h is Outbox. */
-    static const char *names[] = { "Inbox", "Drafts", "Sent", "Outbox", "Trash" };
+    /* MSG creates Inbox with its welcome, and other folders when first used. */
+    static const char *names[] = { "Sent" };
     char path[MAX_PATH];
     const char *profile;
     DWORD attributes;

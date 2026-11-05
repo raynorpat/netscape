@@ -35,6 +35,7 @@ static void invalid_parameter(const wchar_t *expression, const wchar_t *function
 #include "msgcom.h"
 #include "libi18n.h"
 #include "mailsettings.h"
+#include "mailintro.h"
 #include "composer.h"
 #include "composer_resource.h"
 #include "images.h"
@@ -1004,6 +1005,28 @@ static CString display_header(MWContext *context, const char *raw)
     free(decoded);
     return text;
 }
+static CString display_message_date(MWContext *context,time_t date)
+{
+    struct tm local={};SYSTEMTIME value={};char day[128],clock[128],pattern[128];CString format;
+    if(!localtime_s(&local,&date)) {
+        value.wYear=(WORD)(local.tm_year+1900);value.wMonth=(WORD)(local.tm_mon+1);
+        value.wDay=(WORD)local.tm_mday;value.wHour=(WORD)local.tm_hour;value.wMinute=(WORD)local.tm_min;
+        if(GetLocaleInfoA(LOCALE_USER_DEFAULT,LOCALE_SSHORTDATE,pattern,sizeof(pattern))) {
+            bool quoted=false;
+            for(int i=0;pattern[i];++i) {
+                if(pattern[i]=='\'') quoted=!quoted;
+                if(!quoted&&pattern[i]=='y') {
+                    while(pattern[i+1]=='y') ++i;
+                    format+="yyyy";
+                } else format+=pattern[i];
+            }
+        }
+        if(!format.IsEmpty()&&GetDateFormatA(LOCALE_USER_DEFAULT,0,&value,format,day,sizeof(day))
+           &&GetTimeFormatA(LOCALE_USER_DEFAULT,TIME_NOSECONDS|TIME_FORCE24HOURFORMAT|TIME_NOTIMEMARKER,
+                            &value,nullptr,clock,sizeof(clock))) return CString(day)+" "+clock;
+    }
+    return MSG_FormatDate(context,date);
+}
 void BrowserFrame::RefreshMailLists()
 {
     if (!initialized || !mode || !context.msgframe || updating_lists) return;
@@ -1024,8 +1047,8 @@ void BrowserFrame::RefreshMailLists()
                 LVITEM subscription={};subscription.mask=LVIF_IMAGE;subscription.iItem=i;subscription.iSubItem=1;
                 subscription.iImage=mail_panes.SubscriptionImage(folder.flags);folders.SetItem(&subscription);
             } else {
-                if(folder.unseen>=0) value.Format("%d",folder.unseen);folders.SetItemText(i,1,value);
-                value.Empty();if(folder.total>=0) value.Format("%d",folder.total);folders.SetItemText(i,2,value);
+                if(folder.unseen>0) value.Format("%d",folder.unseen);folders.SetItemText(i,1,value);
+                value.Empty();if(folder.total>0) value.Format("%d",folder.total);folders.SetItemText(i,2,value);
             }
         }
         if (folder.flags & MSG_FOLDER_FLAG_SELECTED) folder_selection = i;
@@ -1039,7 +1062,7 @@ void BrowserFrame::RefreshMailLists()
         LVITEM status_icon={};status_icon.mask=LVIF_IMAGE;status_icon.iItem=i;status_icon.iSubItem=MailPaneUI::FlagColumn;
         status_icon.iImage=(message.flags&MSG_FLAG_MARKED)?MailPaneUI::FlagImage:I_IMAGENONE;messages.SetItem(&status_icon);
         messages.SetItemText(i, MailPaneUI::SubjectColumn, subject);
-        messages.SetItemText(i, MailPaneUI::DateColumn, MSG_FormatDate(&context, message.date));
+        messages.SetItemText(i, MailPaneUI::DateColumn, display_message_date(&context, message.date));
         if (message.flags & MSG_FLAG_SELECTED) {message_selection=i;messages.SetItemState(i,LVIS_SELECTED,LVIS_SELECTED);}
     }
     if (folder_selection >= 0 && folder_selection < folders.GetItemCount()) {
@@ -2729,6 +2752,7 @@ static bool ui_drag(CWnd *owner,int id,CPoint target)
 }
 #include "menu-smoke.inc"
 #include "messaging-geometry-smoke.inc"
+#include "mail-welcome-smoke.inc"
 #ifdef EDITOR
 #include "editor-smoke.inc"
 #endif
@@ -3158,7 +3182,7 @@ public:
         bool explicit_command=position!=nullptr;
         CString first = position ? arguments.GetNext(position) : "about:";
         smoke_mode = first == "--applications-smoke" || first == "--applications-reopen-smoke" || first == "--background-smoke" || first == "--background-reopen-smoke" || first == "--dividers-smoke" || first == "--links-smoke" || first == "--interaction-smoke" || first == "--printing-smoke" || first == "--smoke-test" || first == "--mailnews-smoke" || first == "--composer-delivery-smoke"
-            || first == "--images-smoke" || first == "--forms-smoke" || first == "--frames-smoke" || first == "--downloads-smoke" || first == "--history-smoke" || first == "--history-reopen-smoke" || first == "--bookmarks-smoke" || first == "--chrome-smoke" || first == "--ui-gallery" || first == "--preferences-ui-smoke" || first == "--preferences-reopen-smoke" || first == "--news-ui-smoke" || first == "--mail-ui-smoke" || first == "--compose-ui-smoke"
+            || first == "--images-smoke" || first == "--forms-smoke" || first == "--frames-smoke" || first == "--downloads-smoke" || first == "--history-smoke" || first == "--history-reopen-smoke" || first == "--bookmarks-smoke" || first == "--chrome-smoke" || first == "--ui-gallery" || first == "--preferences-ui-smoke" || first == "--preferences-reopen-smoke" || first == "--news-ui-smoke" || first == "--mail-ui-smoke" || first == "--compose-ui-smoke" || first == "--mail-welcome-smoke"
 #ifdef EDITOR
             || first == "--editor-smoke"
             || first == "--editor-workflows-smoke" || first == "--editor-publish-smoke"
@@ -3196,6 +3220,7 @@ public:
             else if(first=="--preferences-ui-smoke"||first=="--preferences-reopen-smoke") { CString page=position?arguments.GetNext(position):"";m_nExitCode=WFE_RunPreferencesSmoke(report,url,page,first=="--preferences-reopen-smoke"); }
             else if(first=="--news-ui-smoke") { CString server=position?arguments.GetNext(position):"";m_nExitCode=WFE_RunNewsUISmoke(report,url,server); }
             else if(first=="--mail-ui-smoke") { m_nExitCode=WFE_RunMailUISmoke(report,url); }
+            else if(first=="--mail-welcome-smoke") { CString target=position?arguments.GetNext(position):"";m_nExitCode=WFE_RunMailWelcomeSmoke(report,url,target); }
             else if(first=="--compose-ui-smoke") {
                 WFE_SetMailPreference("email","preview@example.invalid");WFE_ApplyMailPreferences();
                 MWContext *source=WFE_NewWindow("about:blank");

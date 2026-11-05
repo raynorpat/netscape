@@ -164,6 +164,7 @@ IDR_CLASSIC_ABOUT RCDATA "res/gold/about.html"
 IDR_CLASSIC_ABOUT RCDATA "res/about.html"
 #endif
 IDR_CLASSIC_ABOUT_LOGO RCDATA "../../lib/xp/biglogo.gif"
+IDR_MAIL_INTRO RCDATA "res/mailintro.msg"
 IDR_CLASSIC_LICENSE RCDATA "../../l10n/us/xp/LICENSE-export"
 
 535 BITMAP "res/classic/quote.bmp"

@@ -426,8 +426,11 @@ unconfigured.
 
 The folder and message controls call the original MSG backend; the reader uses
 its MIME conversion, HTML layout and native GDI text drawing. Local mail uses
-mbox files in the profile's `Mail` directory. Inbox, Drafts, Sent, Outbox and
-Trash are created only when missing. Message commands include reply, reply all,
+mbox files in the profile's `Mail` directory. Sent is prepared initially; the
+original MSG engine creates a missing Inbox with the original Mozilla Welcome
+message, selects it and opens its HTML through MIME/LO. Existing Inboxes,
+including empty ones, are preserved. Drafts, Outbox and Trash are created when
+needed. Message commands include reply, reply all,
 forward, mark read, delete mail, fetch mail/more news, and send queued messages.
 
 Mail and news now follow the supplied classic Mail reference: their own menus,
@@ -462,7 +465,7 @@ or all newsgroups. Existing subscriptions use the flat subscribed view; a new
 host with no subscriptions initially exposes its full hierarchy. Completed
 requests preserve an explicitly chosen view and its article selection.
 
-News starts with a taller upper band and wider server list, plus a full-width
+News uses a 303px server pane and 203px upper lists at 96 DPI, plus a full-width
 white reader when no article is selected. Loaded articles retain normal MIME
 rendering. The article list has Sender, separate priority/flag cells, Subject and Date columns. Both pane
 dividers remain draggable. Directory rows do not report message counts, and
@@ -805,3 +808,29 @@ captures were reviewed against the original Gold window and supplied comparison.
 The resource check now verifies 84 compiled bitmap/icon payloads; 97 generated
 assets reproduce from 33 hashed inputs, including the original Location icon.
 Both Release ZIPs are refreshed with the tested executables and updated docs.
+
+## Mail/News Gold screenshot follow-up
+
+Mail/News now use the original 41x41 buttons, 8px group gaps, 53px chrome and
+32px framed logo. Mail's folder pane is 333px wide and News's is 303px; both
+upper lists are 203px high. Sender/priority/flag/Subject widths are
+150/16/16/150px, with Date expanding. Folder headers retain their native bevels;
+the Date marker follows the actual backend sort. News uses original bitmaps
+702/723 for the expanded host/newsgroup; Mail leaf folders stay closed when
+selected. Dates use the Windows locale order, four-digit year and 24-hour time.
+Mail zero counts are blank and its status uses the engine's wasted-space text.
+
+The Windows welcome payload is retained byte-for-byte, with provenance in
+`cmd/winfe/res/mailintro-provenance.md`. Its original remote banner URL remains;
+that retired image has not been recreated. The built-in Netscape logo uses the
+existing image library. The native welcome fixture caches only that local image
+and disables remote image loads. It verifies automatic first-run reading, all
+three body sections, exact payload SHA-256, restart idempotence, existing empty
+and populated Inbox preservation, blocking-file failure/retry, staging-name
+collisions and failed rename cleanup. The Windows adapter checks writes, flush
+and close before exclusive publication; those three individual system-call
+failures have not been fault-injected.
+
+Mail/News and welcome verification passed the complete standard 25/25 and
+Gold 28/28 suites in both Win32 Debug and Release on 2026-11-04. These full
+runs preceded the separate composition-toolbar screenshot follow-up below.

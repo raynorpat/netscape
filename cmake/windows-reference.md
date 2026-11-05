@@ -42,7 +42,7 @@ association changes, external mail delivery or news posting was performed.
 | --- | --- | --- |
 | Browser | Running standard 3.02 About page; nine icon/caption toolbar buttons, Location, six directory shortcuts and nine top-level menus. Later comparison also used the running Gold 3.02 browser and the user's side-by-side capture. | Standard nine-button/Gold ten-button toolbars use original Windows artwork. The browser now follows the observed button grouping, Location icon/input, directory widths, logo and status-pane layout. Native printing/preview is implemented as described in windows.md; original printer-output equivalence remains unverified. |
 | Gold editor | Opened a blank original Gold editor; three icon-only toolbar bars and editor MENU 101. A physical `g` keypress produced a visible character. Sky's Unicode `type_text` injection did not enter the intended text. | Optional native EDT integration uses the same menu inventory, bitmap cells and editor icon, with a 104px toolbar area at 96 DPI and chosen 1105 x 765 outer reference size. Native editing/save fixtures pass as described below; these observations do not establish general original input, formatting, save or property-dialog equivalence. |
-| Mail | Opened Inbox containing the same two synthetic MIME messages used by our fixture; selected and read the base64 message. Ten toolbar buttons, eight menus, folder/message lists above a full-width reader. | At matching reference sizes, the port now uses the observed 303px folder column and 203px upper lists. Original list left the fixture's US-ASCII encoded-word headers literal; the port decodes them. |
+| Mail | Opened Inbox containing the same two synthetic MIME messages used by our fixture; selected and read the base64 message. Ten toolbar buttons, eight menus, folder/message lists above a full-width reader. | The later Gold capture establishes a 333px Mail folder column and 203px upper lists, now used by the port. Original list left the fixture's US-ASCII encoded-word headers literal; the port decodes them. |
 | Composer | Opened a new unsent composition. Five toolbar buttons, five menus, compact Mail To/Cc/Subject/Attachment rows and fixed-width editor. | Structure agrees. Original Address is enabled; ours is disabled pending address-book UI. Fresh original window was approximately 534 x 953 pixels; the port now uses those dimensions, constrained to the monitor work area. |
 | News | Opened the original empty News window: twelve buttons, eight menus, server/group tree, three subscribed default groups and unknown unread counts. Default host `news` failed DNS. | Original reply-button order and Re:Both caption, separate priority/flag columns, Date, yellow subscription boxes and white empty reader now match. No original article retrieval was verified. |
 | Preferences | Opened and captured Appearance, Fonts, Colors, Images, Apps, Helpers and Language. | All seven native pages now exist; supported settings persist and affect the browser. Unsupported controls are disabled as detailed below. |
@@ -196,6 +196,15 @@ respectively. Mail leaf folders retain their closed-folder image when selected.
 Mail status displays the original backend's mailbox path/wasted-space text.
 The Gold Debug artwork, messaging, empty-News, chrome, Mail/News layout and
 composition tests pass 7/7; native captures were inspected at 96 DPI.
+
+The original first-run Windows Inbox supplied the 3,513-byte Mozilla Welcome
+payload, dated December 13, 1995. Its exact headers/HTML are now embedded for the
+original MSG first-run path; they differ from the Unix welcome resource.
+Fresh profiles show Inbox/Sent and automatically read Welcome. Existing empty
+or populated Inboxes are preserved. The historical remote banner is retained
+as a URL; the built-in Netscape logo is decoded locally. Native fixtures check
+rendered text, automatic selection and exact bytes, plus retry/collision/rename
+failures. See [payload provenance](../cmd/winfe/res/mailintro-provenance.md).
 
 Original runtime inspection covered browser chrome/About, local mail reading,
 empty News, new composition, the seven General Preferences pages and the limited

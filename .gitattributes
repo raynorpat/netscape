@@ -1,0 +1,2 @@
+# Preserve the original resource bytes, including CRLF and trailing spaces.
+cmd/winfe/res/mailintro.msg -text -whitespace

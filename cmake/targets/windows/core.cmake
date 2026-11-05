@@ -44,8 +44,10 @@ add_custom_target(netscape_windows_core DEPENDS ${native_core})
 include(CTest)
 if(BUILD_TESTING)
  if(NETSCAPE_ENABLE_BEARSSL_HTTPS)
+  add_executable(netscape_tls_dependency_test "${PROJECT_SOURCE_DIR}/cmake/tests/tls_dependency_test.c")
+  target_link_libraries(netscape_tls_dependency_test PRIVATE netscape_bearssl)
   add_executable(netscape_tls_engine_test "${PROJECT_SOURCE_DIR}/cmake/tests/tls_engine_test.c")
-  target_link_libraries(netscape_tls_engine_test PRIVATE netscape_bearssl)
+  target_link_libraries(netscape_tls_engine_test PRIVATE netscape_tls ws2_32)
   add_executable(netscape_tls_trust_test "${PROJECT_SOURCE_DIR}/cmake/tests/tls_trust_test.c")
   target_include_directories(netscape_tls_trust_test PRIVATE "${PROJECT_SOURCE_DIR}/security/tls" "${PROJECT_SOURCE_DIR}/include")
   target_link_libraries(netscape_tls_trust_test PRIVATE netscape_tls netscape_bearssl)
@@ -62,7 +64,24 @@ if(BUILD_TESTING)
   file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/tls-trust/allocation")
   add_test(NAME tls_trust_allocation COMMAND netscape_tls_trust_alloc_test "${PROJECT_SOURCE_DIR}/cmake/tests/data/tls")
   set_tests_properties(tls_trust_allocation PROPERTIES TIMEOUT 20 WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/tls-trust/allocation")
-  add_test(NAME tls_dependency COMMAND netscape_tls_engine_test)
+  find_package(Python3 REQUIRED COMPONENTS Interpreter)
+  find_program(NETSCAPE_TLS_FIXTURE_OPENSSL NAMES openssl
+   HINTS "$ENV{LOCALAPPDATA}/Programs/Git/mingw64/bin" REQUIRED)
+  add_test(NAME tls_engine_prerequisites COMMAND "${Python3_EXECUTABLE}"
+   "${PROJECT_SOURCE_DIR}/cmake/tests/tls_fixture.py"
+   --openssl "${NETSCAPE_TLS_FIXTURE_OPENSSL}" --case prerequisites)
+  set_tests_properties(tls_engine_prerequisites PROPERTIES FIXTURES_SETUP tls_peer TIMEOUT 40)
+  foreach(case success_1 success_7 success_4096 mixed_case future fail_name fail_root fail_expired fail_future
+    fail_identity fail_ipv4hex fail_ipv6 fail_nonascii fail_entropy fail_time fail_time_range fail_time_negative_range
+    cancel close_pending renegotiate truncate alert malformed_alert fail_client_auth
+    fail_tls10 fail_tls11 legacy10 legacy11 legacy_ec fail_forbidden fail_forbidden_legacy
+    fail_default_cbc rsa128 rsa256 rsachacha ec128 ec256 ecchacha)
+   add_test(NAME tls_engine_${case} COMMAND "${Python3_EXECUTABLE}"
+    "${PROJECT_SOURCE_DIR}/cmake/tests/tls_fixture.py"
+    --openssl "${NETSCAPE_TLS_FIXTURE_OPENSSL}" --client "$<TARGET_FILE:netscape_tls_engine_test>" --case ${case})
+   set_tests_properties(tls_engine_${case} PROPERTIES FIXTURES_REQUIRED tls_peer TIMEOUT 70)
+  endforeach()
+  add_test(NAME tls_dependency COMMAND netscape_tls_dependency_test)
   set_tests_properties(tls_dependency PROPERTIES TIMEOUT 20)
  endif()
  add_executable(netscape_windows_core_smoke "${PROJECT_SOURCE_DIR}/cmake/tests/windows_core_smoke.c")

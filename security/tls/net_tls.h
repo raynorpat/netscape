@@ -2,6 +2,7 @@
 #define NET_TLS_H
 
 #include <stddef.h>
+#include <stdint.h>
 #include "net_tls_types.h"
 
 #ifdef __cplusplus
@@ -9,6 +10,36 @@ extern "C" {
 #endif
 
 typedef struct NETTLSTrust NETTLSTrust;
+typedef struct NETTLS NETTLS;
+
+typedef struct {
+    void *arg;
+    int (*recv)(void *, void *, size_t);
+    int (*send)(void *, const void *, size_t);
+    int (*entropy)(void *, void *, size_t);
+    int (*utc_time)(void *, int64_t *);
+} NETTLSIO;
+
+#define NET_TLS_WANT_READ  1
+#define NET_TLS_WANT_WRITE 2
+#define NET_TLS_WANT_LOCAL 4
+
+/* The caller supplies nonblocking I/O (-2 would-block, -1 failure, 0 EOF),
+ * secure entropy and trustworthy UTC seconds. Callbacks never retain buffers.
+ * Create retains trust. All calls belong to one owning event loop.
+ * Read/Write require a nonzero length and return bytes, -2 pending, -1 fatal; only Read returns clean EOF.
+ * Pump performs bounded work; LOCAL requests another turn without socket I/O.
+ * Failed Create clears *out; no info object is returned on creation failure.
+ */
+int NETTLS_Create(const char *hostname, NETTLSTrust *trust, int allow_legacy,
+                  const NETTLSIO *io, NETTLS **out);
+int NETTLS_Pump(NETTLS *tls);
+int NETTLS_Read(NETTLS *tls, void *buf, size_t len);
+int NETTLS_Write(NETTLS *tls, const void *buf, size_t len);
+int NETTLS_Wants(const NETTLS *tls);
+void NETTLS_GetInfo(const NETTLS *tls, NETTLSInfo *info);
+void NETTLS_Close(NETTLS *tls);
+void NETTLS_Destroy(NETTLS *tls);
 
 /* A successful load owns one reference. Failure always clears *out.
  * The immutable store owns all its data; path and parser buffers may go away.

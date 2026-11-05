@@ -93,3 +93,30 @@ if(BUILD_TESTING)
  add_test(NAME windows_socket_smoke COMMAND netscape_windows_socket_smoke)
  set_tests_properties(windows_socket_smoke PROPERTIES TIMEOUT 20)
 endif()
+if(BUILD_TESTING AND NETSCAPE_ENABLE_BEARSSL_HTTPS)
+ add_executable(netscape_tls_socket_test "${PROJECT_SOURCE_DIR}/cmake/tests/tls_socket_test.c")
+ target_link_libraries(netscape_tls_socket_test PRIVATE netscape_tls netscape_bearssl)
+ add_test(NAME tls_socket COMMAND netscape_tls_socket_test "${PROJECT_SOURCE_DIR}/cmake/tests/data/tls/test-ca.pem")
+ target_include_directories(netscape_tls_socket_test PRIVATE "${PROJECT_SOURCE_DIR}/third_party/bearssl/upstream/inc")
+ add_executable(netscape_tls_platform_test "${PROJECT_SOURCE_DIR}/cmake/tests/tls_platform_test.c"
+  "${PROJECT_SOURCE_DIR}/cmd/winfe/tls-platform.c")
+ target_link_libraries(netscape_tls_platform_test PRIVATE netscape_tls ws2_32 bcrypt)
+ add_custom_command(TARGET netscape_tls_platform_test POST_BUILD
+  COMMAND "${CMAKE_COMMAND}" -E make_directory "$<TARGET_FILE_DIR:netscape_tls_platform_test>/../share/netscape/ca"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${PROJECT_SOURCE_DIR}/security/ca/cacert.pem"
+   "$<TARGET_FILE_DIR:netscape_tls_platform_test>/../share/netscape/ca/cacert.pem")
+ add_custom_command(TARGET netscape_tls_platform_test POST_BUILD
+  COMMAND "${CMAKE_COMMAND}" -E make_directory "${PROJECT_BINARY_DIR}/tls-platform-missing/bin"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:netscape_tls_platform_test>"
+   "${PROJECT_BINARY_DIR}/tls-platform-missing/bin/tls-platform-test.exe")
+ add_test(NAME tls_socket_platform_missing COMMAND "${PROJECT_BINARY_DIR}/tls-platform-missing/bin/tls-platform-test.exe" missing)
+ set_tests_properties(tls_socket_platform_missing PROPERTIES TIMEOUT 20 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/security/ca")
+ add_test(NAME tls_socket_platform COMMAND netscape_tls_platform_test)
+ foreach(case success_1 success_4096 fail_name fail_root)
+  add_test(NAME tls_socket_peer_${case} COMMAND "${Python3_EXECUTABLE}"
+   "${PROJECT_SOURCE_DIR}/cmake/tests/tls_fixture.py"
+   --openssl "${NETSCAPE_TLS_FIXTURE_OPENSSL}" --client "$<TARGET_FILE:netscape_tls_platform_test>" --case ${case})
+  set_tests_properties(tls_socket_peer_${case} PROPERTIES FIXTURES_REQUIRED tls_peer TIMEOUT 70)
+ endforeach()
+ set_tests_properties(tls_socket tls_socket_platform PROPERTIES TIMEOUT 20)
+endif()

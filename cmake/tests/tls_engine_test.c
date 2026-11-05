@@ -63,6 +63,7 @@ int main(int argc, char **argv)
     NETTLS *tls = NULL;
     NETTLSIO io = { NULL, receive, transmit, entropy, utc };
     NETTLSInfo info;
+    NETTLSError creation_error;
     char error[128], tx[PAYLOAD], rx[PAYLOAD], byte;
     const char *name = "fixture.test", *mode;
     int i, r = 0, written = 0, readn = 0, legacy, expected_failure;
@@ -87,7 +88,10 @@ int main(int argc, char **argv)
     if (!strcmp(mode, "fail_identity") || !strcmp(mode, "fail_ipv6") ||
         !strcmp(mode, "fail_ipv4hex") || !strcmp(mode, "fail_nonascii") || !entropy_ok || !time_ok ||
         !strcmp(mode, "fail_time_range") || !strcmp(mode, "fail_time_negative_range")) {
-        CHECK(!NETTLS_Create(name, trust, legacy, &io, &tls));
+        CHECK(!NETTLS_CreateWithError(name, trust, legacy, &io, &tls, &creation_error));
+        CHECK(creation_error == (!entropy_ok ? NET_TLS_ERROR_ENTROPY :
+            (!time_ok || !strcmp(mode, "fail_time_range") || !strcmp(mode, "fail_time_negative_range")) ?
+            NET_TLS_ERROR_TIME : NET_TLS_ERROR_IDENTITY));
         CHECK(tls == NULL);
         NETTLS_GetInfo(tls, &info);
         assert(info.authenticated == 0); CHECK(!info.authenticated);

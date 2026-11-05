@@ -113,6 +113,10 @@ int WFE_PlatformInit(void)
     FE_UserNewsRC = wfe_profile;
     FE_DownloadDir = wfe_profile;
     wfe_initialized = 1;
+#ifdef NETSCAPE_USE_BEARSSL
+    /* CA failure disables HTTPS only. Preferences initialize after platform. */
+    (void)WFE_TLSInit();
+#endif
     return 1;
 }
 
@@ -705,6 +709,9 @@ void WFE_PlatformShutdown(void)
         free(wfe_watches);
         wfe_watches = next;
     }
+#ifdef NETSCAPE_USE_BEARSSL
+    WFE_TLSShutdown();
+#endif
     if (wfe_initialized) WSACleanup();
     wfe_initialized = 0;
 }

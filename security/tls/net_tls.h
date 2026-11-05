@@ -26,13 +26,18 @@ typedef struct {
 
 /* The caller supplies nonblocking I/O (-2 would-block, -1 failure, 0 EOF),
  * secure entropy and trustworthy UTC seconds. Callbacks never retain buffers.
+ * Callback arg remains caller-owned through Destroy.
  * Create retains trust. All calls belong to one owning event loop.
  * Read/Write require a nonzero length and return bytes, -2 pending, -1 fatal; only Read returns clean EOF.
- * Pump performs bounded work; LOCAL requests another turn without socket I/O.
- * Failed Create clears *out; no info object is returned on creation failure.
+ * Pump performs bounded work; LOCAL requests another turn without waiting for socket readiness.
+ * Failed Create clears *out; CreateWithError also returns a typed reason.
+ * Close is idempotent and attempts one bounded pump; Pump may drain later wants.
+ * Destroy releases state and trust, never a native socket.
  */
 int NETTLS_Create(const char *hostname, NETTLSTrust *trust, int allow_legacy,
                   const NETTLSIO *io, NETTLS **out);
+int NETTLS_CreateWithError(const char *hostname, NETTLSTrust *trust, int allow_legacy,
+                           const NETTLSIO *io, NETTLS **out, NETTLSError *error);
 int NETTLS_Pump(NETTLS *tls);
 int NETTLS_Read(NETTLS *tls, void *buf, size_t len);
 int NETTLS_Write(NETTLS *tls, const void *buf, size_t len);

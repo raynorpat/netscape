@@ -31,6 +31,14 @@ add_executable(netscape-win32 WIN32
  "${PROJECT_SOURCE_DIR}/cmd/winfe/netscape.rc"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/cmdparse.cpp"
  "${PROJECT_SOURCE_DIR}/cmd/winfe/legacy/genedit.cpp")
+if(NETSCAPE_ENABLE_BEARSSL_HTTPS)
+ target_sources(netscape-win32 PRIVATE "${PROJECT_SOURCE_DIR}/cmd/winfe/tls-platform.c")
+ target_link_libraries(netscape-win32 PRIVATE netscape_tls bcrypt)
+ add_custom_command(TARGET netscape-win32 POST_BUILD
+  COMMAND "${CMAKE_COMMAND}" -E make_directory "$<TARGET_FILE_DIR:netscape-win32>/../share/netscape/ca"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${PROJECT_SOURCE_DIR}/security/ca/cacert.pem"
+   "$<TARGET_FILE_DIR:netscape-win32>/../share/netscape/ca/cacert.pem")
+endif()
 if(NETSCAPE_BUILD_WINDOWS_EDITOR)
  target_sources(netscape-win32 PRIVATE
   "${PROJECT_SOURCE_DIR}/cmd/winfe/editor-platform.cpp"

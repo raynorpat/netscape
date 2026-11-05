@@ -10,7 +10,8 @@ target_link_libraries(netscape_bearssl PRIVATE advapi32)
 
 # The transport adapter owns trust stores and TLS state; upstream stays pristine.
 add_library(netscape_tls STATIC "${PROJECT_SOURCE_DIR}/security/tls/net_tls_trust.c"
- "${PROJECT_SOURCE_DIR}/security/tls/net_tls_engine.c")
+ "${PROJECT_SOURCE_DIR}/security/tls/net_tls_engine.c"
+ "${PROJECT_SOURCE_DIR}/security/tls/net_tls_socket.c")
 set_target_properties(netscape_tls PROPERTIES C_STANDARD 99 C_STANDARD_REQUIRED ON)
 target_include_directories(netscape_tls PUBLIC "${PROJECT_SOURCE_DIR}/security/tls"
  "${PROJECT_SOURCE_DIR}/include")

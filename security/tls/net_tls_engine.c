@@ -115,8 +115,8 @@ static const br_ssl_client_certificate_class reject_auth = {
     auth_start, auth_choose, NULL, NULL
 };
 
-int NETTLS_Create(const char *hostname, NETTLSTrust *trust, int allow_legacy,
-                  const NETTLSIO *io, NETTLS **out)
+int NETTLS_CreateWithError(const char *hostname, NETTLSTrust *trust, int allow_legacy,
+                           const NETTLSIO *io, NETTLS **out, NETTLSError *error)
 {
     /* These exact IANA suites exist in the pinned upstream bearssl_ssl.h. */
     static const uint16_t suites[] = {
@@ -134,10 +134,13 @@ int NETTLS_Create(const char *hostname, NETTLSTrust *trust, int allow_legacy,
     size_t count;
     unsigned char seed[48];
     int64_t seconds, days, rem;
+    if (error) *error = NET_TLS_ERROR_ARGUMENT;
     if (!out) return 0;
     *out = NULL;
-    if (!identity(hostname) || !trust || !io || !io->recv || !io->send ||
+    if (!identity(hostname)) { if (error) *error = NET_TLS_ERROR_IDENTITY; return 0; }
+    if (!trust || !io || !io->recv || !io->send ||
         !io->entropy || !io->utc_time) return 0;
+    if (error) *error = NET_TLS_ERROR_TIME;
     if (!io->utc_time(io->arg, &seconds)) return 0;
     days = seconds / 86400;
     rem = seconds % 86400;
@@ -146,13 +149,16 @@ int NETTLS_Create(const char *hostname, NETTLSTrust *trust, int allow_legacy,
     if (days <= -INT64_C(719528) || days > INT64_C(4294967295) - 719528)
         return 0;
     days += 719528;
+    if (error) *error = NET_TLS_ERROR_ENTROPY;
     memset(seed, 0, sizeof seed);
     if (!io->entropy(io->arg, seed, sizeof seed)) {
         wipe(seed, sizeof seed);
         return 0;
     }
+    if (error) *error = NET_TLS_ERROR_CA_BUNDLE;
     anchors = NETTLS_TrustAnchors(trust, &count);
     if (!anchors || !count) { wipe(seed, sizeof seed); return 0; }
+    if (error) *error = NET_TLS_ERROR_MEMORY;
     tls = (NETTLS *)calloc(1, sizeof *tls);
     if (!tls) { wipe(seed, sizeof seed); return 0; }
     tls->io = *io;
@@ -170,12 +176,20 @@ int NETTLS_Create(const char *hostname, NETTLSTrust *trust, int allow_legacy,
     br_ssl_engine_inject_entropy(&tls->client.eng, seed, sizeof seed);
     wipe(seed, sizeof seed);
     /* A fresh context and resume_session=0: no imported session or retry path. */
+    if (error) *error = NET_TLS_ERROR_HANDSHAKE;
     if (!br_ssl_client_reset(&tls->client, hostname, 0)) {
         NETTLS_Destroy(tls);
         return 0;
     }
     *out = tls;
+    if (error) *error = NET_TLS_ERROR_NONE;
     return 1;
+}
+
+int NETTLS_Create(const char *hostname, NETTLSTrust *trust, int allow_legacy,
+                  const NETTLSIO *io, NETTLS **out)
+{
+    return NETTLS_CreateWithError(hostname, trust, allow_legacy, io, out, NULL);
 }
 
 static int state(NETTLS *tls, unsigned *flags)

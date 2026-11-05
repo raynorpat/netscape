@@ -30,32 +30,39 @@ SUITES = {
 def key():
     return rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
-def certificate(subject, public, issuer, signing_key, ca=False, path=None):
+def certificate(subject, public, issuer, signing_key, ca=False, path=None,
+                eku="default", eku_critical=False, signing=True, unknown_critical=False):
     builder = (x509.CertificateBuilder().subject_name(x509.Name([
         x509.NameAttribute(NameOID.COMMON_NAME, subject)]))
         .issuer_name(issuer).public_key(public).serial_number(x509.random_serial_number())
         .not_valid_before(dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc))
         .not_valid_after(dt.datetime(2045, 1, 1, tzinfo=dt.timezone.utc))
         .add_extension(x509.BasicConstraints(ca, path), critical=True)
-        .add_extension(x509.KeyUsage(True, False, False, False, False, ca, ca,
+        .add_extension(x509.KeyUsage(signing, False, not signing, False, False, ca, ca,
                                      False, False), critical=True))
     if not ca:
-        builder = (builder.add_extension(x509.SubjectAlternativeName([
+        builder = builder.add_extension(x509.SubjectAlternativeName([
             x509.DNSName('fixture.test')]), critical=False)
-            .add_extension(x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH]), False))
+    if eku == "default":
+        eku = None if ca else [ExtendedKeyUsageOID.SERVER_AUTH]
+    if eku is not None:
+        builder = builder.add_extension(x509.ExtendedKeyUsage(eku), eku_critical)
+    if unknown_critical:
+        builder = builder.add_extension(x509.UnrecognizedExtension(
+            x509.ObjectIdentifier('1.2.3.4'), b'\x05\x00'), True)
     return builder.sign(signing_key, hashes.SHA256())
 
-def material(folder):
+def material(folder, leaf_eku="default", inter_eku="default", leaf_options=None):
     root_key, inter_key = key(), key()
     root_name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, 'Fixture root')])
     root = certificate('Fixture root', root_key.public_key(), root_name, root_key, True, 1)
-    inter = certificate('Fixture intermediate', inter_key.public_key(), root.subject, root_key, True, 0)
+    inter = certificate('Fixture intermediate', inter_key.public_key(), root.subject, root_key, True, 0, inter_eku)
     wrong_key = key()
     wrong = certificate('Wrong root', wrong_key.public_key(), root_name, wrong_key, True, 1)
     for name, cert in [('root', root), ('wrong', wrong), ('inter', inter)]:
         (folder / (name + '.pem')).write_bytes(cert.public_bytes(serialization.Encoding.PEM))
     for name, leaf_key in [('rsa', key()), ('ec', ec.generate_private_key(ec.SECP256R1()))]:
-        cert = certificate('fixture.test', leaf_key.public_key(), inter.subject, inter_key)
+        cert = certificate('fixture.test', leaf_key.public_key(), inter.subject, inter_key, eku=leaf_eku, **(leaf_options or {}))
         (folder / (name + '.pem')).write_bytes(cert.public_bytes(serialization.Encoding.PEM) +
                                                     inter.public_bytes(serialization.Encoding.PEM))
         (folder / (name + '.key')).write_bytes(leaf_key.private_bytes(
@@ -218,6 +225,17 @@ def run(folder, executable, case):
         suite = 'AES128-SHA:@SECLEVEL=0' if case == 'fail_forbidden' else 'ECDHE-RSA-AES128-SHA:@SECLEVEL=0'
     if case == 'fail_forbidden_legacy':
         suite, legacy = 'AES128-SHA:@SECLEVEL=0', int(ssl.TLSVersion.TLSv1_2)
+    if 'purpose_' in case:
+        cert = 'ec' if '_ec' in case else 'rsa'
+        suite = SUITES['ec128' if cert == 'ec' else 'rsa128']
+        mode = 'fail_purpose' if case.startswith('fail_') else 'success'
+        if any(kind in case for kind in ('_critical_', '_unknown_')):
+            mode = 'fail_cert'
+        if '_keyusage_' in case:
+            mode = 'fail_keyusage'
+        if case.endswith('_legacy'):
+            version, legacy = ssl.TLSVersion.TLSv1, int(ssl.TLSVersion.TLSv1)
+            suite = ('ECDHE-ECDSA' if cert == 'ec' else 'ECDHE-RSA') + '-AES128-SHA:@SECLEVEL=0'
     ctx = context(folder, version, suite, cert, case == 'fail_client_auth')
     sock = listener()
     errors, received = [], bytearray()
@@ -304,7 +322,26 @@ def main():
     args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='netscape-tls-') as temp:
         folder = Path(temp)
-        material(folder)
+        leaf_eku, inter_eku = 'default', 'default'
+        leaf_options = {}
+        if 'purpose_' in args.case:
+            purpose = args.case.split('purpose_')[1].split('_')[0]
+            leaf_eku = {'client': [ExtendedKeyUsageOID.CLIENT_AUTH],
+                'code': [ExtendedKeyUsageOID.CODE_SIGNING],
+                'other': [x509.ObjectIdentifier('1.2.3.4')],
+                'critical': [ExtendedKeyUsageOID.SERVER_AUTH],
+                'keyusage': [ExtendedKeyUsageOID.SERVER_AUTH],
+                'unknown': [ExtendedKeyUsageOID.SERVER_AUTH],
+                'absent': None,
+                'mixed': [ExtendedKeyUsageOID.CLIENT_AUTH, ExtendedKeyUsageOID.SERVER_AUTH],
+                'any': [x509.ObjectIdentifier('2.5.29.37.0')],
+                'server': [ExtendedKeyUsageOID.SERVER_AUTH]}[purpose]
+            leaf_options = {'eku_critical': purpose == 'critical',
+                            'signing': purpose != 'keyusage',
+                            'unknown_critical': purpose == 'unknown'}
+            if '_inter_' in args.case:
+                inter_eku, leaf_eku = leaf_eku, 'default'
+        material(folder, leaf_eku, inter_eku, leaf_options)
         if args.case == 'prerequisites':
             probe(folder, args.openssl)
         elif args.case == 'renegotiate':

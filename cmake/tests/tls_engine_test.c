@@ -129,6 +129,13 @@ int main(int argc, char **argv)
     CHECK(http_bytes_sent_before_auth == 0);
     if (expected_failure) {
         CHECK(r == -1); assert(info.authenticated == 0); CHECK(!info.authenticated);
+        /* BearSSL checks signing usage after X.509 via BR_ERR_WRONG_KEY_USAGE. */
+        if (!strcmp(mode, "fail_keyusage")) CHECK(info.error == NET_TLS_ERROR_HANDSHAKE);
+        if (!strcmp(mode, "fail_cert")) CHECK(info.error == NET_TLS_ERROR_CERT_MALFORMED);
+        if (!strcmp(mode, "fail_purpose")) {
+            CHECK(info.error == NET_TLS_ERROR_CERT_PURPOSE);
+            puts("cert-purpose: rejected before application data");
+        }
         if (!strcmp(mode, "fail_name")) CHECK(info.error == NET_TLS_ERROR_HOSTNAME);
         if (!strcmp(mode, "fail_root")) CHECK(info.error == NET_TLS_ERROR_CERT_UNTRUSTED);
         if (!strcmp(mode, "fail_expired") || !strcmp(mode, "fail_future")) CHECK(info.error == NET_TLS_ERROR_CERT_DATE);

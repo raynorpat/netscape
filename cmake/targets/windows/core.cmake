@@ -67,6 +67,11 @@ if(BUILD_TESTING)
   find_package(Python3 REQUIRED COMPONENTS Interpreter)
   find_program(NETSCAPE_TLS_FIXTURE_OPENSSL NAMES openssl
    HINTS "$ENV{LOCALAPPDATA}/Programs/Git/mingw64/bin" REQUIRED)
+  add_executable(netscape_tls_x509_test "${PROJECT_SOURCE_DIR}/cmake/tests/tls_x509_test.c")
+  target_link_libraries(netscape_tls_x509_test PRIVATE netscape_tls netscape_bearssl)
+  add_test(NAME tls_x509_purpose COMMAND "${Python3_EXECUTABLE}"
+   "${PROJECT_SOURCE_DIR}/cmake/tests/tls_x509_fixture.py" --client "$<TARGET_FILE:netscape_tls_x509_test>")
+  set_tests_properties(tls_x509_purpose PROPERTIES TIMEOUT 70)
   add_test(NAME tls_engine_prerequisites COMMAND "${Python3_EXECUTABLE}"
    "${PROJECT_SOURCE_DIR}/cmake/tests/tls_fixture.py"
    --openssl "${NETSCAPE_TLS_FIXTURE_OPENSSL}" --case prerequisites)
@@ -75,6 +80,18 @@ if(BUILD_TESTING)
     fail_identity fail_ipv4hex fail_ipv6 fail_nonascii fail_entropy fail_time fail_time_range fail_time_negative_range
     cancel close_pending renegotiate truncate alert malformed_alert fail_client_auth
     fail_tls10 fail_tls11 legacy10 legacy11 legacy_ec fail_forbidden fail_forbidden_legacy
+    fail_purpose_client_rsa fail_purpose_client_ec fail_purpose_code_rsa
+    fail_purpose_client_inter_rsa fail_purpose_code_inter_rsa
+    fail_purpose_client_rsa_legacy fail_purpose_client_ec_legacy fail_purpose_code_rsa_legacy
+    fail_purpose_client_inter_rsa_legacy fail_purpose_code_inter_rsa_legacy
+    purpose_server_rsa purpose_absent_rsa purpose_mixed_rsa purpose_any_rsa
+    purpose_server_rsa_legacy purpose_absent_rsa_legacy purpose_mixed_rsa_legacy purpose_any_rsa_legacy
+    purpose_mixed_inter_rsa purpose_any_inter_rsa
+    purpose_absent_ec purpose_mixed_ec purpose_any_ec
+    purpose_absent_ec_legacy purpose_mixed_ec_legacy purpose_any_ec_legacy
+    fail_purpose_other_rsa fail_purpose_other_rsa_legacy
+    fail_purpose_critical_rsa fail_purpose_keyusage_rsa fail_purpose_unknown_rsa
+    fail_purpose_critical_rsa_legacy fail_purpose_keyusage_rsa_legacy fail_purpose_unknown_rsa_legacy
     fail_default_cbc rsa128 rsa256 rsachacha ec128 ec256 ecchacha)
    add_test(NAME tls_engine_${case} COMMAND "${Python3_EXECUTABLE}"
     "${PROJECT_SOURCE_DIR}/cmake/tests/tls_fixture.py"

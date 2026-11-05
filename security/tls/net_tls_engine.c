@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
-#include "net_tls_internal.h"
+#include "net_tls_x509.h"
 
 typedef struct {
     const br_ssl_client_certificate_class *vtable;
@@ -12,6 +12,7 @@ typedef struct {
 struct NETTLS {
     br_ssl_client_context client;
     br_x509_minimal_context x509;
+    NETTLSX509 purpose;
     unsigned char buffer[BR_SSL_BUFSIZE_BIDI];
     NETTLSAuth auth;
     NETTLSIO io;
@@ -165,6 +166,8 @@ int NETTLS_CreateWithError(const char *hostname, NETTLSTrust *trust, int allow_l
     tls->trust = trust;
     NETTLS_TrustRetain(trust);
     br_ssl_client_init_full(&tls->client, &tls->x509, anchors, count);
+    NETTLS_X509Init(&tls->purpose, &tls->x509);
+    br_ssl_engine_set_x509(&tls->client.eng, &tls->purpose.vtable);
     br_ssl_engine_set_versions(&tls->client.eng, allow_legacy ? BR_TLS10 : BR_TLS12, BR_TLS12);
     br_ssl_engine_set_suites(&tls->client.eng, suites, allow_legacy ? 8 : 6);
     br_ssl_engine_set_all_flags(&tls->client.eng, BR_OPT_NO_RENEGOTIATION);
@@ -199,7 +202,8 @@ static int state(NETTLS *tls, unsigned *flags)
     if (tls->client_auth) return fail(tls, NET_TLS_ERROR_HANDSHAKE);
     if (*flags & BR_SSL_CLOSED) {
         int err = br_ssl_engine_last_error(&tls->client.eng);
-        if (err) return fail(tls, translate(err));
+        if (err) return fail(tls, tls->purpose.result != NET_TLS_ERROR_NONE ?
+                             tls->purpose.result : translate(err));
         if (!tls->info.authenticated && !tls->closing)
             return fail(tls, NET_TLS_ERROR_HANDSHAKE);
         tls->clean_eof = 1;

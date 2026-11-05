@@ -348,6 +348,8 @@ def errors(args, output):
         run('wrong-hostname',9,'hostname',host='wrong.test',proxied=True)
         ctx.load_cert_chain(output/'browser-expired.pem',output/'browser-leaf.key')
         run('invalid-date',10,'expired')
+        ctx.load_cert_chain(output/'browser-client-purpose.pem',output/'browser-leaf.key')
+        run('certificate-purpose',16,'certificate purpose')
         ctx.load_cert_chain(output/'browser-leaf.pem',output/'browser-leaf.key')
         run('missing-ca',13,'Cannot open CA bundle',ca='missing.pem')
         (output/'malformed.pem').write_text('not a certificate bundle')
@@ -526,6 +528,14 @@ def main():
         .add_extension(x509.SubjectAlternativeName([x509.DNSName('localhost')]),False)
         .add_extension(x509.BasicConstraints(False,None),True).sign(root_key,hashes.SHA256()))
     (output/'browser-expired.pem').write_bytes(expired.public_bytes(serialization.Encoding.PEM))
+    client_purpose = (x509.CertificateBuilder().subject_name(name).issuer_name(name)
+        .public_key(leaf_key.public_key()).serial_number(x509.random_serial_number())
+        .not_valid_before(dt.datetime(2020,1,1,tzinfo=dt.timezone.utc))
+        .not_valid_after(dt.datetime(2045,1,1,tzinfo=dt.timezone.utc))
+        .add_extension(x509.SubjectAlternativeName([x509.DNSName('localhost')]),False)
+        .add_extension(x509.ExtendedKeyUsage([x509.oid.ExtendedKeyUsageOID.CLIENT_AUTH]),False)
+        .add_extension(x509.BasicConstraints(False,None),True).sign(root_key,hashes.SHA256()))
+    (output/'browser-client-purpose.pem').write_bytes(client_purpose.public_bytes(serialization.Encoding.PEM))
     if args.mode == 'installed':
         return installed(args, output)
     if args.mode == 'errors':

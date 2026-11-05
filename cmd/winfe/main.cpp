@@ -1621,6 +1621,7 @@ static const char *tls_error_message(NETTLSError error)
     case NET_TLS_ERROR_HOSTNAME: return "HTTPS certificate hostname does not match this site.";
     case NET_TLS_ERROR_CERT_DATE: return "HTTPS certificate has expired or is not yet valid.";
     case NET_TLS_ERROR_CERT_UNTRUSTED: return "HTTPS certificate issuer is not trusted.";
+    case NET_TLS_ERROR_CERT_PURPOSE: return "HTTPS certificate purpose does not permit server authentication.";
     case NET_TLS_ERROR_CERT_MALFORMED: return "HTTPS certificate is malformed or unsupported.";
     case NET_TLS_ERROR_CA_BUNDLE: return "HTTPS CA bundle configuration error.";
     case NET_TLS_ERROR_PROTOCOL: return "HTTPS protocol or cipher negotiation failed.";

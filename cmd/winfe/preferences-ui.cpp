@@ -33,7 +33,7 @@ protected:
 };
 
 static const char *preference_tabs[] = {
-    "Appearance", "Fonts", "Colors", "Images", "Apps", "Helpers", "Language"
+    "Appearance", "Fonts", "Colors", "Images", "Apps", "Helpers", "Language", "Security"
 };
 static const char *language_names[] = {
     "Chinese [zh]", "Chinese/China [zh-CN]", "Chinese/Taiwan [zh-TW]",
@@ -68,7 +68,7 @@ public:
     int help_count, current;
     std::string error;
     CTabCtrl tabs;
-    std::unique_ptr<PreferencesPage> pages[7];
+    std::unique_ptr<PreferencesPage> pages[8];
     CBrush swatches[4];
 
     CWnd *Control(int page, int id) { return pages[page]->GetDlgItem(id); }
@@ -98,7 +98,7 @@ public:
         Add(p,"EDIT",s,WS_BORDER|WS_TABSTOP|ES_AUTOHSCROLL,x,y,w,20,id,WS_EX_CLIENTEDGE)->EnableWindow(enabled);
     }
     void SelectPage(int index) {
-        if(index<0 || index>6) return;
+        if(index<0 || index>7) return;
         pages[current]->ShowWindow(SW_HIDE); current=index; tabs.SetCurSel(index);
         pages[current]->ShowWindow(SW_SHOW);
     }
@@ -206,7 +206,7 @@ BOOL GeneralPreferencesDialog::OnInitDialog()
     SetWindowPos(nullptr,0,0,outer.Width(),outer.Height(),SWP_NOMOVE|SWP_NOZORDER);
     tabs.SubclassDlgItem(IDC_PREF_TABS,this);
     tabs.MoveWindow(ClassicUI::Scale(this,7),ClassicUI::Scale(this,4),ClassicUI::Scale(this,473),ClassicUI::Scale(this,364));
-    for(int i=0;i<7;i++) {
+    for(int i=0;i<8;i++) {
         tabs.InsertItem(i,preference_tabs[i]);
         pages[i].reset(new PreferencesPage(this,i)); pages[i]->Create(IDD_PREFERENCES_PAGE,this);
         pages[i]->MoveWindow(ClassicUI::Scale(this,16),ClassicUI::Scale(this,29),ClassicUI::Scale(this,453),ClassicUI::Scale(this,330));
@@ -325,7 +325,15 @@ BOOL GeneralPreferencesDialog::OnInitDialog()
     Control(6,IDC_PREF_AVAILABLE)->SendMessage(LB_SETCURSEL,0);
     Button(6,">",214,142,26,26,IDC_PREF_LANG_ADD); Button(6,"<",214,206,26,26,IDC_PREF_LANG_REMOVE);
     RefreshAccepted();
-    for(int i=0;i<7;i++) { ClassicUI::Apply(pages[i].get());pages[i]->ShowWindow(i==0?SW_SHOW:SW_HIDE); }
+    Group(7,"HTTPS",10,18,445,220);
+    Tick(7,"Allow obsolete TLS 1.0 and TLS 1.1",24,46,409,IDC_PREF_LEGACY_TLS);
+    Check(7,IDC_PREF_LEGACY_TLS,values.allow_legacy_tls);
+    Label(7,"CA file (full absolute path; blank uses the supplied CA bundle):",24,91,410);
+    Edit(7,values.ca_bundle.c_str(),24,113,317,IDC_PREF_CA_BUNDLE);
+    Button(7,"Browse...",350,111,83,23,IDC_PREF_CA_BROWSE);
+    Label(7,"CA file changes take effect after restarting Netscape.",24,150,410);
+    Label(7,"Protocol changes apply to new connections. Certificates are always checked.",24,181,410,32);
+    for(int i=0;i<8;i++) { ClassicUI::Apply(pages[i].get());pages[i]->ShowWindow(i==0?SW_SHOW:SW_HIDE); }
     ClassicUI::Apply(this); CenterWindow(); tabs.SetFocus(); return FALSE;
 }
 
@@ -371,6 +379,11 @@ bool GeneralPreferencesDialog::PageCommand(int page,WPARAM w,LPARAM)
         if(picker.DoModal()==IDOK) { values.colors[n]=picker.GetColor();SetSwatches(); }
         return true;
     }
+    if(page==7 && notification==BN_CLICKED && id==IDC_PREF_CA_BROWSE) {
+        CFileDialog picker(TRUE,"pem",Text(7,IDC_PREF_CA_BUNDLE),OFN_FILEMUSTEXIST|OFN_HIDEREADONLY|OFN_NOCHANGEDIR,
+            "CA bundles|*.pem;*.crt|All files|*.*||",this);
+        if(picker.DoModal()==IDOK) SetText(7,IDC_PREF_CA_BUNDLE,picker.GetPathName());return true;
+    }
     if(page==6) {
         if(id==IDC_PREF_LANG_ADD || (id==IDC_PREF_AVAILABLE && notification==LBN_DBLCLK)) {
             int index=(int)Control(6,IDC_PREF_AVAILABLE)->SendMessage(LB_GETCURSEL);
@@ -406,7 +419,7 @@ BOOL GeneralPreferencesDialog::PreTranslateMessage(MSG *message)
         if((message->wParam==VK_TAB && (GetKeyState(VK_CONTROL)&0x8000)) ||
            (handle==tabs.GetSafeHwnd() && (message->wParam==VK_LEFT || message->wParam==VK_RIGHT))) {
             bool previous=message->wParam==VK_LEFT || (message->wParam==VK_TAB && (GetKeyState(VK_SHIFT)&0x8000));
-            SelectPage((current+(previous?6:1))%7);tabs.SetFocus();return TRUE;
+            SelectPage((current+(previous?7:1))%8);tabs.SetFocus();return TRUE;
         }
         if(message->wParam==VK_RETURN) {
             if(handle==Control(6,IDC_PREF_LANG_CUSTOM)->GetSafeHwnd()) { Control(6,IDC_PREF_LANG_CUSTOM_ADD)->SendMessage(BM_CLICK);return TRUE; }
@@ -439,6 +452,8 @@ bool GeneralPreferencesDialog::ReadControls()
     values.background_image=Checked(2,IDC_PREF_BG_IMAGE);values.background_file=(const char *)Text(2,IDC_PREF_BG_FILE);
     values.dither=Checked(3,IDC_PREF_AUTOMATIC)?0:Checked(3,IDC_PREF_DITHER)?1:2;
     values.incremental=Checked(3,IDC_PREF_WHILE_LOADING);
+    values.allow_legacy_tls=Checked(7,IDC_PREF_LEGACY_TLS);
+    values.ca_bundle=(const char *)Text(7,IDC_PREF_CA_BUNDLE);
     values.telnet_application=(const char *)Text(4,7500);values.tn3270_application=(const char *)Text(4,7501);
     values.source_application=(const char *)Text(4,7502);values.temporary_directory=(const char *)Text(4,7503);
     if(!_stricmp(values.temporary_directory.c_str(),WFE_DefaultTemporaryDirectory())) values.temporary_directory.clear();
@@ -484,7 +499,7 @@ static bool preferences_capture(CWnd *dialog,const char *path)
 
 static bool same_preferences(const GeneralPreferences &a,const GeneralPreferences &b)
 {
-    return a.toolbar==b.toolbar && a.startup==b.startup && a.blank==b.blank && a.underline==b.underline &&
+    return a.allow_legacy_tls==b.allow_legacy_tls && a.ca_bundle==b.ca_bundle && a.toolbar==b.toolbar && a.startup==b.startup && a.blank==b.blank && a.underline==b.underline &&
         a.expire==b.expire && a.days==b.days && a.home==b.home && a.proportional==b.proportional && a.fixed==b.fixed &&
         a.proportional_size==b.proportional_size && a.fixed_size==b.fixed_size &&
         a.text_custom==b.text_custom && a.link_custom==b.link_custom && a.visited_custom==b.visited_custom &&
@@ -511,10 +526,10 @@ int WFE_PreferencesUISmoke(CWnd *parent,const char *report,const char *snapshot)
     GeneralPreferencesDialog cancel(parent,true);
     if(!cancel.Create(IDD_GENERAL_PREFERENCES,parent)) return 2;
     cancel.ShowWindow(SW_SHOW);cancel.UpdateWindow();
-    bool captured=preferences_capture(&cancel,snapshot), labels=cancel.tabs.GetItemCount()==7, bounds=true;
+    bool captured=preferences_capture(&cancel,snapshot), labels=cancel.tabs.GetItemCount()==8, bounds=true;
     CRect client;cancel.GetClientRect(client);
     CRect original;cancel.GetWindowRect(original);
-    for(int i=0;i<7;i++) {
+    for(int i=0;i<8;i++) {
         TCITEM item={};char text[64]={};item.mask=TCIF_TEXT;item.pszText=text;item.cchTextMax=sizeof(text);
         labels=labels && cancel.tabs.GetItem(i,&item) && !strcmp(text,preference_tabs[i]);
         cancel.SelectPage(i);CRect page;cancel.pages[i]->GetWindowRect(page);cancel.ScreenToClient(page);
@@ -525,6 +540,13 @@ int WFE_PreferencesUISmoke(CWnd *parent,const char *report,const char *snapshot)
             bounds=bounds && page_client.PtInRect(control.TopLeft()) && page_client.PtInRect(CPoint(control.right-1,control.bottom-1));
         }
     }
+    cancel.SelectPage(7);
+    bool tls_controls=cancel.Control(7,IDC_PREF_CA_BUNDLE)->IsWindowVisible() &&
+        cancel.Control(7,IDC_PREF_CA_BUNDLE)->IsWindowEnabled() &&
+        cancel.Text(7,IDC_PREF_LEGACY_TLS)=="Allow obsolete TLS 1.0 and TLS 1.1";
+    tls_controls=tls_controls && preferences_capture(&cancel,(std::string(snapshot)+".security.bmp").c_str());
+    cancel.Check(7,IDC_PREF_LEGACY_TLS,!before.allow_legacy_tls);
+    cancel.SetText(7,IDC_PREF_CA_BUNDLE,"must-not-apply.pem");
     cancel.SelectPage(0);
     bool appearance=cancel.Control(0,IDC_PREF_BOTH)->IsWindowVisible() && cancel.Control(0,IDC_PREF_EXPIRE_NOW)->IsWindowVisible();
     cancel.GetDlgItem(IDC_PREF_HELP)->SetFocus();
@@ -569,6 +591,7 @@ int WFE_PreferencesUISmoke(CWnd *parent,const char *report,const char *snapshot)
     if(GetFileAttributesA(path.c_str())==INVALID_FILE_ATTRIBUTES) {
         std::string problem;WFE_SaveGeneralPreferences(before,&problem);
     }
+    save.Check(7,IDC_PREF_LEGACY_TLS,!before.allow_legacy_tls);
     preferences_file(path,disk_before);
     HANDLE locked=CreateFileA(path.c_str(),GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
     bool save_failure=false;
@@ -578,21 +601,54 @@ int WFE_PreferencesUISmoke(CWnd *parent,const char *report,const char *snapshot)
         CloseHandle(locked);
         save_failure=save_failure && preferences_file(path,disk_after) && disk_before==disk_after;
     }
+    save.Check(7,IDC_PREF_LEGACY_TLS,true);
     save.SendMessage(WM_COMMAND,IDOK);
     const GeneralPreferences &result=WFE_GeneralPreferences();
-    bool saved=save.accepted && result.toolbar==1 && result.startup==1 && result.blank && !result.underline && result.days==17 &&
+    bool saved=save.accepted && result.allow_legacy_tls && result.ca_bundle.empty() && result.toolbar==1 && result.startup==1 && result.blank && !result.underline && result.days==17 &&
         result.languages.size()==2 && result.languages[0]=="fr" && result.languages[1]=="en";
     std::string last_error=save.error;save.DestroyWindow();
     GeneralPreferencesDialog reopen(parent,true);bool reopened=reopen.Create(IDD_GENERAL_PREFERENCES,parent)!=FALSE;
-    if(reopened) { reopened=reopen.Checked(0,IDC_PREF_TEXT) && reopen.Checked(0,IDC_PREF_BLANK) && reopen.Text(0,IDC_PREF_DAYS)=="17" && reopen.values.languages==result.languages;reopen.DestroyWindow(); }
+    if(reopened) { reopened=reopen.Checked(7,IDC_PREF_LEGACY_TLS) && reopen.Text(7,IDC_PREF_CA_BUNDLE).IsEmpty() && reopen.Checked(0,IDC_PREF_TEXT) && reopen.Checked(0,IDC_PREF_BLANK) && reopen.Text(0,IDC_PREF_DAYS)=="17" && reopen.values.languages==result.languages;reopen.DestroyWindow(); }
     bool menu=parent && parent->GetMenu() && parent->GetMenu()->GetMenuState(33030,MF_BYCOMMAND)!=(UINT)-1;
     FILE *output=fopen(report,"wb");if(!output) return 2;
-    fprintf(output,"menu=%d\ndialog=1\ntabs=%d\nappearance=%d\nlayout=%d\nkeyboard=%d\ncancel=%d\nvalidation=%d\npage_retention=%d\nsave_failure=%d\nsave=%d\nreopen=%d\ncapture=%d\nwidth=%d\nheight=%d\nerror=%s\n",
-        menu,labels,appearance,bounds,keyboard,cancelled,validation,retained,save_failure,saved,reopened,captured,original.Width(),original.Height(),last_error.c_str());
+    fprintf(output,"tls_controls=%d\nmenu=%d\ndialog=1\ntabs=%d\nappearance=%d\nlayout=%d\nkeyboard=%d\ncancel=%d\nvalidation=%d\npage_retention=%d\nsave_failure=%d\nsave=%d\nreopen=%d\ncapture=%d\nwidth=%d\nheight=%d\nerror=%s\n",
+        tls_controls,menu,labels,appearance,bounds,keyboard,cancelled,validation,retained,save_failure,saved,reopened,captured,original.Width(),original.Height(),last_error.c_str());
     fclose(output);
-    return menu && labels && appearance && bounds && keyboard && cancelled && validation && retained && save_failure && saved && reopened && captured ? 0 : 1;
+    return tls_controls && menu && labels && appearance && bounds && keyboard && cancelled && validation && retained && save_failure && saved && reopened && captured ? 0 : 1;
 }
 
 #include "preferences-background-smoke.inc"
 
 #include "preferences-apps-smoke.inc"
+
+/* Focused TLS scenarios use the same native controls and Save/Cancel handlers. */
+int WFE_TLSPreferencesUISmoke(CWnd *parent,const char *action,const char *bundle)
+{
+    const GeneralPreferences before=WFE_GeneralPreferences();
+    std::string path=std::string(WFE_ProfileDirectory())+"\\browser.ini",old_bytes,new_bytes;
+    if(!preferences_file(path,old_bytes)) return 0;
+    GeneralPreferencesDialog dialog(parent,true);
+    if(!dialog.Create(IDD_GENERAL_PREFERENCES,parent)) return 0;
+    dialog.SelectPage(7);dialog.ShowWindow(SW_SHOW);dialog.UpdateWindow();
+    bool ca=!strcmp(action,"policy-ca");
+    bool failed=!strcmp(action,"policy-failed"),cancel=!strcmp(action,"policy-cancel");
+    dialog.Check(7,IDC_PREF_LEGACY_TLS,ca ? !before.allow_legacy_tls : false);
+    if(ca || failed || cancel) dialog.SetText(7,IDC_PREF_CA_BUNDLE,bundle);
+    if(!strcmp(action,"policy-invalid")) dialog.SetText(7,IDC_PREF_CA_BUNDLE,path.c_str());
+    HANDLE locked=INVALID_HANDLE_VALUE;
+    if(failed) locked=CreateFileA(path.c_str(),GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,
+        nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
+    dialog.SendMessage(WM_COMMAND,cancel ? IDCANCEL : IDOK);
+    if(locked!=INVALID_HANDLE_VALUE) CloseHandle(locked);
+    bool ok;
+    if(cancel || failed || !strcmp(action,"policy-invalid")) {
+        ok=!dialog.accepted && (cancel ? dialog.rejected : !dialog.error.empty()) &&
+            (!failed || locked!=INVALID_HANDLE_VALUE) && same_preferences(before,WFE_GeneralPreferences()) &&
+            preferences_file(path,new_bytes) && old_bytes==new_bytes;
+    } else {
+        const GeneralPreferences &after=WFE_GeneralPreferences();
+        ok=dialog.accepted && after.allow_legacy_tls==(ca ? !before.allow_legacy_tls : false) &&
+            after.ca_bundle==(ca ? bundle : before.ca_bundle);
+    }
+    dialog.DestroyWindow();return ok ? 1 : 0;
+}

@@ -3,6 +3,9 @@
 #include "preferences.h"
 #include "glhist.h"
 #include "applications.h"
+#ifdef NETSCAPE_USE_BEARSSL
+#include "net_tls.h"
+#endif
 #include <shlwapi.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,6 +15,9 @@ extern "C" int WFE_PlatformInit(void);
 
 static GeneralPreferences wfe_general;
 static bool wfe_general_loaded;
+#ifdef NETSCAPE_USE_BEARSSL
+static bool wfe_tls_preferences_initialized;
+#endif
 static std::string wfe_general_file, wfe_languages;
 /* mkhttp.c formats this value in a 512-byte buffer: 17 header bytes,
  * two CR/LF bytes and the terminating NUL leave 492 bytes for the value. */
@@ -29,6 +35,12 @@ static bool wfe_safe_string(const std::string &value, size_t limit, bool empty)
     for (size_t i = 0; i < value.size(); ++i)
         if ((unsigned char)value[i] < 32 || value[i] == 127) return false;
     return true;
+}
+
+static bool wfe_absolute_ca_path(const std::string &path)
+{
+    return (path.size()>2 && ((path[0]>='A'&&path[0]<='Z') || (path[0]>='a'&&path[0]<='z')) &&
+        path[1]==':' && (path[2]=='\\'||path[2]=='/')) || path.compare(0,2,"\\\\")==0;
 }
 
 static bool wfe_language_tag(const std::string &value)
@@ -92,6 +104,21 @@ bool WFE_ValidateGeneralPreferences(const GeneralPreferences &p, std::string *er
         DWORD attributes=GetFileAttributesA(path.c_str());
         if(!absolute || attributes==INVALID_FILE_ATTRIBUTES || (attributes&FILE_ATTRIBUTE_DIRECTORY))
             return wfe_preference_error(error, "Choose an existing background image file using its full path.");
+    }
+    if (!wfe_safe_string(p.ca_bundle, MAX_PATH, true))
+        return wfe_preference_error(error, "Choose a CA file path shorter than 260 characters, without control characters.");
+    if (!p.ca_bundle.empty()) {
+        const std::string &path = p.ca_bundle;
+        if (!wfe_absolute_ca_path(path)) return wfe_preference_error(error, "Choose a CA file using its full absolute path.");
+#ifdef NETSCAPE_USE_BEARSSL
+        NETTLSTrust *trust = NULL;
+        char problem[256];
+        if (!NETTLS_TrustLoad(path.c_str(), &trust, problem, sizeof problem))
+            return wfe_preference_error(error, problem);
+        NETTLS_TrustRelease(trust);
+#else
+        return wfe_preference_error(error, "TLS support is unavailable in this build.");
+#endif
     }
     if (!wfe_valid_languages(p.languages))
         return wfe_preference_error(error, "Use unique language tags with letters, digits and single hyphens.");
@@ -226,9 +253,31 @@ extern "C" int WFE_PreferencesInit(void)
         } while (comma != std::string::npos && languages.size() <= 64);
         if (wfe_valid_languages(languages)) p.languages = languages;
     }
+    /* Retain an invalid persisted override so HTTPS fails closed, rather than
+     * silently selecting the public default. Save must validate replacements. */
+    p.allow_legacy_tls = wfe_read_string("General", "allow_legacy_tls", value) && value == "1";
+    /* Read this key without the ordinary missing-value sentinel: every
+     * nonempty override, including a truncated or control-character path,
+     * must remain an explicit failure instead of selecting the default. */
+    char ca_path[MAX_PATH+1];
+    DWORD ca_length=GetPrivateProfileStringA("General", "ca_bundle", "", ca_path,
+        sizeof ca_path, wfe_general_file.c_str());
+    p.ca_bundle.assign(ca_path,ca_length);
     wfe_general = p;
     wfe_general_loaded = true;
     wfe_apply_general();
+#ifdef NETSCAPE_USE_BEARSSL
+    /* PlatformInit already completed. Never call preference accessors from
+     * TLSInit: PreferencesInit itself depends on the platform services. */
+    if (!wfe_tls_preferences_initialized) {
+        wfe_tls_preferences_initialized = true;
+        const std::string &path = wfe_general.ca_bundle;
+        bool valid = path.empty() || (wfe_safe_string(path,MAX_PATH,false) && wfe_absolute_ca_path(path));
+        /* An impossible Windows filename disables new HTTPS on invalid profile
+         * input; NULL/empty would instead request the public default store. */
+        WFE_TLSConfigure(valid ? path.c_str() : "?:invalid-ca-override", wfe_general.allow_legacy_tls, NULL, 0);
+    }
+#endif
     return 1;
 }
 
@@ -236,6 +285,16 @@ const GeneralPreferences &WFE_GeneralPreferences()
 {
     WFE_PreferencesInit();
     return wfe_general;
+}
+
+extern "C" int WFE_PreferenceAllowLegacyTLS(void)
+{
+    return WFE_GeneralPreferences().allow_legacy_tls ? 1 : 0;
+}
+
+extern "C" const char *WFE_PreferenceCABundle(void)
+{
+    return WFE_GeneralPreferences().ca_bundle.c_str();
 }
 
 extern "C" int WFE_PreferenceIncrementalImages(void)
@@ -269,6 +328,21 @@ static bool wfe_write_string(const char *file, const char *section, const char *
     return WritePrivateProfileStringA(section, key, quoted.c_str(), file) != FALSE;
 }
 
+/* TLS-only changes must not schedule a layout reload of an active request. */
+static bool wfe_other_preferences_changed(const GeneralPreferences &a, const GeneralPreferences &b)
+{
+    return a.toolbar!=b.toolbar || a.startup!=b.startup || a.blank!=b.blank || a.underline!=b.underline ||
+        a.expire!=b.expire || a.days!=b.days || a.home!=b.home || a.proportional!=b.proportional || a.fixed!=b.fixed ||
+        a.proportional_size!=b.proportional_size || a.fixed_size!=b.fixed_size ||
+        a.text_custom!=b.text_custom || a.link_custom!=b.link_custom || a.visited_custom!=b.visited_custom ||
+        a.background_custom!=b.background_custom || a.override_colors!=b.override_colors ||
+        a.background_image!=b.background_image || a.background_file!=b.background_file ||
+        a.telnet_application!=b.telnet_application || a.tn3270_application!=b.tn3270_application ||
+        a.source_application!=b.source_application || a.temporary_directory!=b.temporary_directory ||
+        memcmp(a.colors,b.colors,sizeof a.colors)!=0 || a.dither!=b.dither || a.incremental!=b.incremental ||
+        a.languages!=b.languages;
+}
+
 bool WFE_SaveGeneralPreferences(const GeneralPreferences &p, std::string *error)
 {
     if (!WFE_ValidateGeneralPreferences(p, error)) return false;
@@ -293,12 +367,14 @@ bool WFE_SaveGeneralPreferences(const GeneralPreferences &p, std::string *error)
         WRITE_INT("OverrideColors", override_colors); WRITE_INT("Dither", dither);
         WRITE_INT("BackgroundImage", background_image);
         WRITE_INT("Incremental", incremental);
+        WRITE_INT("allow_legacy_tls", allow_legacy_tls);
 #undef WRITE_INT
         for (int i = 0; ok && i < 4; ++i) {
             char key[16]; sprintf(key, "Color%d", i);
             ok = wfe_write_int(temporary, key, p.colors[i]);
         }
-        if (ok) ok = wfe_write_string(temporary, "General", "Home", p.home) &&
+        if (ok) ok = wfe_write_string(temporary, "General", "ca_bundle", p.ca_bundle) &&
+            wfe_write_string(temporary, "General", "Home", p.home) &&
             wfe_write_string(temporary, "Browser", "Home", p.home) &&
             wfe_write_string(temporary, "General", "Proportional", p.proportional) &&
             wfe_write_string(temporary, "General", "Fixed", p.fixed) &&
@@ -330,9 +406,16 @@ bool WFE_SaveGeneralPreferences(const GeneralPreferences &p, std::string *error)
         return wfe_preference_error(error, "Cannot save preferences. The existing settings have been retained.");
     }
     WritePrivateProfileStringA(NULL, NULL, NULL, wfe_general_file.c_str());
+#ifdef NETSCAPE_USE_BEARSSL
+    /* Only a committed protocol change is live. The retained CA store is
+     * intentionally unchanged until the next process startup. */
+    if (wfe_general.allow_legacy_tls != p.allow_legacy_tls)
+        WFE_TLSSetLegacy(p.allow_legacy_tls ? 1 : 0);
+#endif
+    bool notify = wfe_other_preferences_changed(wfe_general,p);
     wfe_general = p;
     wfe_apply_general();
-    WFE_GeneralPreferencesChanged();
+    if (notify) WFE_GeneralPreferencesChanged();
     return true;
 }
 
@@ -394,6 +477,22 @@ int WFE_PreferencesStoreSmoke(const char *report)
     bool prepared = wfe_smoke_write(wfe_general_file.c_str(), fixture);
     wfe_general_loaded = false;
     STORE_CHECK("migration", prepared && WFE_PreferencesInit() && wfe_general.home == "about:migrated");
+    STORE_CHECK("tls_defaults", !WFE_PreferenceAllowLegacyTLS() && !*WFE_PreferenceCABundle());
+    bool strict_boolean = true;
+    const char *invalid_booleans[] = { "2", "true", "-1", "01", "999999999999999999999" };
+    for (int i=0; i<5; ++i) {
+        prepared = wfe_smoke_write(wfe_general_file.c_str(), fixture + "[General]\r\nallow_legacy_tls=" + invalid_booleans[i] + "\r\n");
+        wfe_general_loaded = false;
+        strict_boolean = strict_boolean && prepared && WFE_PreferencesInit() && !WFE_PreferenceAllowLegacyTLS();
+    }
+    STORE_CHECK("tls_invalid_boolean", strict_boolean);
+    prepared = wfe_smoke_write(wfe_general_file.c_str(), fixture + "[General]\r\nca_bundle=" + std::string(33000,'x') + "\r\n");
+    wfe_general_loaded = false;
+    STORE_CHECK("tls_invalid_override_retained", prepared && WFE_PreferencesInit() && !wfe_general.ca_bundle.empty() &&
+        !WFE_ValidateGeneralPreferences(wfe_general,NULL));
+    prepared = wfe_smoke_write(wfe_general_file.c_str(),fixture);
+    wfe_general_loaded = false;
+    STORE_CHECK("tls_fixture_reset", prepared && WFE_PreferencesInit());
     GeneralPreferences p = wfe_general;
     std::string error;
     p.toolbar = 3; bool ranges = !WFE_ValidateGeneralPreferences(p, &error); p.toolbar = 2;
@@ -432,7 +531,7 @@ int WFE_PreferencesStoreSmoke(const char *report)
     p.days = 17; p.proportional = "Arial"; p.proportional_size = 18; p.fixed_size = 14;
     p.text_custom = p.link_custom = p.visited_custom = p.background_custom = p.override_colors = true;
     p.colors[0] = 0x123456; p.colors[1] = 0x654321; p.colors[2] = 0x102030; p.colors[3] = 0x908070;
-    p.incremental = false; p.dither = 2;
+    p.incremental = false; p.dither = 2; p.allow_legacy_tls = true;
     bool saved = WFE_SaveGeneralPreferences(p, &error);
     wfe_general_loaded = false;
     bool loaded = WFE_PreferencesInit() != 0;
@@ -444,6 +543,7 @@ int WFE_PreferencesStoreSmoke(const char *report)
         stored.colors[0] == 0x123456 && stored.colors[1] == 0x654321 && stored.colors[2] == 0x102030 && stored.colors[3] == 0x908070 &&
         !WFE_PreferenceIncrementalImages() && WFE_PreferenceImageDither() == 2 &&
         !strcmp(WFE_PreferenceLanguages(), "fr,en-US,es-419"));
+    STORE_CHECK("tls_persisted", saved && loaded && WFE_PreferenceAllowLegacyTLS() && !*WFE_PreferenceCABundle());
     char check[64];
     GetPrivateProfileStringA("Unrelated", "Keep", "", check, sizeof(check), wfe_general_file.c_str());
     STORE_CHECK("unknown_section_preserved", !strcmp(check, "untouched"));
@@ -454,13 +554,26 @@ int WFE_PreferencesStoreSmoke(const char *report)
     int temporary_count = wfe_smoke_temporaries();
     HANDLE locked = CreateFileA(wfe_general_file.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
                                 NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    p.home = "about:must-not-apply";
+    p.home = "about:must-not-apply"; p.allow_legacy_tls = false;
     bool rejected = locked != INVALID_HANDLE_VALUE && !WFE_SaveGeneralPreferences(p, &error);
     if (locked != INVALID_HANDLE_VALUE) CloseHandle(locked);
     STORE_CHECK("failed_save_memory_preserved", rejected && wfe_general.home == "about:saved" &&
         !strcmp(WFE_PreferenceLanguages(), "fr,en-US,es-419"));
     STORE_CHECK("failed_save_file_preserved", rejected && before_read &&
         wfe_smoke_read(wfe_general_file.c_str(), after) && before == after);
+    STORE_CHECK("tls_failed_save", rejected && WFE_PreferenceAllowLegacyTLS() && before == after);
+    GeneralPreferences invalid_ca = wfe_general;
+    invalid_ca.ca_bundle = "relative.pem";
+    bool invalid_paths = !WFE_SaveGeneralPreferences(invalid_ca, &error);
+    invalid_ca.ca_bundle = std::string(WFE_ProfileDirectory()) + "\\missing.pem";
+    invalid_paths = invalid_paths && !WFE_SaveGeneralPreferences(invalid_ca, &error);
+    invalid_ca.ca_bundle = wfe_general_file;
+    invalid_paths = invalid_paths && !WFE_SaveGeneralPreferences(invalid_ca, &error);
+    invalid_ca.ca_bundle = WFE_ProfileDirectory();
+    invalid_paths = invalid_paths && !WFE_SaveGeneralPreferences(invalid_ca, &error) &&
+        WFE_PreferenceAllowLegacyTLS() && !*WFE_PreferenceCABundle() &&
+        wfe_smoke_read(wfe_general_file.c_str(), after) && before == after;
+    STORE_CHECK("tls_path_validation", invalid_paths);
     STORE_CHECK("temporary_files_cleaned", wfe_smoke_temporaries() == temporary_count);
     fixture += "[General]\r\nToolbar=99\r\nStartup=0\r\nDays=9999999999999\r\nFixedSize=73\r\n"
                "Proportional=abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz\r\nColor0=16777216\r\nLanguages=";
@@ -473,6 +586,9 @@ int WFE_PreferencesStoreSmoke(const char *report)
     bool restored = existed ? wfe_smoke_write(wfe_general_file.c_str(), original_bytes) :
                               DeleteFileA(wfe_general_file.c_str()) != FALSE;
     wfe_general = original; wfe_general_loaded = true; wfe_apply_general();
+#ifdef NETSCAPE_USE_BEARSSL
+    WFE_TLSSetLegacy(original.allow_legacy_tls ? 1 : 0);
+#endif
     WFE_GeneralPreferencesChanged();
     STORE_CHECK("original_restored", restored && (!existed ||
         (wfe_smoke_read(wfe_general_file.c_str(), after) && original_bytes == after)));

@@ -38,7 +38,8 @@ static int WFE_RunTLSSmoke(const char *report, const char *url, const char *bund
                            const char *proxy, const char *scenario)
 {
     char error[256];
-    WFE_TLSConfigure(bundle,0,error,sizeof error);
+    if (bundle && *bundle && strcmp(bundle,"-"))
+        WFE_TLSConfigure(bundle,WFE_PreferenceAllowLegacyTLS(),error,sizeof error);
     if (proxy && *proxy && strcmp(proxy,"-")) NET_SetProxyServer(HTTPS_PROXY,(char *)proxy);
     tls_smoke_info=NETTLSInfo();tls_smoke_completed=tls_smoke_ticks=0;
     BrowserFrame *frame=frame_for(WFE_NewWindow(nullptr));
@@ -78,6 +79,14 @@ static int WFE_RunTLSSmoke(const char *report, const char *url, const char *bund
         FE_GetURL(&frame->context,request);
     } else frame->Navigate(url);
     bool scenario_ok=true;
+    NETTLSInfo first_info={};
+    bool policy=scenario && !strncmp(scenario,"policy-",7);
+    if (policy && !strcmp(scenario,"policy-active")) {
+        ULONGLONG deadline=GetTickCount64()+2000;
+        while (!frame->completed && frame_text(frame).empty() && GetTickCount64()<deadline) mail_smoke_pump();
+        scenario_ok=!frame->completed && !frame_text(frame).empty() &&
+            WFE_TLSPreferencesUISmoke(frame,scenario,nullptr);
+    }
     if (scenario && !strcmp(scenario,"cancel")) {
         ULONGLONG deadline=GetTickCount64()+100;
         while (GetTickCount64()<deadline) mail_smoke_pump();
@@ -109,6 +118,19 @@ static int WFE_RunTLSSmoke(const char *report, const char *url, const char *bund
         if (!strcmp(scenario,"policy")) WFE_TLSSetLegacy(0);
         frame->Navigate((std::string(url)+"?second").c_str());browser_smoke_wait(frame);
         scenario_ok=first && frame->completed && frame->load_status>=0;
+    }
+    if (policy) {
+        first_info=tls_smoke_info;
+        bool first=frame->completed && frame->load_status>=0 && first_info.authenticated;
+        if (strcmp(scenario,"policy-active")) {
+            char replacement[MAX_PATH];
+            GetFullPathNameA("wrong.pem",sizeof replacement,replacement,nullptr);
+            scenario_ok=scenario_ok && WFE_TLSPreferencesUISmoke(frame,scenario,replacement);
+        }
+        frame->Navigate((std::string(url)+"?second").c_str());browser_smoke_wait(frame);
+        bool disabling=!strcmp(scenario,"policy-active") || !strcmp(scenario,"policy-idle");
+        scenario_ok=scenario_ok && first && frame->completed &&
+            (disabling ? frame->load_status<0 : frame->load_status>=0);
     }
     std::string text=frame_text(frame);
     CString title;frame->GetWindowText(title);
@@ -144,8 +166,8 @@ static int WFE_RunTLSSmoke(const char *report, const char *url, const char *bund
     tls_smoke_context=nullptr;
     FILE *file=fopen(report,"wb");
     if (!file) return 3;
-    fprintf(file,"completed=%d\nstatus=%d\ntls_authenticated=%d\ntls_version=%u\ntls_cipher=%u\ntls_error=%d\nbody_sha256=%s\nrequests_completed=%u\nui_responsive=%d\ntitle=%s\nrendered=%d\ndownload_ok=%d\nscenario_ok=%d\nimages_rendered=%u\nsecurity_on=%d\nrefresh_present=%d\nproxy_cookie=%d\norigin_cookie=%d\n",
-        completed,status,info.authenticated,info.version,info.cipher_suite,(int)info.error,
+    fprintf(file,"first_authenticated=%d\nfirst_version=%u\ncompleted=%d\nstatus=%d\ntls_authenticated=%d\ntls_version=%u\ntls_cipher=%u\ntls_error=%d\nbody_sha256=%s\nrequests_completed=%u\nui_responsive=%d\ntitle=%s\nrendered=%d\ndownload_ok=%d\nscenario_ok=%d\nimages_rendered=%u\nsecurity_on=%d\nrefresh_present=%d\nproxy_cookie=%d\norigin_cookie=%d\n",
+        first_info.authenticated,first_info.version,completed,status,info.authenticated,info.version,info.cipher_suite,(int)info.error,
         hash.c_str(),requests,responsive,(const char *)title,!text.empty(),download_ok,scenario_ok,images,tls_smoke_security_on,tls_smoke_refresh,proxy_cookie,origin_cookie);
     fclose(file);
     return completed && responsive && download_ok ? 0 : 4;

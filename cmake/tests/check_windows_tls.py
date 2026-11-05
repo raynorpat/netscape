@@ -6,12 +6,14 @@ import http.server
 import os
 from pathlib import Path
 import select
+import shutil
 import socket
 import socketserver
 import ssl
 import subprocess
 import threading
 import time
+import warnings
 from urllib.parse import urlsplit
 import tls_fixture
 from cryptography import x509
@@ -100,13 +102,19 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             return
         body, kind = (DOWNLOAD, 'application/octet-stream') if path == '/download' else (GIF, 'image/gif') if path == '/image.gif' else (BODY, 'text/html')
+        if path.startswith('/policy-'):
+            body = b'<html><head><title>TLS browser fixture</title></head><body><h1>Policy snapshot</h1><p>Active transfer remains valid through policy Save.</p></body></html>'
         self.send_response(200)
         self.send_header('Content-Type', kind)
         if path == '/cookies': self.send_header('Set-Cookie','origin_cookie=good; Path=/')
         self.send_header('Content-Length', str(len(body) + (100 if path == '/truncated' else 0)))
-        self.send_header('Connection', 'keep-alive' if path.startswith('/keepalive') else 'close')
+        self.send_header('Connection', 'keep-alive' if path.startswith(('/keepalive','/policy-idle','/policy-ca')) else 'close')
         self.end_headers()
-        if path == '/cancel':
+        if path == '/policy-active':
+            self.wfile.write(body[:100]);self.wfile.flush()
+            time.sleep(.8)
+            self.wfile.write(body[100:]);self.wfile.flush()
+        elif path == '/cancel':
             self.wfile.write(body[:40]);self.wfile.flush()
             time.sleep(.4)
             try: self.wfile.write(body[40:]);self.wfile.flush()
@@ -119,7 +127,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.connection.shutdown(socket.SHUT_RDWR)
             self.close_connection = True
             return
-        if isinstance(self.connection, ssl.SSLSocket) and path not in ('/truncated','/keepalive'):
+        if isinstance(self.connection, ssl.SSLSocket) and path not in ('/truncated','/keepalive') and not path.startswith(('/policy-idle','/policy-ca')):
 
             try: self.connection.unwrap()
             except (OSError, ssl.SSLError): pass
@@ -188,11 +196,94 @@ def running(server):
         server.server_close()
         thread.join(2)
 
+def policy(args, output):
+    contexts = {}
+    for label, version in [('10',ssl.TLSVersion.TLSv1),('11',ssl.TLSVersion.TLSv1_1),('12',ssl.TLSVersion.TLSv1_2)]:
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', DeprecationWarning)
+            context.minimum_version = context.maximum_version = version
+        context.set_ciphers('ECDHE-RSA-AES128-SHA:@SECLEVEL=0' if label != '12' else 'ECDHE-RSA-AES128-GCM-SHA256')
+        context.load_cert_chain(output/'browser-leaf.pem',output/'browser-leaf.key')
+        contexts[label] = context
+    peer = Server(('127.0.0.1',0),Handler)
+    peer.mode = ''; peer.errors = []; peer.requests = []; peer.connections = []; peer.records = []
+    peer.transports = []; peer.image_cookies = []; peer.ctx = contexts['12']
+    count = 0
+    with running(peer):
+        def run(case, version='12', legacy=None, bundle='browser-root.pem', scenario='', success=True,
+                profile_name=None, prepare=True, explicit=False, scheme='https', executable=None, relative=False):
+            nonlocal count
+            if args.case and args.case != case and not (args.case=='ca-change-restarted' and case=='ca-change-retained'): return None
+            peer.ctx = contexts[version] if scheme == 'https' else None
+            profile = output/('profile-'+(profile_name or case));profile.mkdir(exist_ok=True)
+            if prepare:
+                content = '[General]\nca_bundle='+(bundle if relative else str((output/bundle).resolve()) if bundle else '')+'\n'
+                if legacy is not None: content += 'allow_legacy_tls='+str(legacy)+'\n'
+                content += '[Unrelated]\nKeep=untouched\n'
+                (profile/'browser.ini').write_text(content)
+            env = os.environ.copy();env['NETSCAPE_PROFILE_DIR'] = str(profile)
+            report = output/(case+'.txt');report.unlink(missing_ok=True)
+            url = f'{scheme}://localhost:{peer.server_port}/'+(scenario or 'index')
+            command = [str((executable or args.executable).resolve()),'--tls-smoke-test',str(report),url]
+            if explicit or scenario: command += [str(output/'browser-root.pem') if explicit else '-', '-', scenario or '-']
+            before = len(peer.requests)
+            result = subprocess.run(command, env=env, cwd=output,capture_output=True,text=True,timeout=30)
+            fields = dict(line.split('=',1) for line in report.read_text().splitlines() if '=' in line) if report.exists() else {}
+            assert result.returncode == 0 and fields.get('completed') == '1', (case,result.returncode,fields,result.stderr)
+            if success:
+                assert int(fields['status']) >= 0, (case,fields)
+                if scheme == 'https':
+                    assert fields.get('tls_authenticated') == '1' and int(fields['tls_version']) == int(version)+759, (case,fields)
+                else: assert fields.get('tls_authenticated') == '0', (case,fields)
+            else:
+                assert int(fields['status']) < 0 and int(fields.get('tls_error','0')) != 0, (case,fields)
+                if scenario not in ('policy-active','policy-idle'):
+                    assert len(peer.requests)==before, (case,'HTTP leaked before authentication',peer.requests[before:])
+            if scenario: assert fields.get('scenario_ok') == '1', (case,fields)
+            assert fields.get('ui_responsive') == '1', (case,fields)
+            if scenario in ('policy-active','policy-idle'):
+                assert fields.get('first_authenticated')=='1' and fields.get('first_version')==str(int(version)+759), (case,fields)
+                assert fields.get('requests_completed')=='2', (case,fields)
+                assert peer.requests[before:]==['/'+scenario], (case,peer.requests[before:])
+            assert '[Unrelated]\nKeep=untouched' in (profile/'browser.ini').read_text(), case
+            count += 1
+            print('PASS',case,flush=True)
+            return fields
+        for version in ('10','11'):
+            run('tls'+version+'-default',version,success=False)
+            run('tls'+version+'-enabled',version,legacy=1)
+            run('tls'+version+'-explicit-fixture',version,legacy=1,explicit=True)
+            run('tls'+version+'-bad-certificate',version,legacy=1,bundle='wrong.pem',success=False)
+            run('tls'+version+'-active-generation',version,legacy=1,scenario='policy-active',success=False)
+            run('tls'+version+'-idle-generation',version,legacy=1,scenario='policy-idle',success=False)
+            run('tls'+version+'-cancel',version,legacy=1,scenario='policy-cancel')
+            run('tls'+version+'-failed-save',version,legacy=1,scenario='policy-failed')
+            run('tls'+version+'-invalid-save',version,legacy=1,scenario='policy-invalid')
+        run('bad-certificate-default',legacy=0,bundle='wrong.pem',success=False)
+        run('bad-certificate-compatibility',legacy=1,bundle='wrong.pem',success=False)
+        run('missing-ca-https',bundle='missing.pem',success=False)
+        run('missing-ca-http',bundle='missing.pem',scheme='http')
+        # A relative persisted path must not resolve against an incidental cwd.
+        run('relative-ca-rejected',bundle='browser-root.pem',relative=True,success=False)
+        missing_exe = output/'default-ca-missing'/'bin'/'netscape.exe'
+        missing_exe.parent.mkdir(parents=True,exist_ok=True)
+        shutil.copy2(args.executable,missing_exe)
+        run('missing-default-ca-https',bundle=None,executable=missing_exe,success=False)
+        run('missing-default-ca-http',bundle=None,executable=missing_exe,scheme='http')
+        before=len(peer.records)
+        run('ca-change-retained',legacy=0,scenario='policy-ca',profile_name='ca-restart')
+        if not args.case or args.case=='ca-change-retained':
+            assert len({port for path,port in peer.records[before:] if path=='/policy-ca'})==2, peer.records[before:]
+        run('ca-change-restarted',success=False,profile_name='ca-restart',prepare=False)
+    assert not peer.errors,peer.errors
+    print(f'All {count} policy TLS cases passed')
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--executable', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--mode', choices=['browser'], default='browser')
+    parser.add_argument('--mode', choices=['browser','policy'], default='browser')
     parser.add_argument('--red', action='store_true')
     parser.add_argument('--case', default='')
     args = parser.parse_args()
@@ -214,6 +305,8 @@ def main():
     (output/'browser-root.pem').write_bytes(root.public_bytes(serialization.Encoding.PEM))
     (output/'browser-leaf.pem').write_bytes(leaf.public_bytes(serialization.Encoding.PEM))
     (output/'browser-leaf.key').write_bytes(leaf_key.private_bytes(serialization.Encoding.PEM,serialization.PrivateFormat.PKCS8,serialization.NoEncryption()))
+    if args.mode == 'policy':
+        return policy(args, output)
     ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER); ctx.minimum_version = ctx.maximum_version = ssl.TLSVersion.TLSv1_2
     ctx.set_ciphers('ECDHE-RSA-AES128-GCM-SHA256'); ctx.load_cert_chain(output/'browser-leaf.pem',output/'browser-leaf.key')
     names = []; ctx.set_servername_callback(lambda sock, name, context: names.append(name))

@@ -94,6 +94,11 @@ def run(executable, output):
                 if actual.get("width") != "502" or actual.get("height") != "442":
                     raise RuntimeError("Preferences sizing differs from original 3.02: " + repr(actual))
                 store = fields(Path(str(report) + ".store"))
+                for name in ("tls_defaults", "tls_invalid_boolean", "tls_persisted", "tls_failed_save", "tls_path_validation", "tls_invalid_override_retained", "tls_fixture_reset"):
+                    if store.get(name) != "1":
+                        raise RuntimeError("Preferences omitted TLS transaction check: " + name)
+                if actual.get("tls_controls") != "1":
+                    raise RuntimeError("Preferences omitted native TLS controls")
                 if store.get("language_header_boundary") != "1":
                     raise RuntimeError("Preferences omitted the legacy HTTP language boundary check")
                 required += ["menu", "dialog", "tabs", "appearance", "layout", "keyboard", "cancel",

@@ -20,6 +20,8 @@ struct GeneralPreferences {
     unsigned long colors[4] = {0xffffff, 0x000000, 0xff0000, 0x800080}; /* COLORREF: background,text,link,visited */
     int dither = 0; /* automatic, dither, closest */
     bool incremental = true;
+    bool allow_legacy_tls = false;
+    std::string ca_bundle;
     std::vector<std::string> languages;
 };
 const GeneralPreferences &WFE_GeneralPreferences();
@@ -29,9 +31,12 @@ int WFE_PreferencesStoreSmoke(const char *report);
 int WFE_ShowGeneralPreferences(CWnd *parent);
 int WFE_PreferencesUISmoke(CWnd *parent, const char *report, const char *snapshot);
 void WFE_GeneralPreferencesChanged();
+int WFE_TLSPreferencesUISmoke(CWnd *, const char *action, const char *bundle);
 extern "C" {
 #endif
 int WFE_PreferencesInit(void);
+int WFE_PreferenceAllowLegacyTLS(void);
+const char *WFE_PreferenceCABundle(void);
 int WFE_PreferenceIncrementalImages(void);
 int WFE_PreferenceImageDither(void);
 const char *WFE_PreferenceLanguages(void);

@@ -1727,6 +1727,13 @@ net_parse_http_mime_headers (ActiveEntry *ce)
     if(!line)
         return(0);  /* wait for next line */
 
+#ifdef NETSCAPE_USE_BEARSSL
+    /* CONNECT headers belong to the unauthenticated proxy, never the origin.
+     * Only the terminating blank line below may advance the tunnel to TLS. */
+    if (CD_USE_SSL_PROXY && !CD_SSL_PROXY_SETUP_DONE && *line && *line!='\r')
+        return 1;
+#endif
+
     TRACEMSG(("parse_http_mime_headers: Parsing headers, got line: %s",line));
 
     if(CD_ACTING_AS_PROXY)

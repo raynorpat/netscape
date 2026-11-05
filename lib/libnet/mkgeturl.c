@@ -1294,6 +1294,15 @@ NET_GetURL (URL_Struct *URL_s,
 	LIBNET_LOCK();
 
 	XP_ASSERT (URL_s && URL_s->address);
+#ifdef NETSCAPE_USE_BEARSSL
+    /* Redirects reuse URL_s, but begin here only after the previous transport's
+     * cleanup. Retain its diagnostic through close, then start a fresh hop even
+     * if this destination fails before a protocol socket can be attached. */
+    if (URL_s) {
+        XP_MEMSET(&URL_s->tls_info,0,sizeof URL_s->tls_info);
+        URL_s->security_on=0;
+    }
+#endif
 #ifdef MOZILLA_CLIENT
 	if ( URL_s->mailto_post && warn_on_mailto_post) {
 		confirmstring = NULL;

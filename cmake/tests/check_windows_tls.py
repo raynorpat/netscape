@@ -85,6 +85,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.server.records.append((path,self.connection.getpeername()[1]))
         self.server.transports.append((path,isinstance(self.connection,ssl.SSLSocket)))
         if path=='/headers': self.server.large_header=self.headers.get('X-Large','')
+        if path in ('/redirect-http','/redirect-unreachable'):
+            self.send_response(302)
+            self.send_header('Location', self.server.plain_url if path=='/redirect-http' else self.server.failure_url)
+            self.send_header('Content-Length','0')
+            self.end_headers()
+            return
+        if path == '/cookies': self.server.cookie_headers.append(self.headers.get('Cookie',''))
+        if path == '/image.gif': self.server.image_cookies.append(self.headers.get('Cookie',''))
         if path == '/redirect':
             self.send_response(302)
             self.send_header('Location', f'https://fixture.test:{self.server.server_port}/index')
@@ -94,6 +102,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         body, kind = (DOWNLOAD, 'application/octet-stream') if path == '/download' else (GIF, 'image/gif') if path == '/image.gif' else (BODY, 'text/html')
         self.send_response(200)
         self.send_header('Content-Type', kind)
+        if path == '/cookies': self.send_header('Set-Cookie','origin_cookie=good; Path=/')
         self.send_header('Content-Length', str(len(body) + (100 if path == '/truncated' else 0)))
         self.send_header('Connection', 'keep-alive' if path.startswith('/keepalive') else 'close')
         self.end_headers()
@@ -157,7 +166,7 @@ class Relay(socketserver.BaseRequestHandler):
             return
         upstream = socket.create_connection(('127.0.0.1', self.server.target), timeout=12)
         with upstream:
-            for chunk in (b'HTTP/1.0 200 Con', b'nection established\r\nX-Split: yes\r\n', b'\r\n'+self.server.tail):
+            for chunk in (b'HTTP/1.0 200 Con', b'nection established\r\nX-Split: yes\r\n'+self.server.headers, b'\r\n'+self.server.tail):
                 self.request.sendall(chunk)
                 time.sleep(.015)
             peers = [self.request, upstream]
@@ -209,11 +218,16 @@ def main():
     ctx.set_ciphers('ECDHE-RSA-AES128-GCM-SHA256'); ctx.load_cert_chain(output/'browser-leaf.pem',output/'browser-leaf.key')
     names = []; ctx.set_servername_callback(lambda sock, name, context: names.append(name))
     server = Server(('127.0.0.1',0), Handler); server.ctx = ctx; server.requests = []; server.post_hashes = []; server.connections = []; server.records = []; server.transports = []; server.errors = []; server.mode = ''
-    proxy = Proxy(('127.0.0.1',0),Relay); proxy.target = server.server_port; proxy.requests = []; proxy.reject = False; proxy.tail = b''; proxy.errors = []
+    proxy = Proxy(('127.0.0.1',0),Relay); proxy.target = server.server_port; proxy.requests = []; proxy.reject = False; proxy.tail = b''; proxy.errors = []; proxy.headers = b''
     env = os.environ.copy()
     plain = Server(('127.0.0.1',0),Handler);plain.ctx=None;plain.requests=[];plain.connections=[];plain.records=[];plain.transports=[];plain.errors=[];plain.mode=''
+    server.plain_url=f'http://localhost:{plain.server_port}/index'
+    # Netlib rejects port 25 before DNS/TCP/TLS, independent of listener timing.
+    server.failure_url='https://localhost:25/unreachable'
+    server.cookie_headers=[];server.image_cookies=[]
+    plain.cookie_headers=[];plain.image_cookies=[]
     with running(server), running(proxy), running(plain):
-        def run(case, path='/index', ca='browser-root.pem', proxied=False, success=True, extra='', host='localhost'):
+        def run(case, path='/index', ca='browser-root.pem', proxied=False, success=True, extra='', host='localhost', transport='tls'):
             if args.case and args.case != case: return None
             profile = output/('profile-'+case); profile.mkdir(exist_ok=True)
             env['NETSCAPE_PROFILE_DIR'] = str(profile)
@@ -225,13 +239,22 @@ def main():
             fields = dict(line.split('=',1) for line in report.read_text().splitlines() if '=' in line) if report.exists() else {}
             assert fields.get('completed') == '1', (case,result.returncode,fields,result.stderr)
             if success:
-                assert fields.get('tls_authenticated') == '1' and fields.get('tls_version') == '771', (case,fields)
+                if transport=='tls':
+                    assert fields.get('tls_authenticated') == '1' and fields.get('tls_version') == '771', (case,fields)
+                else:
+                    assert all(fields.get(key)=='0' for key in ('tls_authenticated','tls_version','tls_cipher','tls_error','security_on')), (case,fields)
                 assert int(fields['status']) >= 0, (case,fields)
                 assert 'TLS browser fixture' in fields.get('title',''), (case,fields)
                 assert fields.get('ui_responsive') == '1', (case,fields)
                 if extra == 'download': assert fields.get('body_sha256') == hashlib.sha256(DOWNLOAD).hexdigest(), fields
             else:
-                assert int(fields['status']) < 0 and int(fields.get('tls_error','0')) != 0, (case,fields)
+                assert int(fields['status']) < 0, (case,fields)
+                if transport=='unattached':
+                    assert all(fields.get(key)=='0' for key in ('tls_authenticated','tls_version','tls_cipher','tls_error','security_on')), (case,fields)
+                else: assert int(fields.get('tls_error','0')) != 0, (case,fields)
+            if extra in ('connect-isolation','connect-isolation-fail'):
+                assert fields.get('proxy_cookie')=='0' and fields.get('refresh_present')=='0', (case,fields)
+                if success: assert fields.get('origin_cookie')=='1', (case,fields)
             if extra in ('reuse','policy','cancel','scheme') or extra.startswith('mixed:'):
                 assert fields.get('scenario_ok') == '1', (case,fields)
             print('PASS',case,flush=True)
@@ -263,6 +286,17 @@ def main():
         if not args.case or args.case=='scheme-origin-isolation':
             assert [secure for path,secure in server.transports[before:] if path=='/keepalive']==[True,False,True], server.transports[before:]
         server.mode=''
+        proxy.headers=b'Set-Cookie: proxy_injected=evil; Path=/\r\nRefresh: 0; url=/proxy-refresh\r\n'
+        isolated=run('connect-origin-header-isolation',path='/cookies',proxied=True,extra='connect-isolation')
+        if isolated:
+            assert not any('proxy_injected=evil' in h for h in server.cookie_headers+server.image_cookies), (server.cookie_headers,server.image_cookies)
+            assert any('origin_cookie=good' in h for h in server.image_cookies), server.image_cookies
+        before=len(server.requests)
+        run('connect-origin-header-isolation-failed-auth',path='/cookies',proxied=True,ca='wrong.pem',success=False,extra='connect-isolation-fail')
+        assert len(server.requests)==before, 'origin request leaked after failed authentication'
+        proxy.headers=b''
+        run('redirect-http-metadata',path='/redirect-http',extra='redirect-metadata',transport='plain')
+        run('redirect-before-attach-metadata',path='/redirect-unreachable',success=False,extra='redirect-metadata',transport='unattached')
         run('connect-split',proxied=True)
         proxy.tail = b'\x15\x03\x03\x00\x02\x02\x28'
         before = len(server.requests)

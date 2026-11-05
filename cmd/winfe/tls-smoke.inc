@@ -1,6 +1,15 @@
 /* Focused CLI driver: all network, parser, renderer and download work is real. */
 #include <bcrypt.h>
+extern "C" {
+#include "mkaccess.h"
+}
 static unsigned tls_smoke_ticks;
+static int tls_smoke_security_on, tls_smoke_refresh;
+static void tls_smoke_metadata(URL_Struct *url, int, MWContext *)
+{
+    tls_smoke_security_on=url->security_on;
+    tls_smoke_refresh=url->refresh_url!=nullptr;
+}
 static void CALLBACK tls_smoke_timer(HWND, UINT, UINT_PTR, DWORD) { ++tls_smoke_ticks; }
 static std::string tls_smoke_hash(const char *path)
 {
@@ -36,7 +45,14 @@ static int WFE_RunTLSSmoke(const char *report, const char *url, const char *bund
     if (!frame) return 2;
     tls_smoke_context=&frame->context;
     UINT_PTR timer=SetTimer(nullptr,0,10,tls_smoke_timer);
-    if (scenario && !strcmp(scenario,"headers")) {
+    tls_smoke_security_on=-1;tls_smoke_refresh=0;
+    if (scenario && (!strcmp(scenario,"connect-isolation") ||
+        !strcmp(scenario,"connect-isolation-fail") || !strcmp(scenario,"redirect-metadata"))) {
+        if (strncmp(scenario,"connect-isolation",17)==0) NET_RemoveAllCookies();
+        URL_Struct *request=NET_CreateURLStruct(url,NET_DONT_RELOAD);
+        request->pre_exit_fn=tls_smoke_metadata;
+        FE_GetURL(&frame->context,request);
+    } else if (scenario && !strcmp(scenario,"headers")) {
         URL_Struct *request=NET_CreateURLStruct(url,NET_DONT_RELOAD);
         std::string headers="Host: localhost\r\nX-Large: "+std::string(40000,'a')+"\r\n";
         request->http_headers=XP_STRDUP(headers.c_str());
@@ -121,13 +137,16 @@ static int WFE_RunTLSSmoke(const char *report, const char *url, const char *bund
     bool responsive=tls_smoke_ticks>0 && IsWindow(frame->GetSafeHwnd());
     if (timer) KillTimer(nullptr,timer);
     unsigned requests=tls_smoke_completed;
+    char *cookies=NET_GetCookie(&frame->context,(char *)url);
+    bool proxy_cookie=cookies && strstr(cookies,"proxy_injected=evil");
+    bool origin_cookie=cookies && strstr(cookies,"origin_cookie=good");
     frame->SendMessage(WM_CLOSE);
     tls_smoke_context=nullptr;
     FILE *file=fopen(report,"wb");
     if (!file) return 3;
-    fprintf(file,"completed=%d\nstatus=%d\ntls_authenticated=%d\ntls_version=%u\ntls_cipher=%u\ntls_error=%d\nbody_sha256=%s\nrequests_completed=%u\nui_responsive=%d\ntitle=%s\nrendered=%d\ndownload_ok=%d\nscenario_ok=%d\nimages_rendered=%u\n",
+    fprintf(file,"completed=%d\nstatus=%d\ntls_authenticated=%d\ntls_version=%u\ntls_cipher=%u\ntls_error=%d\nbody_sha256=%s\nrequests_completed=%u\nui_responsive=%d\ntitle=%s\nrendered=%d\ndownload_ok=%d\nscenario_ok=%d\nimages_rendered=%u\nsecurity_on=%d\nrefresh_present=%d\nproxy_cookie=%d\norigin_cookie=%d\n",
         completed,status,info.authenticated,info.version,info.cipher_suite,(int)info.error,
-        hash.c_str(),requests,responsive,(const char *)title,!text.empty(),download_ok,scenario_ok,images);
+        hash.c_str(),requests,responsive,(const char *)title,!text.empty(),download_ok,scenario_ok,images,tls_smoke_security_on,tls_smoke_refresh,proxy_cookie,origin_cookie);
     fclose(file);
     return completed && responsive && download_ok ? 0 : 4;
 }
